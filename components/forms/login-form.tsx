@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { loginSchema, type LoginFormValues } from "@/lib/validation/auth";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
   const {
     register,
@@ -46,7 +47,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(searchParams.get("next") ?? "/dashboard");
     router.refresh();
   }
 

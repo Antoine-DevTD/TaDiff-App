@@ -39,6 +39,7 @@ export function SignupForm() {
       email: values.email,
       password: values.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         data: {
           company_name: values.companyName,
           profile: values.profile,
