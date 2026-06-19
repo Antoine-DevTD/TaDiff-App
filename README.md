@@ -87,3 +87,4 @@ Not implemented yet:
 3. Fill `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 4. Run `sql/001_initial_schema.sql` in the Supabase SQL Editor.
 5. Start the app with `npm run dev`.
+Deployment initialized on Vercel.
