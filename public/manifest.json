@@ -1,0 +1,17 @@
+{
+  "name": "TaDiff",
+  "short_name": "TaDiff",
+  "description": "Pilotage de diffusion pour le spectacle vivant.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f7f3ed",
+  "theme_color": "#8f3f2b",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

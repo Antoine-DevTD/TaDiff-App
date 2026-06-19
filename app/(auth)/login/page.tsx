@@ -1,0 +1,21 @@
+import Link from "next/link";
+import { LoginForm } from "@/components/forms/login-form";
+import { Card } from "@/components/ui/card";
+
+export default function LoginPage() {
+  return (
+    <Card className="w-full max-w-md">
+      <div className="mb-6">
+        <p className="text-sm font-medium text-muted">Connexion</p>
+        <h1 className="mt-2 text-2xl font-semibold">Retour dans votre espace</h1>
+      </div>
+      <LoginForm />
+      <p className="mt-6 text-center text-sm text-muted">
+        Pas encore de compte ?{" "}
+        <Link href="/signup" className="font-medium text-accent">
+          Creer un espace
+        </Link>
+      </p>
+    </Card>
+  );
+}

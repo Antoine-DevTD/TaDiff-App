@@ -1,0 +1,13 @@
+import { z } from "zod";
+
+export const showSchema = z.object({
+  title: z.string().min(2, "Le titre est requis"),
+  discipline: z.string().min(2, "La discipline est requise"),
+  status: z.enum(["En diffusion", "Creation", "En pause"]),
+  nextDate: z.string().optional(),
+  budget: z.coerce.number().min(0, "Le budget doit etre positif").optional(),
+  notes: z.string().max(1200, "La note est trop longue").optional(),
+});
+
+export type ShowFormInput = z.input<typeof showSchema>;
+export type ShowFormValues = z.infer<typeof showSchema>;
