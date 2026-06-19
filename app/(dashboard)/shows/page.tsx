@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getShows } from "@/lib/supabase/queries";
 
 export default async function ShowsPage() {
@@ -18,8 +19,16 @@ export default async function ShowsPage() {
         <ButtonLink href="/shows/new">Nouveau spectacle</ButtonLink>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {shows.map((show) => (
+      {shows.length === 0 ? (
+        <EmptyState
+          title="Aucun spectacle"
+          description="Creez votre premier spectacle pour suivre sa diffusion, son budget et ses prochaines dates."
+          actionLabel="Nouveau spectacle"
+          actionHref="/shows/new"
+        />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {shows.map((show) => (
           <Card key={show.id}>
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
@@ -49,8 +58,9 @@ export default async function ShowsPage() {
               </div>
             </div>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

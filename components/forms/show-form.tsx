@@ -1,8 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { createShow } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -23,7 +25,9 @@ const defaultValues: ShowFormInput = {
 };
 
 export function ShowForm() {
-  const [saved, setSaved] = useState(false);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const {
     register,
     handleSubmit,
@@ -33,8 +37,16 @@ export function ShowForm() {
     defaultValues,
   });
 
-  function onSubmit() {
-    setSaved(true);
+  function onSubmit(values: ShowFormValues) {
+    startTransition(async () => {
+      const result = await createShow(values);
+      setMessage({ ok: result.ok, text: result.message });
+
+      if (result.ok) {
+        router.push("/shows");
+        router.refresh();
+      }
+    });
   }
 
   return (
@@ -75,14 +87,20 @@ export function ShowForm() {
         <Textarea placeholder="Distribution, jauge, besoins techniques..." {...register("notes")} />
       </Field>
 
-      {saved ? (
-        <p className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">
-          Formulaire valide. La persistance Supabase arrive dans le prochain lot CRUD.
+      {message ? (
+        <p
+          className={
+            message.ok
+              ? "rounded-md bg-success/10 px-3 py-2 text-sm text-success"
+              : "rounded-md bg-danger/10 px-3 py-2 text-sm text-danger"
+          }
+        >
+          {message.text}
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isSubmitting}>
-        Valider la fiche
+      <Button type="submit" disabled={isSubmitting || isPending}>
+        Creer le spectacle
       </Button>
     </form>
   );

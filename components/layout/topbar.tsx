@@ -12,14 +12,14 @@ function titleFromPath(pathname: string) {
   return current?.label ?? "Espace compagnie";
 }
 
-export function Topbar() {
+export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
   const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur">
       <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-muted">Compagnie demo</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-muted">{workspaceLabel}</p>
           <h1 className="text-lg font-semibold">{titleFromPath(pathname)}</h1>
         </div>
         <div className="flex items-center gap-3">

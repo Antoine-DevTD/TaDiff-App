@@ -1,14 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ensureClientWorkspace } from "@/lib/supabase/client-workspace";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/auth";
 
 export function LoginForm() {
+  const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const {
     register,
@@ -30,7 +33,21 @@ export function LoginForm() {
 
     const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithPassword(values);
-    setMessage(error ? error.message : "Connexion Supabase reussie.");
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    const workspace = await ensureClientWorkspace();
+
+    if (!workspace.ok) {
+      setMessage(workspace.message);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   }
 
   return (

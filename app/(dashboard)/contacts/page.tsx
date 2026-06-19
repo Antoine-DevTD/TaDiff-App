@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ContactsTable } from "@/components/tables/contacts-table";
 import { getContacts } from "@/lib/supabase/queries";
 
@@ -16,7 +17,16 @@ export default async function ContactsPage() {
         </div>
         <ButtonLink href="/contacts/new">Ajouter un contact</ButtonLink>
       </div>
-      <ContactsTable contacts={contacts} />
+      {contacts.length === 0 ? (
+        <EmptyState
+          title="Aucun contact"
+          description="Ajoutez vos premiers programmateurs, lieux et partenaires pour commencer le suivi de diffusion."
+          actionLabel="Ajouter un contact"
+          actionHref="/contacts/new"
+        />
+      ) : (
+        <ContactsTable contacts={contacts} />
+      )}
     </div>
   );
 }

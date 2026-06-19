@@ -6,9 +6,9 @@ type ButtonVariant = "primary" | "secondary" | "ghost";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-accent text-white shadow-sm hover:bg-accent-strong focus-visible:outline-accent",
+    "bg-accent text-white shadow-lg shadow-accent/25 hover:bg-accent-strong focus-visible:outline-accent",
   secondary:
-    "border border-border bg-panel text-foreground hover:bg-panel-strong focus-visible:outline-accent",
+    "border border-border bg-white/5 text-foreground hover:bg-white/10 focus-visible:outline-accent",
   ghost: "text-muted hover:bg-panel-strong hover:text-foreground focus-visible:outline-accent",
 };
 

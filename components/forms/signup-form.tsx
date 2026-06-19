@@ -1,15 +1,18 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ensureClientWorkspace } from "@/lib/supabase/client-workspace";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { signupSchema, type SignupFormValues } from "@/lib/validation/auth";
 
 export function SignupForm() {
+  const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const {
     register,
@@ -32,7 +35,7 @@ export function SignupForm() {
     }
 
     const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
@@ -43,7 +46,25 @@ export function SignupForm() {
       },
     });
 
-    setMessage(error ? error.message : "Compte cree. Verifiez votre email si la confirmation est active.");
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    if (data.session) {
+      const workspace = await ensureClientWorkspace(values.companyName);
+
+      if (!workspace.ok) {
+        setMessage(workspace.message);
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+      return;
+    }
+
+    setMessage("Compte cree. Verifiez votre email avant de vous connecter.");
   }
 
   return (

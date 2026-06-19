@@ -1,8 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { createContact } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -18,7 +20,9 @@ const defaultValues: ContactFormValues = {
 };
 
 export function ContactForm() {
-  const [saved, setSaved] = useState(false);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const {
     register,
     handleSubmit,
@@ -28,8 +32,16 @@ export function ContactForm() {
     defaultValues,
   });
 
-  function onSubmit() {
-    setSaved(true);
+  function onSubmit(values: ContactFormValues) {
+    startTransition(async () => {
+      const result = await createContact(values);
+      setMessage({ ok: result.ok, text: result.message });
+
+      if (result.ok) {
+        router.push("/contacts");
+        router.refresh();
+      }
+    });
   }
 
   return (
@@ -65,14 +77,20 @@ export function ContactForm() {
         </Field>
       </div>
 
-      {saved ? (
-        <p className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">
-          Contact valide. La creation en base sera branchee avec les mutations Supabase.
+      {message ? (
+        <p
+          className={
+            message.ok
+              ? "rounded-md bg-success/10 px-3 py-2 text-sm text-success"
+              : "rounded-md bg-danger/10 px-3 py-2 text-sm text-danger"
+          }
+        >
+          {message.text}
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isSubmitting}>
-        Valider le contact
+      <Button type="submit" disabled={isSubmitting || isPending}>
+        Creer le contact
       </Button>
     </form>
   );
