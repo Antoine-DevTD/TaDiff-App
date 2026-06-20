@@ -11,54 +11,20 @@ export async function getOrCreateWorkspace() {
     return { error: "Vous devez etre connecte.", companyId: null };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("company_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.company_id) {
-    return { error: null, companyId: profile.company_id };
-  }
-
   const companyName =
     typeof user.user_metadata.company_name === "string"
       ? user.user_metadata.company_name
       : "Ma compagnie";
 
-  const { data: company, error: companyError } = await supabase
-    .from("companies")
-    .insert({ name: companyName })
-    .select("id")
-    .single();
+  const { data: companyId, error } = await supabase.rpc("ensure_workspace", {
+    company_name: companyName,
+  });
 
-  if (companyError || !company) {
-    return {
-      error: companyError?.message ?? "Impossible de creer la compagnie.",
-      companyId: null,
-    };
+  if (error || !companyId) {
+    return { error: error?.message ?? "Impossible de creer la compagnie.", companyId: null };
   }
 
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        id: user.id,
-        company_id: company.id,
-        role: "owner",
-        full_name:
-          typeof user.user_metadata.full_name === "string"
-            ? user.user_metadata.full_name
-            : user.email,
-      },
-      { onConflict: "id" },
-    );
-
-  if (profileError) {
-    return { error: profileError.message, companyId: null };
-  }
-
-  return { error: null, companyId: company.id };
+  return { error: null, companyId };
 }
 
 export async function getWorkspaceLabel() {
