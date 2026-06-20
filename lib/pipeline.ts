@@ -42,6 +42,22 @@ export function getPipelineSignal(input: {
   return { label: "Suivi actif", tone: "neutral" as const };
 }
 
+export function getPipelinePriorityScore(deal: PipelineDeal) {
+  const signal = getPipelineSignal(deal);
+  const weightedValue = Math.round((deal.value * deal.probability) / 100);
+  const overdueBoost = signal.tone === "danger" ? 5000 : 0;
+  const upcomingBoost = signal.tone === "warning" ? 2500 : 0;
+  const missingActionPenalty =
+    !deal.nextAction || deal.nextAction === "Prochaine action a definir" ? -1500 : 0;
+  const stageBoost = deal.stage === "Negociation" ? 1200 : deal.stage === "Relance prevue" ? 800 : 0;
+
+  if (deal.stage === "Perdu" || deal.stage === "Confirme") {
+    return weightedValue;
+  }
+
+  return weightedValue + overdueBoost + upcomingBoost + stageBoost + missingActionPenalty;
+}
+
 export function getPipelineInsights(deals: PipelineDeal[]) {
   const activeDeals = deals.filter((deal) => deal.stage !== "Perdu" && deal.stage !== "Confirme");
   const today = new Date();

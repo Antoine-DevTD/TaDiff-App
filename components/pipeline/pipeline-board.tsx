@@ -11,25 +11,21 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useDraggable } from "@dnd-kit/core";
 import { useMemo, useState, useTransition } from "react";
-import {
-  createReminder,
-  deleteOpportunity,
-  updateOpportunity,
-  updateOpportunityStage,
-} from "@/app/(dashboard)/actions";
+import { createReminder, updateOpportunityStage } from "@/app/(dashboard)/actions";
+import { OpportunityEditor } from "@/components/pipeline/opportunity-editor";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   buildPipelineEmailDraft,
   getDefaultProbability,
+  getPipelinePriorityScore,
   getPipelineSignal,
   pipelineStages,
 } from "@/lib/pipeline";
 import type { Contact, PipelineDeal, PipelineStage, Show } from "@/types";
+
+type PipelineFilter = "all" | "open" | "follow-up" | "high-value";
 
 export function PipelineBoard({
   contacts,
@@ -41,6 +37,7 @@ export function PipelineBoard({
   shows: Show[];
 }) {
   const [optimisticDeals, setOptimisticDeals] = useState(deals);
+  const [filter, setFilter] = useState<PipelineFilter>("all");
   const [isPending, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -54,6 +51,35 @@ export function PipelineBoard({
       { raw: 0, weighted: 0 },
     );
   }, [optimisticDeals]);
+
+  const visibleDeals = useMemo(() => {
+    return optimisticDeals
+      .filter((deal) => {
+        if (filter === "open") {
+          return deal.stage !== "Confirme" && deal.stage !== "Perdu";
+        }
+
+        if (filter === "follow-up") {
+          return ["danger", "warning"].includes(getPipelineSignal(deal).tone);
+        }
+
+        if (filter === "high-value") {
+          return deal.value >= 8000 && deal.probability >= 50;
+        }
+
+        return true;
+      })
+      .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a));
+  }, [filter, optimisticDeals]);
+
+  const priorityDeals = useMemo(
+    () =>
+      optimisticDeals
+        .filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu")
+        .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a))
+        .slice(0, 3),
+    [optimisticDeals],
+  );
 
   function moveDeal(id: string, stage: PipelineStage) {
     setOptimisticDeals((current) =>
@@ -98,12 +124,64 @@ export function PipelineBoard({
         </Card>
       </div>
 
+      <Card className="grid gap-4 p-4 lg:grid-cols-[1fr_1.2fr]">
+        <div>
+          <p className="text-sm font-semibold">Mode de lecture</p>
+          <p className="mt-1 text-xs text-muted">
+            Filtrez le pipeline pour traiter en premier les opportunites qui demandent une action.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              { id: "all", label: "Tout" },
+              { id: "open", label: "Actifs" },
+              { id: "follow-up", label: "A relancer" },
+              { id: "high-value", label: "Fort potentiel" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                className={
+                  filter === item.id
+                    ? "rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white"
+                    : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted hover:text-foreground"
+                }
+                type="button"
+                onClick={() => setFilter(item.id as PipelineFilter)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-md border border-white/10 bg-background/45 p-3">
+          <p className="text-sm font-semibold">Priorites recommandees</p>
+          <div className="mt-3 space-y-2">
+            {priorityDeals.length === 0 ? (
+              <p className="text-xs text-muted">Aucune opportunite active a prioriser.</p>
+            ) : (
+              priorityDeals.map((deal) => (
+                <div key={deal.id} className="flex items-center justify-between gap-3 text-xs">
+                  <span className="truncate text-muted">{deal.title}</span>
+                  <span className="shrink-0 font-medium text-foreground">
+                    {Math.max(getPipelinePriorityScore(deal), 0).toLocaleString("fr-FR")}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </Card>
+
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="grid gap-4 xl:grid-cols-6">
           {pipelineStages.map((stage) => {
-            const stageDeals = optimisticDeals.filter((deal) => deal.stage === stage.id);
+            const stageDeals = visibleDeals.filter((deal) => deal.stage === stage.id);
             return (
-              <PipelineColumn key={stage.id} stage={stage.id} label={stage.label}>
+              <PipelineColumn
+                key={stage.id}
+                count={stageDeals.length}
+                stage={stage.id}
+                label={stage.label}
+              >
                 {stageDeals.map((deal) => (
                   <PipelineCard
                     key={deal.id}
@@ -133,10 +211,12 @@ export function PipelineBoard({
 
 function PipelineColumn({
   children,
+  count,
   label,
   stage,
 }: {
   children: React.ReactNode;
+  count: number;
   label: string;
   stage: PipelineStage;
 }) {
@@ -153,6 +233,9 @@ function PipelineColumn({
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">{label}</h3>
+        <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-xs text-muted">
+          {count}
+        </span>
       </div>
       <div className="space-y-3">{children}</div>
     </section>
@@ -181,17 +264,6 @@ function PipelineCard({
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [draft, setDraft] = useState({
-    title: deal.title,
-    contactId: deal.contactId,
-    showId: deal.showId,
-    stage: deal.stage,
-    value: String(deal.value),
-    probability: String(deal.probability),
-    nextAction: deal.nextAction === "Prochaine action a definir" ? "" : deal.nextAction,
-    nextFollowUpAt: deal.nextFollowUpAt,
-    lostReason: deal.lostReason,
-  });
 
   async function createQuickReminder() {
     const dueDate =
@@ -209,63 +281,6 @@ function PipelineCard({
     await navigator.clipboard.writeText(buildPipelineEmailDraft(deal));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
-  }
-
-  async function saveDeal() {
-    setMessage(null);
-    const result = await updateOpportunity(deal.id, draft);
-
-    if (!result.ok) {
-      setMessage(result.message);
-      return;
-    }
-
-    const selectedContact = contacts.find((contact) => contact.id === draft.contactId);
-    const selectedShow = shows.find((show) => show.id === draft.showId);
-    const updatedDeal: PipelineDeal = {
-      ...deal,
-      title: draft.title,
-      contactId: draft.contactId,
-      showId: draft.showId,
-      venue: selectedContact?.organization ?? "Structure a renseigner",
-      stage: draft.stage,
-      value: Number(draft.value) || 0,
-      probability: Number(draft.probability) || 0,
-      nextAction: draft.nextAction || "Prochaine action a definir",
-      nextFollowUpAt: draft.nextFollowUpAt,
-      lostReason: draft.stage === "Perdu" ? draft.lostReason : "",
-      contactName: selectedContact?.name ?? "Contact a renseigner",
-      contactOrganization: selectedContact?.organization ?? "",
-      showTitle: selectedShow?.title ?? "Spectacle a associer",
-    };
-
-    onUpdate(updatedDeal);
-    setIsEditing(false);
-    setMessage(result.message);
-  }
-
-  async function removeDeal() {
-    const confirmed = window.confirm("Supprimer cette opportunite du pipeline ?");
-
-    if (!confirmed) {
-      return;
-    }
-
-    const result = await deleteOpportunity(deal.id);
-    setMessage(result.message);
-
-    if (result.ok) {
-      onDelete(deal.id);
-    }
-  }
-
-  function setDraftStage(stage: PipelineStage) {
-    setDraft((current) => ({
-      ...current,
-      stage,
-      probability: String(getDefaultProbability(stage)),
-      lostReason: stage === "Perdu" ? current.lostReason : "",
-    }));
   }
 
   return (
@@ -300,130 +315,18 @@ function PipelineCard({
       </div>
 
       {isEditing ? (
-        <div className="mt-3 space-y-2 rounded-md border border-white/10 bg-background/50 p-3">
-          <Input
-            aria-label="Titre opportunite"
-            className="min-h-9 text-xs"
-            value={draft.title}
-            onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
-          />
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-            <Select
-              aria-label="Contact"
-              className="min-h-9 text-xs"
-              value={draft.contactId}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, contactId: event.target.value }))
-              }
-            >
-              <option value="">Aucun contact</option>
-              {contacts.map((contact) => (
-                <option key={contact.id} value={contact.id}>
-                  {contact.name}
-                </option>
-              ))}
-            </Select>
-            <Select
-              aria-label="Spectacle"
-              className="min-h-9 text-xs"
-              value={draft.showId}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, showId: event.target.value }))
-              }
-            >
-              <option value="">Aucun spectacle</option>
-              {shows.map((show) => (
-                <option key={show.id} value={show.id}>
-                  {show.title}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              aria-label="Montant"
-              className="min-h-9 text-xs"
-              min="0"
-              step="100"
-              type="number"
-              value={draft.value}
-              onChange={(event) => setDraft((current) => ({ ...current, value: event.target.value }))}
-            />
-            <Input
-              aria-label="Probabilite"
-              className="min-h-9 text-xs"
-              max="100"
-              min="0"
-              step="5"
-              type="number"
-              value={draft.probability}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, probability: event.target.value }))
-              }
-            />
-          </div>
-          <Input
-            aria-label="Date de relance"
-            className="min-h-9 text-xs"
-            type="date"
-            value={draft.nextFollowUpAt}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, nextFollowUpAt: event.target.value }))
-            }
-          />
-          <Textarea
-            aria-label="Prochaine action"
-            className="min-h-16 text-xs"
-            placeholder="Prochaine action"
-            value={draft.nextAction}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, nextAction: event.target.value }))
-            }
-          />
-          <Select
-            aria-label="Etape"
-            className="min-h-9 text-xs"
-            value={draft.stage}
-            onChange={(event) => setDraftStage(event.target.value as PipelineStage)}
-          >
-            {pipelineStages.map((stage) => (
-              <option key={stage.id} value={stage.id}>
-                {stage.label}
-              </option>
-            ))}
-          </Select>
-          {draft.stage === "Perdu" ? (
-            <Textarea
-              aria-label="Raison de perte"
-              className="min-h-16 text-xs"
-              placeholder="Ex : budget trop eleve, mauvais timing, programmation complete..."
-              value={draft.lostReason}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, lostReason: event.target.value }))
-              }
-            />
-          ) : null}
-          <div className="grid grid-cols-2 gap-2">
-            <Button className="min-h-9 px-2 text-xs" type="button" onClick={saveDeal}>
-              Enregistrer
-            </Button>
-            <Button
-              className="min-h-9 px-2 text-xs"
-              type="button"
-              variant="secondary"
-              onClick={() => setIsEditing(false)}
-            >
-              Annuler
-            </Button>
-          </div>
-          <button
-            className="w-full rounded-md bg-danger/10 px-2 py-2 text-xs text-danger hover:bg-danger/15"
-            type="button"
-            onClick={removeDeal}
-          >
-            Supprimer
-          </button>
-        </div>
+        <OpportunityEditor
+          contacts={contacts}
+          deal={deal}
+          onCancel={() => setIsEditing(false)}
+          onDelete={onDelete}
+          onSaved={(updatedDeal, resultMessage) => {
+            onUpdate(updatedDeal);
+            setIsEditing(false);
+            setMessage(resultMessage);
+          }}
+          shows={shows}
+        />
       ) : null}
 
       <div className="mt-3 grid gap-2">
