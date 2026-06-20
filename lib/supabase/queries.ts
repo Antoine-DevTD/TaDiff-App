@@ -1,7 +1,7 @@
 import { contacts, dashboardStats, pipelineDeals, reminders, shows } from "@/data/mock-data";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import type { Contact, Show } from "@/types";
+import type { Contact, PipelineDeal, Reminder, Show } from "@/types";
 
 export async function getShows(): Promise<Show[]> {
   if (!hasSupabaseEnv()) {
@@ -53,14 +53,73 @@ export async function getContacts(): Promise<Contact[]> {
   }));
 }
 
+export async function getPipelineDeals(): Promise<PipelineDeal[]> {
+  if (!hasSupabaseEnv()) {
+    return pipelineDeals;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("opportunities")
+    .select(
+      "id,title,stage,value,probability,next_action,next_follow_up_at,created_at,contacts(name,organization),shows(title)",
+    )
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return pipelineDeals;
+  }
+
+  return data.map((deal) => ({
+    id: deal.id,
+    title: deal.title,
+    venue: deal.contacts?.organization ?? "Structure a renseigner",
+    stage: deal.stage as PipelineDeal["stage"],
+    value: deal.value ?? 0,
+    probability: deal.probability ?? 0,
+    nextAction: deal.next_action ?? "Prochaine action a definir",
+    nextFollowUpAt: deal.next_follow_up_at ?? "",
+    contactName: deal.contacts?.name ?? "Contact a renseigner",
+    contactOrganization: deal.contacts?.organization ?? "",
+    showTitle: deal.shows?.title ?? "Spectacle a associer",
+    createdAt: deal.created_at,
+  }));
+}
+
+export async function getReminders(): Promise<Reminder[]> {
+  if (!hasSupabaseEnv()) {
+    return reminders;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("reminders")
+    .select("id,title,due_date,related_to,done,priority")
+    .order("due_date", { ascending: true });
+
+  if (error || !data) {
+    return reminders;
+  }
+
+  return data.map((reminder) => ({
+    id: reminder.id,
+    label: reminder.title,
+    dueDate: reminder.due_date,
+    relatedTo: reminder.related_to ?? "",
+    done: reminder.done,
+    priority: reminder.priority,
+  }));
+}
+
 export async function getDashboardData() {
-  const [resolvedShows, resolvedContacts] = await Promise.all([getShows(), getContacts()]);
+  const [resolvedShows, resolvedContacts, resolvedDeals, resolvedReminders] =
+    await Promise.all([getShows(), getContacts(), getPipelineDeals(), getReminders()]);
 
   return {
     contacts: resolvedContacts,
     dashboardStats,
-    pipelineDeals,
-    reminders,
+    pipelineDeals: resolvedDeals,
+    reminders: resolvedReminders,
     shows: resolvedShows,
   };
 }

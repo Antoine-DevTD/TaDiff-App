@@ -18,12 +18,27 @@ export type Contact = {
   status: "Prospect" | "En discussion" | "Partenaire";
 };
 
+export type PipelineStage =
+  | "A qualifier"
+  | "Contacte"
+  | "Relance prevue"
+  | "Negociation"
+  | "Confirme"
+  | "Perdu";
+
 export type PipelineDeal = {
   id: string;
   title: string;
   venue: string;
-  stage: "A qualifier" | "Contacte" | "Negociation" | "Gagne";
+  stage: PipelineStage;
   value: number;
+  probability: number;
+  nextAction: string;
+  nextFollowUpAt: string;
+  contactName: string;
+  contactOrganization: string;
+  showTitle: string;
+  createdAt: string;
 };
 
 export type Reminder = {
@@ -31,4 +46,6 @@ export type Reminder = {
   label: string;
   dueDate: string;
   relatedTo: string;
+  done: boolean;
+  priority: "low" | "normal" | "high";
 };

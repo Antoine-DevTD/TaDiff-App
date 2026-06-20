@@ -1,0 +1,156 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { createOpportunity } from "@/app/(dashboard)/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { getDefaultProbability, pipelineStages } from "@/lib/pipeline";
+import {
+  opportunitySchema,
+  type OpportunityFormInput,
+  type OpportunityFormValues,
+} from "@/lib/validation/pipeline";
+import type { Contact, Show } from "@/types";
+
+export function OpportunityForm({
+  contacts,
+  shows,
+}: {
+  contacts: Contact[];
+  shows: Show[];
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<OpportunityFormInput, unknown, OpportunityFormValues>({
+    resolver: zodResolver(opportunitySchema),
+    defaultValues: {
+      title: "",
+      contactId: "",
+      showId: "",
+      stage: "A qualifier",
+      value: 0,
+      probability: 15,
+      nextAction: "",
+      nextFollowUpAt: "",
+    },
+  });
+
+  function onSubmit(values: OpportunityFormValues) {
+    startTransition(async () => {
+      const result = await createOpportunity(values);
+      setMessage({ ok: result.ok, text: result.message });
+    });
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+      <Field label="Opportunite" error={errors.title?.message}>
+        <Input placeholder="Serie scolaire automne" {...register("title")} />
+      </Field>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Contact" error={errors.contactId?.message}>
+          <Select {...register("contactId")}>
+            <option value="">Aucun contact</option>
+            {contacts.map((contact) => (
+              <option key={contact.id} value={contact.id}>
+                {contact.name} - {contact.organization}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Spectacle" error={errors.showId?.message}>
+          <Select {...register("showId")}>
+            <option value="">Aucun spectacle</option>
+            {shows.map((show) => (
+              <option key={show.id} value={show.id}>
+                {show.title}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Etape" error={errors.stage?.message}>
+          <Select
+            {...register("stage")}
+            onChange={(event) => {
+              const stage = event.target.value as OpportunityFormValues["stage"];
+              setValue("stage", stage);
+              setValue("probability", getDefaultProbability(stage));
+            }}
+          >
+            {pipelineStages.map((stage) => (
+              <option key={stage.id} value={stage.id}>
+                {stage.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Montant" error={errors.value?.message}>
+          <Input type="number" min="0" step="100" {...register("value")} />
+        </Field>
+        <Field label="Probabilite" error={errors.probability?.message}>
+          <Input type="number" min="0" max="100" step="5" {...register("probability")} />
+        </Field>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
+        <Field label="Prochaine action" error={errors.nextAction?.message}>
+          <Textarea
+            className="min-h-20"
+            placeholder="Appeler, envoyer le dossier, relancer..."
+            {...register("nextAction")}
+          />
+        </Field>
+        <Field label="Relance" error={errors.nextFollowUpAt?.message}>
+          <Input type="date" {...register("nextFollowUpAt")} />
+        </Field>
+      </div>
+
+      {message ? (
+        <p
+          className={
+            message.ok
+              ? "rounded-md bg-success/10 px-3 py-2 text-sm text-success"
+              : "rounded-md bg-danger/10 px-3 py-2 text-sm text-danger"
+          }
+        >
+          {message.text}
+        </p>
+      ) : null}
+
+      <Button type="submit" disabled={isSubmitting || isPending}>
+        Creer opportunite
+      </Button>
+    </form>
+  );
+}
+
+function Field({
+  children,
+  error,
+  label,
+}: {
+  children: React.ReactNode;
+  error?: string;
+  label: string;
+}) {
+  return (
+    <label className="block text-sm font-medium">
+      {label}
+      <div className="mt-2">{children}</div>
+      {error ? <p className="mt-2 text-xs text-danger">{error}</p> : null}
+    </label>
+  );
+}

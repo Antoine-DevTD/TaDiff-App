@@ -151,6 +151,10 @@ export type Database = {
           title: string;
           stage: string;
           value: number | null;
+          probability: number;
+          next_action: string | null;
+          next_follow_up_at: string | null;
+          lost_reason: string | null;
           created_at: string;
         };
         Insert: {
@@ -161,6 +165,10 @@ export type Database = {
           title: string;
           stage?: string;
           value?: number | null;
+          probability?: number;
+          next_action?: string | null;
+          next_follow_up_at?: string | null;
+          lost_reason?: string | null;
           created_at?: string;
         };
         Update: {
@@ -169,6 +177,10 @@ export type Database = {
           title?: string;
           stage?: string;
           value?: number | null;
+          probability?: number;
+          next_action?: string | null;
+          next_follow_up_at?: string | null;
+          lost_reason?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -202,7 +214,11 @@ export type Database = {
           title: string;
           due_date: string;
           related_to: string | null;
+          opportunity_id: string | null;
+          contact_id: string | null;
+          priority: "low" | "normal" | "high";
           done: boolean;
+          completed_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -211,14 +227,22 @@ export type Database = {
           title: string;
           due_date: string;
           related_to?: string | null;
+          opportunity_id?: string | null;
+          contact_id?: string | null;
+          priority?: "low" | "normal" | "high";
           done?: boolean;
+          completed_at?: string | null;
           created_at?: string;
         };
         Update: {
           title?: string;
           due_date?: string;
           related_to?: string | null;
+          opportunity_id?: string | null;
+          contact_id?: string | null;
+          priority?: "low" | "normal" | "high";
           done?: boolean;
+          completed_at?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -227,6 +251,20 @@ export type Database = {
             columns: ["company_id"];
             isOneToOne: false;
             referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reminders_opportunity_id_fkey";
+            columns: ["opportunity_id"];
+            isOneToOne: false;
+            referencedRelation: "opportunities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reminders_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
             referencedColumns: ["id"];
           },
         ];
