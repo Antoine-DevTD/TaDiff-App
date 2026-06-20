@@ -15,7 +15,12 @@ import { createReminder, updateOpportunityStage } from "@/app/(dashboard)/action
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
-import { getDefaultProbability, getPipelineSignal, pipelineStages } from "@/lib/pipeline";
+import {
+  buildPipelineEmailDraft,
+  getDefaultProbability,
+  getPipelineSignal,
+  pipelineStages,
+} from "@/lib/pipeline";
 import type { PipelineDeal, PipelineStage } from "@/types";
 
 export function PipelineBoard({ deals }: { deals: PipelineDeal[] }) {
@@ -139,6 +144,7 @@ function PipelineCard({
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: deal.id });
   const signal = getPipelineSignal(deal);
+  const [copied, setCopied] = useState(false);
 
   async function createQuickReminder() {
     const dueDate =
@@ -150,6 +156,12 @@ function PipelineCard({
       priority: signal.tone === "danger" ? "high" : "normal",
       opportunityId: deal.id,
     });
+  }
+
+  async function copyEmailDraft() {
+    await navigator.clipboard.writeText(buildPipelineEmailDraft(deal));
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
   }
 
   return (
@@ -199,6 +211,13 @@ function PipelineCard({
           onClick={createQuickReminder}
         >
           Relancer
+        </button>
+        <button
+          className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
+          type="button"
+          onClick={copyEmailDraft}
+        >
+          {copied ? "Email copie" : "Copier email"}
         </button>
       </div>
     </article>

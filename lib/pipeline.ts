@@ -121,3 +121,63 @@ export function getPipelineInsights(deals: PipelineDeal[]) {
     },
   ];
 }
+
+export function buildPipelineEmailDraft(deal: PipelineDeal) {
+  const greetingName = deal.contactName && deal.contactName !== "Contact a renseigner"
+    ? deal.contactName.split(" ")[0]
+    : "bonjour";
+  const showTitle =
+    deal.showTitle && deal.showTitle !== "Spectacle a associer"
+      ? deal.showTitle
+      : "notre spectacle";
+
+  if (deal.stage === "A qualifier") {
+    return [
+      `Bonjour ${greetingName},`,
+      "",
+      `Je me permets de vous contacter au sujet de ${showTitle}.`,
+      "Je pense que cette proposition pourrait trouver sa place dans votre programmation, selon vos axes de saison.",
+      "",
+      "Seriez-vous disponible pour un court echange afin de voir si cela peut correspondre a vos prochaines dates ?",
+      "",
+      "Bien cordialement,",
+    ].join("\n");
+  }
+
+  if (deal.stage === "Relance prevue" || deal.stage === "Contacte") {
+    return [
+      `Bonjour ${greetingName},`,
+      "",
+      `Je reviens vers vous concernant ${showTitle}.`,
+      deal.nextAction
+        ? `Comme prochaine etape, je pensais : ${deal.nextAction}.`
+        : "Je voulais savoir si vous aviez pu prendre connaissance du dossier.",
+      "",
+      "Je reste disponible pour vous envoyer des elements complementaires ou convenir d'un echange.",
+      "",
+      "Bien cordialement,",
+    ].join("\n");
+  }
+
+  if (deal.stage === "Negociation") {
+    return [
+      `Bonjour ${greetingName},`,
+      "",
+      `Suite a nos echanges autour de ${showTitle}, je vous propose que nous avancions sur les points pratiques : calendrier, conditions d'accueil et budget.`,
+      "",
+      `A ce stade, l'enveloppe suivie dans notre pipeline est de ${deal.value.toLocaleString("fr-FR")} EUR.`,
+      "Dites-moi ce qui vous conviendrait pour finaliser les prochaines etapes.",
+      "",
+      "Bien cordialement,",
+    ].join("\n");
+  }
+
+  return [
+    `Bonjour ${greetingName},`,
+    "",
+    `Je reviens vers vous au sujet de ${showTitle}.`,
+    "Je reste a votre disposition pour toute precision.",
+    "",
+    "Bien cordialement,",
+  ].join("\n");
+}
