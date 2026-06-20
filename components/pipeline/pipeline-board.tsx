@@ -152,10 +152,12 @@ function PipelineCard({
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
       className="rounded-lg border border-border bg-panel p-3 shadow-lg shadow-ink/20"
-      {...listeners}
-      {...attributes}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div
+        className="flex cursor-grab items-start justify-between gap-3 active:cursor-grabbing"
+        {...listeners}
+        {...attributes}
+      >
         <div>
           <p className="font-semibold">{deal.title}</p>
           <p className="mt-1 text-xs text-muted">{deal.showTitle}</p>
