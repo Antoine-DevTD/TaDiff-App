@@ -264,16 +264,22 @@ function PipelineCard({
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isReminderPending, startReminderTransition] = useTransition();
 
   async function createQuickReminder() {
     const dueDate =
       deal.nextFollowUpAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    await createReminder({
-      title: deal.nextAction || `Relancer ${deal.contactName}`,
-      dueDate,
-      relatedTo: deal.title,
-      priority: signal.tone === "danger" ? "high" : "normal",
-      opportunityId: deal.id,
+
+    startReminderTransition(async () => {
+      const result = await createReminder({
+        title: deal.nextAction || `Relancer ${deal.contactName}`,
+        dueDate,
+        relatedTo: deal.title,
+        priority: signal.tone === "danger" ? "high" : "normal",
+        opportunityId: deal.id,
+      });
+
+      setMessage(result.message);
     });
   }
 
@@ -344,10 +350,11 @@ function PipelineCard({
         </Select>
         <button
           className="rounded-md bg-accent/20 px-2 py-2 text-xs text-foreground hover:bg-accent/30"
+          disabled={isReminderPending}
           type="button"
           onClick={createQuickReminder}
         >
-          Relancer
+          {isReminderPending ? "Creation..." : "Relancer"}
         </button>
         <button
           className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"

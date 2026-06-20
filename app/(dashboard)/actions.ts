@@ -355,6 +355,24 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
   }
 
   const supabase = await getSupabaseServerClient();
+
+  if (parsed.data.opportunityId) {
+    const { data: existingReminder, error: lookupError } = await supabase
+      .from("reminders")
+      .select("id")
+      .eq("opportunity_id", parsed.data.opportunityId)
+      .eq("done", false)
+      .maybeSingle();
+
+    if (lookupError) {
+      return { ok: false, message: lookupError.message };
+    }
+
+    if (existingReminder) {
+      return { ok: true, message: "Relance deja ouverte pour cette opportunite." };
+    }
+  }
+
   const { error } = await supabase.from("reminders").insert({
     company_id: workspace.companyId,
     title: parsed.data.title,

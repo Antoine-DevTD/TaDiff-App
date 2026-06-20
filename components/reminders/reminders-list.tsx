@@ -16,8 +16,31 @@ function getReminderTone(reminder: Reminder) {
   return "neutral";
 }
 
+function getReminderWeight(reminder: Reminder) {
+  if (reminder.done) return 3;
+  if (getReminderTone(reminder) === "danger") return 0;
+  if (reminder.priority === "high") return 1;
+  return 2;
+}
+
+function getPriorityLabel(priority: Reminder["priority"]) {
+  if (priority === "high") return "Urgent";
+  if (priority === "low") return "Faible";
+  return "Normal";
+}
+
 export function RemindersList({ reminders }: { reminders: Reminder[] }) {
-  const [items, setItems] = useState(reminders);
+  const [items, setItems] = useState(
+    [...reminders].sort((a, b) => {
+      const weightDiff = getReminderWeight(a) - getReminderWeight(b);
+
+      if (weightDiff !== 0) {
+        return weightDiff;
+      }
+
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    }),
+  );
   const [isPending, startTransition] = useTransition();
 
   function markDone(id: string) {
@@ -42,7 +65,7 @@ export function RemindersList({ reminders }: { reminders: Reminder[] }) {
                 {reminder.label}
               </p>
               <Badge tone={getReminderTone(reminder)}>
-                {reminder.done ? "Fait" : reminder.priority}
+                {reminder.done ? "Fait" : getPriorityLabel(reminder.priority)}
               </Badge>
             </div>
             <p className="mt-1 text-sm text-muted">
