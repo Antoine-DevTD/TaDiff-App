@@ -6,7 +6,7 @@ export default function NewContactPage() {
     <Card className="max-w-2xl">
       <CardHeader>
         <CardTitle>Nouveau contact</CardTitle>
-        <CardDescription>Validation locale Zod, persistance Supabase a brancher.</CardDescription>
+        <CardDescription>Ajoutez un programmateur, lieu, partenaire ou prospect.</CardDescription>
       </CardHeader>
       <ContactForm />
     </Card>

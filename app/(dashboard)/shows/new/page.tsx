@@ -6,7 +6,7 @@ export default function NewShowPage() {
     <Card className="max-w-2xl">
       <CardHeader>
         <CardTitle>Nouveau spectacle</CardTitle>
-        <CardDescription>Validation locale Zod, persistance Supabase a brancher.</CardDescription>
+        <CardDescription>Ajoutez une creation au catalogue de diffusion.</CardDescription>
       </CardHeader>
       <ShowForm />
     </Card>

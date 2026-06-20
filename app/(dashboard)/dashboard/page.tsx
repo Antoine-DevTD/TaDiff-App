@@ -20,7 +20,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Spectacles suivis</CardTitle>
-            <CardDescription>Vue de travail mockee avant connexion Supabase.</CardDescription>
+            <CardDescription>Etat de production et prochaines dates de diffusion.</CardDescription>
           </CardHeader>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-left text-sm">
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Pipeline</CardTitle>
-            <CardDescription>Apercu sans kanban interactif pour le lot 1.</CardDescription>
+            <CardDescription>Resume des opportunites commerciales en cours.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
             {pipelineDeals.map((deal) => (

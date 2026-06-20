@@ -13,7 +13,7 @@ export default async function ShowsPage() {
         <div>
           <h2 className="text-2xl font-semibold">Spectacles</h2>
           <p className="mt-1 text-sm text-muted">
-            Donnees mockees avec fallback Supabase pret.
+            Catalogue des creations, statuts de diffusion et prochaines dates.
           </p>
         </div>
         <ButtonLink href="/shows/new">Nouveau spectacle</ButtonLink>
@@ -29,9 +29,9 @@ export default async function ShowsPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-3">
           {shows.map((show) => (
-          <Card key={show.id}>
+          <Card key={show.id} className="transition hover:-translate-y-0.5 hover:border-accent/[0.45] hover:bg-panel-strong/70">
             <CardHeader>
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex min-h-16 items-start justify-between gap-3">
                 <div>
                   <CardTitle>{show.title}</CardTitle>
                   <CardDescription>{show.discipline}</CardDescription>
@@ -41,7 +41,7 @@ export default async function ShowsPage() {
                 </Badge>
               </div>
             </CardHeader>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 rounded-md border border-white/[0.08] bg-background/45 p-3 text-sm">
               <div>
                 <p className="text-muted">Prochaine date</p>
                 <p className="mt-1 font-medium">
