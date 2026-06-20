@@ -39,7 +39,7 @@ export default async function PipelinePage() {
       ) : (
         <>
           <PipelineInsights deals={deals} />
-          <PipelineBoard deals={deals} />
+          <PipelineBoard contacts={contacts} deals={deals} shows={shows} />
         </>
       )}
     </div>

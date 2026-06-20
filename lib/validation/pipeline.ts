@@ -16,6 +16,7 @@ export const opportunitySchema = z.object({
   probability: z.coerce.number().min(0).max(100),
   nextAction: z.string().optional(),
   nextFollowUpAt: z.string().optional(),
+  lostReason: z.string().optional(),
 });
 
 export const reminderSchema = z.object({

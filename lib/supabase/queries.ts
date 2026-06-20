@@ -62,7 +62,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
   const { data, error } = await supabase
     .from("opportunities")
     .select(
-      "id,title,stage,value,probability,next_action,next_follow_up_at,created_at,contacts(name,organization),shows(title)",
+      "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization),shows(title)",
     )
     .order("created_at", { ascending: false });
 
@@ -73,12 +73,15 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
   return data.map((deal) => ({
     id: deal.id,
     title: deal.title,
+    contactId: deal.contact_id ?? "",
+    showId: deal.show_id ?? "",
     venue: deal.contacts?.organization ?? "Structure a renseigner",
     stage: deal.stage as PipelineDeal["stage"],
     value: deal.value ?? 0,
     probability: deal.probability ?? 0,
     nextAction: deal.next_action ?? "Prochaine action a definir",
     nextFollowUpAt: deal.next_follow_up_at ?? "",
+    lostReason: deal.lost_reason ?? "",
     contactName: deal.contacts?.name ?? "Contact a renseigner",
     contactOrganization: deal.contacts?.organization ?? "",
     showTitle: deal.shows?.title ?? "Spectacle a associer",

@@ -41,6 +41,7 @@ export function OpportunityForm({
       probability: 15,
       nextAction: "",
       nextFollowUpAt: "",
+      lostReason: "",
     },
   });
 

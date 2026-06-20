@@ -29,12 +29,15 @@ export type PipelineStage =
 export type PipelineDeal = {
   id: string;
   title: string;
+  contactId: string;
+  showId: string;
   venue: string;
   stage: PipelineStage;
   value: number;
   probability: number;
   nextAction: string;
   nextFollowUpAt: string;
+  lostReason: string;
   contactName: string;
   contactOrganization: string;
   showTitle: string;

@@ -126,6 +126,7 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
       probability: parsed.data.probability,
       next_action: parsed.data.nextAction || null,
       next_follow_up_at: parsed.data.nextFollowUpAt || null,
+      lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
     })
     .select("id")
     .single();
@@ -158,6 +159,99 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   };
 }
 
+export async function updateOpportunity(
+  opportunityId: string,
+  values: OpportunityFormInput,
+): Promise<ActionResult> {
+  const parsed = opportunitySchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire opportunite contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : opportunite mise a jour." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("opportunities")
+    .update({
+      title: parsed.data.title,
+      contact_id: parsed.data.contactId || null,
+      show_id: parsed.data.showId || null,
+      stage: parsed.data.stage,
+      value: parsed.data.value,
+      probability: parsed.data.probability,
+      next_action: parsed.data.nextAction || null,
+      next_follow_up_at: parsed.data.nextFollowUpAt || null,
+      lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
+    })
+    .eq("id", opportunityId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (parsed.data.nextFollowUpAt && parsed.data.stage !== "Confirme" && parsed.data.stage !== "Perdu") {
+    const workspace = await getOrCreateWorkspace();
+
+    if (workspace.companyId) {
+      const { data: existingReminder } = await supabase
+        .from("reminders")
+        .select("id")
+        .eq("opportunity_id", opportunityId)
+        .eq("done", false)
+        .maybeSingle();
+
+      if (!existingReminder) {
+        await supabase.from("reminders").insert({
+          company_id: workspace.companyId,
+          title: parsed.data.nextAction || `Relancer ${parsed.data.title}`,
+          due_date: parsed.data.nextFollowUpAt,
+          related_to: parsed.data.title,
+          priority: parsed.data.probability >= 60 ? "high" : "normal",
+          opportunity_id: opportunityId,
+          contact_id: parsed.data.contactId || null,
+        });
+      }
+    }
+  }
+
+  if (parsed.data.stage === "Confirme" || parsed.data.stage === "Perdu") {
+    await supabase
+      .from("reminders")
+      .update({ done: true, completed_at: new Date().toISOString() })
+      .eq("opportunity_id", opportunityId)
+      .eq("done", false);
+  }
+
+  revalidatePath("/pipeline");
+  revalidatePath("/reminders");
+  revalidatePath("/dashboard");
+
+  return { ok: true, message: "Opportunite mise a jour." };
+}
+
+export async function deleteOpportunity(opportunityId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : opportunite supprimee." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("opportunities").delete().eq("id", opportunityId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/pipeline");
+  revalidatePath("/reminders");
+  revalidatePath("/dashboard");
+
+  return { ok: true, message: "Opportunite supprimee." };
+}
+
 export async function updateOpportunityStage(
   opportunityId: string,
   stage: PipelineStage,
@@ -171,6 +265,7 @@ export async function updateOpportunityStage(
     stage: PipelineStage;
     probability: number;
     next_follow_up_at?: string;
+    lost_reason?: string | null;
   } = {
     stage,
     probability: getDefaultProbability(stage),
@@ -182,6 +277,10 @@ export async function updateOpportunityStage(
 
   if (stage === "Relance prevue") {
     updates.next_follow_up_at = followUpDate;
+  }
+
+  if (stage !== "Perdu") {
+    updates.lost_reason = null;
   }
 
   const { error } = await supabase
