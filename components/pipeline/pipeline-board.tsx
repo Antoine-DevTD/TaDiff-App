@@ -19,6 +19,7 @@ import {
 import { OpportunityEditor } from "@/components/pipeline/opportunity-editor";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
   buildPipelineEmailDraft,
@@ -43,6 +44,7 @@ export function PipelineBoard({
 }) {
   const [optimisticDeals, setOptimisticDeals] = useState(deals);
   const [filter, setFilter] = useState<PipelineFilter>("all");
+  const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -58,6 +60,8 @@ export function PipelineBoard({
   }, [optimisticDeals]);
 
   const visibleDeals = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
     return optimisticDeals
       .filter((deal) => {
         if (filter === "open") {
@@ -74,8 +78,25 @@ export function PipelineBoard({
 
         return true;
       })
+      .filter((deal) => {
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        return [
+          deal.title,
+          deal.contactName,
+          deal.contactOrganization,
+          deal.showTitle,
+          deal.venue,
+          deal.nextAction,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedSearch);
+      })
       .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a));
-  }, [filter, optimisticDeals]);
+  }, [filter, optimisticDeals, search]);
 
   const priorityDeals = useMemo(
     () =>
@@ -135,26 +156,53 @@ export function PipelineBoard({
           <p className="mt-1 text-xs text-muted">
             Filtrez le pipeline pour traiter en premier les opportunites qui demandent une action.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {[
-              { id: "all", label: "Tout" },
-              { id: "open", label: "Actifs" },
-              { id: "follow-up", label: "A relancer" },
-              { id: "high-value", label: "Fort potentiel" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                className={
-                  filter === item.id
-                    ? "rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white"
-                    : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted hover:text-foreground"
-                }
-                type="button"
-                onClick={() => setFilter(item.id as PipelineFilter)}
-              >
-                {item.label}
-              </button>
-            ))}
+          <div className="mt-3 space-y-3">
+            <Input
+              aria-label="Rechercher dans le pipeline"
+              className="min-h-10"
+              placeholder="Rechercher contact, lieu, spectacle..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: "all", label: "Tout" },
+                { id: "open", label: "Actifs" },
+                { id: "follow-up", label: "A relancer" },
+                { id: "high-value", label: "Fort potentiel" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  className={
+                    filter === item.id
+                      ? "rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white"
+                      : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted hover:text-foreground"
+                  }
+                  type="button"
+                  onClick={() => setFilter(item.id as PipelineFilter)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-3 text-xs text-muted">
+              <span>
+                {visibleDeals.length} resultat{visibleDeals.length > 1 ? "s" : ""} sur{" "}
+                {optimisticDeals.length}
+              </span>
+              {search || filter !== "all" ? (
+                <button
+                  className="text-foreground hover:text-accent-strong"
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setFilter("all");
+                  }}
+                >
+                  Reinitialiser
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
         <div className="rounded-md border border-white/10 bg-background/45 p-3">
@@ -180,38 +228,57 @@ export function PipelineBoard({
       </Card>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid gap-4 xl:grid-cols-6">
-          {pipelineStages.map((stage) => {
-            const stageDeals = visibleDeals.filter((deal) => deal.stage === stage.id);
-            return (
-              <PipelineColumn
-                key={stage.id}
-                count={stageDeals.length}
-                stage={stage.id}
-                label={stage.label}
-              >
-                {stageDeals.map((deal) => (
-                  <PipelineCard
-                    key={deal.id}
-                    contacts={contacts}
-                    deal={deal}
-                    disabled={isPending}
-                    shows={shows}
-                    onDelete={(id) =>
-                      setOptimisticDeals((current) => current.filter((item) => item.id !== id))
-                    }
-                    onMove={moveDeal}
-                    onUpdate={(updatedDeal) =>
-                      setOptimisticDeals((current) =>
-                        current.map((item) => (item.id === updatedDeal.id ? updatedDeal : item)),
-                      )
-                    }
-                  />
-                ))}
-              </PipelineColumn>
-            );
-          })}
-        </div>
+        {visibleDeals.length === 0 ? (
+          <Card className="p-6 text-center">
+            <p className="font-medium">Aucune opportunite ne correspond.</p>
+            <p className="mt-2 text-sm text-muted">
+              Ajustez la recherche ou revenez a la vue complete du pipeline.
+            </p>
+            <button
+              className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setFilter("all");
+              }}
+            >
+              Voir tout le pipeline
+            </button>
+          </Card>
+        ) : (
+          <div className="grid gap-4 xl:grid-cols-6">
+            {pipelineStages.map((stage) => {
+              const stageDeals = visibleDeals.filter((deal) => deal.stage === stage.id);
+              return (
+                <PipelineColumn
+                  key={stage.id}
+                  count={stageDeals.length}
+                  stage={stage.id}
+                  label={stage.label}
+                >
+                  {stageDeals.map((deal) => (
+                    <PipelineCard
+                      key={deal.id}
+                      contacts={contacts}
+                      deal={deal}
+                      disabled={isPending}
+                      shows={shows}
+                      onDelete={(id) =>
+                        setOptimisticDeals((current) => current.filter((item) => item.id !== id))
+                      }
+                      onMove={moveDeal}
+                      onUpdate={(updatedDeal) =>
+                        setOptimisticDeals((current) =>
+                          current.map((item) => (item.id === updatedDeal.id ? updatedDeal : item)),
+                        )
+                      }
+                    />
+                  ))}
+                </PipelineColumn>
+              );
+            })}
+          </div>
+        )}
       </DndContext>
     </div>
   );
