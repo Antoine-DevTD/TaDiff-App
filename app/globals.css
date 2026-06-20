@@ -46,6 +46,16 @@ select {
   font: inherit;
 }
 
+option {
+  background: var(--color-panel);
+  color: var(--color-foreground);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.65;
+}
+
 ::selection {
   background: rgba(139, 61, 255, 0.35);
 }
