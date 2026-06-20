@@ -24,6 +24,7 @@ import {
   buildPipelineEmailDraft,
   getDefaultProbability,
   getPipelinePriorityScore,
+  getPipelineRecommendation,
   getPipelineSignal,
   pipelineStages,
 } from "@/lib/pipeline";
@@ -163,11 +164,14 @@ export function PipelineBoard({
               <p className="text-xs text-muted">Aucune opportunite active a prioriser.</p>
             ) : (
               priorityDeals.map((deal) => (
-                <div key={deal.id} className="flex items-center justify-between gap-3 text-xs">
-                  <span className="truncate text-muted">{deal.title}</span>
-                  <span className="shrink-0 font-medium text-foreground">
-                    {Math.max(getPipelinePriorityScore(deal), 0).toLocaleString("fr-FR")}
-                  </span>
+                <div key={deal.id} className="rounded-md bg-white/[0.04] p-2 text-xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate text-muted">{deal.title}</span>
+                    <span className="shrink-0 font-medium text-foreground">
+                      {Math.max(getPipelinePriorityScore(deal), 0).toLocaleString("fr-FR")}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-foreground">{getPipelineRecommendation(deal).title}</p>
                 </div>
               ))
             )}
@@ -265,6 +269,7 @@ function PipelineCard({
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: deal.id });
   const signal = getPipelineSignal(deal);
+  const recommendation = getPipelineRecommendation(deal);
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -338,6 +343,13 @@ function PipelineCard({
         {deal.lostReason ? (
           <p className="rounded-md bg-danger/10 p-2 text-danger">Perdu : {deal.lostReason}</p>
         ) : null}
+        <div className="rounded-md border border-white/10 bg-background/45 p-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-medium text-foreground">{recommendation.title}</p>
+            <Badge tone={recommendation.tone}>Action</Badge>
+          </div>
+          <p className="mt-1 leading-5">{recommendation.detail}</p>
+        </div>
       </div>
 
       {isEditing ? (

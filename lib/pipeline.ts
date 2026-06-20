@@ -58,6 +58,82 @@ export function getPipelinePriorityScore(deal: PipelineDeal) {
   return weightedValue + overdueBoost + upcomingBoost + stageBoost + missingActionPenalty;
 }
 
+export function getPipelineRecommendation(deal: PipelineDeal) {
+  const signal = getPipelineSignal(deal);
+
+  if (deal.stage === "Confirme") {
+    return {
+      title: "Consolider",
+      detail: "Preparez contrat, fiche technique et jalons de production.",
+      tone: "success" as const,
+    };
+  }
+
+  if (deal.stage === "Perdu") {
+    return {
+      title: "Capitaliser",
+      detail: deal.lostReason
+        ? "Gardez le motif de perte pour affiner les prochaines prospections."
+        : "Ajoutez le motif de perte pour enrichir la lecture commerciale.",
+      tone: "neutral" as const,
+    };
+  }
+
+  if (signal.tone === "danger") {
+    return {
+      title: "Relancer maintenant",
+      detail: "Cette opportunite est en retard : appelez ou envoyez un mail court aujourd'hui.",
+      tone: "danger" as const,
+    };
+  }
+
+  if (!deal.nextAction || deal.nextAction === "Prochaine action a definir") {
+    return {
+      title: "Qualifier l'action",
+      detail: "Definissez une action precise : appel, dossier, devis ou rendez-vous.",
+      tone: "warning" as const,
+    };
+  }
+
+  if (!deal.nextFollowUpAt) {
+    return {
+      title: "Planifier",
+      detail: "Ajoutez une date de relance pour eviter que le dossier sorte du radar.",
+      tone: "warning" as const,
+    };
+  }
+
+  if (deal.stage === "A qualifier") {
+    return {
+      title: "Qualifier",
+      detail: "Validez budget, calendrier et interlocuteur avant d'investir du temps commercial.",
+      tone: "neutral" as const,
+    };
+  }
+
+  if (deal.stage === "Negociation") {
+    return {
+      title: "Fermer les points ouverts",
+      detail: "Envoyez une proposition claire sur date, budget et conditions d'accueil.",
+      tone: "success" as const,
+    };
+  }
+
+  if (deal.value >= 8000 && deal.probability >= 50) {
+    return {
+      title: "Accelerer",
+      detail: "Fort potentiel : proposez un prochain rendez-vous ou une option de date.",
+      tone: "success" as const,
+    };
+  }
+
+  return {
+    title: "Suivre",
+    detail: "Gardez le dossier actif avec une prochaine etape courte et datee.",
+    tone: "neutral" as const,
+  };
+}
+
 export function getPipelineInsights(deals: PipelineDeal[]) {
   const activeDeals = deals.filter((deal) => deal.stage !== "Perdu" && deal.stage !== "Confirme");
   const today = new Date();
