@@ -11,7 +11,11 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useDraggable } from "@dnd-kit/core";
 import { useMemo, useState, useTransition } from "react";
-import { createReminder, updateOpportunityStage } from "@/app/(dashboard)/actions";
+import {
+  createReminder,
+  scheduleOpportunityFollowUp,
+  updateOpportunityStage,
+} from "@/app/(dashboard)/actions";
 import { OpportunityEditor } from "@/components/pipeline/opportunity-editor";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -265,6 +269,7 @@ function PipelineCard({
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isReminderPending, startReminderTransition] = useTransition();
+  const [isSchedulePending, startScheduleTransition] = useTransition();
 
   async function createQuickReminder() {
     const dueDate =
@@ -287,6 +292,21 @@ function PipelineCard({
     await navigator.clipboard.writeText(buildPipelineEmailDraft(deal));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  function scheduleFollowUp(days: 3 | 7) {
+    startScheduleTransition(async () => {
+      const result = await scheduleOpportunityFollowUp(deal.id, days);
+      setMessage(result.message);
+
+      if (result.ok && result.dueDate) {
+        onUpdate({
+          ...deal,
+          stage: deal.stage === "A qualifier" ? "Relance prevue" : deal.stage,
+          nextFollowUpAt: result.dueDate,
+        });
+      }
+    });
   }
 
   return (
@@ -356,6 +376,24 @@ function PipelineCard({
         >
           {isReminderPending ? "Creation..." : "Relancer"}
         </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
+            disabled={isSchedulePending}
+            type="button"
+            onClick={() => scheduleFollowUp(3)}
+          >
+            J+3
+          </button>
+          <button
+            className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
+            disabled={isSchedulePending}
+            type="button"
+            onClick={() => scheduleFollowUp(7)}
+          >
+            J+7
+          </button>
+        </div>
         <button
           className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
           type="button"

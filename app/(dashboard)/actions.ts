@@ -20,6 +20,75 @@ type ActionResult = {
   message: string;
 };
 
+function getDateAfterDays(days: number) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+async function ensureOpportunityReminder({
+  contactId,
+  companyId,
+  dueDate,
+  opportunityId,
+  priority = "normal",
+  relatedTo,
+  title,
+}: {
+  contactId?: string | null;
+  companyId: string;
+  dueDate: string;
+  opportunityId: string;
+  priority?: "low" | "normal" | "high";
+  relatedTo: string;
+  title: string;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const { data: existingReminder, error: lookupError } = await supabase
+    .from("reminders")
+    .select("id")
+    .eq("opportunity_id", opportunityId)
+    .eq("done", false)
+    .maybeSingle();
+
+  if (lookupError) {
+    return { ok: false, message: lookupError.message };
+  }
+
+  if (existingReminder) {
+    const { error } = await supabase
+      .from("reminders")
+      .update({
+        title,
+        due_date: dueDate,
+        related_to: relatedTo,
+        priority,
+        contact_id: contactId ?? null,
+      })
+      .eq("id", existingReminder.id);
+
+    if (error) {
+      return { ok: false, message: error.message };
+    }
+
+    return { ok: true, message: "Relance existante replanifiee." };
+  }
+
+  const { error } = await supabase.from("reminders").insert({
+    company_id: companyId,
+    title,
+    due_date: dueDate,
+    related_to: relatedTo,
+    priority,
+    opportunity_id: opportunityId,
+    contact_id: contactId ?? null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  return { ok: true, message: "Relance creee." };
+}
+
 export async function createShow(values: ShowFormInput): Promise<ActionResult> {
   const parsed = showSchema.safeParse(values);
 
@@ -136,14 +205,14 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   }
 
   if (parsed.data.nextFollowUpAt) {
-    await supabase.from("reminders").insert({
-      company_id: workspace.companyId,
+    await ensureOpportunityReminder({
+      companyId: workspace.companyId,
       title: parsed.data.nextAction || `Relancer ${parsed.data.title}`,
-      due_date: parsed.data.nextFollowUpAt,
-      related_to: parsed.data.title,
+      dueDate: parsed.data.nextFollowUpAt,
+      relatedTo: parsed.data.title,
       priority: parsed.data.probability >= 60 ? "high" : "normal",
-      opportunity_id: opportunity.id,
-      contact_id: parsed.data.contactId || null,
+      opportunityId: opportunity.id,
+      contactId: parsed.data.contactId || null,
     });
   }
 
@@ -197,24 +266,15 @@ export async function updateOpportunity(
     const workspace = await getOrCreateWorkspace();
 
     if (workspace.companyId) {
-      const { data: existingReminder } = await supabase
-        .from("reminders")
-        .select("id")
-        .eq("opportunity_id", opportunityId)
-        .eq("done", false)
-        .maybeSingle();
-
-      if (!existingReminder) {
-        await supabase.from("reminders").insert({
-          company_id: workspace.companyId,
-          title: parsed.data.nextAction || `Relancer ${parsed.data.title}`,
-          due_date: parsed.data.nextFollowUpAt,
-          related_to: parsed.data.title,
-          priority: parsed.data.probability >= 60 ? "high" : "normal",
-          opportunity_id: opportunityId,
-          contact_id: parsed.data.contactId || null,
-        });
-      }
+      await ensureOpportunityReminder({
+        companyId: workspace.companyId,
+        title: parsed.data.nextAction || `Relancer ${parsed.data.title}`,
+        dueDate: parsed.data.nextFollowUpAt,
+        relatedTo: parsed.data.title,
+        priority: parsed.data.probability >= 60 ? "high" : "normal",
+        opportunityId,
+        contactId: parsed.data.contactId || null,
+      });
     }
   }
 
@@ -271,9 +331,7 @@ export async function updateOpportunityStage(
     probability: getDefaultProbability(stage),
   };
 
-  const followUpDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const followUpDate = getDateAfterDays(7);
 
   if (stage === "Relance prevue") {
     updates.next_follow_up_at = followUpDate;
@@ -301,24 +359,15 @@ export async function updateOpportunityStage(
       .single();
 
     if (opportunity && workspace.companyId) {
-      const { data: existingReminder } = await supabase
-        .from("reminders")
-        .select("id")
-        .eq("opportunity_id", opportunity.id)
-        .eq("done", false)
-        .maybeSingle();
-
-      if (!existingReminder) {
-        await supabase.from("reminders").insert({
-          company_id: workspace.companyId,
-          title: opportunity.next_action || `Relancer ${opportunity.title}`,
-          due_date: followUpDate,
-          related_to: opportunity.title,
-          priority: "normal",
-          opportunity_id: opportunity.id,
-          contact_id: opportunity.contact_id,
-        });
-      }
+      await ensureOpportunityReminder({
+        companyId: workspace.companyId,
+        title: opportunity.next_action || `Relancer ${opportunity.title}`,
+        dueDate: followUpDate,
+        relatedTo: opportunity.title,
+        priority: "normal",
+        opportunityId: opportunity.id,
+        contactId: opportunity.contact_id,
+      });
     }
   }
 
@@ -335,6 +384,77 @@ export async function updateOpportunityStage(
   revalidatePath("/dashboard");
 
   return { ok: true, message: "Pipeline mis a jour." };
+}
+
+export async function scheduleOpportunityFollowUp(
+  opportunityId: string,
+  days: 3 | 7,
+): Promise<ActionResult & { dueDate?: string }> {
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: true,
+      message: `Mode demo : relance planifiee a J+${days}.`,
+      dueDate: getDateAfterDays(days),
+    };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const dueDate = getDateAfterDays(days);
+  const supabase = await getSupabaseServerClient();
+  const { data: opportunity, error: opportunityError } = await supabase
+    .from("opportunities")
+    .select("id,title,contact_id,next_action,stage")
+    .eq("id", opportunityId)
+    .single();
+
+  if (opportunityError || !opportunity) {
+    return { ok: false, message: opportunityError?.message ?? "Opportunite introuvable." };
+  }
+
+  if (opportunity.stage === "Confirme" || opportunity.stage === "Perdu") {
+    return { ok: false, message: "Impossible de replanifier une opportunite fermee." };
+  }
+
+  const { error } = await supabase
+    .from("opportunities")
+    .update({
+      next_follow_up_at: dueDate,
+      stage: opportunity.stage === "A qualifier" ? "Relance prevue" : opportunity.stage,
+    })
+    .eq("id", opportunityId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  const reminderResult = await ensureOpportunityReminder({
+    companyId: workspace.companyId,
+    title: opportunity.next_action || `Relancer ${opportunity.title}`,
+    dueDate,
+    relatedTo: opportunity.title,
+    priority: days === 3 ? "high" : "normal",
+    opportunityId: opportunity.id,
+    contactId: opportunity.contact_id,
+  });
+
+  if (!reminderResult.ok) {
+    return reminderResult;
+  }
+
+  revalidatePath("/pipeline");
+  revalidatePath("/reminders");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    message: days === 3 ? "Relance prioritaire planifiee a J+3." : "Relance planifiee a J+7.",
+    dueDate,
+  };
 }
 
 export async function createReminder(values: ReminderFormInput): Promise<ActionResult> {
