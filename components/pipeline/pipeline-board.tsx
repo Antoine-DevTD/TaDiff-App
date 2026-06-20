@@ -14,7 +14,8 @@ import { useMemo, useState, useTransition } from "react";
 import { createReminder, updateOpportunityStage } from "@/app/(dashboard)/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { getPipelineSignal, pipelineStages } from "@/lib/pipeline";
+import { Select } from "@/components/ui/select";
+import { getDefaultProbability, getPipelineSignal, pipelineStages } from "@/lib/pipeline";
 import type { PipelineDeal, PipelineStage } from "@/types";
 
 export function PipelineBoard({ deals }: { deals: PipelineDeal[] }) {
@@ -35,7 +36,11 @@ export function PipelineBoard({ deals }: { deals: PipelineDeal[] }) {
 
   function moveDeal(id: string, stage: PipelineStage) {
     setOptimisticDeals((current) =>
-      current.map((deal) => (deal.id === id ? { ...deal, stage } : deal)),
+      current.map((deal) =>
+        deal.id === id
+          ? { ...deal, stage, probability: getDefaultProbability(stage) }
+          : deal,
+      ),
     );
     startTransition(async () => {
       await updateOpportunityStage(id, stage);
@@ -175,23 +180,21 @@ function PipelineCard({
         ) : null}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        {pipelineStages
-          .filter((stage) => stage.id !== deal.stage)
-          .slice(0, 3)
-          .map((stage) => (
-            <button
-              key={stage.id}
-              className="rounded-md bg-white/5 px-2 py-1 text-xs text-muted hover:bg-white/10 hover:text-foreground"
-              disabled={disabled}
-              type="button"
-              onClick={() => onMove(deal.id, stage.id)}
-            >
+      <div className="mt-3 grid gap-2">
+        <Select
+          className="min-h-9 text-xs"
+          disabled={disabled}
+          value={deal.stage}
+          onChange={(event) => onMove(deal.id, event.target.value as PipelineStage)}
+        >
+          {pipelineStages.map((stage) => (
+            <option key={stage.id} value={stage.id}>
               {stage.label}
-            </button>
+            </option>
           ))}
+        </Select>
         <button
-          className="rounded-md bg-accent/20 px-2 py-1 text-xs text-foreground hover:bg-accent/30"
+          className="rounded-md bg-accent/20 px-2 py-2 text-xs text-foreground hover:bg-accent/30"
           type="button"
           onClick={createQuickReminder}
         >

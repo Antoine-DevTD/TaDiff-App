@@ -210,17 +210,25 @@ export async function updateOpportunityStage(
         .maybeSingle();
 
       if (!existingReminder) {
-      await supabase.from("reminders").insert({
-        company_id: workspace.companyId,
-        title: opportunity.next_action || `Relancer ${opportunity.title}`,
-        due_date: followUpDate,
-        related_to: opportunity.title,
-        priority: "normal",
-        opportunity_id: opportunity.id,
-        contact_id: opportunity.contact_id,
-      });
+        await supabase.from("reminders").insert({
+          company_id: workspace.companyId,
+          title: opportunity.next_action || `Relancer ${opportunity.title}`,
+          due_date: followUpDate,
+          related_to: opportunity.title,
+          priority: "normal",
+          opportunity_id: opportunity.id,
+          contact_id: opportunity.contact_id,
+        });
       }
     }
+  }
+
+  if (stage === "Confirme" || stage === "Perdu") {
+    await supabase
+      .from("reminders")
+      .update({ done: true, completed_at: new Date().toISOString() })
+      .eq("opportunity_id", opportunityId)
+      .eq("done", false);
   }
 
   revalidatePath("/pipeline");
