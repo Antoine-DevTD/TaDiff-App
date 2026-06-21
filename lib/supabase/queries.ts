@@ -3,6 +3,12 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Contact, PipelineDeal, Reminder, Show } from "@/types";
 
+type DashboardStat = {
+  detail: string;
+  label: string;
+  value: string;
+};
+
 export async function getShows(): Promise<Show[]> {
   if (!hasSupabaseEnv()) {
     return shows;
@@ -15,7 +21,7 @@ export async function getShows(): Promise<Show[]> {
     .order("created_at", { ascending: false });
 
   if (error || !data) {
-    return shows;
+    return [];
   }
 
   return data.map((show) => ({
@@ -40,7 +46,7 @@ export async function getContacts(): Promise<Contact[]> {
     .order("created_at", { ascending: false });
 
   if (error || !data) {
-    return contacts;
+    return [];
   }
 
   return data.map((contact) => ({
@@ -67,7 +73,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     .order("created_at", { ascending: false });
 
   if (error || !data) {
-    return pipelineDeals;
+    return [];
   }
 
   return data.map((deal) => ({
@@ -98,10 +104,11 @@ export async function getReminders(): Promise<Reminder[]> {
   const { data, error } = await supabase
     .from("reminders")
     .select("id,title,due_date,related_to,done,priority")
+    .eq("done", false)
     .order("due_date", { ascending: true });
 
   if (error || !data) {
-    return reminders;
+    return [];
   }
 
   return data.map((reminder) => ({
@@ -120,9 +127,58 @@ export async function getDashboardData() {
 
   return {
     contacts: resolvedContacts,
-    dashboardStats,
+    dashboardStats: hasSupabaseEnv()
+      ? buildDashboardStats({
+          contacts: resolvedContacts,
+          deals: resolvedDeals,
+          reminders: resolvedReminders,
+          shows: resolvedShows,
+        })
+      : dashboardStats,
     pipelineDeals: resolvedDeals,
     reminders: resolvedReminders,
     shows: resolvedShows,
   };
+}
+
+function buildDashboardStats({
+  contacts,
+  deals,
+  reminders,
+  shows,
+}: {
+  contacts: Contact[];
+  deals: PipelineDeal[];
+  reminders: Reminder[];
+  shows: Show[];
+}): DashboardStat[] {
+  const activeShows = shows.filter((show) => show.status !== "En pause");
+  const activeDeals = deals.filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu");
+  const estimatedRevenue = activeDeals.reduce(
+    (total, deal) => total + Math.round((deal.value * deal.probability) / 100),
+    0,
+  );
+
+  return [
+    {
+      label: "Spectacles actifs",
+      value: activeShows.length.toString(),
+      detail: shows.length === 0 ? "Aucun spectacle cree" : `${shows.length} au total`,
+    },
+    {
+      label: "Contacts CRM",
+      value: contacts.length.toString(),
+      detail: contacts.length === 0 ? "Aucun contact cree" : "Contacts reels",
+    },
+    {
+      label: "Relances a venir",
+      value: reminders.length.toString(),
+      detail: reminders.length === 0 ? "Aucune relance ouverte" : "Relances non terminees",
+    },
+    {
+      label: "CA previsionnel",
+      value: `${estimatedRevenue.toLocaleString("fr-FR")} EUR`,
+      detail: activeDeals.length === 0 ? "Aucun pipeline actif" : "Pipeline pondere",
+    },
+  ];
 }
