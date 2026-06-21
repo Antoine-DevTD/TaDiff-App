@@ -165,6 +165,52 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
   return { ok: true, message: "Contact cree." };
 }
 
+export async function createOpportunityWithNewContact(
+  values: OpportunityFormInput,
+  contactValues: ContactFormValues,
+): Promise<ActionResult> {
+  const parsedOpportunity = opportunitySchema.safeParse(values);
+  const parsedContact = contactSchema.safeParse(contactValues);
+
+  if (!parsedOpportunity.success || !parsedContact.success) {
+    return { ok: false, message: "Le formulaire contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : contact et opportunite valides, non enregistres." };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: contact, error } = await supabase
+    .from("contacts")
+    .insert({
+      company_id: workspace.companyId,
+      name: parsedContact.data.name,
+      organization: parsedContact.data.organization,
+      role: parsedContact.data.role || null,
+      email: parsedContact.data.email || null,
+      city: parsedContact.data.city || null,
+      status: parsedContact.data.status,
+    })
+    .select("id")
+    .single();
+
+  if (error || !contact) {
+    return { ok: false, message: error?.message ?? "Contact non cree." };
+  }
+
+  return createOpportunity({
+    ...parsedOpportunity.data,
+    contactId: contact.id,
+  });
+}
+
 export async function createOpportunity(values: OpportunityFormInput): Promise<ActionResult> {
   const parsed = opportunitySchema.safeParse(values);
 

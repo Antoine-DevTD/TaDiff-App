@@ -1,9 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { createOpportunity } from "@/app/(dashboard)/actions";
+import { createOpportunity, createOpportunityWithNewContact } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -18,16 +19,29 @@ import type { Contact, Show } from "@/types";
 
 export function OpportunityForm({
   contacts,
+  onSuccess,
   shows,
 }: {
   contacts: Contact[];
+  onSuccess?: () => void;
   shows: Show[];
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [contactMode, setContactMode] = useState<"existing" | "new">("existing");
+  const [newContact, setNewContact] = useState({
+    city: "",
+    email: "",
+    name: "",
+    organization: "",
+    role: "",
+    status: "Prospect" as const,
+  });
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<OpportunityFormInput, unknown, OpportunityFormValues>({
@@ -47,8 +61,17 @@ export function OpportunityForm({
 
   function onSubmit(values: OpportunityFormValues) {
     startTransition(async () => {
-      const result = await createOpportunity(values);
+      const result =
+        contactMode === "new"
+          ? await createOpportunityWithNewContact(values, newContact)
+          : await createOpportunity(values);
       setMessage({ ok: result.ok, text: result.message });
+
+      if (result.ok) {
+        reset();
+        router.refresh();
+        onSuccess?.();
+      }
     });
   }
 
@@ -58,17 +81,94 @@ export function OpportunityForm({
         <Input placeholder="Serie scolaire automne" {...register("title")} />
       </Field>
 
+      <div className="rounded-md border border-white/10 bg-background/35 p-3">
+        <div className="grid grid-cols-2 rounded-md border border-white/10 bg-white/5 p-1 text-xs">
+          <button
+            className={
+              contactMode === "existing"
+                ? "rounded bg-accent px-3 py-2 font-medium text-white"
+                : "rounded px-3 py-2 text-muted hover:text-foreground"
+            }
+            type="button"
+            onClick={() => setContactMode("existing")}
+          >
+            Contact existant
+          </button>
+          <button
+            className={
+              contactMode === "new"
+                ? "rounded bg-accent px-3 py-2 font-medium text-white"
+                : "rounded px-3 py-2 text-muted hover:text-foreground"
+            }
+            type="button"
+            onClick={() => {
+              setContactMode("new");
+              setValue("contactId", "");
+            }}
+          >
+            Nouveau contact
+          </button>
+        </div>
+
+        {contactMode === "existing" ? (
+          <div className="mt-3">
+            <Field label="Contact" error={errors.contactId?.message}>
+              <Select {...register("contactId")}>
+                <option value="">Aucun contact</option>
+                {contacts.map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.name} - {contact.organization}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        ) : (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="Nom du contact">
+              <Input
+                required
+                placeholder="Marie Dupont"
+                value={newContact.name}
+                onChange={(event) =>
+                  setNewContact((current) => ({ ...current, name: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Structure">
+              <Input
+                required
+                placeholder="Scene nationale, mairie..."
+                value={newContact.organization}
+                onChange={(event) =>
+                  setNewContact((current) => ({ ...current, organization: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Role">
+              <Input
+                placeholder="Programmation, diffusion..."
+                value={newContact.role}
+                onChange={(event) =>
+                  setNewContact((current) => ({ ...current, role: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Email">
+              <Input
+                type="email"
+                placeholder="contact@structure.fr"
+                value={newContact.email}
+                onChange={(event) =>
+                  setNewContact((current) => ({ ...current, email: event.target.value }))
+                }
+              />
+            </Field>
+          </div>
+        )}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Contact" error={errors.contactId?.message}>
-          <Select {...register("contactId")}>
-            <option value="">Aucun contact</option>
-            {contacts.map((contact) => (
-              <option key={contact.id} value={contact.id}>
-                {contact.name} - {contact.organization}
-              </option>
-            ))}
-          </Select>
-        </Field>
         <Field label="Spectacle" error={errors.showId?.message}>
           <Select {...register("showId")}>
             <option value="">Aucun spectacle</option>

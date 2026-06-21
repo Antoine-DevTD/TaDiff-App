@@ -105,9 +105,16 @@ export function PipelineBoard({
       optimisticDeals
         .filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu")
         .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a))
-        .slice(0, 3),
+        .slice(0, 1),
     [optimisticDeals],
   );
+
+  const activeDeals = optimisticDeals.filter(
+    (deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu",
+  );
+  const lateFollowUps = optimisticDeals.filter(
+    (deal) => getPipelineSignal(deal).tone === "danger",
+  ).length;
 
   function moveDeal(id: string, stage: PipelineStage) {
     setOptimisticDeals((current) =>
@@ -133,122 +140,124 @@ export function PipelineBoard({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="p-4">
-          <p className="text-sm text-muted">Pipeline total</p>
-          <p className="mt-2 text-2xl font-semibold">{totals.raw.toLocaleString("fr-FR")} EUR</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted">Prevision ponderee</p>
-          <p className="mt-2 text-2xl font-semibold">
-            {totals.weighted.toLocaleString("fr-FR")} EUR
-          </p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted">Opportunites actives</p>
-          <p className="mt-2 text-2xl font-semibold">
-            {optimisticDeals.filter((deal) => deal.stage !== "Perdu").length}
-          </p>
-        </Card>
-      </div>
-
-      <Card className="grid gap-4 p-4 lg:grid-cols-[1fr_1.2fr]">
-        <div>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold">Mode de lecture</p>
-            <div className="grid grid-cols-2 rounded-md border border-white/10 bg-white/5 p-1 text-xs">
-              {[
-                { id: "board", label: "Kanban" },
-                { id: "list", label: "Liste" },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  className={
-                    view === item.id
-                      ? "rounded bg-accent px-2 py-1 font-medium text-white"
-                      : "rounded px-2 py-1 text-muted hover:text-foreground"
-                  }
-                  type="button"
-                  onClick={() => setView(item.id as PipelineView)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Filtrez le pipeline pour traiter en premier les opportunites qui demandent une action.
-          </p>
-          <div className="mt-3 space-y-3">
-            <Input
-              aria-label="Rechercher dans le pipeline"
-              className="min-h-10"
-              placeholder="Rechercher contact, lieu, spectacle..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: "all", label: "Tout" },
-                { id: "open", label: "Actifs" },
-                { id: "follow-up", label: "A relancer" },
-                { id: "high-value", label: "Fort potentiel" },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  className={
-                    filter === item.id
-                      ? "rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white"
-                      : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted hover:text-foreground"
-                  }
-                  type="button"
-                  onClick={() => setFilter(item.id as PipelineFilter)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center justify-between gap-3 text-xs text-muted">
-              <span>
-                {visibleDeals.length} resultat{visibleDeals.length > 1 ? "s" : ""} sur{" "}
-                {optimisticDeals.length}
-              </span>
-              {search || filter !== "all" ? (
-                <button
-                  className="text-foreground hover:text-accent-strong"
-                  type="button"
-                  onClick={() => {
-                    setSearch("");
-                    setFilter("all");
-                  }}
-                >
-                  Reinitialiser
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </div>
-        <div className="rounded-md border border-white/10 bg-background/45 p-3">
-          <p className="text-sm font-semibold">Priorites recommandees</p>
-          <div className="mt-3 space-y-2">
-            {priorityDeals.length === 0 ? (
-              <p className="text-xs text-muted">Aucune opportunite active a prioriser.</p>
+      <Card className="p-4">
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-center">
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted">A traiter maintenant</p>
+            {priorityDeals[0] ? (
+              <div className="mt-2">
+                <p className="text-lg font-semibold">{priorityDeals[0].title}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {getPipelineRecommendation(priorityDeals[0]).title} -{" "}
+                  {priorityDeals[0].contactName}
+                </p>
+              </div>
             ) : (
-              priorityDeals.map((deal) => (
-                <div key={deal.id} className="rounded-md bg-white/[0.04] p-2 text-xs">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="truncate text-muted">{deal.title}</span>
-                    <span className="shrink-0 font-medium text-foreground">
-                      {Math.max(getPipelinePriorityScore(deal), 0).toLocaleString("fr-FR")}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-foreground">{getPipelineRecommendation(deal).title}</p>
-                </div>
-              ))
+              <p className="mt-2 text-sm text-muted">Aucune opportunite active a prioriser.</p>
             )}
+          </div>
+          <div className="grid grid-cols-3 gap-2 rounded-md border border-white/10 bg-background/45 p-2 text-center">
+            <Metric label="Actives" value={activeDeals.length.toString()} />
+            <Metric label="En retard" value={lateFollowUps.toString()} />
+            <Metric label="Prevision" value={`${totals.weighted.toLocaleString("fr-FR")} EUR`} />
           </div>
         </div>
       </Card>
+
+      <Card className="space-y-3 p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <Input
+            aria-label="Rechercher dans le pipeline"
+            className="min-h-10 lg:max-w-xl"
+            placeholder="Rechercher un contact, un lieu, un spectacle..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <div className="grid w-full grid-cols-2 rounded-md border border-white/10 bg-white/5 p-1 text-xs lg:w-auto">
+            {[
+              { id: "board", label: "Kanban" },
+              { id: "list", label: "Liste" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                className={
+                  view === item.id
+                    ? "rounded bg-accent px-3 py-1.5 font-medium text-white"
+                    : "rounded px-3 py-1.5 text-muted hover:text-foreground"
+                }
+                type="button"
+                onClick={() => setView(item.id as PipelineView)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { id: "all", label: "Tout" },
+            { id: "open", label: "Actifs" },
+            { id: "follow-up", label: "A relancer" },
+            { id: "high-value", label: "Fort potentiel" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              className={
+                filter === item.id
+                  ? "rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white"
+                  : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted hover:text-foreground"
+              }
+              type="button"
+              onClick={() => setFilter(item.id as PipelineFilter)}
+            >
+              {item.label}
+            </button>
+          ))}
+          <div className="ml-auto flex items-center gap-3 text-xs text-muted">
+            <span>
+              {visibleDeals.length} resultat{visibleDeals.length > 1 ? "s" : ""}
+            </span>
+            {search || filter !== "all" ? (
+              <button
+                className="text-foreground hover:text-accent-strong"
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setFilter("all");
+                }}
+              >
+                Reinitialiser
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </Card>
+
+      <details className="rounded-lg border border-white/10 bg-panel/70 p-4 text-sm">
+        <summary className="cursor-pointer list-none font-semibold">
+          Chiffres du pipeline
+          <span className="ml-2 text-xs font-normal text-muted">
+            {totals.raw.toLocaleString("fr-FR")} EUR total
+          </span>
+        </summary>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-md border border-white/10 bg-background/45 p-3">
+            <p className="text-xs text-muted">Pipeline total</p>
+            <p className="mt-1 text-lg font-semibold">{totals.raw.toLocaleString("fr-FR")} EUR</p>
+          </div>
+          <div className="rounded-md border border-white/10 bg-background/45 p-3">
+            <p className="text-xs text-muted">Prevision ponderee</p>
+            <p className="mt-1 text-lg font-semibold">
+              {totals.weighted.toLocaleString("fr-FR")} EUR
+            </p>
+          </div>
+          <div className="rounded-md border border-white/10 bg-background/45 p-3">
+            <p className="text-xs text-muted">Opportunites suivies</p>
+            <p className="mt-1 text-lg font-semibold">{optimisticDeals.length}</p>
+          </div>
+        </div>
+      </details>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         {visibleDeals.length === 0 ? (
@@ -305,6 +314,15 @@ export function PipelineBoard({
           </div>
         )}
       </DndContext>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-[11px] text-muted">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }
@@ -452,6 +470,7 @@ function PipelineCard({
   const signal = getPipelineSignal(deal);
   const recommendation = getPipelineRecommendation(deal);
   const [copied, setCopied] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isReminderPending, startReminderTransition] = useTransition();
@@ -529,7 +548,6 @@ function PipelineCard({
             <p className="font-medium text-foreground">{recommendation.title}</p>
             <Badge tone={recommendation.tone}>Action</Badge>
           </div>
-          <p className="mt-1 leading-5">{recommendation.detail}</p>
         </div>
       </div>
 
@@ -562,45 +580,56 @@ function PipelineCard({
           ))}
         </Select>
         <button
-          className="rounded-md bg-accent/20 px-2 py-2 text-xs text-foreground hover:bg-accent/30"
-          disabled={isReminderPending}
-          type="button"
-          onClick={createQuickReminder}
-        >
-          {isReminderPending ? "Creation..." : "Relancer"}
-        </button>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
-            disabled={isSchedulePending}
-            type="button"
-            onClick={() => scheduleFollowUp(3)}
-          >
-            J+3
-          </button>
-          <button
-            className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
-            disabled={isSchedulePending}
-            type="button"
-            onClick={() => scheduleFollowUp(7)}
-          >
-            J+7
-          </button>
-        </div>
-        <button
           className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
           type="button"
-          onClick={() => setIsEditing((current) => !current)}
+          onClick={() => setShowActions((current) => !current)}
         >
-          {isEditing ? "Fermer edition" : "Modifier"}
+          {showActions ? "Masquer les actions" : "Actions"}
         </button>
-        <button
-          className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
-          type="button"
-          onClick={copyEmailDraft}
-        >
-          {copied ? "Email copie" : "Copier email"}
-        </button>
+        {showActions ? (
+          <>
+            <button
+              className="rounded-md bg-accent/20 px-2 py-2 text-xs text-foreground hover:bg-accent/30"
+              disabled={isReminderPending}
+              type="button"
+              onClick={createQuickReminder}
+            >
+              {isReminderPending ? "Creation..." : "Creer une relance"}
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
+                disabled={isSchedulePending}
+                type="button"
+                onClick={() => scheduleFollowUp(3)}
+              >
+                J+3
+              </button>
+              <button
+                className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
+                disabled={isSchedulePending}
+                type="button"
+                onClick={() => scheduleFollowUp(7)}
+              >
+                J+7
+              </button>
+            </div>
+            <button
+              className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
+              type="button"
+              onClick={() => setIsEditing((current) => !current)}
+            >
+              {isEditing ? "Fermer edition" : "Modifier"}
+            </button>
+            <button
+              className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
+              type="button"
+              onClick={copyEmailDraft}
+            >
+              {copied ? "Email copie" : "Copier email"}
+            </button>
+          </>
+        ) : null}
         {message ? <p className="text-xs text-muted">{message}</p> : null}
       </div>
     </article>

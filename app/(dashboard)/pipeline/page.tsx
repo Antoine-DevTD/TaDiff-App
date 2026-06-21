@@ -1,7 +1,6 @@
-import { OpportunityForm } from "@/components/pipeline/opportunity-form";
 import { PipelineBoard } from "@/components/pipeline/pipeline-board";
+import { PipelineCreatePanel } from "@/components/pipeline/pipeline-create-panel";
 import { PipelineInsights } from "@/components/pipeline/pipeline-insights";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getContacts, getPipelineDeals, getShows } from "@/lib/supabase/queries";
 
@@ -21,15 +20,7 @@ export default async function PipelinePage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Nouvelle opportunite</CardTitle>
-          <CardDescription>
-            Associez un contact, un spectacle, une prochaine action et une date de relance.
-          </CardDescription>
-        </CardHeader>
-        <OpportunityForm contacts={contacts} shows={shows} />
-      </Card>
+      <PipelineCreatePanel contacts={contacts} shows={shows} />
 
       {deals.length === 0 ? (
         <EmptyState
@@ -38,8 +29,18 @@ export default async function PipelinePage() {
         />
       ) : (
         <>
-          <PipelineInsights deals={deals} />
           <PipelineBoard contacts={contacts} deals={deals} shows={shows} />
+          <details className="group rounded-lg border border-white/10 bg-panel/70 p-4">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-foreground">
+              Pilotage avance
+              <span className="ml-2 text-xs font-normal text-muted group-open:hidden">
+                Voir les alertes et indicateurs
+              </span>
+            </summary>
+            <div className="mt-4">
+              <PipelineInsights deals={deals} />
+            </div>
+          </details>
         </>
       )}
     </div>
