@@ -32,6 +32,7 @@ import {
 import type { Contact, PipelineDeal, PipelineStage, Show } from "@/types";
 
 type PipelineFilter = "all" | "open" | "follow-up" | "high-value";
+type PipelineView = "board" | "list";
 
 export function PipelineBoard({
   contacts,
@@ -45,6 +46,7 @@ export function PipelineBoard({
   const [optimisticDeals, setOptimisticDeals] = useState(deals);
   const [filter, setFilter] = useState<PipelineFilter>("all");
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<PipelineView>("board");
   const [isPending, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -152,7 +154,28 @@ export function PipelineBoard({
 
       <Card className="grid gap-4 p-4 lg:grid-cols-[1fr_1.2fr]">
         <div>
-          <p className="text-sm font-semibold">Mode de lecture</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold">Mode de lecture</p>
+            <div className="grid grid-cols-2 rounded-md border border-white/10 bg-white/5 p-1 text-xs">
+              {[
+                { id: "board", label: "Kanban" },
+                { id: "list", label: "Liste" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  className={
+                    view === item.id
+                      ? "rounded bg-accent px-2 py-1 font-medium text-white"
+                      : "rounded px-2 py-1 text-muted hover:text-foreground"
+                  }
+                  type="button"
+                  onClick={() => setView(item.id as PipelineView)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="mt-1 text-xs text-muted">
             Filtrez le pipeline pour traiter en premier les opportunites qui demandent une action.
           </p>
@@ -245,6 +268,8 @@ export function PipelineBoard({
               Voir tout le pipeline
             </button>
           </Card>
+        ) : view === "list" ? (
+          <PipelineListView deals={visibleDeals} disabled={isPending} onMove={moveDeal} />
         ) : (
           <div className="grid gap-4 xl:grid-cols-6">
             {pipelineStages.map((stage) => {
@@ -281,6 +306,95 @@ export function PipelineBoard({
         )}
       </DndContext>
     </div>
+  );
+}
+
+function PipelineListView({
+  deals,
+  disabled,
+  onMove,
+}: {
+  deals: PipelineDeal[];
+  disabled: boolean;
+  onMove: (id: string, stage: PipelineStage) => void;
+}) {
+  return (
+    <Card className="overflow-hidden p-0">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[960px] text-left text-sm">
+          <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase tracking-[0.12em] text-muted">
+            <tr>
+              <th className="px-4 py-3 font-medium">Opportunite</th>
+              <th className="px-4 py-3 font-medium">Contact</th>
+              <th className="px-4 py-3 font-medium">Etape</th>
+              <th className="px-4 py-3 font-medium">Relance</th>
+              <th className="px-4 py-3 text-right font-medium">CA pondere</th>
+              <th className="px-4 py-3 text-right font-medium">Score</th>
+              <th className="px-4 py-3 font-medium">Action conseillee</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {deals.map((deal) => {
+              const signal = getPipelineSignal(deal);
+              const recommendation = getPipelineRecommendation(deal);
+              const weightedValue = Math.round((deal.value * deal.probability) / 100);
+
+              return (
+                <tr key={deal.id} className="align-top hover:bg-white/[0.03]">
+                  <td className="px-4 py-4">
+                    <p className="font-medium text-foreground">{deal.title}</p>
+                    <p className="mt-1 text-xs text-muted">{deal.showTitle}</p>
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="text-foreground">{deal.contactName}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {deal.contactOrganization || deal.venue}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4">
+                    <Select
+                      className="min-h-9 min-w-40 text-xs"
+                      disabled={disabled}
+                      value={deal.stage}
+                      onChange={(event) => onMove(deal.id, event.target.value as PipelineStage)}
+                    >
+                      {pipelineStages.map((stage) => (
+                        <option key={stage.id} value={stage.id}>
+                          {stage.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </td>
+                  <td className="px-4 py-4">
+                    <Badge tone={signal.tone}>{signal.label}</Badge>
+                    <p className="mt-2 text-xs text-muted">
+                      {deal.nextFollowUpAt
+                        ? new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")
+                        : "Non planifiee"}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-right font-medium">
+                    {weightedValue.toLocaleString("fr-FR")} EUR
+                    <p className="mt-1 text-xs text-muted">
+                      {deal.value.toLocaleString("fr-FR")} EUR - {deal.probability}%
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-right font-medium">
+                    {Math.max(getPipelinePriorityScore(deal), 0).toLocaleString("fr-FR")}
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="font-medium text-foreground">{recommendation.title}</p>
+                    <p className="mt-1 max-w-64 text-xs leading-5 text-muted">
+                      {recommendation.detail}
+                    </p>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
 
