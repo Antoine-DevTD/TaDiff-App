@@ -7,6 +7,7 @@ export type Show = {
   status: ShowStatus;
   nextDate: string;
   budget: number;
+  notes: string;
 };
 
 export type Contact = {

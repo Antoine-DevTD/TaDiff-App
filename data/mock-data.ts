@@ -8,6 +8,7 @@ export const shows: Show[] = [
     status: "En diffusion",
     nextDate: "2026-09-18",
     budget: 12500,
+    notes: "Version legere en tournée. Dossier diffusion et fiche technique à tenir à jour.",
   },
   {
     id: "show-2",
@@ -16,6 +17,7 @@ export const shows: Show[] = [
     status: "Creation",
     nextDate: "2026-11-04",
     budget: 18400,
+    notes: "Montage coproduction en cours. Besoins lumière et résidence à confirmer.",
   },
   {
     id: "show-3",
@@ -24,6 +26,7 @@ export const shows: Show[] = [
     status: "En pause",
     nextDate: "2027-01-12",
     budget: 9200,
+    notes: "Projet en pause, relance possible sur la prochaine saison scolaire.",
   },
 ];
 

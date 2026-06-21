@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,35 +30,37 @@ export default async function ShowsPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-3">
           {shows.map((show) => (
-          <Card key={show.id} className="transition hover:-translate-y-0.5 hover:border-accent/[0.45] hover:bg-panel-strong/70">
-            <CardHeader>
-              <div className="flex min-h-16 items-start justify-between gap-3">
-                <div>
-                  <CardTitle>{show.title}</CardTitle>
-                  <CardDescription>{show.discipline}</CardDescription>
+          <Link key={show.id} href={`/shows/${show.id}`}>
+            <Card className="transition hover:-translate-y-0.5 hover:border-accent/[0.45] hover:bg-panel-strong/70">
+              <CardHeader>
+                <div className="flex min-h-16 items-start justify-between gap-3">
+                  <div>
+                    <CardTitle>{show.title}</CardTitle>
+                    <CardDescription>{show.discipline}</CardDescription>
+                  </div>
+                  <Badge tone={show.status === "En diffusion" ? "success" : "neutral"}>
+                    {show.status}
+                  </Badge>
                 </div>
-                <Badge tone={show.status === "En diffusion" ? "success" : "neutral"}>
-                  {show.status}
-                </Badge>
+              </CardHeader>
+              <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-panel-strong/45 p-3 text-sm">
+                <div>
+                  <p className="text-muted">Prochaine date</p>
+                  <p className="mt-1 font-medium">
+                    {show.nextDate
+                      ? new Date(show.nextDate).toLocaleDateString("fr-FR")
+                      : "A planifier"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted">Budget</p>
+                  <p className="mt-1 font-medium">
+                    {show.budget.toLocaleString("fr-FR")} EUR
+                  </p>
+                </div>
               </div>
-            </CardHeader>
-            <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-panel-strong/45 p-3 text-sm">
-              <div>
-                <p className="text-muted">Prochaine date</p>
-                <p className="mt-1 font-medium">
-                  {show.nextDate
-                    ? new Date(show.nextDate).toLocaleDateString("fr-FR")
-                    : "A planifier"}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted">Budget</p>
-                <p className="mt-1 font-medium">
-                  {show.budget.toLocaleString("fr-FR")} EUR
-                </p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
           ))}
         </div>
       )}
