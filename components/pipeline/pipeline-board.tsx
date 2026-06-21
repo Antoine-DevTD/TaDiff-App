@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   DndContext,
   PointerSensor,
@@ -18,6 +19,7 @@ import {
 } from "@/app/(dashboard)/actions";
 import { OpportunityEditor } from "@/components/pipeline/opportunity-editor";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -105,7 +107,7 @@ export function PipelineBoard({
       optimisticDeals
         .filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu")
         .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a))
-        .slice(0, 1),
+        .slice(0, 3),
     [optimisticDeals],
   );
 
@@ -163,6 +165,27 @@ export function PipelineBoard({
           </div>
         </div>
       </Card>
+
+      {priorityDeals.length > 0 ? (
+        <Card className="space-y-3 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">Priorites du jour</p>
+              <p className="mt-1 text-xs text-muted">
+                Traitez en priorite les dossiers avec relance proche, en retard ou fort potentiel.
+              </p>
+            </div>
+            <ButtonLink href="/reminders" variant="secondary">
+              Ouvrir les relances
+            </ButtonLink>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-3">
+            {priorityDeals.map((deal) => (
+              <PriorityDealCard key={deal.id} deal={deal} />
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="space-y-3 p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -327,6 +350,40 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function PriorityDealCard({ deal }: { deal: PipelineDeal }) {
+  const signal = getPipelineSignal(deal);
+  const recommendation = getPipelineRecommendation(deal);
+  const weightedValue = Math.round((deal.value * deal.probability) / 100);
+
+  return (
+    <div className="rounded-lg border border-border bg-panel-strong/45 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{deal.title}</p>
+          <p className="mt-1 truncate text-sm text-muted">{deal.contactName}</p>
+        </div>
+        <Badge tone={signal.tone}>{signal.label}</Badge>
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+        <div>
+          <p className="text-xs text-muted">CA pondere</p>
+          <p className="font-semibold">{weightedValue.toLocaleString("fr-FR")} EUR</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-muted">Relance</p>
+          <p className="font-medium">
+            {deal.nextFollowUpAt
+              ? new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")
+              : "A planifier"}
+          </p>
+        </div>
+      </div>
+      <p className="mt-4 text-sm text-foreground">{recommendation.title}</p>
+      <p className="mt-1 text-xs text-muted">{deal.nextAction || "Prochaine action a definir"}</p>
+    </div>
+  );
+}
+
 function PipelineListView({
   deals,
   disabled,
@@ -469,6 +526,7 @@ function PipelineCard({
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: deal.id });
   const signal = getPipelineSignal(deal);
   const recommendation = getPipelineRecommendation(deal);
+  const weightedValue = Math.round((deal.value * deal.probability) / 100);
   const [copied, setCopied] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -518,27 +576,46 @@ function PipelineCard({
     <article
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
-      className="rounded-lg border border-border bg-panel p-3 shadow-sm shadow-ink/5"
+      className="rounded-lg border border-border bg-panel p-3 shadow-sm shadow-ink/5 transition hover:border-accent/35 hover:shadow-md hover:shadow-accent/5"
     >
       <div
         className="flex cursor-grab items-start justify-between gap-3 active:cursor-grabbing"
         {...listeners}
         {...attributes}
       >
-        <div>
-          <p className="font-semibold">{deal.title}</p>
-          <p className="mt-1 text-xs text-muted">{deal.showTitle}</p>
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{deal.title}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+            <Link className="hover:text-accent" href={`/shows/${deal.showId}`}>
+              {deal.showTitle}
+            </Link>
+            <span>•</span>
+            <Link className="hover:text-accent" href={`/contacts/${deal.contactId}`}>
+              {deal.contactName}
+            </Link>
+          </div>
         </div>
         <Badge tone={signal.tone}>{signal.label}</Badge>
       </div>
 
+      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md border border-border bg-panel-strong/45 p-2 text-xs">
+        <InfoCell label="Montant" value={`${deal.value.toLocaleString("fr-FR")} EUR`} />
+        <InfoCell label="Probabilite" value={`${deal.probability}%`} />
+        <InfoCell label="Pondere" value={`${weightedValue.toLocaleString("fr-FR")} EUR`} />
+      </div>
+
       <div className="mt-3 space-y-2 text-xs text-muted">
-        <p>{deal.contactName}</p>
         <p>{deal.contactOrganization || deal.venue}</p>
-        <p>{deal.value.toLocaleString("fr-FR")} EUR - {deal.probability}%</p>
-        <p className="text-foreground">{deal.nextAction}</p>
+        <div className="rounded-md border border-border bg-panel-strong/55 p-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-muted">Prochaine action</p>
+          <p className="mt-1 text-sm text-foreground">
+            {deal.nextAction || "Prochaine action a definir"}
+          </p>
+        </div>
         {deal.nextFollowUpAt ? (
-          <p>Relance {new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")}</p>
+          <p className="font-medium text-foreground">
+            Relance {new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")}
+          </p>
         ) : null}
         {deal.lostReason ? (
           <p className="rounded-md bg-danger/10 p-2 text-danger">Perdu : {deal.lostReason}</p>
@@ -575,27 +652,37 @@ function PipelineCard({
         >
           {pipelineStages.map((stage) => (
             <option key={stage.id} value={stage.id}>
-              {stage.label}
-            </option>
+            {stage.label}
+          </option>
           ))}
         </Select>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            className="rounded-md bg-accent px-2 py-2 text-xs font-medium text-white hover:bg-accent-strong disabled:opacity-50"
+            disabled={isReminderPending}
+            type="button"
+            onClick={createQuickReminder}
+          >
+            {isReminderPending ? "Creation..." : "Relancer"}
+          </button>
+          <button
+            className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"
+            disabled={isSchedulePending}
+            type="button"
+            onClick={() => scheduleFollowUp(7)}
+          >
+            Planifier
+          </button>
+        </div>
         <button
           className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground"
           type="button"
           onClick={() => setShowActions((current) => !current)}
         >
-          {showActions ? "Masquer les actions" : "Actions"}
+          {showActions ? "Masquer les options" : "Options"}
         </button>
         {showActions ? (
           <>
-            <button
-              className="rounded-md bg-accent/20 px-2 py-2 text-xs text-foreground hover:bg-accent/30"
-              disabled={isReminderPending}
-              type="button"
-              onClick={createQuickReminder}
-            >
-              {isReminderPending ? "Creation..." : "Creer une relance"}
-            </button>
             <div className="grid grid-cols-2 gap-2">
               <button
                 className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"
@@ -633,5 +720,14 @@ function PipelineCard({
         {message ? <p className="text-xs text-muted">{message}</p> : null}
       </div>
     </article>
+  );
+}
+
+function InfoCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-[11px] text-muted">{label}</p>
+      <p className="mt-1 truncate font-medium text-foreground">{value}</p>
+    </div>
   );
 }
