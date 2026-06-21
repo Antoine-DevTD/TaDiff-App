@@ -41,7 +41,7 @@ export default async function ShowsPage() {
                 </Badge>
               </div>
             </CardHeader>
-            <div className="grid grid-cols-2 gap-3 rounded-md border border-white/[0.08] bg-background/45 p-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-panel-strong/45 p-3 text-sm">
               <div>
                 <p className="text-muted">Prochaine date</p>
                 <p className="mt-1 font-medium">

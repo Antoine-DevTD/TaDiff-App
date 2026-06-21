@@ -17,7 +17,7 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
   const activeLabel = titleFromPath(pathname);
 
   return (
-    <header className="sticky top-0 z-10 border-b border-white/10 bg-background/86 backdrop-blur-xl">
+    <header className="sticky top-0 z-10 border-b border-border bg-panel/86 backdrop-blur-xl">
       <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-muted">{workspaceLabel}</p>
@@ -26,7 +26,7 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
         <div className="flex items-center gap-3">
           <Link
             href="/shows/new"
-            className="hidden rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-medium shadow-sm shadow-ink/20 transition hover:bg-white/10 sm:inline-flex"
+            className="hidden rounded-md border border-border bg-panel px-3 py-2 text-sm font-medium shadow-sm shadow-ink/5 transition hover:bg-panel-strong sm:inline-flex"
           >
             Nouveau spectacle
           </Link>
@@ -47,7 +47,7 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
               className={
                 active
                   ? "shrink-0 rounded-full bg-accent px-3 py-1.5 text-white"
-                  : "shrink-0 rounded-full bg-panel px-3 py-1.5 text-muted"
+                  : "shrink-0 rounded-full bg-panel-strong px-3 py-1.5 text-muted"
               }
             >
               {item.label}

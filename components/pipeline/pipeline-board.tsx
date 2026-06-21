@@ -156,7 +156,7 @@ export function PipelineBoard({
               <p className="mt-2 text-sm text-muted">Aucune opportunite active a prioriser.</p>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-2 rounded-md border border-white/10 bg-background/45 p-2 text-center">
+          <div className="grid grid-cols-3 gap-2 rounded-md border border-border bg-panel-strong/65 p-2 text-center">
             <Metric label="Actives" value={activeDeals.length.toString()} />
             <Metric label="En retard" value={lateFollowUps.toString()} />
             <Metric label="Prevision" value={`${totals.weighted.toLocaleString("fr-FR")} EUR`} />
@@ -173,7 +173,7 @@ export function PipelineBoard({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <div className="grid w-full grid-cols-2 rounded-md border border-white/10 bg-white/5 p-1 text-xs lg:w-auto">
+          <div className="grid w-full grid-cols-2 rounded-md border border-border bg-panel-strong p-1 text-xs lg:w-auto">
             {[
               { id: "board", label: "Kanban" },
               { id: "list", label: "Liste" },
@@ -183,7 +183,7 @@ export function PipelineBoard({
                 className={
                   view === item.id
                     ? "rounded bg-accent px-3 py-1.5 font-medium text-white"
-                    : "rounded px-3 py-1.5 text-muted hover:text-foreground"
+                    : "rounded px-3 py-1.5 text-muted hover:bg-panel hover:text-foreground"
                 }
                 type="button"
                 onClick={() => setView(item.id as PipelineView)}
@@ -206,7 +206,7 @@ export function PipelineBoard({
               className={
                 filter === item.id
                   ? "rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white"
-                  : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted hover:text-foreground"
+                  : "rounded-full border border-border bg-panel px-3 py-1.5 text-xs text-muted hover:bg-panel-strong hover:text-foreground"
               }
               type="button"
               onClick={() => setFilter(item.id as PipelineFilter)}
@@ -234,7 +234,7 @@ export function PipelineBoard({
         </div>
       </Card>
 
-      <details className="rounded-lg border border-white/10 bg-panel/70 p-4 text-sm">
+      <details className="rounded-lg border border-border bg-panel p-4 text-sm">
         <summary className="cursor-pointer list-none font-semibold">
           Chiffres du pipeline
           <span className="ml-2 text-xs font-normal text-muted">
@@ -242,17 +242,17 @@ export function PipelineBoard({
           </span>
         </summary>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div className="rounded-md border border-white/10 bg-background/45 p-3">
+          <div className="rounded-md border border-border bg-panel-strong/55 p-3">
             <p className="text-xs text-muted">Pipeline total</p>
             <p className="mt-1 text-lg font-semibold">{totals.raw.toLocaleString("fr-FR")} EUR</p>
           </div>
-          <div className="rounded-md border border-white/10 bg-background/45 p-3">
+          <div className="rounded-md border border-border bg-panel-strong/55 p-3">
             <p className="text-xs text-muted">Prevision ponderee</p>
             <p className="mt-1 text-lg font-semibold">
               {totals.weighted.toLocaleString("fr-FR")} EUR
             </p>
           </div>
-          <div className="rounded-md border border-white/10 bg-background/45 p-3">
+          <div className="rounded-md border border-border bg-panel-strong/55 p-3">
             <p className="text-xs text-muted">Opportunites suivies</p>
             <p className="mt-1 text-lg font-semibold">{optimisticDeals.length}</p>
           </div>
@@ -340,7 +340,7 @@ function PipelineListView({
     <Card className="overflow-hidden p-0">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[960px] text-left text-sm">
-          <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase tracking-[0.12em] text-muted">
+          <thead className="border-b border-border bg-panel-strong/60 text-xs uppercase tracking-[0.12em] text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Opportunite</th>
               <th className="px-4 py-3 font-medium">Contact</th>
@@ -351,14 +351,14 @@ function PipelineListView({
               <th className="px-4 py-3 font-medium">Action conseillee</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10">
+          <tbody className="divide-y divide-border">
             {deals.map((deal) => {
               const signal = getPipelineSignal(deal);
               const recommendation = getPipelineRecommendation(deal);
               const weightedValue = Math.round((deal.value * deal.probability) / 100);
 
               return (
-                <tr key={deal.id} className="align-top hover:bg-white/[0.03]">
+                <tr key={deal.id} className="align-top hover:bg-panel-strong/45">
                   <td className="px-4 py-4">
                     <p className="font-medium text-foreground">{deal.title}</p>
                     <p className="mt-1 text-xs text-muted">{deal.showTitle}</p>
@@ -435,12 +435,12 @@ function PipelineColumn({
       className={
         isOver
           ? "min-h-72 rounded-lg border border-accent bg-accent/10 p-3"
-          : "min-h-72 rounded-lg border border-border bg-ink/45 p-3"
+          : "min-h-72 rounded-lg border border-border bg-panel-strong/55 p-3"
       }
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">{label}</h3>
-        <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-xs text-muted">
+        <span className="rounded-full bg-panel px-2 py-0.5 text-xs text-muted">
           {count}
         </span>
       </div>
@@ -518,7 +518,7 @@ function PipelineCard({
     <article
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
-      className="rounded-lg border border-border bg-panel p-3 shadow-lg shadow-ink/20"
+      className="rounded-lg border border-border bg-panel p-3 shadow-sm shadow-ink/5"
     >
       <div
         className="flex cursor-grab items-start justify-between gap-3 active:cursor-grabbing"
@@ -543,7 +543,7 @@ function PipelineCard({
         {deal.lostReason ? (
           <p className="rounded-md bg-danger/10 p-2 text-danger">Perdu : {deal.lostReason}</p>
         ) : null}
-        <div className="rounded-md border border-white/10 bg-background/45 p-2">
+        <div className="rounded-md border border-border bg-panel-strong/55 p-2">
           <div className="flex items-center justify-between gap-2">
             <p className="font-medium text-foreground">{recommendation.title}</p>
             <Badge tone={recommendation.tone}>Action</Badge>
@@ -580,7 +580,7 @@ function PipelineCard({
           ))}
         </Select>
         <button
-          className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
+          className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground"
           type="button"
           onClick={() => setShowActions((current) => !current)}
         >
@@ -598,7 +598,7 @@ function PipelineCard({
             </button>
             <div className="grid grid-cols-2 gap-2">
               <button
-                className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
+                className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"
                 disabled={isSchedulePending}
                 type="button"
                 onClick={() => scheduleFollowUp(3)}
@@ -606,7 +606,7 @@ function PipelineCard({
                 J+3
               </button>
               <button
-                className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-50"
+                className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"
                 disabled={isSchedulePending}
                 type="button"
                 onClick={() => scheduleFollowUp(7)}
@@ -615,14 +615,14 @@ function PipelineCard({
               </button>
             </div>
             <button
-              className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
+              className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground"
               type="button"
               onClick={() => setIsEditing((current) => !current)}
             >
               {isEditing ? "Fermer edition" : "Modifier"}
             </button>
             <button
-              className="rounded-md bg-white/5 px-2 py-2 text-xs text-muted hover:bg-white/10 hover:text-foreground"
+              className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground"
               type="button"
               onClick={copyEmailDraft}
             >

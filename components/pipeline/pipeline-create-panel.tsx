@@ -26,7 +26,7 @@ export function PipelineCreatePanel({
       {isOpen ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-50 grid place-items-center bg-ink/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4 backdrop-blur-sm"
           role="dialog"
         >
           <button
@@ -36,7 +36,7 @@ export function PipelineCreatePanel({
             onClick={() => setIsOpen(false)}
           />
           <Card className="relative max-h-[88vh] w-full max-w-3xl overflow-y-auto p-0">
-            <div className="sticky top-0 z-10 border-b border-white/10 bg-panel/95 px-5 py-4 backdrop-blur">
+            <div className="sticky top-0 z-10 border-b border-border bg-panel/95 px-5 py-4 backdrop-blur">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-muted">

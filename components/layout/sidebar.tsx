@@ -10,9 +10,9 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden min-h-screen w-64 shrink-0 border-r border-white/10 bg-ink text-white shadow-2xl shadow-ink/40 lg:flex lg:flex-col">
+    <aside className="hidden min-h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-bold shadow-lg shadow-accent/30">
+        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-bold shadow-sm shadow-accent/30">
           TD
         </span>
         <div>
@@ -32,14 +32,14 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/[0.68] transition hover:bg-white/10 hover:text-white",
-                active && "bg-white/[0.12] text-white shadow-inner shadow-white/5",
+                "group flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/[0.72] transition hover:bg-white/10 hover:text-white",
+                active && "bg-white/[0.16] text-white shadow-inner shadow-white/5",
               )}
             >
               <span
                 className={cn(
-                  "h-1.5 w-1.5 rounded-full bg-white/25 transition group-hover:bg-accent-strong",
-                  active && "bg-accent-strong shadow-[0_0_14px_rgba(168,85,247,0.75)]",
+                  "h-1.5 w-1.5 rounded-full bg-white/25 transition group-hover:bg-accent",
+                  active && "bg-accent shadow-[0_0_14px_rgba(29,78,216,0.75)]",
                 )}
               />
               {item.label}

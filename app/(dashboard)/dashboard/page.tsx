@@ -143,7 +143,7 @@ export default async function DashboardPage() {
 
 function EmptyBlock({ text }: { text: string }) {
   return (
-    <div className="rounded-md border border-dashed border-white/10 bg-background/40 p-4 text-sm text-muted">
+    <div className="rounded-md border border-dashed border-border bg-panel-strong/45 p-4 text-sm text-muted">
       {text}
     </div>
   );

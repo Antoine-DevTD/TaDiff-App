@@ -81,13 +81,13 @@ export function OpportunityForm({
         <Input placeholder="Serie scolaire automne" {...register("title")} />
       </Field>
 
-      <div className="rounded-md border border-white/10 bg-background/35 p-3">
-        <div className="grid grid-cols-2 rounded-md border border-white/10 bg-white/5 p-1 text-xs">
+      <div className="rounded-md border border-border bg-panel-strong/60 p-3">
+        <div className="grid grid-cols-2 rounded-md border border-border bg-panel p-1 text-xs">
           <button
             className={
               contactMode === "existing"
                 ? "rounded bg-accent px-3 py-2 font-medium text-white"
-                : "rounded px-3 py-2 text-muted hover:text-foreground"
+                : "rounded px-3 py-2 text-muted hover:bg-panel-strong hover:text-foreground"
             }
             type="button"
             onClick={() => setContactMode("existing")}
@@ -98,7 +98,7 @@ export function OpportunityForm({
             className={
               contactMode === "new"
                 ? "rounded bg-accent px-3 py-2 font-medium text-white"
-                : "rounded px-3 py-2 text-muted hover:text-foreground"
+                : "rounded px-3 py-2 text-muted hover:bg-panel-strong hover:text-foreground"
             }
             type="button"
             onClick={() => {

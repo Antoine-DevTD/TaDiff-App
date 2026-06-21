@@ -30,7 +30,7 @@ export default async function PipelinePage() {
       ) : (
         <>
           <PipelineBoard contacts={contacts} deals={deals} shows={shows} />
-          <details className="group rounded-lg border border-white/10 bg-panel/70 p-4">
+          <details className="group rounded-lg border border-border bg-panel p-4">
             <summary className="cursor-pointer list-none text-sm font-semibold text-foreground">
               Pilotage avance
               <span className="ml-2 text-xs font-normal text-muted group-open:hidden">

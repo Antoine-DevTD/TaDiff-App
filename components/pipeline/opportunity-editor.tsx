@@ -95,7 +95,7 @@ export function OpportunityEditor({
   }
 
   return (
-    <div className="mt-3 space-y-2 rounded-md border border-white/10 bg-background/50 p-3">
+    <div className="mt-3 space-y-2 rounded-md border border-border bg-panel-strong/55 p-3">
       <Input
         aria-label="Titre opportunite"
         className="min-h-9 text-xs"

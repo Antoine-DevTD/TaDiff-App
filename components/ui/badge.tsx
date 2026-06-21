@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type BadgeTone = "neutral" | "success" | "warning" | "danger";
 
 const tones: Record<BadgeTone, string> = {
-  neutral: "bg-panel-strong text-muted",
+  neutral: "bg-panel-strong text-ink",
   success: "bg-success/10 text-success",
   warning: "bg-warning/10 text-warning",
   danger: "bg-danger/10 text-danger",
