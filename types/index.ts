@@ -15,6 +15,7 @@ export type Contact = {
   name: string;
   organization: string;
   role: string;
+  email: string;
   city: string;
   status: "Prospect" | "En discussion" | "Partenaire";
 };

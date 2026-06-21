@@ -142,7 +142,7 @@ export async function getContacts(): Promise<Contact[]> {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("contacts")
-    .select("id,name,organization,role,city,status")
+    .select("id,name,organization,role,email,city,status")
     .order("created_at", { ascending: false });
 
   if (error || !data) {
@@ -154,9 +154,140 @@ export async function getContacts(): Promise<Contact[]> {
     name: contact.name,
     organization: contact.organization,
     role: contact.role ?? "",
+    email: contact.email ?? "",
     city: contact.city ?? "",
     status: contact.status,
   }));
+}
+
+export async function getContactById(contactId: string): Promise<{
+  contact: Contact | null;
+  opportunities: PipelineDeal[];
+  reminders: Reminder[];
+  shows: Show[];
+}> {
+  if (!hasSupabaseEnv()) {
+    const contact = contacts.find((item) => item.id === contactId) ?? null;
+    const opportunities = pipelineDeals.filter((deal) => deal.contactId === contactId);
+    const relatedShowIds = new Set(opportunities.map((deal) => deal.showId));
+    const relatedShows = shows.filter((show) => relatedShowIds.has(show.id));
+    const relatedLabels = new Set([
+      ...opportunities.map((deal) => deal.title),
+      ...relatedShows.map((show) => show.title),
+      contact?.name ?? "",
+      contact?.organization ?? "",
+    ]);
+    const filteredReminders = reminders.filter((reminder) => relatedLabels.has(reminder.relatedTo));
+
+    return {
+      contact,
+      opportunities,
+      reminders: filteredReminders,
+      shows: relatedShows,
+    };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const [{ data: contact, error: contactError }, { data: opportunities, error: opportunitiesError }] =
+    await Promise.all([
+      supabase
+        .from("contacts")
+        .select("id,name,organization,role,email,city,status")
+        .eq("id", contactId)
+        .maybeSingle(),
+      supabase
+        .from("opportunities")
+        .select(
+          "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization),shows(title,discipline,status,next_date,budget,notes,id)",
+        )
+        .eq("contact_id", contactId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+  if (contactError || !contact || opportunitiesError || !opportunities) {
+    return { contact: null, opportunities: [], reminders: [], shows: [] };
+  }
+
+  const resolvedContact: Contact = {
+    id: contact.id,
+    name: contact.name,
+    organization: contact.organization,
+    role: contact.role ?? "",
+    email: contact.email ?? "",
+    city: contact.city ?? "",
+    status: contact.status,
+  };
+
+  const resolvedOpportunities: PipelineDeal[] = opportunities.map((deal) => ({
+    id: deal.id,
+    title: deal.title,
+    contactId: deal.contact_id ?? "",
+    showId: deal.show_id ?? "",
+    venue: deal.contacts?.organization ?? "Structure a renseigner",
+    stage: deal.stage as PipelineDeal["stage"],
+    value: deal.value ?? 0,
+    probability: deal.probability ?? 0,
+    nextAction: deal.next_action ?? "Prochaine action a definir",
+    nextFollowUpAt: deal.next_follow_up_at ?? "",
+    lostReason: deal.lost_reason ?? "",
+    contactName: deal.contacts?.name ?? resolvedContact.name,
+    contactOrganization: deal.contacts?.organization ?? resolvedContact.organization,
+    showTitle: deal.shows?.title ?? "Spectacle a associer",
+    createdAt: deal.created_at,
+  }));
+
+  const relatedShowsMap = new Map<string, Show>();
+  for (const opportunity of opportunities) {
+    const show = opportunity.shows;
+    if (show?.id) {
+      relatedShowsMap.set(show.id, {
+        id: show.id,
+        title: show.title,
+        discipline: show.discipline,
+        status: show.status,
+        nextDate: show.next_date ?? "",
+        budget: show.budget ?? 0,
+        notes: show.notes ?? "",
+      });
+    }
+  }
+
+  const reminderQuery = supabase
+    .from("reminders")
+    .select("id,title,due_date,related_to,done,priority,contact_id,opportunity_id")
+    .eq("done", false)
+    .order("due_date", { ascending: true });
+
+  const opportunityIds = resolvedOpportunities.map((deal) => deal.id);
+  const reminderResponse =
+    opportunityIds.length > 0
+      ? await reminderQuery.or(
+          `contact_id.eq.${contactId},opportunity_id.in.(${opportunityIds.join(",")})`,
+        )
+      : await reminderQuery.eq("contact_id", contactId);
+
+  if (reminderResponse.error || !reminderResponse.data) {
+    return {
+      contact: resolvedContact,
+      opportunities: resolvedOpportunities,
+      reminders: [],
+      shows: Array.from(relatedShowsMap.values()),
+    };
+  }
+
+  return {
+    contact: resolvedContact,
+    opportunities: resolvedOpportunities,
+    reminders: reminderResponse.data.map((reminder) => ({
+      id: reminder.id,
+      label: reminder.title,
+      dueDate: reminder.due_date,
+      relatedTo: reminder.related_to ?? "",
+      done: reminder.done,
+      priority: reminder.priority,
+    })),
+    shows: Array.from(relatedShowsMap.values()),
+  };
 }
 
 export async function getPipelineDeals(): Promise<PipelineDeal[]> {

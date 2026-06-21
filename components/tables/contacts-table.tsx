@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   flexRender,
   getCoreRowModel,
@@ -13,7 +14,11 @@ const columns: ColumnDef<Contact>[] = [
   {
     accessorKey: "name",
     header: "Nom",
-    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    cell: ({ row }) => (
+      <Link className="font-medium text-foreground hover:text-accent" href={`/contacts/${row.original.id}`}>
+        {row.original.name}
+      </Link>
+    ),
   },
   {
     accessorKey: "organization",
