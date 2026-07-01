@@ -43,7 +43,6 @@ export default function PricingPage() {
             </ul>
             <ButtonLink
               href="/signup"
-              variant={plan.current ? "secondary" : "primary"}
               className="mt-6 w-full"
             >
               {plan.id === "studio" ? "Contacter l'equipe" : "Commencer"}
