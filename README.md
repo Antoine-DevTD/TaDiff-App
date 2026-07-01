@@ -83,3 +83,21 @@ Without Stripe or email variables, billing and campaigns stay in preview mode.
 - Stripe is modeled in the billing module but not charged until keys and webhook handling are configured.
 - Email campaigns are operational as planning objects; real sending needs an email provider key and a send action.
 - FEC export is represented as a preview generated from quote/accounting lines; file export can be added on top of the current billing data.
+
+## Supabase Heartbeat
+
+The repository includes `.github/workflows/supabase-heartbeat.yml`.
+It runs every Tuesday and Friday at 10:00 Europe/Paris and calls:
+
+```txt
+GET /rest/v1/companies?select=id&limit=1
+```
+
+Create these GitHub repository secrets before relying on it:
+
+```txt
+SUPABASE_URL
+SUPABASE_ANON_KEY
+```
+
+The workflow also supports manual runs from the GitHub Actions tab.

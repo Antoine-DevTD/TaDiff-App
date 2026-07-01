@@ -1,0 +1,71 @@
+name: Supabase heartbeat
+
+on:
+  schedule:
+    # GitHub cron is UTC. Running both slots keeps 10:00 Europe/Paris across DST.
+    - cron: "0 8 * * 2,5"
+    - cron: "0 9 * * 2,5"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Supabase REST API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check Paris schedule window
+        id: schedule
+        shell: bash
+        run: |
+          paris_hour="$(TZ=Europe/Paris date +'%H')"
+          paris_weekday="$(TZ=Europe/Paris date +'%u')"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$paris_hour" == "10" && ( "$paris_weekday" == "2" || "$paris_weekday" == "5" ) ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ping Supabase
+        if: steps.schedule.outputs.run == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        shell: bash
+        run: |
+          if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_ANON_KEY" ]]; then
+            echo "Missing SUPABASE_URL or SUPABASE_ANON_KEY GitHub secret."
+            exit 1
+          fi
+
+          endpoint="${SUPABASE_URL%/}/rest/v1/companies?select=id&limit=1"
+          status_code="$(
+            curl \
+              --silent \
+              --show-error \
+              --location \
+              --output /tmp/supabase-heartbeat.json \
+              --write-out "%{http_code}" \
+              "$endpoint" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "Accept: application/json"
+          )"
+
+          if [[ "$status_code" -lt 200 || "$status_code" -ge 300 ]]; then
+            echo "Supabase heartbeat failed with HTTP $status_code."
+            cat /tmp/supabase-heartbeat.json
+            exit 1
+          fi
+
+          echo "Supabase heartbeat succeeded with HTTP $status_code."
+
+      - name: Skip duplicate UTC slot
+        if: steps.schedule.outputs.run != 'true'
+        run: echo "Skipped because it is not 10:00 in Europe/Paris."
