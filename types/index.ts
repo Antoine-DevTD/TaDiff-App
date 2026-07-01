@@ -8,6 +8,7 @@ export type Show = {
   nextDate: string;
   budget: number;
   notes: string;
+  costProfile?: CostProfile;
 };
 
 export type Contact = {
@@ -44,6 +45,8 @@ export type PipelineDeal = {
   contactOrganization: string;
   showTitle: string;
   createdAt: string;
+  commercialPackId?: string;
+  quoteId?: string;
 };
 
 export type Reminder = {
@@ -53,4 +56,118 @@ export type Reminder = {
   relatedTo: string;
   done: boolean;
   priority: "low" | "normal" | "high";
+};
+
+export type CostProfile = {
+  artistFees: number;
+  technicalFees: number;
+  rights: number;
+  production: number;
+  transportPerKm: number;
+  hotelPerNight: number;
+  socialChargesRate: number;
+  tourCommissionRate: number;
+};
+
+export type ProfitabilityInput = {
+  salePrice: number;
+  performanceCount: number;
+  distanceKm: number;
+  hotelNights: number;
+  workshopRevenue: number;
+  subsidyRevenue: number;
+  strategicTags: string[];
+  costProfile: CostProfile;
+};
+
+export type ProfitabilityVerdict =
+  | "rentable"
+  | "equilibre"
+  | "strategique"
+  | "deficitaire";
+
+export type ProfitabilityResult = {
+  breakEven: number;
+  commissionCost: number;
+  fixedCost: number;
+  grossRevenue: number;
+  margin: number;
+  marginRate: number;
+  totalCost: number;
+  verdict: ProfitabilityVerdict;
+  suggestions: string[];
+};
+
+export type CommercialPack = {
+  id: string;
+  name: string;
+  description: string;
+  multiplier: number;
+  includes: string[];
+  recommendedFor: string;
+};
+
+export type GrantStatus = "A surveiller" | "En montage" | "Depose" | "Attribue";
+
+export type GrantOpportunity = {
+  id: string;
+  title: string;
+  funder: string;
+  territory: string;
+  discipline: string;
+  deadline: string;
+  amount: number;
+  status: GrantStatus;
+  relatedShowId?: string;
+};
+
+export type PatronageStatus = "Prospect" | "Argumentaire" | "Negociation" | "Signe";
+
+export type PatronageDeal = {
+  id: string;
+  companyName: string;
+  contactName: string;
+  amount: number;
+  status: PatronageStatus;
+  nextAction: string;
+  nextFollowUpAt: string;
+  packId: string;
+};
+
+export type EmailCampaignStatus = "Brouillon" | "Prete" | "Envoyee";
+
+export type EmailCampaign = {
+  id: string;
+  name: string;
+  template: string;
+  audience: string;
+  status: EmailCampaignStatus;
+  sentCount: number;
+  openRate: number;
+  nextSendAt: string;
+};
+
+export type BillingPlan = {
+  id: string;
+  name: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  description: string;
+  features: string[];
+  current?: boolean;
+};
+
+export type QuoteStatus = "A preparer" | "Envoye" | "Acompte attendu" | "Solde attendu" | "Archive";
+
+export type QuoteItem = {
+  id: string;
+  number: string;
+  dealId: string;
+  title: string;
+  organization: string;
+  amount: number;
+  depositDue: number;
+  balanceDue: number;
+  status: QuoteStatus;
+  dueDate: string;
 };

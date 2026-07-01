@@ -135,9 +135,14 @@ export default async function DashboardPage() {
               detail="Creer une fiche diffusion propre avec prochaine date et budget."
             />
             <ActionLink
-              href="/contacts/new"
-              title="Ajouter un contact"
-              detail="Enregistrer une salle, un programmateur ou un partenaire."
+              href="/subventions"
+              title="Verifier les subventions"
+              detail="Voir les deadlines DRAC, Region et fondations."
+            />
+            <ActionLink
+              href="/billing"
+              title="Suivre les devis"
+              detail="Controler acomptes, soldes et export comptable."
             />
           </div>
         </Card>

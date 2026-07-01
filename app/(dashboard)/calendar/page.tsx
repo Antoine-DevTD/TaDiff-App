@@ -3,13 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getReminders, getShows } from "@/lib/supabase/queries";
+import { getGrantOpportunities, getReminders, getShows } from "@/lib/supabase/queries";
 
 type CalendarItem = {
   id: string;
   date: string;
   href: string;
-  kind: "show" | "reminder";
+  kind: "grant" | "show" | "reminder";
   label: string;
   meta: string;
   tone: "neutral" | "success" | "warning" | "danger";
@@ -50,8 +50,10 @@ function getMonthKey(date: string) {
 
 function buildCalendarItems({
   reminders,
+  grants,
   shows,
 }: {
+  grants: Awaited<ReturnType<typeof getGrantOpportunities>>;
   reminders: Awaited<ReturnType<typeof getReminders>>;
   shows: Awaited<ReturnType<typeof getShows>>;
 }): CalendarItem[] {
@@ -77,14 +79,28 @@ function buildCalendarItems({
       tone: show.status === "En diffusion" ? "success" : "neutral",
     }));
 
-  return [...reminderItems, ...showItems].sort(
+  const grantItems: CalendarItem[] = grants.map((grant) => ({
+    id: `grant-${grant.id}`,
+    date: grant.deadline,
+    href: "/subventions",
+    kind: "grant",
+    label: grant.title,
+    meta: `${grant.funder} Â· ${grant.status}`,
+    tone: getReminderTone(grant.deadline),
+  }));
+
+  return [...reminderItems, ...showItems, ...grantItems].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   );
 }
 
 export default async function CalendarPage() {
-  const [shows, reminders] = await Promise.all([getShows(), getReminders()]);
-  const items = buildCalendarItems({ reminders, shows });
+  const [shows, reminders, grants] = await Promise.all([
+    getShows(),
+    getReminders(),
+    getGrantOpportunities(),
+  ]);
+  const items = buildCalendarItems({ grants, reminders, shows });
   const upcomingItems = items.slice(0, 5);
   const groupedByMonth = items.reduce<Record<string, CalendarItem[]>>((acc, item) => {
     const key = getMonthKey(item.date);
@@ -125,9 +141,9 @@ export default async function CalendarPage() {
               detail="Prochaines sorties programmees"
             />
             <MetricCard
-              label="Mois visibles"
-              value={Object.keys(groupedByMonth).length.toString()}
-              detail="Horizon actuel du planning"
+              label="Subventions"
+              value={grants.length.toString()}
+              detail="Deadlines integrees"
             />
           </section>
 
@@ -223,14 +239,18 @@ function TimelineRow({ item }: { item: CalendarItem }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{item.label}</p>
-          <Badge tone={item.tone}>{item.kind === "reminder" ? "Relance" : "Spectacle"}</Badge>
+          <Badge tone={item.tone}>
+            {item.kind === "reminder" ? "Relance" : item.kind === "grant" ? "Subvention" : "Spectacle"}
+          </Badge>
         </div>
         <p className="mt-1 text-sm text-muted">
           {item.meta} · {new Date(item.date).toLocaleDateString("fr-FR")}
         </p>
       </div>
       <Badge tone={item.tone}>
-        {item.kind === "reminder" ? getReminderLabel(item.date) : "Date programmee"}
+        {item.kind === "reminder" || item.kind === "grant"
+          ? getReminderLabel(item.date)
+          : "Date programmee"}
       </Badge>
     </Link>
   );
@@ -242,7 +262,9 @@ function MonthRow({ item }: { item: CalendarItem }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{item.label}</p>
-          <Badge tone={item.tone}>{item.kind === "reminder" ? "Relance" : "Spectacle"}</Badge>
+          <Badge tone={item.tone}>
+            {item.kind === "reminder" ? "Relance" : item.kind === "grant" ? "Subvention" : "Spectacle"}
+          </Badge>
         </div>
         <p className="mt-1 text-sm text-muted">{item.meta}</p>
       </div>
@@ -256,7 +278,9 @@ function MonthRow({ item }: { item: CalendarItem }) {
             })}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {item.kind === "reminder" ? getReminderLabel(item.date) : "Prochaine date"}
+            {item.kind === "reminder" || item.kind === "grant"
+              ? getReminderLabel(item.date)
+              : "Prochaine date"}
           </p>
         </div>
         <ButtonLink href={item.href} variant="secondary">

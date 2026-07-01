@@ -1,4 +1,27 @@
-import type { Contact, PipelineDeal, Reminder, Show } from "@/types";
+import type {
+  BillingPlan,
+  CommercialPack,
+  Contact,
+  CostProfile,
+  EmailCampaign,
+  GrantOpportunity,
+  PatronageDeal,
+  PipelineDeal,
+  QuoteItem,
+  Reminder,
+  Show,
+} from "@/types";
+
+export const defaultCostProfile: CostProfile = {
+  artistFees: 1200,
+  technicalFees: 650,
+  rights: 180,
+  production: 420,
+  transportPerKm: 0.45,
+  hotelPerNight: 90,
+  socialChargesRate: 0.05,
+  tourCommissionRate: 0.08,
+};
 
 export const shows: Show[] = [
   {
@@ -8,7 +31,14 @@ export const shows: Show[] = [
     status: "En diffusion",
     nextDate: "2026-09-18",
     budget: 12500,
-    notes: "Version legere en tournée. Dossier diffusion et fiche technique à tenir à jour.",
+    notes: "Version legere en tournee. Dossier diffusion et fiche technique a tenir a jour.",
+    costProfile: {
+      ...defaultCostProfile,
+      artistFees: 1450,
+      technicalFees: 720,
+      rights: 220,
+      production: 500,
+    },
   },
   {
     id: "show-2",
@@ -17,7 +47,14 @@ export const shows: Show[] = [
     status: "Creation",
     nextDate: "2026-11-04",
     budget: 18400,
-    notes: "Montage coproduction en cours. Besoins lumière et résidence à confirmer.",
+    notes: "Montage coproduction en cours. Besoins lumiere et residence a confirmer.",
+    costProfile: {
+      ...defaultCostProfile,
+      artistFees: 2100,
+      technicalFees: 900,
+      production: 820,
+      tourCommissionRate: 0.1,
+    },
   },
   {
     id: "show-3",
@@ -27,6 +64,13 @@ export const shows: Show[] = [
     nextDate: "2027-01-12",
     budget: 9200,
     notes: "Projet en pause, relance possible sur la prochaine saison scolaire.",
+    costProfile: {
+      ...defaultCostProfile,
+      artistFees: 900,
+      technicalFees: 420,
+      rights: 120,
+      production: 360,
+    },
   },
 ];
 
@@ -77,6 +121,8 @@ export const pipelineDeals: PipelineDeal[] = [
     contactOrganization: "Scene nationale du Littoral",
     showTitle: "Les lignes de fuite",
     createdAt: "2026-06-12",
+    commercialPackId: "pack-school",
+    quoteId: "quote-1",
   },
   {
     id: "deal-2",
@@ -94,6 +140,8 @@ export const pipelineDeals: PipelineDeal[] = [
     contactOrganization: "Festival Passages",
     showTitle: "Le cabinet des songes",
     createdAt: "2026-06-15",
+    commercialPackId: "pack-school",
+    quoteId: "quote-2",
   },
   {
     id: "deal-3",
@@ -111,6 +159,8 @@ export const pipelineDeals: PipelineDeal[] = [
     contactOrganization: "Theatre du Nord",
     showTitle: "Cendres claires",
     createdAt: "2026-06-18",
+    commercialPackId: "pack-residency",
+    quoteId: "quote-3",
   },
 ];
 
@@ -146,4 +196,198 @@ export const dashboardStats = [
   { label: "Prospects ouverts", value: "42", detail: "+8 ce mois" },
   { label: "Relances a venir", value: "11", detail: "4 cette semaine" },
   { label: "CA previsionnel", value: "48 900 EUR", detail: "Pipeline qualifie" },
+];
+
+export const commercialPacks: CommercialPack[] = [
+  {
+    id: "pack-school",
+    name: "Pack scolaire",
+    description: "Representation, mediation et atelier pour transformer une cession en action culturelle.",
+    multiplier: 1.25,
+    includes: ["Representation", "Atelier scolaire", "Dossier pedagogique", "Rencontre equipe"],
+    recommendedFor: "Salles municipales, colleges, scenes jeune public",
+  },
+  {
+    id: "pack-press",
+    name: "Pack presse",
+    description: "Argumentaire, elements visuels et relance dediee pour une date a visibilite forte.",
+    multiplier: 1.15,
+    includes: ["Kit presse", "Captation courte", "Relance journalistes", "Bilan impact"],
+    recommendedFor: "Festivals, premieres, tournees de lancement",
+  },
+  {
+    id: "pack-residency",
+    name: "Pack festival / residence",
+    description: "Offre renforcee pour vendre un temps long avec repetition ouverte et restitution.",
+    multiplier: 1.45,
+    includes: ["Residence", "Bord plateau", "Action territoriale", "Restitution"],
+    recommendedFor: "Festivals, scenes conventionnees, lieux de creation",
+  },
+  {
+    id: "pack-patronage",
+    name: "Pack entreprise mecene",
+    description: "Contreparties claires et calcul de deduction fiscale pour convaincre une entreprise.",
+    multiplier: 1.6,
+    includes: ["Soiree partenaire", "Places invitees", "Visibilite logo", "Recu fiscal"],
+    recommendedFor: "Entreprises locales, fondations, clubs d'affaires",
+  },
+];
+
+export const grantOpportunities: GrantOpportunity[] = [
+  {
+    id: "grant-1",
+    title: "Aide a la creation",
+    funder: "DRAC Ile-de-France",
+    territory: "Ile-de-France",
+    discipline: "Theatre",
+    deadline: "2026-07-19",
+    amount: 8000,
+    status: "En montage",
+    relatedShowId: "show-2",
+  },
+  {
+    id: "grant-2",
+    title: "Aide a la diffusion regionale",
+    funder: "Region Nouvelle-Aquitaine",
+    territory: "Nouvelle-Aquitaine",
+    discipline: "Spectacle vivant",
+    deadline: "2026-08-05",
+    amount: 4500,
+    status: "A surveiller",
+    relatedShowId: "show-1",
+  },
+  {
+    id: "grant-3",
+    title: "Fonds theatre contemporain",
+    funder: "SACD",
+    territory: "National",
+    discipline: "Theatre",
+    deadline: "2026-09-12",
+    amount: 2000,
+    status: "Depose",
+    relatedShowId: "show-1",
+  },
+];
+
+export const patronageDeals: PatronageDeal[] = [
+  {
+    id: "patronage-1",
+    companyName: "Ateliers Rochefort",
+    contactName: "Nadia Morel",
+    amount: 5000,
+    status: "Argumentaire",
+    nextAction: "Envoyer proposition Pack entreprise mecene",
+    nextFollowUpAt: "2026-07-06",
+    packId: "pack-patronage",
+  },
+  {
+    id: "patronage-2",
+    companyName: "Fondation Horizon",
+    contactName: "Eliott Mercier",
+    amount: 12000,
+    status: "Negociation",
+    nextAction: "Preciser contreparties et calendrier de visibilite",
+    nextFollowUpAt: "2026-07-10",
+    packId: "pack-patronage",
+  },
+];
+
+export const emailCampaigns: EmailCampaign[] = [
+  {
+    id: "campaign-1",
+    name: "Relance programmateurs automne",
+    template: "Diffusion spectacle",
+    audience: "Programmateurs en discussion",
+    status: "Prete",
+    sentCount: 0,
+    openRate: 0,
+    nextSendAt: "2026-07-04",
+  },
+  {
+    id: "campaign-2",
+    name: "Pack scolaire jeune public",
+    template: "Offre mediation",
+    audience: "Villes et services culture",
+    status: "Brouillon",
+    sentCount: 0,
+    openRate: 0,
+    nextSendAt: "2026-07-12",
+  },
+  {
+    id: "campaign-3",
+    name: "Bilan festival et presse",
+    template: "News de tournee",
+    audience: "Partenaires et presse",
+    status: "Envoyee",
+    sentCount: 214,
+    openRate: 42,
+    nextSendAt: "",
+  },
+];
+
+export const billingPlans: BillingPlan[] = [
+  {
+    id: "solo",
+    name: "Solo",
+    monthlyPrice: 49,
+    annualPrice: 39,
+    description: "Pour une compagnie avec un spectacle actif en lancement de diffusion.",
+    features: ["1 spectacle actif", "500 contacts CRM", "Calculateur rentabilite", "Radar subventions", "200 emails / mois"],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    monthlyPrice: 99,
+    annualPrice: 79,
+    description: "Pour les compagnies avec plusieurs spectacles et une equipe de diffusion.",
+    features: ["3 spectacles actifs", "2 000 contacts CRM", "Mecenat", "1 000 emails / mois", "Export FEC"],
+    current: true,
+  },
+  {
+    id: "studio",
+    name: "Studio",
+    monthlyPrice: 199,
+    annualPrice: 159,
+    description: "Pour les structures professionnalisees avec catalogue large.",
+    features: ["Spectacles illimites", "Contacts illimites", "Tous modules", "5 000 emails / mois", "Support prioritaire"],
+  },
+];
+
+export const quoteItems: QuoteItem[] = [
+  {
+    id: "quote-1",
+    number: "DEV-2026-001",
+    dealId: "deal-1",
+    title: "Accueil plateau automne",
+    organization: "Scene nationale du Littoral",
+    amount: 7800,
+    depositDue: 2340,
+    balanceDue: 5460,
+    status: "Acompte attendu",
+    dueDate: "2026-07-15",
+  },
+  {
+    id: "quote-2",
+    number: "DEV-2026-002",
+    dealId: "deal-2",
+    title: "Serie scolaire",
+    organization: "Festival Passages",
+    amount: 5400,
+    depositDue: 1620,
+    balanceDue: 3780,
+    status: "Envoye",
+    dueDate: "2026-07-20",
+  },
+  {
+    id: "quote-3",
+    number: "DEV-2026-003",
+    dealId: "deal-3",
+    title: "Coproduction creation",
+    organization: "Theatre du Nord",
+    amount: 15000,
+    depositDue: 4500,
+    balanceDue: 10500,
+    status: "A preparer",
+    dueDate: "2026-08-01",
+  },
 ];

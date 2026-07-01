@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: "%s | TaDiff",
   },
   description:
-    "Une web app SaaS pour organiser spectacles, contacts, relances, documents et pilotage commercial des compagnies.",
+    "Une web app SaaS pour piloter diffusion, rentabilite, subventions, mecenat, devis et finances des compagnies.",
   applicationName: "TaDiff",
   manifest: "/manifest.json",
   appleWebApp: {

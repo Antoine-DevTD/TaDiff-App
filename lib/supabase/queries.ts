@@ -1,7 +1,30 @@
-import { contacts, dashboardStats, pipelineDeals, reminders, shows } from "@/data/mock-data";
+import {
+  billingPlans,
+  commercialPacks,
+  contacts,
+  dashboardStats,
+  emailCampaigns,
+  grantOpportunities,
+  patronageDeals,
+  pipelineDeals,
+  quoteItems,
+  reminders,
+  shows,
+} from "@/data/mock-data";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import type { Contact, PipelineDeal, Reminder, Show } from "@/types";
+import type {
+  BillingPlan,
+  CommercialPack,
+  Contact,
+  EmailCampaign,
+  GrantOpportunity,
+  PatronageDeal,
+  PipelineDeal,
+  QuoteItem,
+  Reminder,
+  Show,
+} from "@/types";
 
 type DashboardStat = {
   detail: string;
@@ -370,6 +393,30 @@ export async function getDashboardData() {
     reminders: resolvedReminders,
     shows: resolvedShows,
   };
+}
+
+export async function getCommercialPacks(): Promise<CommercialPack[]> {
+  return commercialPacks;
+}
+
+export async function getGrantOpportunities(): Promise<GrantOpportunity[]> {
+  return grantOpportunities;
+}
+
+export async function getPatronageDeals(): Promise<PatronageDeal[]> {
+  return patronageDeals;
+}
+
+export async function getEmailCampaigns(): Promise<EmailCampaign[]> {
+  return emailCampaigns;
+}
+
+export async function getBillingPlans(): Promise<BillingPlan[]> {
+  return billingPlans;
+}
+
+export async function getQuoteItems(): Promise<QuoteItem[]> {
+  return quoteItems;
 }
 
 function buildDashboardStats({

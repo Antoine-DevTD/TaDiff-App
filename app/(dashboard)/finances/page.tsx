@@ -2,7 +2,13 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getPipelineDeals, getReminders, getShows } from "@/lib/supabase/queries";
+import {
+  getPipelineDeals,
+  getQuoteItems,
+  getReminders,
+  getShows,
+} from "@/lib/supabase/queries";
+import { buildDealProfitability, formatCurrency, getVerdictMeta } from "@/lib/finance";
 import type { PipelineDeal, Reminder } from "@/types";
 
 function getWeightedValue(deal: PipelineDeal) {
@@ -52,10 +58,11 @@ function getFinanceTone(stage: PipelineDeal["stage"]) {
 }
 
 export default async function FinancesPage() {
-  const [deals, reminders, shows] = await Promise.all([
+  const [deals, reminders, shows, quotes] = await Promise.all([
     getPipelineDeals(),
     getReminders(),
     getShows(),
+    getQuoteItems(),
   ]);
 
   const signedDeals = deals.filter((deal) => deal.stage === "Confirme");
@@ -64,6 +71,16 @@ export default async function FinancesPage() {
   const weightedRevenue = activeDeals.reduce((total, deal) => total + getWeightedValue(deal), 0);
   const pipelineRaw = activeDeals.reduce((total, deal) => total + deal.value, 0);
   const totalBudgets = shows.reduce((total, show) => total + show.budget, 0);
+  const quoteBalance = quotes.reduce((total, quote) => total + quote.depositDue + quote.balanceDue, 0);
+  const showMap = new Map(shows.map((show) => [show.id, show]));
+  const profitabilityRows = deals
+    .filter((deal) => deal.stage !== "Perdu")
+    .map((deal) => ({
+      deal,
+      result: buildDealProfitability({ deal, show: showMap.get(deal.showId) }),
+    }))
+    .sort((a, b) => a.result.margin - b.result.margin)
+    .slice(0, 5);
 
   const cashFocus = buildCashFocus(deals, reminders);
   const focusDeal = cashFocus[0]?.deal ?? signedDeals[0] ?? activeDeals[0] ?? null;
@@ -122,8 +139,76 @@ export default async function FinancesPage() {
             <MetricCard
               label="Budgets spectacle"
               value={`${totalBudgets.toLocaleString("fr-FR")} EUR`}
-              detail="Somme des budgets suivis"
+              detail={`Devis ${formatCurrency(quoteBalance)}`}
             />
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            <Card className="space-y-4 p-5">
+              <div>
+                <p className="text-base font-semibold">Rentabilite des dates</p>
+                <p className="mt-1 text-sm text-muted">
+                  Les opportunites sont classees avec la structure de couts du spectacle.
+                </p>
+              </div>
+              <div className="space-y-3">
+                {profitabilityRows.map(({ deal, result }) => {
+                  const verdict = getVerdictMeta(result.verdict);
+
+                  return (
+                    <Link
+                      key={deal.id}
+                      className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
+                      href={deal.showId ? `/shows/${deal.showId}` : "/pipeline"}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium">{deal.title}</p>
+                          <p className="mt-1 text-sm text-muted">{deal.showTitle}</p>
+                        </div>
+                        <Badge tone={verdict.tone}>{verdict.label}</Badge>
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                        <FinanceCell label="Marge" value={formatCurrency(result.margin)} />
+                        <FinanceCell label="Point mort" value={formatCurrency(result.breakEven)} />
+                        <FinanceCell label="Prix" value={formatCurrency(deal.value)} />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card className="space-y-4 p-5">
+              <div>
+                <p className="text-base font-semibold">Devis et encaissements</p>
+                <p className="mt-1 text-sm text-muted">
+                  Les acomptes et soldes viennent du module facturation.
+                </p>
+              </div>
+              <div className="space-y-3">
+                {quotes.map((quote) => (
+                  <Link
+                    key={quote.id}
+                    className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
+                    href="/billing"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{quote.number}</p>
+                        <p className="mt-1 text-sm text-muted">{quote.organization}</p>
+                      </div>
+                      <Badge>{quote.status}</Badge>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                      <FinanceCell label="Montant" value={formatCurrency(quote.amount)} />
+                      <FinanceCell label="Acompte" value={formatCurrency(quote.depositDue)} />
+                      <FinanceCell label="Solde" value={formatCurrency(quote.balanceDue)} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </Card>
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">

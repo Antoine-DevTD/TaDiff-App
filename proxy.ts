@@ -8,9 +8,13 @@ const protectedRoutes = [
   "/pipeline",
   "/reminders",
   "/calendar",
+  "/subventions",
+  "/mecenat",
+  "/campaigns",
   "/contracts",
   "/finances",
   "/documents",
+  "/billing",
   "/settings",
 ];
 
@@ -75,9 +79,13 @@ export const config = {
     "/pipeline/:path*",
     "/reminders/:path*",
     "/calendar/:path*",
+    "/subventions/:path*",
+    "/mecenat/:path*",
+    "/campaigns/:path*",
     "/contracts/:path*",
     "/finances/:path*",
     "/documents/:path*",
+    "/billing/:path*",
     "/settings/:path*",
   ],
 };
