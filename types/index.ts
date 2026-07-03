@@ -146,6 +146,10 @@ export type GrantOpportunity = {
   amount: number;
   status: GrantStatus;
   relatedShowId?: string;
+  requirements?: ShowDocumentType[];
+  eligibility?: string;
+  sourceUrl?: string;
+  themes?: string[];
 };
 
 export type PatronageStatus = "Prospect" | "Argumentaire" | "Negociation" | "Signe";

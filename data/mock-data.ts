@@ -315,6 +315,19 @@ export const grantOpportunities: GrantOpportunity[] = [
     amount: 8000,
     status: "En montage",
     relatedShowId: "show-2",
+    requirements: [
+      "Dossier artistique",
+      "Note d'intention",
+      "Synopsis",
+      "Budget",
+      "Fiche technique",
+      "RIB",
+      "Statuts",
+    ],
+    eligibility: "Equipe artistique professionnelle avec projet de creation identifie.",
+    sourceUrl:
+      "https://www.culture.gouv.fr/catalogue-des-demarches-et-subventions/subvention/aide-au-projet-ou-au-fonctionnement-spectacle-vivant-et-arts-visuels",
+    themes: ["Creation", "Theatre", "DRAC"],
   },
   {
     id: "grant-2",
@@ -326,6 +339,18 @@ export const grantOpportunities: GrantOpportunity[] = [
     amount: 4500,
     status: "A surveiller",
     relatedShowId: "show-1",
+    requirements: [
+      "Dossier artistique",
+      "Synopsis",
+      "Budget",
+      "Fiche technique",
+      "Devis",
+      "RIB",
+      "Statuts",
+    ],
+    eligibility: "Projet diffuse sur le territoire regional avec partenaires identifies.",
+    sourceUrl: "https://www.nouvelle-aquitaine.fr/",
+    themes: ["Diffusion", "Region", "Tournee"],
   },
   {
     id: "grant-3",
@@ -337,6 +362,17 @@ export const grantOpportunities: GrantOpportunity[] = [
     amount: 2000,
     status: "Depose",
     relatedShowId: "show-1",
+    requirements: [
+      "Dossier artistique",
+      "Note d'intention",
+      "Synopsis",
+      "Texte",
+      "Budget",
+      "RIB",
+    ],
+    eligibility: "Projet porte par une compagnie ou un auteur autour d'une oeuvre contemporaine.",
+    sourceUrl: "https://www.sacd.fr/",
+    themes: ["Theatre", "Auteur", "Texte"],
   },
 ];
 

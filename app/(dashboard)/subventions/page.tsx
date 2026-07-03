@@ -1,10 +1,22 @@
-import Link from "next/link";
+import { GrantDossierZipButton } from "@/components/grants/grant-dossier-zip-button";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency } from "@/lib/finance";
-import { getGrantOpportunities, getShows } from "@/lib/supabase/queries";
+import {
+  buildGrantDossierState,
+  getDossierReadinessPercent,
+  getDossierTone,
+  getRequirementLabel,
+  getRequirementTone,
+  type GrantDossierState,
+} from "@/lib/grants";
+import {
+  getGrantOpportunities,
+  getShowDocuments,
+  getShows,
+} from "@/lib/supabase/queries";
 import type { GrantOpportunity } from "@/types";
 
 function startOfDay(date: Date) {
@@ -38,12 +50,32 @@ function getDeadlineLabel(deadline: string) {
 }
 
 export default async function SubventionsPage() {
-  const [grants, shows] = await Promise.all([getGrantOpportunities(), getShows()]);
+  const [grants, shows, documents] = await Promise.all([
+    getGrantOpportunities(),
+    getShows(),
+    getShowDocuments(),
+  ]);
   const showMap = new Map(shows.map((show) => [show.id, show]));
+  const dossierStates = grants.map((grant) => {
+    const show = grant.relatedShowId ? showMap.get(grant.relatedShowId) ?? null : null;
+    const showDocuments = show
+      ? documents.filter((document) => document.showId === show.id)
+      : [];
+
+    return buildGrantDossierState({ documents: showDocuments, grant, show });
+  });
   const totalExpected = grants.reduce((total, grant) => total + grant.amount, 0);
-  const urgent = grants.filter((grant) => getGrantTone(grant) === "warning" || getGrantTone(grant) === "danger");
-  const mounted = grants.filter((grant) => grant.status === "En montage");
-  const deposited = grants.filter((grant) => grant.status === "Depose" || grant.status === "Attribue");
+  const urgent = dossierStates.filter(
+    (state) => getGrantTone(state.grant) === "warning" || getGrantTone(state.grant) === "danger",
+  );
+  const mounted = dossierStates.filter((state) => state.grant.status === "En montage");
+  const deposited = dossierStates.filter(
+    (state) => state.grant.status === "Depose" || state.grant.status === "Attribue",
+  );
+  const missingPieces = dossierStates.reduce((total, state) => total + state.missingCount, 0);
+  const readyDossiers = dossierStates.filter(
+    (state) => state.missingCount === 0 && state.updateCount === 0,
+  );
 
   return (
     <div className="space-y-6">
@@ -68,8 +100,8 @@ export default async function SubventionsPage() {
         <>
           <section className="grid gap-4 md:grid-cols-4">
             <MetricCard label="Aides suivies" value={grants.length.toString()} detail="Dispositifs actifs" />
-            <MetricCard label="A monter" value={mounted.length.toString()} detail="Dossiers en cours" />
-            <MetricCard label="Urgences" value={urgent.length.toString()} detail="Deadline proche" />
+            <MetricCard label="Dossiers prets" value={readyDossiers.length.toString()} detail="Pieces disponibles" />
+            <MetricCard label="Pieces manquantes" value={missingPieces.toString()} detail="Avant depot" />
             <MetricCard label="Montant cible" value={formatCurrency(totalExpected)} detail="Total attendu" />
           </section>
 
@@ -78,18 +110,15 @@ export default async function SubventionsPage() {
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted">Priorites</p>
                 <p className="mt-2 text-xl font-semibold">
-                  {urgent[0]?.title ?? mounted[0]?.title ?? grants[0]?.title}
+                  {urgent[0]?.grant.title ?? mounted[0]?.grant.title ?? grants[0]?.title}
                 </p>
               </div>
               <div className="space-y-3">
                 {[...urgent, ...mounted].slice(0, 4).map((grant) => {
-                  const show = grant.relatedShowId ? showMap.get(grant.relatedShowId) : null;
-
                   return (
                     <GrantRow
-                      key={grant.id}
-                      grant={grant}
-                      showTitle={show?.title}
+                      key={grant.grant.id}
+                      state={grant}
                     />
                   );
                 })}
@@ -98,32 +127,26 @@ export default async function SubventionsPage() {
 
             <Card className="space-y-4 p-5">
               <div>
-                <p className="text-base font-semibold">Bilan financier aides</p>
+                <p className="text-base font-semibold">Depot simplifie</p>
                 <p className="mt-1 text-sm text-muted">
-                  Le montant attendu se rapproche du budget spectacle et du pipeline.
+                  TaDiff rapproche chaque subvention des pieces du spectacle et prepare un zip de depot.
                 </p>
               </div>
               <div className="grid gap-3">
-                {deposited.map((grant) => (
-                  <div key={grant.id} className="rounded-lg border border-border bg-panel-strong/35 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{grant.funder}</p>
-                        <p className="mt-1 text-sm text-muted">{grant.title}</p>
-                      </div>
-                      <Badge tone={getGrantTone(grant)}>{grant.status}</Badge>
-                    </div>
-                    <p className="mt-3 text-sm font-medium">{formatCurrency(grant.amount)}</p>
-                  </div>
+                {dossierStates.slice(0, 3).map((state) => (
+                  <DossierSummary key={state.grant.id} state={state} />
                 ))}
               </div>
             </Card>
           </section>
 
           <section className="grid gap-6 xl:grid-cols-3">
-            <GrantColumn title="A surveiller" grants={grants.filter((grant) => grant.status === "A surveiller")} />
-            <GrantColumn title="En montage" grants={mounted} />
-            <GrantColumn title="Depose / attribue" grants={deposited} />
+            <GrantColumn
+              title="A surveiller"
+              states={dossierStates.filter((state) => state.grant.status === "A surveiller")}
+            />
+            <GrantColumn title="En montage" states={mounted} />
+            <GrantColumn title="Depose / attribue" states={deposited} />
           </section>
         </>
       )}
@@ -131,21 +154,21 @@ export default async function SubventionsPage() {
   );
 }
 
-function GrantColumn({ grants, title }: { grants: GrantOpportunity[]; title: string }) {
+function GrantColumn({ states, title }: { states: GrantDossierState[]; title: string }) {
   return (
     <Card className="space-y-4 p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-base font-semibold">{title}</p>
-        <Badge>{grants.length}</Badge>
+        <Badge>{states.length}</Badge>
       </div>
-      {grants.length === 0 ? (
+      {states.length === 0 ? (
         <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted">
           Aucun dossier dans cette colonne.
         </p>
       ) : (
         <div className="space-y-3">
-          {grants.map((grant) => (
-            <GrantRow key={grant.id} grant={grant} />
+          {states.map((state) => (
+            <GrantRow key={state.grant.id} state={state} />
           ))}
         </div>
       )}
@@ -153,16 +176,16 @@ function GrantColumn({ grants, title }: { grants: GrantOpportunity[]; title: str
   );
 }
 
-function GrantRow({ grant, showTitle }: { grant: GrantOpportunity; showTitle?: string }) {
+function GrantRow({ state }: { state: GrantDossierState }) {
+  const readiness = getDossierReadinessPercent(state);
+  const grant = state.grant;
+
   return (
-    <Link
-      className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
-      href={grant.relatedShowId ? `/shows/${grant.relatedShowId}` : "/subventions"}
-    >
+    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium">{grant.funder}</p>
-          <p className="mt-1 text-sm text-muted">{showTitle ?? grant.title}</p>
+          <p className="mt-1 text-sm text-muted">{state.show?.title ?? grant.title}</p>
         </div>
         <Badge tone={getGrantTone(grant)}>{getDeadlineLabel(grant.deadline)}</Badge>
       </div>
@@ -176,7 +199,75 @@ function GrantRow({ grant, showTitle }: { grant: GrantOpportunity; showTitle?: s
           <p className="mt-1 font-medium">{grant.territory}</p>
         </div>
       </div>
-    </Link>
+      <div className="mt-3 rounded-md border border-border bg-panel/70 p-3">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <p className="font-medium">Dossier</p>
+          <Badge tone={getDossierTone(state)}>
+            {state.readyCount}/{state.totalCount} pieces
+          </Badge>
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
+          <div className="h-full rounded-full bg-accent" style={{ width: `${readiness}%` }} />
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          {state.missingCount === 0
+            ? "Toutes les pieces demandees sont disponibles."
+            : `${state.missingCount} piece(s) manquante(s), ${state.updateCount} a revoir.`}
+        </p>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {state.requirements.slice(0, 5).map((requirement) => (
+          <Badge key={requirement.type} tone={getRequirementTone(requirement.status)}>
+            {requirement.type}
+          </Badge>
+        ))}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {state.show ? (
+          <ButtonLink href={`/shows/${state.show.id}`} variant="secondary">
+            Voir le spectacle
+          </ButtonLink>
+        ) : null}
+        <GrantDossierZipButton state={state} />
+      </div>
+    </div>
+  );
+}
+
+function DossierSummary({ state }: { state: GrantDossierState }) {
+  return (
+    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium">{state.grant.funder}</p>
+          <p className="mt-1 text-sm text-muted">{state.grant.title}</p>
+        </div>
+        <Badge tone={getDossierTone(state)}>{getDossierReadinessPercent(state)}%</Badge>
+      </div>
+      {state.grant.eligibility ? (
+        <p className="mt-3 text-sm text-muted">{state.grant.eligibility}</p>
+      ) : null}
+      <div className="mt-3 grid gap-2">
+        {state.requirements.slice(0, 4).map((requirement) => (
+          <div key={requirement.type} className="flex items-center justify-between gap-3 text-sm">
+            <span>{requirement.type}</span>
+            <Badge tone={getRequirementTone(requirement.status)}>
+              {getRequirementLabel(requirement.status)}
+            </Badge>
+          </div>
+        ))}
+      </div>
+      {state.grant.sourceUrl ? (
+        <a
+          className="mt-4 inline-flex text-sm font-medium text-accent hover:text-accent-strong"
+          href={state.grant.sourceUrl}
+          rel="noreferrer"
+          target="_blank"
+        >
+          Source officielle
+        </a>
+      ) : null}
+    </div>
   );
 }
 
