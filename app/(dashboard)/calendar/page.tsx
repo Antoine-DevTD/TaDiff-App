@@ -75,7 +75,7 @@ function buildCalendarItems({
       href: `/shows/${show.id}`,
       kind: "show",
       label: show.title,
-      meta: `${show.discipline} · ${show.status}`,
+      meta: `${show.discipline} - ${show.status}`,
       tone: show.status === "En diffusion" ? "success" : "neutral",
     }));
 
@@ -85,7 +85,7 @@ function buildCalendarItems({
     href: "/subventions",
     kind: "grant",
     label: grant.title,
-    meta: `${grant.funder} Â· ${grant.status}`,
+    meta: `${grant.funder} - ${grant.status}`,
     tone: getReminderTone(grant.deadline),
   }));
 
@@ -244,7 +244,7 @@ function TimelineRow({ item }: { item: CalendarItem }) {
           </Badge>
         </div>
         <p className="mt-1 text-sm text-muted">
-          {item.meta} · {new Date(item.date).toLocaleDateString("fr-FR")}
+          {item.meta} - {new Date(item.date).toLocaleDateString("fr-FR")}
         </p>
       </div>
       <Badge tone={item.tone}>

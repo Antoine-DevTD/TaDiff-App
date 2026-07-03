@@ -17,8 +17,8 @@ export function PublicHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <ButtonLink href="/signup" className="hidden sm:inline-flex">
-            Demarrer
+          <ButtonLink href="/beta" className="hidden sm:inline-flex">
+            Rejoindre la beta
           </ButtonLink>
           <ButtonLink href="/login" variant="secondary" className="sm:hidden">
             Connexion

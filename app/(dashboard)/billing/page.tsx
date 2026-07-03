@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -49,7 +50,11 @@ export default async function BillingPage() {
           </div>
           <div className="space-y-3">
             {quotes.map((quote) => (
-              <div key={quote.id} className="rounded-lg border border-border bg-panel-strong/35 p-4">
+              <Link
+                key={quote.id}
+                className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
+                href={`/billing/${quote.id}`}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{quote.number} - {quote.title}</p>
@@ -65,7 +70,7 @@ export default async function BillingPage() {
                 <p className="mt-3 text-xs text-muted">
                   Echeance {new Date(quote.dueDate).toLocaleDateString("fr-FR")}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         </Card>

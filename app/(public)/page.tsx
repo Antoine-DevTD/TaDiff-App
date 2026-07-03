@@ -72,11 +72,15 @@ export default function LandingPage() {
               finances dans un cockpit concu pour les compagnies de spectacle vivant.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/signup">Creer mon espace</ButtonLink>
+              <ButtonLink href="/beta">Reserver la beta</ButtonLink>
               <ButtonLink href="/#calculateur" variant="secondary">
                 Tester le calculateur
               </ButtonLink>
             </div>
+            <p className="mt-4 text-sm text-white/60">
+              Beta limitee a 10 compagnies le 6 aout, puis liste d&apos;attente
+              prioritaire pour les 30 suivantes.
+            </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <HeroMetric label="Pipeline pondere" value={formatCurrency(signedOrWeighted)} />
               <HeroMetric label="Aides suivies" value={formatCurrency(grantsTotal)} />

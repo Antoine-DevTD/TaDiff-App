@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   PointerSensor,
@@ -13,6 +14,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useDraggable } from "@dnd-kit/core";
 import { useMemo, useState, useTransition } from "react";
 import {
+  createQuoteFromOpportunity,
   createReminder,
   scheduleOpportunityFollowUp,
   updateOpportunityStage,
@@ -532,7 +534,9 @@ function PipelineCard({
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isReminderPending, startReminderTransition] = useTransition();
+  const [isQuotePending, startQuoteTransition] = useTransition();
   const [isSchedulePending, startScheduleTransition] = useTransition();
+  const router = useRouter();
 
   async function createQuickReminder() {
     const dueDate =
@@ -555,6 +559,26 @@ function PipelineCard({
     await navigator.clipboard.writeText(buildPipelineEmailDraft(deal));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  function openEmailDraft() {
+    const subject = `Relance - ${deal.showTitle || deal.title}`;
+    const body = buildPipelineEmailDraft(deal);
+    const to = deal.contactEmail ? encodeURIComponent(deal.contactEmail) : "";
+
+    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
+  function createQuote() {
+    startQuoteTransition(async () => {
+      const result = await createQuoteFromOpportunity(deal.id);
+      setMessage(result.message);
+
+      if (result.ok) {
+        router.push("/billing");
+        router.refresh();
+      }
+    });
   }
 
   function scheduleFollowUp(days: 3 | 7) {
@@ -714,6 +738,21 @@ function PipelineCard({
               onClick={copyEmailDraft}
             >
               {copied ? "Email copie" : "Copier email"}
+            </button>
+            <button
+              className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground"
+              type="button"
+              onClick={openEmailDraft}
+            >
+              Ouvrir email
+            </button>
+            <button
+              className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"
+              disabled={isQuotePending}
+              type="button"
+              onClick={createQuote}
+            >
+              {isQuotePending ? "Devis..." : "Creer devis"}
             </button>
           </>
         ) : null}

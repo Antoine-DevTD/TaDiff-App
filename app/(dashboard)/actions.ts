@@ -6,6 +6,10 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateWorkspace } from "@/lib/supabase/workspace";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
 import {
+  showDocumentSchema,
+  type ShowDocumentFormInput,
+} from "@/lib/validation/document";
+import {
   opportunitySchema,
   reminderSchema,
   type OpportunityFormInput,
@@ -114,6 +118,7 @@ export async function createShow(values: ShowFormInput): Promise<ActionResult> {
     status: parsed.data.status,
     next_date: parsed.data.nextDate || null,
     budget: parsed.data.budget ?? 0,
+    poster_url: parsed.data.posterUrl || null,
     notes: parsed.data.notes || null,
   });
 
@@ -125,6 +130,47 @@ export async function createShow(values: ShowFormInput): Promise<ActionResult> {
   revalidatePath("/dashboard");
 
   return { ok: true, message: "Spectacle cree." };
+}
+
+export async function createShowDocument(values: ShowDocumentFormInput): Promise<ActionResult> {
+  const parsed = showDocumentSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire document contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : document valide, non enregistre." };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("show_documents").insert({
+    company_id: workspace.companyId,
+    show_id: parsed.data.showId,
+    title: parsed.data.title,
+    document_type: parsed.data.documentType,
+    status: parsed.data.status,
+    file_url: parsed.data.fileUrl || null,
+    notes: parsed.data.notes || null,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath(`/shows/${parsed.data.showId}`);
+  revalidatePath("/shows");
+  revalidatePath("/documents");
+  revalidatePath("/dashboard");
+
+  return { ok: true, message: "Document ajoute au spectacle." };
 }
 
 export async function createContact(values: ContactFormValues): Promise<ActionResult> {
@@ -163,6 +209,77 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
   revalidatePath("/dashboard");
 
   return { ok: true, message: "Contact cree." };
+}
+
+export async function importContacts(
+  values: ContactFormValues[],
+): Promise<ActionResult & { imported: number; skipped: number }> {
+  const limitedValues = values.slice(0, 500);
+  const parsedContacts = limitedValues
+    .map((value) => contactSchema.safeParse(value))
+    .filter((result): result is { success: true; data: ContactFormValues } => result.success)
+    .map((result) => result.data);
+  const skipped = values.length - parsedContacts.length;
+
+  if (parsedContacts.length === 0) {
+    return {
+      ok: false,
+      imported: 0,
+      skipped: values.length,
+      message: "Aucun contact valide a importer.",
+    };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: true,
+      imported: parsedContacts.length,
+      skipped,
+      message: `Mode demo : ${parsedContacts.length} contact(s) CSV valide(s), non enregistre(s).`,
+    };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return {
+      ok: false,
+      imported: 0,
+      skipped: values.length,
+      message: workspace.error ?? "Compagnie introuvable.",
+    };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("contacts").insert(
+    parsedContacts.map((contact) => ({
+      company_id: workspace.companyId,
+      name: contact.name,
+      organization: contact.organization,
+      role: contact.role || null,
+      email: contact.email || null,
+      city: contact.city || null,
+      status: contact.status,
+    })),
+  );
+
+  if (error) {
+    return { ok: false, imported: 0, skipped: values.length, message: error.message };
+  }
+
+  revalidatePath("/contacts");
+  revalidatePath("/pipeline");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    imported: parsedContacts.length,
+    skipped,
+    message:
+      skipped > 0
+        ? `${parsedContacts.length} contact(s) importe(s), ${skipped} ligne(s) ignoree(s).`
+        : `${parsedContacts.length} contact(s) importe(s).`,
+  };
 }
 
 export async function createOpportunityWithNewContact(
@@ -337,6 +454,100 @@ export async function updateOpportunity(
   revalidatePath("/dashboard");
 
   return { ok: true, message: "Opportunite mise a jour." };
+}
+
+export async function createQuoteFromOpportunity(
+  opportunityId: string,
+): Promise<ActionResult & { quoteId?: string }> {
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: true,
+      quoteId: `quote-${opportunityId}`,
+      message: "Mode demo : devis prepare depuis l'opportunite.",
+    };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: existingQuote, error: existingQuoteError } = await supabase
+    .from("quotes")
+    .select("id,number")
+    .eq("opportunity_id", opportunityId)
+    .maybeSingle();
+
+  if (existingQuoteError) {
+    return { ok: false, message: existingQuoteError.message };
+  }
+
+  if (existingQuote) {
+    revalidatePath("/billing");
+    revalidatePath("/finances");
+
+    return {
+      ok: true,
+      quoteId: existingQuote.id,
+      message: `Devis deja existant : ${existingQuote.number}.`,
+    };
+  }
+
+  const { data: opportunity, error: opportunityError } = await supabase
+    .from("opportunities")
+    .select("id,title,value,contact_id,contacts(name,organization)")
+    .eq("id", opportunityId)
+    .maybeSingle();
+
+  if (opportunityError || !opportunity) {
+    return { ok: false, message: opportunityError?.message ?? "Opportunite introuvable." };
+  }
+
+  const { count, error: countError } = await supabase
+    .from("quotes")
+    .select("id", { count: "exact", head: true });
+
+  if (countError) {
+    return { ok: false, message: countError.message };
+  }
+
+  const amount = opportunity.value ?? 0;
+  const depositDue = Math.round(amount * 0.3);
+  const nextIndex = (count ?? 0) + 1;
+  const number = `DEV-${new Date().getFullYear()}-${nextIndex.toString().padStart(3, "0")}`;
+  const organization =
+    opportunity.contacts?.organization || opportunity.contacts?.name || "Structure a renseigner";
+
+  const { data: quote, error } = await supabase
+    .from("quotes")
+    .insert({
+      company_id: workspace.companyId,
+      opportunity_id: opportunity.id,
+      number,
+      title: opportunity.title,
+      organization,
+      amount,
+      deposit_due: depositDue,
+      balance_due: Math.max(0, amount - depositDue),
+      status: "A preparer",
+      due_date: getDateAfterDays(15),
+    })
+    .select("id")
+    .single();
+
+  if (error || !quote) {
+    return { ok: false, message: error?.message ?? "Devis non cree." };
+  }
+
+  revalidatePath("/billing");
+  revalidatePath("/finances");
+  revalidatePath("/contracts");
+  revalidatePath("/pipeline");
+  revalidatePath("/dashboard");
+
+  return { ok: true, quoteId: quote.id, message: `Devis ${number} cree.` };
 }
 
 export async function deleteOpportunity(opportunityId: string): Promise<ActionResult> {

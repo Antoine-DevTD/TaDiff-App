@@ -2,8 +2,14 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getPipelineDeals, getReminders, getShows } from "@/lib/supabase/queries";
-import type { PipelineDeal, Reminder, Show } from "@/types";
+import {
+  getPipelineDeals,
+  getReminders,
+  getShowDocuments,
+  getShows,
+} from "@/lib/supabase/queries";
+import { getShowDocumentReadiness } from "@/lib/show-documents";
+import type { PipelineDeal, Reminder, Show, ShowDocument } from "@/types";
 
 type DocumentPackStatus = "to-build" | "to-update" | "ready";
 
@@ -18,6 +24,8 @@ type DocumentPack = {
   remindersCount: number;
   pipelineCount: number;
   packStatus: DocumentPackStatus;
+  readinessPercent: number;
+  missingCount: number;
   note: string;
 };
 
@@ -53,24 +61,30 @@ function resolveContractState(showId: string, deals: PipelineDeal[]) {
 
 function buildDocumentPacks({
   deals,
+  documents,
   reminders,
   shows,
 }: {
   deals: PipelineDeal[];
+  documents: ShowDocument[];
   reminders: Reminder[];
   shows: Show[];
 }): DocumentPack[] {
   return shows
     .map((show) => {
       const relatedDeals = deals.filter((deal) => deal.showId === show.id);
+      const relatedDocuments = documents.filter((document) => document.showId === show.id);
+      const readiness = getShowDocumentReadiness(relatedDocuments);
       const relatedLabels = new Set([show.title, ...relatedDeals.map((deal) => deal.title)]);
       const relatedReminders = reminders.filter((reminder) => relatedLabels.has(reminder.relatedTo));
       const contractState = resolveContractState(show.id, deals);
 
       const packStatus: DocumentPackStatus =
-        show.notes && contractState === "Contrat signe"
+        readiness.missingCount === 0
           ? "ready"
-          : relatedReminders.length > 0 || contractState !== "Pas de contrat actif"
+          : relatedDocuments.length > 0 ||
+              relatedReminders.length > 0 ||
+              contractState !== "Pas de contrat actif"
             ? "to-update"
             : "to-build";
 
@@ -85,25 +99,28 @@ function buildDocumentPacks({
         remindersCount: relatedReminders.length,
         pipelineCount: relatedDeals.length,
         packStatus,
+        readinessPercent: readiness.percent,
+        missingCount: readiness.missingCount,
         note:
           packStatus === "ready"
-            ? "Le dossier peut etre consolide et archive avec ses pieces finales."
+            ? "Le dossier de base est pret pour un depot ou un envoi programmeur."
             : packStatus === "to-update"
-              ? "Des elements bougent encore. Gardez les versions de diffusion, contrat et fiche technique alignees."
-              : "Commencer par preparer un dossier de diffusion et une base technique simple.",
+              ? "Des pieces existent deja, mais le dossier n est pas encore complet."
+              : "Commencer par ajouter affiche, dossier artistique, note, budget et fiche technique.",
       };
     })
     .sort((a, b) => new Date(a.nextDate || "2999-12-31").getTime() - new Date(b.nextDate || "2999-12-31").getTime());
 }
 
 export default async function DocumentsPage() {
-  const [shows, deals, reminders] = await Promise.all([
+  const [shows, deals, reminders, documents] = await Promise.all([
     getShows(),
     getPipelineDeals(),
     getReminders(),
+    getShowDocuments(),
   ]);
 
-  const packs = buildDocumentPacks({ deals, reminders, shows });
+  const packs = buildDocumentPacks({ deals, documents, reminders, shows });
   const focusPack =
     packs.find((pack) => pack.packStatus === "to-update") ??
     packs.find((pack) => pack.packStatus === "to-build") ??
@@ -170,7 +187,7 @@ export default async function DocumentsPage() {
                     }
                   />
                   <InfoCard label="Relances" value={focusPack.remindersCount.toString()} />
-                  <InfoCard label="Budget" value={`${focusPack.budget.toLocaleString("fr-FR")} EUR`} />
+                  <InfoCard label="Pieces" value={`${focusPack.readinessPercent}% pret`} />
                 </div>
               ) : null}
             </Card>
@@ -282,7 +299,10 @@ function DocumentColumn({
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-muted">
                   <p>{item.pipelineCount} opportunite(s)</p>
-                  <p>{item.remindersCount} relance(s)</p>
+                  <p>{item.missingCount} piece(s) manquante(s)</p>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
+                  <div className="h-full rounded-full bg-accent" style={{ width: `${item.readinessPercent}%` }} />
                 </div>
                 <p className="mt-3 text-sm text-muted">{item.note}</p>
               </Link>

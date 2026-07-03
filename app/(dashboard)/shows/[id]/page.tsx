@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ShowDocumentForm } from "@/components/documents/show-document-form";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildDealProfitability, formatCurrency, getShowCostProfile, getVerdictMeta } from "@/lib/finance";
+import {
+  getDocumentStatusTone,
+  getShowDocumentReadiness,
+  requiredShowDocumentTypes,
+} from "@/lib/show-documents";
 import { getShowById } from "@/lib/supabase/queries";
+import type { Show, ShowDocument } from "@/types";
 
 type ShowDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -12,7 +19,7 @@ type ShowDetailPageProps = {
 
 export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
   const { id } = await params;
-  const { opportunities, reminders, show } = await getShowById(id);
+  const { documents, opportunities, reminders, show } = await getShowById(id);
 
   if (!show) {
     notFound();
@@ -27,6 +34,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
     deal,
     result: buildDealProfitability({ deal, show }),
   }));
+  const documentReadiness = getShowDocumentReadiness(documents);
 
   return (
     <div className="space-y-6">
@@ -54,6 +62,99 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
         />
         <StatBlock label="Budget" value={`${show.budget.toLocaleString("fr-FR")} EUR`} />
         <StatBlock label="CA pondere" value={`${weightedRevenue.toLocaleString("fr-FR")} EUR`} />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+        <Card className="overflow-hidden p-0">
+          <ShowPoster show={show} />
+          <div className="p-5">
+            <p className="text-base font-semibold">Affiche et dossier</p>
+            <p className="mt-2 text-sm text-muted">
+              L&apos;affiche et les pieces du spectacle doivent pouvoir servir aux
+              programmateurs, aux devis et aux depots de subventions.
+            </p>
+            <div className="mt-4 rounded-md border border-border bg-panel-strong/45 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium">Pieces essentielles</p>
+                <Badge tone={documentReadiness.missingCount === 0 ? "success" : "warning"}>
+                  {documentReadiness.percent}%
+                </Badge>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full rounded-full bg-accent"
+                  style={{ width: `${documentReadiness.percent}%` }}
+                />
+              </div>
+              <p className="mt-3 text-sm text-muted">
+                {documentReadiness.missingCount === 0
+                  ? "Le dossier de base est pret pour un depot."
+                  : `${documentReadiness.missingCount} piece(s) restent a completer.`}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dossier de subvention</CardTitle>
+            <CardDescription>
+              Checklist de pieces reutilisables pour preparer les depots sans repartir de zero.
+            </CardDescription>
+          </CardHeader>
+          <DocumentChecklist documents={documents} />
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Documents lies</CardTitle>
+            <CardDescription>
+              Pieces deja referenciaes pour ce spectacle. Le vrai upload fichier arrive ensuite.
+            </CardDescription>
+          </CardHeader>
+          <div className="space-y-3">
+            {documents.length === 0 ? (
+              <EmptyPanel text="Aucun document lie a ce spectacle." />
+            ) : (
+              documents.map((document) => (
+                <div key={document.id} className="rounded-md border border-border bg-panel-strong/45 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{document.title}</p>
+                      <p className="mt-1 text-sm text-muted">{document.documentType}</p>
+                    </div>
+                    <Badge tone={getDocumentStatusTone(document.status)}>{document.status}</Badge>
+                  </div>
+                  {document.notes ? (
+                    <p className="mt-3 text-sm text-muted">{document.notes}</p>
+                  ) : null}
+                  {document.fileUrl ? (
+                    <a
+                      className="mt-3 inline-flex text-sm font-medium text-accent hover:text-accent-strong"
+                      href={document.fileUrl}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Ouvrir le fichier
+                    </a>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Ajouter une piece</CardTitle>
+            <CardDescription>
+              Pour la demo, on reference un lien ou une piece deja stockee ailleurs.
+            </CardDescription>
+          </CardHeader>
+          <ShowDocumentForm showId={show.id} />
+        </Card>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
@@ -190,6 +291,50 @@ function StatBlock({ label, value }: { label: string; value: string }) {
       <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
       <p className="mt-3 text-xl font-semibold">{value}</p>
     </Card>
+  );
+}
+
+function ShowPoster({ show }: { show: Show }) {
+  const style = show.posterUrl
+    ? { backgroundImage: `url(${show.posterUrl})` }
+    : undefined;
+
+  return (
+    <div
+      className="flex aspect-[4/3] items-end bg-ink bg-cover bg-center p-5 text-white"
+      style={style}
+    >
+      <div className="w-full rounded-md bg-ink/76 p-4 backdrop-blur-sm">
+        <p className="text-xs uppercase tracking-[0.14em] text-white/55">Affiche spectacle</p>
+        <p className="mt-2 text-xl font-semibold">{show.title}</p>
+        <p className="mt-1 text-sm text-white/65">{show.discipline}</p>
+      </div>
+    </div>
+  );
+}
+
+function DocumentChecklist({ documents }: { documents: ShowDocument[] }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {requiredShowDocumentTypes.map((type) => {
+        const document = documents.find((item) => item.documentType === type);
+        const status = document?.status ?? "Manquant";
+
+        return (
+          <div key={type} className="rounded-md border border-border bg-panel-strong/45 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-medium">{type}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {document?.title || "A ajouter au dossier"}
+                </p>
+              </div>
+              <Badge tone={getDocumentStatusTone(status)}>{status}</Badge>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

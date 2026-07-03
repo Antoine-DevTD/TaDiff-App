@@ -62,3 +62,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 ::selection {
   background: rgba(29, 78, 216, 0.18);
 }
+
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-document {
+    border: 0 !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

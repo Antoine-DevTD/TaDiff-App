@@ -8,7 +8,33 @@ export type Show = {
   nextDate: string;
   budget: number;
   notes: string;
+  posterUrl?: string;
   costProfile?: CostProfile;
+};
+
+export type ShowDocumentType =
+  | "Affiche"
+  | "Dossier artistique"
+  | "Note d'intention"
+  | "Synopsis"
+  | "Texte"
+  | "Budget"
+  | "Fiche technique"
+  | "RIB"
+  | "Statuts"
+  | "Devis";
+
+export type ShowDocumentStatus = "Manquant" | "A mettre a jour" | "Pret";
+
+export type ShowDocument = {
+  id: string;
+  showId: string;
+  title: string;
+  documentType: ShowDocumentType;
+  status: ShowDocumentStatus;
+  fileUrl: string;
+  notes: string;
+  updatedAt: string;
 };
 
 export type Contact = {
@@ -43,6 +69,7 @@ export type PipelineDeal = {
   lostReason: string;
   contactName: string;
   contactOrganization: string;
+  contactEmail?: string;
   showTitle: string;
   createdAt: string;
   commercialPackId?: string;
@@ -155,6 +182,22 @@ export type BillingPlan = {
   description: string;
   features: string[];
   current?: boolean;
+};
+
+export type BetaSignupStatus = "reserved" | "waitlist";
+
+export type BetaSignup = {
+  id: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  discipline: string;
+  mainNeed: string;
+  status: BetaSignupStatus;
+  position: number;
+  createdAt: string;
 };
 
 export type QuoteStatus = "A preparer" | "Envoye" | "Acompte attendu" | "Solde attendu" | "Archive";

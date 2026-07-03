@@ -1,4 +1,5 @@
 import type {
+  BetaSignup,
   BillingPlan,
   CommercialPack,
   Contact,
@@ -10,6 +11,7 @@ import type {
   QuoteItem,
   Reminder,
   Show,
+  ShowDocument,
 } from "@/types";
 
 export const defaultCostProfile: CostProfile = {
@@ -32,6 +34,7 @@ export const shows: Show[] = [
     nextDate: "2026-09-18",
     budget: 12500,
     notes: "Version legere en tournee. Dossier diffusion et fiche technique a tenir a jour.",
+    posterUrl: "",
     costProfile: {
       ...defaultCostProfile,
       artistFees: 1450,
@@ -48,6 +51,7 @@ export const shows: Show[] = [
     nextDate: "2026-11-04",
     budget: 18400,
     notes: "Montage coproduction en cours. Besoins lumiere et residence a confirmer.",
+    posterUrl: "",
     costProfile: {
       ...defaultCostProfile,
       artistFees: 2100,
@@ -64,6 +68,7 @@ export const shows: Show[] = [
     nextDate: "2027-01-12",
     budget: 9200,
     notes: "Projet en pause, relance possible sur la prochaine saison scolaire.",
+    posterUrl: "",
     costProfile: {
       ...defaultCostProfile,
       artistFees: 900,
@@ -71,6 +76,69 @@ export const shows: Show[] = [
       rights: 120,
       production: 360,
     },
+  },
+];
+
+export const showDocuments: ShowDocument[] = [
+  {
+    id: "doc-1",
+    showId: "show-1",
+    title: "Dossier artistique - diffusion 2026",
+    documentType: "Dossier artistique",
+    status: "Pret",
+    fileUrl: "",
+    notes: "Version courte pour programmateurs et dossiers d'aide.",
+    updatedAt: "2026-06-29",
+  },
+  {
+    id: "doc-2",
+    showId: "show-1",
+    title: "Fiche technique salle",
+    documentType: "Fiche technique",
+    status: "A mettre a jour",
+    fileUrl: "",
+    notes: "Revoir le plan feu avant les depots de septembre.",
+    updatedAt: "2026-07-01",
+  },
+  {
+    id: "doc-3",
+    showId: "show-1",
+    title: "Budget de diffusion",
+    documentType: "Budget",
+    status: "Pret",
+    fileUrl: "",
+    notes: "Budget compatible avec le calculateur de rentabilite.",
+    updatedAt: "2026-07-02",
+  },
+  {
+    id: "doc-4",
+    showId: "show-2",
+    title: "Note d'intention creation",
+    documentType: "Note d'intention",
+    status: "Pret",
+    fileUrl: "",
+    notes: "A relire avant depot DRAC.",
+    updatedAt: "2026-06-24",
+  },
+  {
+    id: "doc-5",
+    showId: "show-2",
+    title: "Synopsis provisoire",
+    documentType: "Synopsis",
+    status: "Pret",
+    fileUrl: "",
+    notes: "Texte court pret pour formulaires.",
+    updatedAt: "2026-06-25",
+  },
+  {
+    id: "doc-6",
+    showId: "show-3",
+    title: "Affiche jeune public",
+    documentType: "Affiche",
+    status: "A mettre a jour",
+    fileUrl: "",
+    notes: "Ancienne affiche a remplacer avant relance scolaire.",
+    updatedAt: "2026-05-12",
   },
 ];
 
@@ -119,6 +187,7 @@ export const pipelineDeals: PipelineDeal[] = [
     lostReason: "",
     contactName: "Mina Laurent",
     contactOrganization: "Scene nationale du Littoral",
+    contactEmail: "mina@littoral.fr",
     showTitle: "Les lignes de fuite",
     createdAt: "2026-06-12",
     commercialPackId: "pack-school",
@@ -138,6 +207,7 @@ export const pipelineDeals: PipelineDeal[] = [
     lostReason: "",
     contactName: "Arthur Klein",
     contactOrganization: "Festival Passages",
+    contactEmail: "arthur@passages.fr",
     showTitle: "Le cabinet des songes",
     createdAt: "2026-06-15",
     commercialPackId: "pack-school",
@@ -157,6 +227,7 @@ export const pipelineDeals: PipelineDeal[] = [
     lostReason: "",
     contactName: "Sofia Moreau",
     contactOrganization: "Theatre du Nord",
+    contactEmail: "sofia@theatredunord.fr",
     showTitle: "Cendres claires",
     createdAt: "2026-06-18",
     commercialPackId: "pack-residency",
@@ -350,6 +421,48 @@ export const billingPlans: BillingPlan[] = [
     annualPrice: 159,
     description: "Pour les structures professionnalisees avec catalogue large.",
     features: ["Spectacles illimites", "Contacts illimites", "Tous modules", "5 000 emails / mois", "Support prioritaire"],
+  },
+];
+
+export const betaSignups: BetaSignup[] = [
+  {
+    id: "beta-1",
+    companyName: "Compagnie Les Haltes",
+    contactName: "Claire Mercier",
+    email: "claire@example.com",
+    phone: "",
+    city: "Nantes",
+    discipline: "Theatre",
+    mainNeed: "Suivre les subventions et relances sans perdre les dossiers.",
+    status: "reserved",
+    position: 1,
+    createdAt: "2026-07-03",
+  },
+  {
+    id: "beta-2",
+    companyName: "Collectif Grand Angle",
+    contactName: "Yanis Vidal",
+    email: "yanis@example.com",
+    phone: "",
+    city: "Lyon",
+    discipline: "Danse",
+    mainNeed: "Comprendre la tresorerie par spectacle avant les signatures.",
+    status: "reserved",
+    position: 2,
+    createdAt: "2026-07-03",
+  },
+  {
+    id: "beta-3",
+    companyName: "La Fabrique du Vent",
+    contactName: "Mina Lopes",
+    email: "mina@example.com",
+    phone: "",
+    city: "Avignon",
+    discipline: "Jeune public",
+    mainNeed: "Centraliser les contacts programmateurs et automatiser les relances.",
+    status: "reserved",
+    position: 3,
+    createdAt: "2026-07-04",
   },
 ];
 

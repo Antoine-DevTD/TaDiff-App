@@ -21,6 +21,7 @@ const defaultValues: ShowFormInput = {
   status: "En diffusion",
   nextDate: "",
   budget: 0,
+  posterUrl: "",
   notes: "",
 };
 
@@ -82,6 +83,14 @@ export function ShowForm() {
           <Input type="number" min="0" step="100" {...register("budget")} />
         </Field>
       </div>
+
+      <Field label="Lien de l'affiche" error={errors.posterUrl?.message}>
+        <Input
+          placeholder="https://.../affiche.jpg"
+          type="url"
+          {...register("posterUrl")}
+        />
+      </Field>
 
       <Field label="Note de production" error={errors.notes?.message}>
         <Textarea placeholder="Distribution, jauge, besoins techniques..." {...register("notes")} />

@@ -1,4 +1,5 @@
 import {
+  betaSignups,
   billingPlans,
   commercialPacks,
   contacts,
@@ -9,6 +10,7 @@ import {
   pipelineDeals,
   quoteItems,
   reminders,
+  showDocuments,
   shows,
 } from "@/data/mock-data";
 import { hasSupabaseEnv } from "@/lib/env";
@@ -24,6 +26,7 @@ import type {
   QuoteItem,
   Reminder,
   Show,
+  ShowDocument,
 } from "@/types";
 
 type DashboardStat = {
@@ -40,7 +43,7 @@ export async function getShows(): Promise<Show[]> {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("shows")
-    .select("id,title,discipline,status,next_date,budget,notes")
+    .select("id,title,discipline,status,next_date,budget,notes,poster_url")
     .order("created_at", { ascending: false });
 
   if (error || !data) {
@@ -55,10 +58,12 @@ export async function getShows(): Promise<Show[]> {
     nextDate: show.next_date ?? "",
     budget: show.budget ?? 0,
     notes: show.notes ?? "",
+    posterUrl: show.poster_url ?? "",
   }));
 }
 
 export async function getShowById(showId: string): Promise<{
+  documents: ShowDocument[];
   opportunities: PipelineDeal[];
   reminders: Reminder[];
   show: Show | null;
@@ -72,6 +77,7 @@ export async function getShowById(showId: string): Promise<{
     );
 
     return {
+      documents: showDocuments.filter((document) => document.showId === showId),
       show,
       opportunities,
       reminders: filteredReminders,
@@ -79,24 +85,32 @@ export async function getShowById(showId: string): Promise<{
   }
 
   const supabase = await getSupabaseServerClient();
-  const [{ data: show, error: showError }, { data: opportunities, error: opportunitiesError }] =
-    await Promise.all([
+  const [
+    { data: show, error: showError },
+    { data: opportunities, error: opportunitiesError },
+    { data: documents, error: documentsError },
+  ] = await Promise.all([
       supabase
         .from("shows")
-        .select("id,title,discipline,status,next_date,budget,notes")
+        .select("id,title,discipline,status,next_date,budget,notes,poster_url")
         .eq("id", showId)
         .maybeSingle(),
       supabase
         .from("opportunities")
         .select(
-          "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization),shows(title)",
+          "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
         )
         .eq("show_id", showId)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("show_documents")
+        .select("id,show_id,title,document_type,status,file_url,notes,updated_at")
+        .eq("show_id", showId)
+        .order("updated_at", { ascending: false }),
     ]);
 
   if (showError || !show || opportunitiesError || !opportunities) {
-    return { show: null, opportunities: [], reminders: [] };
+    return { documents: [], show: null, opportunities: [], reminders: [] };
   }
 
   const resolvedShow: Show = {
@@ -107,7 +121,22 @@ export async function getShowById(showId: string): Promise<{
     nextDate: show.next_date ?? "",
     budget: show.budget ?? 0,
     notes: show.notes ?? "",
+    posterUrl: show.poster_url ?? "",
   };
+
+  const resolvedDocuments: ShowDocument[] =
+    documentsError || !documents
+      ? []
+      : documents.map((document) => ({
+          id: document.id,
+          showId: document.show_id,
+          title: document.title,
+          documentType: document.document_type as ShowDocument["documentType"],
+          status: document.status as ShowDocument["status"],
+          fileUrl: document.file_url ?? "",
+          notes: document.notes ?? "",
+          updatedAt: document.updated_at,
+        }));
 
   const resolvedOpportunities: PipelineDeal[] = opportunities.map((deal) => ({
     id: deal.id,
@@ -123,6 +152,7 @@ export async function getShowById(showId: string): Promise<{
     lostReason: deal.lost_reason ?? "",
     contactName: deal.contacts?.name ?? "Contact a renseigner",
     contactOrganization: deal.contacts?.organization ?? "",
+    contactEmail: deal.contacts?.email ?? "",
     showTitle: deal.shows?.title ?? resolvedShow.title,
     createdAt: deal.created_at,
   }));
@@ -140,10 +170,16 @@ export async function getShowById(showId: string): Promise<{
       : { data: [], error: null };
 
   if (remindersError || !reminderRows) {
-    return { show: resolvedShow, opportunities: resolvedOpportunities, reminders: [] };
+    return {
+      documents: resolvedDocuments,
+      show: resolvedShow,
+      opportunities: resolvedOpportunities,
+      reminders: [],
+    };
   }
 
   return {
+    documents: resolvedDocuments,
     show: resolvedShow,
     opportunities: resolvedOpportunities,
     reminders: reminderRows.map((reminder) => ({
@@ -221,7 +257,7 @@ export async function getContactById(contactId: string): Promise<{
       supabase
         .from("opportunities")
         .select(
-          "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization),shows(title,discipline,status,next_date,budget,notes,id)",
+          "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title,discipline,status,next_date,budget,notes,poster_url,id)",
         )
         .eq("contact_id", contactId)
         .order("created_at", { ascending: false }),
@@ -255,6 +291,7 @@ export async function getContactById(contactId: string): Promise<{
     lostReason: deal.lost_reason ?? "",
     contactName: deal.contacts?.name ?? resolvedContact.name,
     contactOrganization: deal.contacts?.organization ?? resolvedContact.organization,
+    contactEmail: deal.contacts?.email ?? resolvedContact.email,
     showTitle: deal.shows?.title ?? "Spectacle a associer",
     createdAt: deal.created_at,
   }));
@@ -271,6 +308,7 @@ export async function getContactById(contactId: string): Promise<{
         nextDate: show.next_date ?? "",
         budget: show.budget ?? 0,
         notes: show.notes ?? "",
+        posterUrl: show.poster_url ?? "",
       });
     }
   }
@@ -322,7 +360,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
   const { data, error } = await supabase
     .from("opportunities")
     .select(
-      "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization),shows(title)",
+      "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
     )
     .order("created_at", { ascending: false });
 
@@ -344,6 +382,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     lostReason: deal.lost_reason ?? "",
     contactName: deal.contacts?.name ?? "Contact a renseigner",
     contactOrganization: deal.contacts?.organization ?? "",
+    contactEmail: deal.contacts?.email ?? "",
     showTitle: deal.shows?.title ?? "Spectacle a associer",
     createdAt: deal.created_at,
   }));
@@ -373,6 +412,76 @@ export async function getReminders(): Promise<Reminder[]> {
     done: reminder.done,
     priority: reminder.priority,
   }));
+}
+
+export async function getShowDocuments(showId?: string): Promise<ShowDocument[]> {
+  if (!hasSupabaseEnv()) {
+    return showId
+      ? showDocuments.filter((document) => document.showId === showId)
+      : showDocuments;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  let query = supabase
+    .from("show_documents")
+    .select("id,show_id,title,document_type,status,file_url,notes,updated_at")
+    .order("updated_at", { ascending: false });
+
+  if (showId) {
+    query = query.eq("show_id", showId);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((document) => ({
+    id: document.id,
+    showId: document.show_id,
+    title: document.title,
+    documentType: document.document_type as ShowDocument["documentType"],
+    status: document.status as ShowDocument["status"],
+    fileUrl: document.file_url ?? "",
+    notes: document.notes ?? "",
+    updatedAt: document.updated_at,
+  }));
+}
+
+export async function getBetaSignupStats(): Promise<{
+  remainingReservedSeats: number;
+  reservedCount: number;
+  waitlistCount: number;
+}> {
+  if (!hasSupabaseEnv()) {
+    const reservedCount = betaSignups.filter((signup) => signup.status === "reserved").length;
+    const waitlistCount = betaSignups.filter((signup) => signup.status === "waitlist").length;
+
+    return {
+      remainingReservedSeats: Math.max(0, 10 - reservedCount),
+      reservedCount,
+      waitlistCount,
+    };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("get_beta_signup_stats");
+  const stats = Array.isArray(data) ? data[0] : data;
+
+  if (error || !stats) {
+    return {
+      remainingReservedSeats: 10,
+      reservedCount: 0,
+      waitlistCount: 0,
+    };
+  }
+
+  return {
+    remainingReservedSeats: Math.max(0, 10 - Number(stats.reserved_count ?? 0)),
+    reservedCount: Number(stats.reserved_count ?? 0),
+    waitlistCount: Number(stats.waitlist_count ?? 0),
+  };
 }
 
 export async function getDashboardData() {
@@ -416,7 +525,62 @@ export async function getBillingPlans(): Promise<BillingPlan[]> {
 }
 
 export async function getQuoteItems(): Promise<QuoteItem[]> {
-  return quoteItems;
+  if (!hasSupabaseEnv()) {
+    return quoteItems;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("quotes")
+    .select("id,opportunity_id,number,title,organization,amount,deposit_due,balance_due,status,due_date")
+    .order("due_date", { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((quote) => ({
+    id: quote.id,
+    number: quote.number,
+    dealId: quote.opportunity_id ?? "",
+    title: quote.title,
+    organization: quote.organization ?? "Structure a renseigner",
+    amount: quote.amount,
+    depositDue: quote.deposit_due,
+    balanceDue: quote.balance_due,
+    status: quote.status,
+    dueDate: quote.due_date ?? "",
+  }));
+}
+
+export async function getQuoteItemById(quoteId: string): Promise<QuoteItem | null> {
+  if (!hasSupabaseEnv()) {
+    return quoteItems.find((quote) => quote.id === quoteId) ?? null;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("quotes")
+    .select("id,opportunity_id,number,title,organization,amount,deposit_due,balance_due,status,due_date")
+    .eq("id", quoteId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    number: data.number,
+    dealId: data.opportunity_id ?? "",
+    title: data.title,
+    organization: data.organization ?? "Structure a renseigner",
+    amount: data.amount,
+    depositDue: data.deposit_due,
+    balanceDue: data.balance_due,
+    status: data.status,
+    dueDate: data.due_date ?? "",
+  };
 }
 
 function buildDashboardStats({
