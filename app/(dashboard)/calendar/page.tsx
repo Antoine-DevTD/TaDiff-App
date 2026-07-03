@@ -3,13 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getGrantOpportunities, getReminders, getShows } from "@/lib/supabase/queries";
+import {
+  getFixedCosts,
+  getGrantOpportunities,
+  getReminders,
+  getShows,
+} from "@/lib/supabase/queries";
 
 type CalendarItem = {
   id: string;
   date: string;
   href: string;
-  kind: "grant" | "show" | "reminder";
+  kind: "fixed-cost" | "grant" | "show" | "reminder";
   label: string;
   meta: string;
   tone: "neutral" | "success" | "warning" | "danger";
@@ -49,10 +54,12 @@ function getMonthKey(date: string) {
 }
 
 function buildCalendarItems({
-  reminders,
+  fixedCosts,
   grants,
+  reminders,
   shows,
 }: {
+  fixedCosts: Awaited<ReturnType<typeof getFixedCosts>>;
   grants: Awaited<ReturnType<typeof getGrantOpportunities>>;
   reminders: Awaited<ReturnType<typeof getReminders>>;
   shows: Awaited<ReturnType<typeof getShows>>;
@@ -89,18 +96,29 @@ function buildCalendarItems({
     tone: getReminderTone(grant.deadline),
   }));
 
-  return [...reminderItems, ...showItems, ...grantItems].sort(
+  const fixedCostItems: CalendarItem[] = fixedCosts.map((cost) => ({
+    id: `fixed-cost-${cost.id}`,
+    date: cost.nextDueDate,
+    href: "/finances",
+    kind: "fixed-cost",
+    label: cost.label,
+    meta: `${cost.category} - ${cost.frequency}`,
+    tone: getReminderTone(cost.nextDueDate),
+  }));
+
+  return [...reminderItems, ...showItems, ...grantItems, ...fixedCostItems].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   );
 }
 
 export default async function CalendarPage() {
-  const [shows, reminders, grants] = await Promise.all([
+  const [shows, reminders, grants, fixedCosts] = await Promise.all([
     getShows(),
     getReminders(),
     getGrantOpportunities(),
+    getFixedCosts(),
   ]);
-  const items = buildCalendarItems({ grants, reminders, shows });
+  const items = buildCalendarItems({ fixedCosts, grants, reminders, shows });
   const upcomingItems = items.slice(0, 5);
   const groupedByMonth = items.reduce<Record<string, CalendarItem[]>>((acc, item) => {
     const key = getMonthKey(item.date);
@@ -125,7 +143,7 @@ export default async function CalendarPage() {
         />
       ) : (
         <>
-          <section className="grid gap-4 md:grid-cols-3">
+          <section className="grid gap-4 md:grid-cols-4">
             <MetricCard
               label="Relances ouvertes"
               value={reminders.length.toString()}
@@ -144,6 +162,11 @@ export default async function CalendarPage() {
               label="Subventions"
               value={grants.length.toString()}
               detail="Deadlines integrees"
+            />
+            <MetricCard
+              label="Frais fixes"
+              value={fixedCosts.length.toString()}
+              detail="Echeances recurrentes"
             />
           </section>
 
@@ -240,7 +263,13 @@ function TimelineRow({ item }: { item: CalendarItem }) {
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{item.label}</p>
           <Badge tone={item.tone}>
-            {item.kind === "reminder" ? "Relance" : item.kind === "grant" ? "Subvention" : "Spectacle"}
+            {item.kind === "reminder"
+              ? "Relance"
+              : item.kind === "grant"
+                ? "Subvention"
+                : item.kind === "fixed-cost"
+                  ? "Frais fixe"
+                  : "Spectacle"}
           </Badge>
         </div>
         <p className="mt-1 text-sm text-muted">
@@ -248,7 +277,7 @@ function TimelineRow({ item }: { item: CalendarItem }) {
         </p>
       </div>
       <Badge tone={item.tone}>
-        {item.kind === "reminder" || item.kind === "grant"
+        {item.kind === "reminder" || item.kind === "grant" || item.kind === "fixed-cost"
           ? getReminderLabel(item.date)
           : "Date programmee"}
       </Badge>
@@ -263,7 +292,13 @@ function MonthRow({ item }: { item: CalendarItem }) {
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{item.label}</p>
           <Badge tone={item.tone}>
-            {item.kind === "reminder" ? "Relance" : item.kind === "grant" ? "Subvention" : "Spectacle"}
+            {item.kind === "reminder"
+              ? "Relance"
+              : item.kind === "grant"
+                ? "Subvention"
+                : item.kind === "fixed-cost"
+                  ? "Frais fixe"
+                  : "Spectacle"}
           </Badge>
         </div>
         <p className="mt-1 text-sm text-muted">{item.meta}</p>
@@ -278,7 +313,7 @@ function MonthRow({ item }: { item: CalendarItem }) {
             })}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {item.kind === "reminder" || item.kind === "grant"
+            {item.kind === "reminder" || item.kind === "grant" || item.kind === "fixed-cost"
               ? getReminderLabel(item.date)
               : "Prochaine date"}
           </p>

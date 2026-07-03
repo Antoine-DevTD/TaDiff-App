@@ -5,6 +5,7 @@ import {
   contacts,
   dashboardStats,
   emailCampaigns,
+  fixedCosts,
   grantOpportunities,
   patronageDeals,
   pipelineDeals,
@@ -20,6 +21,7 @@ import type {
   CommercialPack,
   Contact,
   EmailCampaign,
+  FixedCost,
   GrantOpportunity,
   PatronageDeal,
   PipelineDeal,
@@ -581,6 +583,32 @@ export async function getQuoteItemById(quoteId: string): Promise<QuoteItem | nul
     status: data.status,
     dueDate: data.due_date ?? "",
   };
+}
+
+export async function getFixedCosts(): Promise<FixedCost[]> {
+  if (!hasSupabaseEnv()) {
+    return fixedCosts;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("fixed_costs")
+    .select("id,label,category,amount,frequency,next_due_date,notes")
+    .order("next_due_date", { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((cost) => ({
+    id: cost.id,
+    label: cost.label,
+    category: cost.category,
+    amount: cost.amount,
+    frequency: cost.frequency,
+    nextDueDate: cost.next_due_date,
+    notes: cost.notes ?? "",
+  }));
 }
 
 function buildDashboardStats({

@@ -10,6 +10,10 @@ import {
   type ShowDocumentFormInput,
 } from "@/lib/validation/document";
 import {
+  fixedCostSchema,
+  type FixedCostFormInput,
+} from "@/lib/validation/finance";
+import {
   opportunitySchema,
   reminderSchema,
   type OpportunityFormInput,
@@ -171,6 +175,46 @@ export async function createShowDocument(values: ShowDocumentFormInput): Promise
   revalidatePath("/dashboard");
 
   return { ok: true, message: "Document ajoute au spectacle." };
+}
+
+export async function createFixedCost(values: FixedCostFormInput): Promise<ActionResult> {
+  const parsed = fixedCostSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire frais fixe contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : frais fixe valide, non enregistre." };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("fixed_costs").insert({
+    company_id: workspace.companyId,
+    label: parsed.data.label,
+    category: parsed.data.category,
+    amount: parsed.data.amount,
+    frequency: parsed.data.frequency,
+    next_due_date: parsed.data.nextDueDate,
+    notes: parsed.data.notes || null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+  revalidatePath("/billing");
+  revalidatePath("/calendar");
+
+  return { ok: true, message: "Frais fixe ajoute." };
 }
 
 export async function createContact(values: ContactFormValues): Promise<ActionResult> {

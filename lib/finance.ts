@@ -1,10 +1,13 @@
 import { defaultCostProfile } from "@/data/mock-data";
 import type {
   CostProfile,
+  FixedCost,
+  GrantOpportunity,
   PipelineDeal,
   ProfitabilityInput,
   ProfitabilityResult,
   ProfitabilityVerdict,
+  QuoteItem,
   Show,
 } from "@/types";
 
@@ -103,6 +106,102 @@ export function getVerdictMeta(verdict: ProfitabilityVerdict) {
   }
 
   return { label: "Deficitaire", tone: "danger" as const };
+}
+
+export function getMonthlyFixedCostEquivalent(cost: FixedCost) {
+  if (cost.frequency === "Annuel") return cost.amount / 12;
+  if (cost.frequency === "Trimestriel") return cost.amount / 3;
+  return cost.amount;
+}
+
+export function getMonthlyFixedCostsTotal(costs: FixedCost[]) {
+  return Math.round(
+    costs.reduce((total, cost) => total + getMonthlyFixedCostEquivalent(cost), 0),
+  );
+}
+
+export function getAnnualFixedCostsTotal(costs: FixedCost[]) {
+  return Math.round(getMonthlyFixedCostsTotal(costs) * 12);
+}
+
+export function getFixedCostSharePerPerformance({
+  costs,
+  targetPerformancesPerYear,
+}: {
+  costs: FixedCost[];
+  targetPerformancesPerYear: number;
+}) {
+  const performances = Math.max(targetPerformancesPerYear, 1);
+  return Math.ceil(getAnnualFixedCostsTotal(costs) / performances);
+}
+
+export function getDaysUntil(date: string) {
+  const today = startOfDay(new Date());
+  const target = startOfDay(new Date(date));
+
+  return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+export function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+export function buildTreasuryProjection({
+  currentCash,
+  fixedCosts,
+  grants,
+  quotes,
+}: {
+  currentCash: number;
+  fixedCosts: FixedCost[];
+  grants: GrantOpportunity[];
+  quotes: QuoteItem[];
+}) {
+  const monthlyFixedCosts = getMonthlyFixedCostsTotal(fixedCosts);
+  const expectedQuotes30 = getQuoteCashInflow(quotes, 30);
+  const expectedQuotes60 = getQuoteCashInflow(quotes, 60);
+  const expectedQuotes90 = getQuoteCashInflow(quotes, 90);
+  const expectedGrants90 = grants
+    .filter((grant) => grant.status === "Depose" || grant.status === "Attribue")
+    .filter((grant) => getDaysUntil(grant.deadline) <= 90)
+    .reduce((total, grant) => total + grant.amount, 0);
+  const cash30 = currentCash + expectedQuotes30 - monthlyFixedCosts;
+  const cash60 = currentCash + expectedQuotes60 - monthlyFixedCosts * 2;
+  const cash90 = currentCash + expectedQuotes90 + expectedGrants90 - monthlyFixedCosts * 3;
+  const averageNetBurn = Math.max(monthlyFixedCosts - expectedQuotes30, monthlyFixedCosts);
+  const runwayDays = averageNetBurn > 0 ? Math.round((currentCash / averageNetBurn) * 30) : 365;
+  const riskDate = addDays(new Date(), runwayDays);
+  const status: "success" | "warning" | "danger" =
+    cash90 >= 0 ? "success" : cash60 >= 0 ? "warning" : "danger";
+
+  return {
+    cash30,
+    cash60,
+    cash90,
+    currentCash,
+    expectedGrants90,
+    expectedQuotes30,
+    expectedQuotes60,
+    expectedQuotes90,
+    monthlyFixedCosts,
+    riskDate,
+    runwayDays,
+    status,
+  };
+}
+
+function getQuoteCashInflow(quotes: QuoteItem[], maxDays: number) {
+  return quotes
+    .filter((quote) => quote.dueDate && getDaysUntil(quote.dueDate) <= maxDays)
+    .reduce((total, quote) => total + quote.depositDue + quote.balanceDue, 0);
+}
+
+function startOfDay(date: Date) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
 }
 
 function getProfitabilityVerdict({

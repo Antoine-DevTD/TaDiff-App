@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/finance";
-import { getBillingPlans, getQuoteItems } from "@/lib/supabase/queries";
+import { formatCurrency, getFixedCostSharePerPerformance } from "@/lib/finance";
+import { getBillingPlans, getFixedCosts, getQuoteItems } from "@/lib/supabase/queries";
 import type { QuoteItem } from "@/types";
 
 function getQuoteTone(status: QuoteItem["status"]) {
@@ -13,11 +13,18 @@ function getQuoteTone(status: QuoteItem["status"]) {
 }
 
 export default async function BillingPage() {
-  const [plans, quotes] = await Promise.all([getBillingPlans(), getQuoteItems()]);
+  const [plans, quotes, fixedCosts] = await Promise.all([
+    getBillingPlans(),
+    getQuoteItems(),
+    getFixedCosts(),
+  ]);
   const quotesTotal = quotes.reduce((total, quote) => total + quote.amount, 0);
   const depositsDue = quotes.reduce((total, quote) => total + quote.depositDue, 0);
   const balancesDue = quotes.reduce((total, quote) => total + quote.balanceDue, 0);
-  const currentPlan = plans.find((plan) => plan.current) ?? plans[0];
+  const fixedCostShare = getFixedCostSharePerPerformance({
+    costs: fixedCosts,
+    targetPerformancesPerYear: 24,
+  });
 
   return (
     <div className="space-y-6">
@@ -37,7 +44,7 @@ export default async function BillingPage() {
         <MetricCard label="Devis actifs" value={formatCurrency(quotesTotal)} detail={`${quotes.length} dossiers`} />
         <MetricCard label="Acomptes" value={formatCurrency(depositsDue)} detail="A encaisser" />
         <MetricCard label="Soldes" value={formatCurrency(balancesDue)} detail="Reste a facturer" />
-        <MetricCard label="Plan cible" value={currentPlan.name} detail={`${currentPlan.monthlyPrice} EUR / mois`} />
+        <MetricCard label="Frais fixes/date" value={formatCurrency(fixedCostShare)} detail="A lisser dans les devis" />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -62,10 +69,11 @@ export default async function BillingPage() {
                   </div>
                   <Badge tone={getQuoteTone(quote.status)}>{quote.status}</Badge>
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                <div className="mt-3 grid grid-cols-4 gap-3 text-sm">
                   <InfoCell label="Montant" value={formatCurrency(quote.amount)} />
                   <InfoCell label="Acompte" value={formatCurrency(quote.depositDue)} />
                   <InfoCell label="Solde" value={formatCurrency(quote.balanceDue)} />
+                  <InfoCell label="Frais fixes" value={formatCurrency(fixedCostShare)} />
                 </div>
                 <p className="mt-3 text-xs text-muted">
                   Echeance {new Date(quote.dueDate).toLocaleDateString("fr-FR")}

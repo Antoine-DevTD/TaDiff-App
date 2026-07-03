@@ -218,3 +218,25 @@ export type QuoteItem = {
   status: QuoteStatus;
   dueDate: string;
 };
+
+export type FixedCostFrequency = "Mensuel" | "Trimestriel" | "Annuel";
+
+export type FixedCostCategory =
+  | "Assurance"
+  | "Banque"
+  | "Comptable"
+  | "Stockage"
+  | "Logiciel"
+  | "Local"
+  | "Salaire"
+  | "Autre";
+
+export type FixedCost = {
+  id: string;
+  label: string;
+  category: FixedCostCategory;
+  amount: number;
+  frequency: FixedCostFrequency;
+  nextDueDate: string;
+  notes: string;
+};

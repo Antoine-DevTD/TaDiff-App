@@ -6,14 +6,15 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import {
   getDashboardData,
+  getFixedCosts,
   getGrantOpportunities,
   getQuoteItems,
   getShowDocuments,
 } from "@/lib/supabase/queries";
-import { formatCurrency } from "@/lib/finance";
+import { formatCurrency, getMonthlyFixedCostsTotal } from "@/lib/finance";
 import { getPipelinePriorityScore } from "@/lib/pipeline";
 import { getShowDocumentReadiness } from "@/lib/show-documents";
-import type { GrantOpportunity, PipelineDeal, QuoteItem, Reminder, Show } from "@/types";
+import type { FixedCost, GrantOpportunity, PipelineDeal, QuoteItem, Reminder, Show } from "@/types";
 
 function startOfDay(date: Date) {
   const next = new Date(date);
@@ -68,15 +69,17 @@ function addDays(date: Date, days: number) {
 
 function buildCashPilot({
   deals,
+  fixedCosts,
   quotes,
   shows,
 }: {
   deals: PipelineDeal[];
+  fixedCosts: FixedCost[];
   quotes: QuoteItem[];
   shows: Show[];
 }) {
   const activeShows = shows.filter((show) => show.status !== "En pause");
-  const monthlyFixedCosts = 1280 + activeShows.length * 180;
+  const monthlyFixedCosts = getMonthlyFixedCostsTotal(fixedCosts);
   const currentCash = 18400;
   const expectedQuotes30 = quotes
     .filter((quote) => quote.dueDate && getDaysUntil(quote.dueDate) <= 30)
@@ -167,12 +170,13 @@ function buildCockpitActions({
 }
 
 export default async function DashboardPage() {
-  const [{ contacts, dashboardStats, pipelineDeals, reminders, shows }, grants, quotes, documents] =
+  const [{ contacts, dashboardStats, pipelineDeals, reminders, shows }, grants, quotes, documents, fixedCosts] =
     await Promise.all([
       getDashboardData(),
       getGrantOpportunities(),
       getQuoteItems(),
       getShowDocuments(),
+      getFixedCosts(),
     ]);
 
   const priorityReminders = [...reminders]
@@ -191,7 +195,7 @@ export default async function DashboardPage() {
 
   const focusReminder = priorityReminders[0] ?? null;
   const focusDeal = priorityDeals[0] ?? null;
-  const cashPilot = buildCashPilot({ deals: pipelineDeals, quotes, shows });
+  const cashPilot = buildCashPilot({ deals: pipelineDeals, fixedCosts, quotes, shows });
   const documentMissingCount = shows.reduce((total, show) => {
     const showDocuments = documents.filter((document) => document.showId === show.id);
     return total + getShowDocumentReadiness(showDocuments).missingCount;

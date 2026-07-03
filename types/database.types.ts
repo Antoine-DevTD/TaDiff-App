@@ -396,6 +396,73 @@ export type Database = {
         };
         Relationships: [];
       };
+      fixed_costs: {
+        Row: {
+          id: string;
+          company_id: string;
+          label: string;
+          category:
+            | "Assurance"
+            | "Banque"
+            | "Comptable"
+            | "Stockage"
+            | "Logiciel"
+            | "Local"
+            | "Salaire"
+            | "Autre";
+          amount: number;
+          frequency: "Mensuel" | "Trimestriel" | "Annuel";
+          next_due_date: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          label: string;
+          category?:
+            | "Assurance"
+            | "Banque"
+            | "Comptable"
+            | "Stockage"
+            | "Logiciel"
+            | "Local"
+            | "Salaire"
+            | "Autre";
+          amount?: number;
+          frequency?: "Mensuel" | "Trimestriel" | "Annuel";
+          next_due_date: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          company_id?: string;
+          label?: string;
+          category?:
+            | "Assurance"
+            | "Banque"
+            | "Comptable"
+            | "Stockage"
+            | "Logiciel"
+            | "Local"
+            | "Salaire"
+            | "Autre";
+          amount?: number;
+          frequency?: "Mensuel" | "Trimestriel" | "Annuel";
+          next_due_date?: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fixed_costs_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       quotes: {
         Row: {
           id: string;
