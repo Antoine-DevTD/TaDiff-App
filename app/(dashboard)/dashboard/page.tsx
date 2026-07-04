@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { StatCard } from "@/components/ui/stat-card";
 import {
   getDashboardData,
   getFixedCosts,
@@ -14,44 +13,22 @@ import {
 import { formatCurrency, getMonthlyFixedCostsTotal } from "@/lib/finance";
 import { getPipelinePriorityScore } from "@/lib/pipeline";
 import { getShowDocumentReadiness } from "@/lib/show-documents";
-import type { FixedCost, GrantOpportunity, PipelineDeal, QuoteItem, Reminder, Show } from "@/types";
+import type { FixedCost, GrantOpportunity, PipelineDeal, QuoteItem, Reminder, Show, ShowDocument } from "@/types";
+
+type Tone = "danger" | "neutral" | "success" | "warning";
+
+type TheatreAction = {
+  detail: string;
+  href: string;
+  label: string;
+  title: string;
+  tone: Tone;
+};
 
 function startOfDay(date: Date) {
   const next = new Date(date);
   next.setHours(0, 0, 0, 0);
   return next;
-}
-
-function getReminderTone(reminder: Reminder) {
-  const today = startOfDay(new Date());
-  const due = startOfDay(new Date(reminder.dueDate));
-
-  if (due < today) return "danger";
-  if (due.getTime() === today.getTime()) return "warning";
-  if (reminder.priority === "high") return "warning";
-  return "neutral";
-}
-
-function getReminderLabel(reminder: Reminder) {
-  const today = startOfDay(new Date());
-  const due = startOfDay(new Date(reminder.dueDate));
-  const diffDays = Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return `En retard de ${Math.abs(diffDays)} j`;
-  if (diffDays === 0) return "A faire aujourd hui";
-  if (diffDays === 1) return "Demain";
-  if (diffDays <= 7) return `Dans ${diffDays} j`;
-  return new Date(reminder.dueDate).toLocaleDateString("fr-FR");
-}
-
-function getShowTone(show: Show) {
-  if (show.status === "En diffusion") return "success";
-  if (show.status === "En pause") return "warning";
-  return "neutral";
-}
-
-function getWeightedValue(deal: PipelineDeal) {
-  return Math.round((deal.value * deal.probability) / 100);
 }
 
 function getDaysUntil(date: string) {
@@ -65,6 +42,50 @@ function addDays(date: Date, days: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+function getReminderTone(reminder: Reminder): Tone {
+  const days = getDaysUntil(reminder.dueDate);
+
+  if (days < 0) return "danger";
+  if (days <= 1 || reminder.priority === "high") return "warning";
+  return "neutral";
+}
+
+function getReminderLabel(reminder: Reminder) {
+  const days = getDaysUntil(reminder.dueDate);
+
+  if (days < 0) return `En retard de ${Math.abs(days)} j`;
+  if (days === 0) return "Aujourd hui";
+  if (days === 1) return "Demain";
+  if (days <= 7) return `Dans ${days} j`;
+  return new Date(reminder.dueDate).toLocaleDateString("fr-FR");
+}
+
+function getWeightedValue(deal: PipelineDeal) {
+  return Math.round((deal.value * deal.probability) / 100);
+}
+
+function getShowTone(show: Show): Tone {
+  if (show.status === "En diffusion") return "success";
+  if (show.status === "En pause") return "warning";
+  return "neutral";
+}
+
+function getToneLabel(tone: Tone) {
+  if (tone === "success") return "OK";
+  if (tone === "warning") return "A surveiller";
+  if (tone === "danger") return "Urgent";
+  return "A traiter";
+}
+
+function getDeadlineLabel(date: string) {
+  const days = getDaysUntil(date);
+
+  if (days < 0) return `Depassee de ${Math.abs(days)} j`;
+  if (days === 0) return "Aujourd hui";
+  if (days === 1) return "Demain";
+  return `Dans ${days} j`;
 }
 
 function buildCashPilot({
@@ -94,8 +115,7 @@ function buildCashPilot({
   const monthlyBurn = monthlyFixedCosts + monthlyCreationPressure;
   const runwayDays = monthlyBurn > 0 ? Math.round((currentCash / monthlyBurn) * 30) : 180;
   const riskDate = addDays(new Date(), runwayDays);
-  const status: "success" | "warning" | "danger" =
-    runwayDays >= 90 ? "success" : runwayDays >= 45 ? "warning" : "danger";
+  const status: Tone = runwayDays >= 90 ? "success" : runwayDays >= 45 ? "warning" : "danger";
 
   return {
     currentCash,
@@ -109,42 +129,49 @@ function buildCashPilot({
   };
 }
 
-function buildCockpitActions({
+function buildTheatreActions({
   deals,
   documentMissingCount,
   grants,
+  quotes,
   reminders,
 }: {
   deals: PipelineDeal[];
   documentMissingCount: number;
   grants: GrantOpportunity[];
+  quotes: QuoteItem[];
   reminders: Reminder[];
 }) {
-  const actions: { detail: string; href: string; title: string; tone: "danger" | "neutral" | "warning" }[] = [];
+  const actions: TheatreAction[] = [];
+  const lateReminder = reminders.find((reminder) => getDaysUntil(reminder.dueDate) < 0);
   const urgentGrant = [...grants]
     .filter((grant) => getDaysUntil(grant.deadline) >= 0)
     .sort((a, b) => getDaysUntil(a.deadline) - getDaysUntil(b.deadline))[0];
-  const lateReminder = reminders.find((reminder) => getDaysUntil(reminder.dueDate) < 0);
   const priorityDeal = deals
     .filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu")
     .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a))[0];
+  const cashToCollect = quotes
+    .filter((quote) => quote.dueDate && getDaysUntil(quote.dueDate) <= 30)
+    .reduce((total, quote) => total + quote.depositDue + quote.balanceDue, 0);
+
+  if (lateReminder) {
+    actions.push({
+      detail: lateReminder.relatedTo || "Relance sans contexte",
+      href: "/reminders",
+      label: "Relance",
+      title: lateReminder.label,
+      tone: "danger",
+    });
+  }
 
   if (urgentGrant) {
     const days = getDaysUntil(urgentGrant.deadline);
     actions.push({
       detail: `${urgentGrant.funder} - ${formatCurrency(urgentGrant.amount)}`,
       href: "/subventions",
-      title: days <= 7 ? `Subvention dans ${days} j` : `Subvention a preparer dans ${days} j`,
+      label: days <= 7 ? "Dossier urgent" : "Dossier a preparer",
+      title: `${urgentGrant.title} - ${getDeadlineLabel(urgentGrant.deadline)}`,
       tone: days <= 7 ? "danger" : "warning",
-    });
-  }
-
-  if (lateReminder) {
-    actions.push({
-      detail: lateReminder.relatedTo || "Relance sans contexte",
-      href: "/reminders",
-      title: `Relance en retard : ${lateReminder.label}`,
-      tone: "danger",
     });
   }
 
@@ -152,25 +179,50 @@ function buildCockpitActions({
     actions.push({
       detail: `${priorityDeal.contactName} - ${formatCurrency(getWeightedValue(priorityDeal))} ponderes`,
       href: "/pipeline",
-      title: priorityDeal.nextAction || "Faire avancer le pipeline",
+      label: "Diffusion",
+      title: priorityDeal.nextAction || priorityDeal.title,
       tone: "neutral",
     });
   }
 
   if (documentMissingCount > 0) {
     actions.push({
-      detail: `${documentMissingCount} piece(s) manquante(s) sur les dossiers prioritaires`,
+      detail: `${documentMissingCount} piece(s) manquante(s) dans les dossiers spectacle`,
       href: "/documents",
-      title: "Completer les dossiers de spectacle",
+      label: "Dossiers",
+      title: "Completer les pieces avant depot ou vente",
       tone: "warning",
     });
   }
 
-  return actions.slice(0, 4);
+  if (cashToCollect > 0) {
+    actions.push({
+      detail: `${formatCurrency(cashToCollect)} a encaisser sous 30 jours`,
+      href: "/billing",
+      label: "Tresorerie",
+      title: "Suivre les acomptes et soldes",
+      tone: "neutral",
+    });
+  }
+
+  return actions.slice(0, 5);
+}
+
+function buildShowReadiness(shows: Show[], documents: ShowDocument[]) {
+  return shows
+    .map((show) => {
+      const readiness = getShowDocumentReadiness(
+        documents.filter((document) => document.showId === show.id),
+      );
+
+      return { readiness, show };
+    })
+    .sort((a, b) => a.readiness.percent - b.readiness.percent)
+    .slice(0, 4);
 }
 
 export default async function DashboardPage() {
-  const [{ contacts, dashboardStats, pipelineDeals, reminders, shows }, grants, quotes, documents, fixedCosts] =
+  const [{ contacts, pipelineDeals, reminders, shows }, grants, quotes, documents, fixedCosts] =
     await Promise.all([
       getDashboardData(),
       getGrantOpportunities(),
@@ -179,266 +231,259 @@ export default async function DashboardPage() {
       getFixedCosts(),
     ]);
 
-  const priorityReminders = [...reminders]
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-    .slice(0, 4);
-
   const activeDeals = pipelineDeals
     .filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu")
     .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a));
-
-  const priorityDeals = activeDeals.slice(0, 4);
-  const activeShows = shows
-    .filter((show) => show.status !== "En pause")
-    .sort((a, b) => new Date(a.nextDate || "2999-12-31").getTime() - new Date(b.nextDate || "2999-12-31").getTime())
+  const priorityDeals = activeDeals.slice(0, 3);
+  const priorityReminders = [...reminders]
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 4);
-
-  const focusReminder = priorityReminders[0] ?? null;
-  const focusDeal = priorityDeals[0] ?? null;
+  const activeShows = shows.filter((show) => show.status !== "En pause");
+  const nextShows = [...activeShows]
+    .sort((a, b) => new Date(a.nextDate || "2999-12-31").getTime() - new Date(b.nextDate || "2999-12-31").getTime())
+    .slice(0, 3);
   const cashPilot = buildCashPilot({ deals: pipelineDeals, fixedCosts, quotes, shows });
-  const documentMissingCount = shows.reduce((total, show) => {
-    const showDocuments = documents.filter((document) => document.showId === show.id);
-    return total + getShowDocumentReadiness(showDocuments).missingCount;
-  }, 0);
-  const cockpitActions = buildCockpitActions({
+  const showReadiness = buildShowReadiness(activeShows, documents);
+  const documentMissingCount = showReadiness.reduce(
+    (total, item) => total + item.readiness.missingCount,
+    0,
+  );
+  const urgentGrantCount = grants.filter((grant) => {
+    const days = getDaysUntil(grant.deadline);
+    return days >= 0 && days <= 30;
+  }).length;
+  const overdueReminderCount = reminders.filter((reminder) => getDaysUntil(reminder.dueDate) < 0).length;
+  const theatreActions = buildTheatreActions({
     deals: pipelineDeals,
     documentMissingCount,
     grants,
+    quotes,
     reminders,
   });
+  const mainAction = theatreActions[0] ?? null;
+  const productionTone: Tone =
+    documentMissingCount === 0 ? "success" : documentMissingCount <= 4 ? "warning" : "danger";
+  const agendaTone: Tone =
+    overdueReminderCount > 0 ? "danger" : urgentGrantCount > 0 ? "warning" : "success";
+  const salesTone: Tone = activeDeals.length > 0 ? "success" : "warning";
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="space-y-5 p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-muted">Cockpit compagnie</p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                {cashPilot.status === "success"
-                  ? "La compagnie tient le cap."
-                  : cashPilot.status === "warning"
-                    ? "Surveillez la tresorerie."
-                    : "Risque de tresorerie a traiter."}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm text-muted">
-                Lecture simple pour savoir si la compagnie peut tenir les prochains mois,
-                quoi preparer et ou agir maintenant.
-              </p>
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card className="overflow-hidden p-0">
+          <div className="border-b border-border bg-panel-strong/55 p-5">
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                  Cockpit du jour
+                </p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-normal">
+                  {cashPilot.status === "success"
+                    ? "La compagnie tient le cap."
+                    : cashPilot.status === "warning"
+                      ? "La compagnie tient, mais il faut surveiller."
+                      : "La compagnie risque de passer dans le rouge."}
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm text-muted">
+                  Tresorerie, diffusion, dossiers et echeances reunis dans une seule lecture.
+                </p>
+              </div>
+              <Badge tone={cashPilot.status}>{getToneLabel(cashPilot.status)}</Badge>
             </div>
-            <Badge tone={cashPilot.status}>
-              {cashPilot.status === "success"
-                ? "Vert"
-                : cashPilot.status === "warning"
-                  ? "Orange"
-                  : "Rouge"}
-            </Badge>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-4">
-            <PilotMetric
-              label="Tresorerie"
-              value={formatCurrency(cashPilot.currentCash)}
-              detail="Disponible demo"
-            />
-            <PilotMetric
-              label="Frais / mois"
-              value={formatCurrency(cashPilot.monthlyBurn)}
-              detail={`${formatCurrency(cashPilot.monthlyFixedCosts)} fixes`}
-            />
-            <PilotMetric
-              label="Risque rouge"
-              value={cashPilot.riskDate.toLocaleDateString("fr-FR")}
+          <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-4">
+            <PulseMetric
               detail={`${cashPilot.runwayDays} jours de marge`}
+              label="Est-ce qu'on tient ?"
+              tone={cashPilot.status}
+              value={formatCurrency(cashPilot.currentCash)}
             />
-            <PilotMetric
-              label="A encaisser"
-              value={formatCurrency(cashPilot.expectedQuotes30)}
-              detail="Devis a 30 jours"
+            <PulseMetric
+              detail={`${activeDeals.length} opportunite(s) active(s)`}
+              label="Qu'est-ce qui vend ?"
+              tone={salesTone}
+              value={formatCurrency(cashPilot.weightedPipeline)}
             />
-          </div>
-
-          <div className="rounded-lg border border-border bg-panel-strong/45 p-4">
-            <p className="font-medium">
-              {cashPilot.weightedPipeline > 0
-                ? `${formatCurrency(cashPilot.weightedPipeline)} de pipeline pondere peut prolonger la marge.`
-                : "Ajoutez des opportunites pour projeter la suite."}
-            </p>
-            <p className="mt-1 text-sm text-muted">
-              Cette projection reste volontairement simple pour la demo. Le lot finance
-              branchera ensuite les vrais frais fixes et mouvements bancaires.
-            </p>
+            <PulseMetric
+              detail={`${documentMissingCount} piece(s) manquante(s)`}
+              label="Qu'est-ce qui bloque ?"
+              tone={productionTone}
+              value={`${Math.max(0, activeShows.length - showReadiness.filter((item) => item.readiness.missingCount > 0).length)}/${activeShows.length}`}
+            />
+            <PulseMetric
+              detail={`${overdueReminderCount} retard - ${urgentGrantCount} deadline(s)`}
+              label="Qu'est-ce qui presse ?"
+              tone={agendaTone}
+              value={agendaTone === "success" ? "Calme" : getToneLabel(agendaTone)}
+            />
           </div>
         </Card>
 
         <Card className="space-y-4 p-5">
-          <div>
-            <p className="text-base font-semibold">A faire maintenant</p>
-            <p className="mt-1 text-sm text-muted">
-              Les prochaines actions qui protegent la diffusion et la tresorerie.
-            </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Priorite
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                {mainAction?.title ?? "Rien ne bloque aujourd'hui."}
+              </h2>
+            </div>
+            {mainAction ? <Badge tone={mainAction.tone}>{mainAction.label}</Badge> : null}
           </div>
-          {cockpitActions.length === 0 ? (
-            <EmptyBlock text="Aucune action critique pour le moment." />
+          <p className="text-sm text-muted">
+            {mainAction?.detail ??
+              "Le cockpit restera clair tant que les relances, dossiers et encaissements restent a jour."}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {mainAction ? (
+              <ButtonLink href={mainAction.href}>Ouvrir</ButtonLink>
+            ) : (
+              <ButtonLink href="/pipeline">Ajouter une opportunite</ButtonLink>
+            )}
+            <ButtonLink href="/calendar" variant="secondary">
+              Voir l&apos;agenda
+            </ButtonLink>
+          </div>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+              Plan de route
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Les 5 sorties utiles</h2>
+          </div>
+          {theatreActions.length === 0 ? (
+            <EmptyBlock text="Aucune sortie critique pour le moment." />
           ) : (
             <div className="space-y-3">
-              {cockpitActions.map((action) => (
+              {theatreActions.map((action, index) => (
                 <Link
                   key={`${action.href}-${action.title}`}
-                  className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
+                  className="grid gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60 sm:grid-cols-[2.25rem_1fr_auto]"
                   href={action.href}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="font-medium">{action.title}</p>
-                    <Badge tone={action.tone}>
-                      {action.tone === "danger"
-                        ? "Urgent"
-                        : action.tone === "warning"
-                          ? "A surveiller"
-                          : "Action"}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted">{action.detail}</p>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-panel text-sm font-semibold text-muted">
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-medium">{action.title}</span>
+                    <span className="mt-1 block text-sm text-muted">{action.detail}</span>
+                  </span>
+                  <Badge className="self-start" tone={action.tone}>
+                    {action.label}
+                  </Badge>
                 </Link>
               ))}
             </div>
           )}
         </Card>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <WorkflowCard
+            detail={`${priorityDeals.length} dossier(s) de diffusion a pousser`}
+            href="/pipeline"
+            label="Vendre"
+            title="Transformer les contacts en dates"
+            value={formatCurrency(cashPilot.weightedPipeline)}
+          />
+          <WorkflowCard
+            detail={`${urgentGrantCount} echeance(s) subvention a moins de 30 jours`}
+            href="/subventions"
+            label="Financer"
+            title="Chercher l'argent qui evite le rouge"
+            value={formatCurrency(cashPilot.expectedQuotes30)}
+          />
+          <WorkflowCard
+            detail={`${documentMissingCount} piece(s) a completer`}
+            href="/documents"
+            label="Produire"
+            title="Rendre les spectacles deposables"
+            value={`${showReadiness.filter((item) => item.readiness.missingCount === 0).length} pret(s)`}
+          />
+          <WorkflowCard
+            detail={`${cashPilot.monthlyFixedCosts.toLocaleString("fr-FR")} EUR de frais fixes mensuels`}
+            href="/finances"
+            label="Piloter"
+            title="Voir quand la tresorerie se tend"
+            value={cashPilot.riskDate.toLocaleDateString("fr-FR")}
+          />
+        </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="space-y-4 p-5">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-muted">Focus du jour</p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                {focusReminder?.label || focusDeal?.title || "Aucun sujet prioritaire"}
-              </h2>
-            </div>
-            {focusReminder ? (
-              <Badge tone={getReminderTone(focusReminder)}>{getReminderLabel(focusReminder)}</Badge>
-            ) : null}
-          </div>
-
-          <p className="text-sm text-muted">
-            {focusReminder?.relatedTo ||
-              focusDeal?.nextAction ||
-              "Le dashboard mettra ici la prochaine action a sortir des que le pipeline tourne."}
-          </p>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg border border-border bg-panel-strong/45 p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted">Relance prioritaire</p>
-              <p className="mt-2 font-medium">{focusReminder?.label || "Aucune relance ouverte"}</p>
-              <p className="mt-1 text-sm text-muted">
-                {focusReminder
-                  ? `${focusReminder.relatedTo || "Sans contexte"} - ${new Date(focusReminder.dueDate).toLocaleDateString("fr-FR")}`
-                  : "La liste d execution reminders sera votre point de sortie."}
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Spectacles
               </p>
+              <h2 className="mt-2 text-xl font-semibold">Ce qui peut etre vendu ou depose</h2>
             </div>
-            <div className="rounded-lg border border-border bg-panel-strong/45 p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted">Deal prioritaire</p>
-              <p className="mt-2 font-medium">{focusDeal?.title || "Aucune opportunite active"}</p>
-              <p className="mt-1 text-sm text-muted">
-                {focusDeal
-                  ? `${focusDeal.contactName} - ${getWeightedValue(focusDeal).toLocaleString("fr-FR")} EUR ponderes`
-                  : "Le pipeline vous remontera ici les opportunites les plus chaudes."}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="space-y-4 p-5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-muted">Actions rapides</p>
-            <p className="mt-2 text-sm text-muted">
-              Acces direct aux ecrans qui servent vraiment au quotidien.
-            </p>
-          </div>
-          <div className="grid gap-3">
-            <ActionLink
-              href="/pipeline"
-              title="Traiter le pipeline"
-              detail="Voir les cartes a relancer et ajouter une opportunite."
-            />
-            <ActionLink
-              href="/reminders"
-              title="Sortir les relances"
-              detail="Executer les suivis du jour et vider le retard."
-            />
-            <ActionLink
-              href="/shows/new"
-              title="Ajouter un spectacle"
-              detail="Creer une fiche diffusion propre avec prochaine date et budget."
-            />
-            <ActionLink
-              href="/subventions"
-              title="Verifier les subventions"
-              detail="Voir les deadlines DRAC, Region et fondations."
-            />
-            <ActionLink
-              href="/billing"
-              title="Suivre les devis"
-              detail="Controler acomptes, soldes et export comptable."
-            />
-          </div>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {dashboardStats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="space-y-4 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-base font-semibold">Relances a traiter</p>
-              <p className="mt-1 text-sm text-muted">Les prochaines sorties commerciales.</p>
-            </div>
-            <ButtonLink href="/reminders" variant="secondary">
-              Voir tout
+            <ButtonLink href="/shows" variant="secondary">
+              Tous les spectacles
             </ButtonLink>
           </div>
 
-          {priorityReminders.length === 0 ? (
-            <EmptyBlock text="Aucune relance ouverte." />
+          {nextShows.length === 0 ? (
+            <EmptyBlock text="Aucun spectacle actif pour le moment." />
           ) : (
             <div className="space-y-3">
-              {priorityReminders.map((reminder) => (
-                <div
-                  key={reminder.id}
-                  className="flex flex-col gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 lg:flex-row lg:items-center lg:justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium">{reminder.label}</p>
-                      <Badge tone={getReminderTone(reminder)}>{getReminderLabel(reminder)}</Badge>
+              {nextShows.map((show) => {
+                const readiness = getShowDocumentReadiness(
+                  documents.filter((document) => document.showId === show.id),
+                );
+
+                return (
+                  <Link
+                    key={show.id}
+                    className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60"
+                    href={`/shows/${show.id}`}
+                  >
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                      <div>
+                        <p className="font-medium">{show.title}</p>
+                        <p className="mt-1 text-sm text-muted">
+                          {show.discipline} -{" "}
+                          {show.nextDate
+                            ? new Date(show.nextDate).toLocaleDateString("fr-FR")
+                            : "Date a poser"}
+                        </p>
+                      </div>
+                      <Badge tone={getShowTone(show)}>{show.status}</Badge>
                     </div>
-                    <p className="mt-1 text-sm text-muted">
-                      {reminder.relatedTo || "Sans contexte"} -{" "}
-                      {new Date(reminder.dueDate).toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
-                  <Link className="text-sm font-medium text-accent hover:text-accent-strong" href="/reminders">
-                    Ouvrir
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between gap-3 text-xs text-muted">
+                        <span>Dossier</span>
+                        <span>
+                          {readiness.percent}% - {readiness.missingCount} manquant(s)
+                        </span>
+                      </div>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-border">
+                        <div className="h-full rounded-full bg-accent" style={{ width: `${readiness.percent}%` }} />
+                      </div>
+                    </div>
                   </Link>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>
 
         <Card className="space-y-4 p-5">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
-              <p className="text-base font-semibold">Pipeline prioritaire</p>
-              <p className="mt-1 text-sm text-muted">Les opportunites a faire avancer maintenant.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Diffusion
+              </p>
+              <h2 className="mt-2 text-xl font-semibold">Les dates a faire avancer</h2>
             </div>
             <ButtonLink href="/pipeline" variant="secondary">
-              Ouvrir le pipeline
+              Pipeline
             </ButtonLink>
           </div>
 
@@ -447,9 +492,10 @@ export default async function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {priorityDeals.map((deal) => (
-                <div
+                <Link
                   key={deal.id}
-                  className="rounded-lg border border-border bg-panel-strong/35 p-4"
+                  className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60"
+                  href="/pipeline"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -462,72 +508,59 @@ export default async function DashboardPage() {
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-muted">Pondere</p>
-                      <p className="mt-1 font-medium">
-                        {getWeightedValue(deal).toLocaleString("fr-FR")} EUR
-                      </p>
+                      <p className="text-xs text-muted">Valeur ponderee</p>
+                      <p className="mt-1 font-medium">{formatCurrency(getWeightedValue(deal))}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted">Relance</p>
+                      <p className="text-xs text-muted">Prochaine relance</p>
                       <p className="mt-1 font-medium">
                         {deal.nextFollowUpAt
                           ? new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")
-                          : "A planifier"}
+                          : "A poser"}
                       </p>
                     </div>
                   </div>
                   <p className="mt-3 text-sm text-muted">
                     {deal.nextAction || "Prochaine action a definir"}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           )}
         </Card>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card className="space-y-4 p-5">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
-              <p className="text-base font-semibold">Spectacles a suivre</p>
-              <p className="mt-1 text-sm text-muted">Dates et budgets a garder en ligne de mire.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Aujourd&apos;hui
+              </p>
+              <h2 className="mt-2 text-xl font-semibold">Relances et echeances</h2>
             </div>
-            <ButtonLink href="/shows" variant="secondary">
-              Voir les spectacles
+            <ButtonLink href="/reminders" variant="secondary">
+              A faire
             </ButtonLink>
           </div>
-          {activeShows.length === 0 ? (
-            <EmptyBlock text="Aucun spectacle actif pour le moment." />
+
+          {priorityReminders.length === 0 ? (
+            <EmptyBlock text="Aucune relance ouverte." />
           ) : (
             <div className="space-y-3">
-              {activeShows.map((show) => (
+              {priorityReminders.map((reminder) => (
                 <Link
-                  key={show.id}
-                  className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
-                  href={`/shows/${show.id}`}
+                  key={reminder.id}
+                  className="flex flex-col gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60 sm:flex-row sm:items-center sm:justify-between"
+                  href="/reminders"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{show.title}</p>
-                      <p className="mt-1 text-sm text-muted">{show.discipline}</p>
-                    </div>
-                    <Badge tone={getShowTone(show)}>{show.status}</Badge>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs text-muted">Prochaine date</p>
-                      <p className="mt-1 font-medium">
-                        {show.nextDate
-                          ? new Date(show.nextDate).toLocaleDateString("fr-FR")
-                          : "Non renseignee"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted">Budget</p>
-                      <p className="mt-1 font-medium">{show.budget.toLocaleString("fr-FR")} EUR</p>
-                    </div>
-                  </div>
+                  <span className="min-w-0">
+                    <span className="block font-medium">{reminder.label}</span>
+                    <span className="mt-1 block text-sm text-muted">
+                      {reminder.relatedTo || "Sans contexte"}
+                    </span>
+                  </span>
+                  <Badge tone={getReminderTone(reminder)}>{getReminderLabel(reminder)}</Badge>
                 </Link>
               ))}
             </div>
@@ -535,31 +568,35 @@ export default async function DashboardPage() {
         </Card>
 
         <Card className="space-y-4 p-5">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
-              <p className="text-base font-semibold">Contacts a activer</p>
-              <p className="mt-1 text-sm text-muted">Les derniers interlocuteurs disponibles dans le CRM.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Repertoire
+              </p>
+              <h2 className="mt-2 text-xl font-semibold">Contacts a activer</h2>
             </div>
             <ButtonLink href="/contacts" variant="secondary">
-              Voir les contacts
+              Contacts
             </ButtonLink>
           </div>
+
           {contacts.length === 0 ? (
             <EmptyBlock text="Aucun contact cree." />
           ) : (
-            <div className="space-y-3">
-              {contacts.slice(0, 5).map((contact) => (
+            <div className="grid gap-3 md:grid-cols-2">
+              {contacts.slice(0, 4).map((contact) => (
                 <Link
                   key={contact.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60"
                   href={`/contacts/${contact.id}`}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{contact.name}</p>
-                    <p className="mt-1 truncate text-sm text-muted">
-                      {[contact.organization, contact.city].filter(Boolean).join(" - ") || "Contact sans detail"}
-                    </p>
-                  </div>
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{contact.name}</span>
+                    <span className="mt-1 block truncate text-sm text-muted">
+                      {[contact.organization, contact.city].filter(Boolean).join(" - ") ||
+                        "Contact sans detail"}
+                    </span>
+                  </span>
                   <Badge>{contact.status}</Badge>
                 </Link>
               ))}
@@ -570,49 +607,71 @@ export default async function DashboardPage() {
 
       {contacts.length === 0 && shows.length === 0 && pipelineDeals.length === 0 && reminders.length === 0 ? (
         <EmptyState
-          title="Commencez par remplir votre espace"
-          description="Ajoutez un spectacle, un contact, puis une opportunite pour que le dashboard devienne utile."
+          title="Le cockpit attend les premieres donnees"
+          description="Un spectacle, quelques contacts et une opportunite suffisent pour faire remonter les priorites."
         />
       ) : null}
     </div>
   );
 }
 
-function ActionLink({
-  detail,
-  href,
-  title,
-}: {
-  detail: string;
-  href: string;
-  title: string;
-}) {
-  return (
-    <Link
-      className="rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/30 hover:bg-panel-strong/55"
-      href={href}
-    >
-      <p className="font-medium">{title}</p>
-      <p className="mt-1 text-sm text-muted">{detail}</p>
-    </Link>
-  );
-}
-
-function PilotMetric({
+function PulseMetric({
   detail,
   label,
+  tone,
   value,
 }: {
   detail: string;
   label: string;
+  tone: Tone;
   value: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-panel-strong/45 p-4">
-      <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-2 text-lg font-semibold">{value}</p>
+    <div className="border-t border-border p-4 md:border-r xl:border-t-0">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
+        <span
+          className={[
+            "mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full",
+            tone === "success"
+              ? "bg-success"
+              : tone === "warning"
+                ? "bg-warning"
+                : tone === "danger"
+                  ? "bg-danger"
+                  : "bg-accent",
+          ].join(" ")}
+        />
+      </div>
+      <p className="mt-3 text-xl font-semibold">{value}</p>
       <p className="mt-1 text-xs text-muted">{detail}</p>
     </div>
+  );
+}
+
+function WorkflowCard({
+  detail,
+  href,
+  label,
+  title,
+  value,
+}: {
+  detail: string;
+  href: string;
+  label: string;
+  title: string;
+  value: string;
+}) {
+  return (
+    <Link
+      className="rounded-lg border border-border bg-panel p-5 shadow-sm shadow-ink/5 transition hover:-translate-y-0.5 hover:border-accent/35 hover:bg-panel-strong/55"
+      href={href}
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">{label}</p>
+      <p className="mt-3 text-lg font-semibold">{title}</p>
+      <p className="mt-4 text-2xl font-semibold">{value}</p>
+      <p className="mt-2 text-sm text-muted">{detail}</p>
+    </Link>
   );
 }
 
