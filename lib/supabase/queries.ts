@@ -87,16 +87,18 @@ export async function getShowById(showId: string): Promise<{
   }
 
   const supabase = await getSupabaseServerClient();
-  const [
-    { data: show, error: showError },
-    { data: opportunities, error: opportunitiesError },
-    { data: documents, error: documentsError },
-  ] = await Promise.all([
-      supabase
-        .from("shows")
-        .select("id,title,discipline,status,next_date,budget,notes,poster_url")
-        .eq("id", showId)
-        .maybeSingle(),
+  const { data: show, error: showError } = await supabase
+    .from("shows")
+    .select("id,title,discipline,status,next_date,budget,notes,poster_url")
+    .eq("id", showId)
+    .maybeSingle();
+
+  if (showError || !show) {
+    return { documents: [], show: null, opportunities: [], reminders: [] };
+  }
+
+  const [{ data: opportunities, error: opportunitiesError }, { data: documents, error: documentsError }] =
+    await Promise.all([
       supabase
         .from("opportunities")
         .select(
@@ -110,10 +112,6 @@ export async function getShowById(showId: string): Promise<{
         .eq("show_id", showId)
         .order("updated_at", { ascending: false }),
     ]);
-
-  if (showError || !show || opportunitiesError || !opportunities) {
-    return { documents: [], show: null, opportunities: [], reminders: [] };
-  }
 
   const resolvedShow: Show = {
     id: show.id,
@@ -140,24 +138,27 @@ export async function getShowById(showId: string): Promise<{
           updatedAt: document.updated_at,
         }));
 
-  const resolvedOpportunities: PipelineDeal[] = opportunities.map((deal) => ({
-    id: deal.id,
-    title: deal.title,
-    contactId: deal.contact_id ?? "",
-    showId: deal.show_id ?? "",
-    venue: deal.contacts?.organization ?? "Structure a renseigner",
-    stage: deal.stage as PipelineDeal["stage"],
-    value: deal.value ?? 0,
-    probability: deal.probability ?? 0,
-    nextAction: deal.next_action ?? "Prochaine action a definir",
-    nextFollowUpAt: deal.next_follow_up_at ?? "",
-    lostReason: deal.lost_reason ?? "",
-    contactName: deal.contacts?.name ?? "Contact a renseigner",
-    contactOrganization: deal.contacts?.organization ?? "",
-    contactEmail: deal.contacts?.email ?? "",
-    showTitle: deal.shows?.title ?? resolvedShow.title,
-    createdAt: deal.created_at,
-  }));
+  const resolvedOpportunities: PipelineDeal[] =
+    opportunitiesError || !opportunities
+      ? []
+      : opportunities.map((deal) => ({
+          id: deal.id,
+          title: deal.title,
+          contactId: deal.contact_id ?? "",
+          showId: deal.show_id ?? "",
+          venue: deal.contacts?.organization ?? "Structure a renseigner",
+          stage: deal.stage as PipelineDeal["stage"],
+          value: deal.value ?? 0,
+          probability: deal.probability ?? 0,
+          nextAction: deal.next_action ?? "Prochaine action a definir",
+          nextFollowUpAt: deal.next_follow_up_at ?? "",
+          lostReason: deal.lost_reason ?? "",
+          contactName: deal.contacts?.name ?? "Contact a renseigner",
+          contactOrganization: deal.contacts?.organization ?? "",
+          contactEmail: deal.contacts?.email ?? "",
+          showTitle: deal.shows?.title ?? resolvedShow.title,
+          createdAt: deal.created_at,
+        }));
 
   const opportunityIds = resolvedOpportunities.map((deal) => deal.id);
   const reminderQuery = supabase

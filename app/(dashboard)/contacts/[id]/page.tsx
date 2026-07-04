@@ -29,7 +29,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
           <p className="text-xs uppercase tracking-[0.18em] text-muted">Fiche contact</p>
           <h2 className="mt-2 text-3xl font-semibold">{contact.name}</h2>
           <p className="mt-2 text-sm text-muted">
-            {[contact.role, contact.organization, contact.city].filter(Boolean).join(" · ")}
+            {[contact.role, contact.organization, contact.city].filter(Boolean).join(" - ")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

@@ -220,7 +220,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                   <div>
                     <p className="font-medium">{deal.title}</p>
                     <p className="mt-1 text-sm text-muted">
-                      {deal.contactName} · {deal.contactOrganization || deal.venue}
+                      {deal.contactName} - {deal.contactOrganization || deal.venue}
                     </p>
                     <p className="mt-1 text-xs text-muted">
                       {deal.nextAction || "Prochaine action a definir"}

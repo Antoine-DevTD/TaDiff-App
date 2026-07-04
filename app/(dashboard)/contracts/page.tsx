@@ -45,7 +45,7 @@ function buildContracts(deals: PipelineDeal[], shows: Show[]): ContractItem[] {
         id: `contract-${deal.id}`,
         dealId: deal.id,
         showId: deal.showId,
-        title: `${deal.showTitle} · ${deal.contactOrganization || deal.venue}`,
+        title: `${deal.showTitle} - ${deal.contactOrganization || deal.venue}`,
         contactName: deal.contactName,
         organization: deal.contactOrganization || deal.venue,
         showTitle: deal.showTitle,
@@ -255,7 +255,7 @@ function ContractColumn({
                   <div className="min-w-0">
                     <p className="truncate font-medium">{item.showTitle}</p>
                     <p className="mt-1 truncate text-sm text-muted">
-                      {item.contactName} · {item.organization}
+                      {item.contactName} - {item.organization}
                     </p>
                   </div>
                   <Badge tone={meta.tone}>{meta.label}</Badge>
