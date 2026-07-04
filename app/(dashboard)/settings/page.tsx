@@ -55,8 +55,8 @@ export default async function SettingsPage() {
 
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Spectacles" value={dashboard.shows.length.toString()} detail="Catalogue" />
-        <MetricCard label="Contacts" value={dashboard.contacts.length.toString()} detail="CRM" />
-        <MetricCard label="Opportunites" value={dashboard.pipelineDeals.length.toString()} detail="Pipeline" />
+        <MetricCard label="Contacts" value={dashboard.contacts.length.toString()} detail="Carnet de diffusion" />
+        <MetricCard label="Dates" value={dashboard.pipelineDeals.length.toString()} detail="Diffusion" />
         <MetricCard label="Devis" value={quotes.length.toString()} detail="Facturation" />
       </section>
 

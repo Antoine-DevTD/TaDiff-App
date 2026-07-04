@@ -11,9 +11,9 @@ export default async function ContactsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold">Contacts CRM</h2>
+          <h2 className="text-2xl font-semibold">Carnet de diffusion</h2>
           <p className="mt-1 text-sm text-muted">
-            Premier tableau TanStack, pret pour filtres et actions.
+            Programmateurs, lieux, partenaires et personnes a relancer.
           </p>
         </div>
         <ButtonLink href="/contacts/new">Ajouter un contact</ButtonLink>

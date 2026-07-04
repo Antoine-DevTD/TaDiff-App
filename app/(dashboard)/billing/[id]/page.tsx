@@ -39,7 +39,7 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
           </ButtonLink>
           {quote.dealId ? (
             <ButtonLink href="/pipeline" variant="secondary">
-              Ouvrir pipeline
+              Ouvrir la diffusion
             </ButtonLink>
           ) : null}
           <PrintButton />
@@ -92,7 +92,7 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
             <div>
               <p className="font-medium">{quote.title}</p>
               <p className="mt-1 text-muted">
-                Cession, prestation ou proposition commerciale rattachee au pipeline.
+                Cession, prestation ou proposition commerciale rattachee a une date possible.
               </p>
             </div>
             <p className="text-right font-semibold">{formatCurrency(quote.amount)}</p>

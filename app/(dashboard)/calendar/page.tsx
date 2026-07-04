@@ -200,7 +200,7 @@ export default async function CalendarPage() {
                 />
                 <QuickLink
                   href="/pipeline"
-                  title="Revenir au pipeline"
+                  title="Revenir a la diffusion"
                   detail="Planifier les prochaines actions et alimenter le calendrier."
                 />
                 <QuickLink

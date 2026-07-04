@@ -157,7 +157,7 @@ export function PipelineBoard({
                 </p>
               </div>
             ) : (
-              <p className="mt-2 text-sm text-muted">Aucune opportunite active a prioriser.</p>
+              <p className="mt-2 text-sm text-muted">Aucune date active a prioriser.</p>
             )}
           </div>
           <div className="grid grid-cols-3 gap-2 rounded-md border border-border bg-panel-strong/65 p-2 text-center">
@@ -192,7 +192,7 @@ export function PipelineBoard({
       <Card className="space-y-3 p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <Input
-            aria-label="Rechercher dans le pipeline"
+            aria-label="Rechercher dans la diffusion"
             className="min-h-10 lg:max-w-xl"
             placeholder="Rechercher un contact, un lieu, un spectacle..."
             value={search}
@@ -261,14 +261,14 @@ export function PipelineBoard({
 
       <details className="rounded-lg border border-border bg-panel p-4 text-sm">
         <summary className="cursor-pointer list-none font-semibold">
-          Chiffres du pipeline
+          Chiffres de diffusion
           <span className="ml-2 text-xs font-normal text-muted">
             {totals.raw.toLocaleString("fr-FR")} EUR total
           </span>
         </summary>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <div className="rounded-md border border-border bg-panel-strong/55 p-3">
-            <p className="text-xs text-muted">Pipeline total</p>
+            <p className="text-xs text-muted">Dates ouvertes</p>
             <p className="mt-1 text-lg font-semibold">{totals.raw.toLocaleString("fr-FR")} EUR</p>
           </div>
           <div className="rounded-md border border-border bg-panel-strong/55 p-3">
@@ -278,7 +278,7 @@ export function PipelineBoard({
             </p>
           </div>
           <div className="rounded-md border border-border bg-panel-strong/55 p-3">
-            <p className="text-xs text-muted">Opportunites suivies</p>
+            <p className="text-xs text-muted">Dossiers suivis</p>
             <p className="mt-1 text-lg font-semibold">{optimisticDeals.length}</p>
           </div>
         </div>
@@ -287,9 +287,9 @@ export function PipelineBoard({
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         {visibleDeals.length === 0 ? (
           <Card className="p-6 text-center">
-            <p className="font-medium">Aucune opportunite ne correspond.</p>
+            <p className="font-medium">Aucune date ne correspond.</p>
             <p className="mt-2 text-sm text-muted">
-              Ajustez la recherche ou revenez a la vue complete du pipeline.
+              Ajustez la recherche ou revenez a la vue complete de diffusion.
             </p>
             <button
               className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
@@ -299,7 +299,7 @@ export function PipelineBoard({
                 setFilter("all");
               }}
             >
-              Voir tout le pipeline
+              Voir toute la diffusion
             </button>
           </Card>
         ) : view === "list" ? (
@@ -401,7 +401,7 @@ function PipelineListView({
         <table className="w-full min-w-[960px] text-left text-sm">
           <thead className="border-b border-border bg-panel-strong/60 text-xs uppercase tracking-[0.12em] text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Opportunite</th>
+              <th className="px-4 py-3 font-medium">Date possible</th>
               <th className="px-4 py-3 font-medium">Contact</th>
               <th className="px-4 py-3 font-medium">Etape</th>
               <th className="px-4 py-3 font-medium">Relance</th>
@@ -613,7 +613,7 @@ function PipelineCard({
             <Link className="hover:text-accent" href={`/shows/${deal.showId}`}>
               {deal.showTitle}
             </Link>
-            <span>•</span>
+            <span>-</span>
             <Link className="hover:text-accent" href={`/contacts/${deal.contactId}`}>
               {deal.contactName}
             </Link>

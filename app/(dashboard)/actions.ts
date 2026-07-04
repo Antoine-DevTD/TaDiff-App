@@ -338,7 +338,7 @@ export async function createOpportunityWithNewContact(
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : contact et opportunite valides, non enregistres." };
+    return { ok: true, message: "Mode demo : contact et date valides, non enregistres." };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -376,11 +376,11 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   const parsed = opportunitySchema.safeParse(values);
 
   if (!parsed.success) {
-    return { ok: false, message: "Le formulaire opportunite contient des erreurs." };
+    return { ok: false, message: "Le formulaire de date contient des erreurs." };
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : opportunite valide, non enregistree." };
+    return { ok: true, message: "Mode demo : date valide, non enregistree." };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -408,7 +408,7 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
     .single();
 
   if (error || !opportunity) {
-    return { ok: false, message: error?.message ?? "Opportunite non creee." };
+    return { ok: false, message: error?.message ?? "Date non creee." };
   }
 
   if (parsed.data.nextFollowUpAt) {
@@ -430,8 +430,8 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   return {
     ok: true,
     message: parsed.data.nextFollowUpAt
-      ? "Opportunite creee avec relance."
-      : "Opportunite creee.",
+      ? "Date creee avec relance."
+      : "Date creee.",
   };
 }
 
@@ -442,11 +442,11 @@ export async function updateOpportunity(
   const parsed = opportunitySchema.safeParse(values);
 
   if (!parsed.success) {
-    return { ok: false, message: "Le formulaire opportunite contient des erreurs." };
+    return { ok: false, message: "Le formulaire de date contient des erreurs." };
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : opportunite mise a jour." };
+    return { ok: true, message: "Mode demo : date mise a jour." };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -497,7 +497,7 @@ export async function updateOpportunity(
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
-  return { ok: true, message: "Opportunite mise a jour." };
+  return { ok: true, message: "Date mise a jour." };
 }
 
 export async function createQuoteFromOpportunity(
@@ -507,7 +507,7 @@ export async function createQuoteFromOpportunity(
     return {
       ok: true,
       quoteId: `quote-${opportunityId}`,
-      message: "Mode demo : devis prepare depuis l'opportunite.",
+      message: "Mode demo : devis prepare depuis la date.",
     };
   }
 
@@ -546,7 +546,7 @@ export async function createQuoteFromOpportunity(
     .maybeSingle();
 
   if (opportunityError || !opportunity) {
-    return { ok: false, message: opportunityError?.message ?? "Opportunite introuvable." };
+    return { ok: false, message: opportunityError?.message ?? "Date introuvable." };
   }
 
   const { count, error: countError } = await supabase
@@ -596,7 +596,7 @@ export async function createQuoteFromOpportunity(
 
 export async function deleteOpportunity(opportunityId: string): Promise<ActionResult> {
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : opportunite supprimee." };
+    return { ok: true, message: "Mode demo : date supprimee." };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -610,7 +610,7 @@ export async function deleteOpportunity(opportunityId: string): Promise<ActionRe
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
-  return { ok: true, message: "Opportunite supprimee." };
+  return { ok: true, message: "Date supprimee." };
 }
 
 export async function updateOpportunityStage(
@@ -684,7 +684,7 @@ export async function updateOpportunityStage(
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
-  return { ok: true, message: "Pipeline mis a jour." };
+  return { ok: true, message: "Diffusion mise a jour." };
 }
 
 export async function scheduleOpportunityFollowUp(
@@ -714,11 +714,11 @@ export async function scheduleOpportunityFollowUp(
     .single();
 
   if (opportunityError || !opportunity) {
-    return { ok: false, message: opportunityError?.message ?? "Opportunite introuvable." };
+    return { ok: false, message: opportunityError?.message ?? "Date introuvable." };
   }
 
   if (opportunity.stage === "Confirme" || opportunity.stage === "Perdu") {
-    return { ok: false, message: "Impossible de replanifier une opportunite fermee." };
+    return { ok: false, message: "Impossible de replanifier une date fermee." };
   }
 
   const { error } = await supabase
@@ -790,7 +790,7 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
     }
 
     if (existingReminder) {
-      return { ok: true, message: "Relance deja ouverte pour cette opportunite." };
+      return { ok: true, message: "Relance deja ouverte pour cette date." };
     }
   }
 

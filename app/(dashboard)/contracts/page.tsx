@@ -93,7 +93,7 @@ export default async function ContractsPage() {
       <div>
         <h2 className="text-2xl font-semibold">Contrats</h2>
         <p className="mt-1 text-sm text-muted">
-          Une vue de suivi contractuel derivee des spectacles et du pipeline reel.
+          Une vue de suivi contractuel derivee des spectacles et des dates en discussion.
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export default async function ContractsPage() {
           title="Aucun contrat a suivre"
           description="Des qu un spectacle entre en relance avancee, negociation ou confirmation, il remonte ici."
           actionHref="/pipeline"
-          actionLabel="Ouvrir le pipeline"
+          actionLabel="Ouvrir la diffusion"
         />
       ) : (
         <>
@@ -177,7 +177,7 @@ export default async function ContractsPage() {
               <div className="grid gap-3">
                 <QuickLink
                   href="/pipeline"
-                  title="Revenir au pipeline"
+                  title="Revenir a la diffusion"
                   detail="Faire avancer la negociation et ajuster la probabilite."
                 />
                 <QuickLink

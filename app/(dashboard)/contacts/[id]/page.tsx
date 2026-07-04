@@ -52,12 +52,12 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Opportunites liees</CardTitle>
-            <CardDescription>Pipeline commercial associe a ce contact.</CardDescription>
+            <CardTitle>Dates liees</CardTitle>
+            <CardDescription>Diffusion associee a ce contact.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
             {opportunities.length === 0 ? (
-              <EmptyPanel text="Aucune opportunite ouverte pour ce contact." />
+              <EmptyPanel text="Aucune date ouverte pour ce contact." />
             ) : (
               opportunities.map((deal) => (
                 <div
@@ -133,7 +133,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
             </CardHeader>
             <div className="flex flex-wrap gap-3">
               <ButtonLink href="/pipeline" variant="secondary">
-                Ouvrir le pipeline
+                Ouvrir la diffusion
               </ButtonLink>
               <ButtonLink href="/reminders" variant="secondary">
                 Voir les relances

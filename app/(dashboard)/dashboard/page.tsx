@@ -300,7 +300,7 @@ export default async function DashboardPage() {
               value={formatCurrency(cashPilot.currentCash)}
             />
             <PulseMetric
-              detail={`${activeDeals.length} opportunite(s) active(s)`}
+              detail={`${activeDeals.length} date(s) active(s)`}
               label="Qu'est-ce qui vend ?"
               tone={salesTone}
               value={formatCurrency(cashPilot.weightedPipeline)}
@@ -340,7 +340,7 @@ export default async function DashboardPage() {
             {mainAction ? (
               <ButtonLink href={mainAction.href}>Ouvrir</ButtonLink>
             ) : (
-              <ButtonLink href="/pipeline">Ajouter une opportunite</ButtonLink>
+              <ButtonLink href="/pipeline">Ajouter une date possible</ButtonLink>
             )}
             <ButtonLink href="/calendar" variant="secondary">
               Voir l&apos;agenda
@@ -483,12 +483,12 @@ export default async function DashboardPage() {
               <h2 className="mt-2 text-xl font-semibold">Les dates a faire avancer</h2>
             </div>
             <ButtonLink href="/pipeline" variant="secondary">
-              Pipeline
+              Diffusion
             </ButtonLink>
           </div>
 
           {priorityDeals.length === 0 ? (
-            <EmptyBlock text="Aucune opportunite active." />
+            <EmptyBlock text="Aucune date active." />
           ) : (
             <div className="space-y-3">
               {priorityDeals.map((deal) => (
@@ -608,7 +608,7 @@ export default async function DashboardPage() {
       {contacts.length === 0 && shows.length === 0 && pipelineDeals.length === 0 && reminders.length === 0 ? (
         <EmptyState
           title="Le cockpit attend les premieres donnees"
-          description="Un spectacle, quelques contacts et une opportunite suffisent pour faire remonter les priorites."
+          description="Un spectacle, quelques contacts et une date possible suffisent pour faire remonter les priorites."
         />
       ) : null}
     </div>

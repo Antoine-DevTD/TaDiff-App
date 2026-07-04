@@ -80,7 +80,7 @@ export function OpportunityEditor({
   }
 
   async function removeDeal() {
-    const confirmed = window.confirm("Supprimer cette opportunite du pipeline ?");
+    const confirmed = window.confirm("Supprimer cette date possible ?");
 
     if (!confirmed) {
       return;
@@ -97,7 +97,7 @@ export function OpportunityEditor({
   return (
     <div className="mt-3 space-y-2 rounded-md border border-border bg-panel-strong/55 p-3">
       <Input
-        aria-label="Titre opportunite"
+        aria-label="Titre date possible"
         className="min-h-9 text-xs"
         value={draft.title}
         onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}

@@ -95,7 +95,7 @@ export default async function FinancesPage() {
   const activeDeals = deals.filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu");
   const signedRevenue = signedDeals.reduce((total, deal) => total + deal.value, 0);
   const weightedRevenue = activeDeals.reduce((total, deal) => total + getWeightedValue(deal), 0);
-  const pipelineRaw = activeDeals.reduce((total, deal) => total + deal.value, 0);
+  const diffusionRaw = activeDeals.reduce((total, deal) => total + deal.value, 0);
   const quoteBalance = quotes.reduce((total, quote) => total + quote.depositDue + quote.balanceDue, 0);
   const monthlyFixedCosts = getMonthlyFixedCostsTotal(fixedCosts);
   const fixedCostShare = getFixedCostSharePerPerformance({
@@ -140,7 +140,7 @@ export default async function FinancesPage() {
       {deals.length === 0 && shows.length === 0 ? (
         <EmptyState
           title="Aucune base financiere"
-          description="Ajoutez un spectacle et des opportunites pour commencer a suivre budgets et revenus."
+          description="Ajoutez un spectacle et des dates possibles pour commencer a suivre budgets et revenus."
           actionHref="/shows/new"
           actionLabel="Ajouter un spectacle"
         />
@@ -199,7 +199,7 @@ export default async function FinancesPage() {
                   detail={`Base : ${targetPerformancesPerYear} dates par an pour couvrir ${formatCurrency(monthlyFixedCosts)} de frais fixes mensuels.`}
                 />
                 <AdviceBlock
-                  title={`${formatCurrency(weightedRevenue)} de pipeline pondere`}
+                  title={`${formatCurrency(weightedRevenue)} de dates ponderees`}
                   detail="Ce n est pas encore du cash. Les relances servent a transformer cette probabilite en encaissement."
                 />
                 <AdviceBlock
@@ -211,9 +211,9 @@ export default async function FinancesPage() {
           </section>
 
           <section className="grid gap-4 md:grid-cols-4">
-            <MetricCard label="CA signe" value={formatCurrency(signedRevenue)} detail="Opportunites confirmees" />
-            <MetricCard label="CA previsionnel" value={formatCurrency(weightedRevenue)} detail="Pipeline pondere" />
-            <MetricCard label="Pipeline brut" value={formatCurrency(pipelineRaw)} detail="Valeur ouverte totale" />
+            <MetricCard label="CA signe" value={formatCurrency(signedRevenue)} detail="Dates confirmees" />
+            <MetricCard label="CA previsionnel" value={formatCurrency(weightedRevenue)} detail="Dates ponderees" />
+            <MetricCard label="Diffusion brute" value={formatCurrency(diffusionRaw)} detail="Valeur ouverte totale" />
             <MetricCard label="Frais fixes annuels" value={formatCurrency(monthlyFixedCosts * 12)} detail="Equivalent annuel" />
           </section>
 

@@ -279,7 +279,7 @@ export function RemindersWorkspace({ reminders }: { reminders: Reminder[] }) {
               </div>
             </div>
             <ButtonLink className="w-full" href="/pipeline" variant="secondary">
-              Ouvrir le pipeline
+              Ouvrir la diffusion
             </ButtonLink>
           </Card>
         </div>
@@ -333,9 +333,9 @@ function ReminderSection({
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
                   <span>{reminder.relatedTo || "Sans contexte"}</span>
-                  <span>•</span>
+                  <span>-</span>
                   <span>{new Date(reminder.dueDate).toLocaleDateString("fr-FR")}</span>
-                  <span>•</span>
+                  <span>-</span>
                   <span>{getDueLabel(reminder)}</span>
                 </div>
               </div>

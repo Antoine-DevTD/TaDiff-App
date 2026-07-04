@@ -267,7 +267,7 @@ export const dashboardStats = [
   { label: "Spectacles actifs", value: "3", detail: "2 en diffusion" },
   { label: "Prospects ouverts", value: "42", detail: "+8 ce mois" },
   { label: "Relances a venir", value: "11", detail: "4 cette semaine" },
-  { label: "CA previsionnel", value: "48 900 EUR", detail: "Pipeline qualifie" },
+  { label: "CA previsionnel", value: "48 900 EUR", detail: "Dates qualifiees" },
 ];
 
 export const commercialPacks: CommercialPack[] = [
@@ -440,7 +440,7 @@ export const billingPlans: BillingPlan[] = [
     monthlyPrice: 49,
     annualPrice: 39,
     description: "Pour une compagnie avec un spectacle actif en lancement de diffusion.",
-    features: ["1 spectacle actif", "500 contacts CRM", "Calculateur rentabilite", "Radar subventions", "200 emails / mois"],
+    features: ["1 spectacle actif", "500 contacts diffusion", "Calculateur rentabilite", "Radar subventions", "200 emails / mois"],
   },
   {
     id: "pro",
@@ -448,7 +448,7 @@ export const billingPlans: BillingPlan[] = [
     monthlyPrice: 99,
     annualPrice: 79,
     description: "Pour les compagnies avec plusieurs spectacles et une equipe de diffusion.",
-    features: ["3 spectacles actifs", "2 000 contacts CRM", "Mecenat", "1 000 emails / mois", "Export FEC"],
+    features: ["3 spectacles actifs", "2 000 contacts diffusion", "Mecenat", "1 000 emails / mois", "Export FEC"],
     current: true,
   },
   {

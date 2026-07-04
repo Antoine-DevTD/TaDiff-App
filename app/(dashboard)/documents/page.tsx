@@ -136,7 +136,7 @@ export default async function DocumentsPage() {
       <div>
         <h2 className="text-2xl font-semibold">Documents</h2>
         <p className="mt-1 text-sm text-muted">
-          Hub documentaire des spectacles, derive du pipeline, des relances et des contrats.
+          Hub documentaire des spectacles, derive de la diffusion, des relances et des contrats.
         </p>
       </div>
 
@@ -298,7 +298,7 @@ function DocumentColumn({
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-muted">
-                  <p>{item.pipelineCount} opportunite(s)</p>
+                  <p>{item.pipelineCount} date(s) liee(s)</p>
                   <p>{item.missingCount} piece(s) manquante(s)</p>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">

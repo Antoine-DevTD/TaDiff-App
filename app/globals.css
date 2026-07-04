@@ -1,20 +1,110 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #f6f0e4;
-  --color-foreground: #172033;
-  --color-panel: #fffdf8;
-  --color-panel-strong: #edf3fb;
-  --color-border: #ded3c2;
-  --color-muted: #687386;
-  --color-accent: #1d4ed8;
-  --color-accent-strong: #153a9f;
-  --color-ink: #18233a;
+  --color-background: #f4eadb;
+  --color-foreground: #1f1615;
+  --color-panel: #fffaf2;
+  --color-panel-strong: #f2dfcf;
+  --color-border: #d7beaa;
+  --color-muted: #6f5f58;
+  --color-accent: #8f2f2c;
+  --color-accent-strong: #682016;
+  --color-ink: #241313;
   --color-success: #15803d;
   --color-warning: #b45309;
   --color-danger: #b91c1c;
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+:root {
+  --body-top: #fbf6ed;
+  --body-grid: rgba(143, 47, 44, 0.075);
+}
+
+html[data-theatre-theme="velours"] {
+  --color-background: #f4eadb;
+  --color-foreground: #1f1615;
+  --color-panel: #fffaf2;
+  --color-panel-strong: #f2dfcf;
+  --color-border: #d7beaa;
+  --color-muted: #6f5f58;
+  --color-accent: #8f2f2c;
+  --color-accent-strong: #682016;
+  --color-ink: #241313;
+  --color-success: #28724f;
+  --color-warning: #a5621b;
+  --color-danger: #9d2b24;
+  --body-top: #fbf6ed;
+  --body-grid: rgba(143, 47, 44, 0.075);
+}
+
+html[data-theatre-theme="plateau"] {
+  --color-background: #100f0f;
+  --color-foreground: #f4efe5;
+  --color-panel: #181514;
+  --color-panel-strong: #241e1b;
+  --color-border: #3b302b;
+  --color-muted: #b4a99a;
+  --color-accent: #9a6418;
+  --color-accent-strong: #d9a441;
+  --color-ink: #090807;
+  --color-success: #7fb069;
+  --color-warning: #d9a441;
+  --color-danger: #d46a5d;
+  --body-top: #171413;
+  --body-grid: rgba(217, 164, 65, 0.12);
+}
+
+html[data-theatre-theme="affiche"] {
+  --color-background: #f7f1e3;
+  --color-foreground: #171717;
+  --color-panel: #fffdf7;
+  --color-panel-strong: #efe7d4;
+  --color-border: #d8c9ab;
+  --color-muted: #635d51;
+  --color-accent: #c43d2b;
+  --color-accent-strong: #8d2b21;
+  --color-ink: #231f20;
+  --color-success: #276c4d;
+  --color-warning: #9b621d;
+  --color-danger: #b52f2a;
+  --body-top: #fff9ed;
+  --body-grid: rgba(35, 31, 32, 0.075);
+}
+
+html[data-theatre-theme="loge"] {
+  --color-background: #f1e7e0;
+  --color-foreground: #211616;
+  --color-panel: #fff9f3;
+  --color-panel-strong: #e8d1c8;
+  --color-border: #d4b9b0;
+  --color-muted: #705f5b;
+  --color-accent: #6f3847;
+  --color-accent-strong: #4f2431;
+  --color-ink: #2b1720;
+  --color-success: #2d7150;
+  --color-warning: #9f641f;
+  --color-danger: #a33536;
+  --body-top: #fbf2ec;
+  --body-grid: rgba(111, 56, 71, 0.08);
+}
+
+html[data-theatre-theme="regie"] {
+  --color-background: #e9ece6;
+  --color-foreground: #101615;
+  --color-panel: #f8faf5;
+  --color-panel-strong: #dfe6dd;
+  --color-border: #b8c2b7;
+  --color-muted: #58645d;
+  --color-accent: #315c49;
+  --color-accent-strong: #203f33;
+  --color-ink: #151c19;
+  --color-success: #28724f;
+  --color-warning: #a36d1f;
+  --color-danger: #a43b32;
+  --body-top: #f4f6ef;
+  --body-grid: rgba(49, 92, 73, 0.085);
 }
 
 * {
@@ -28,12 +118,10 @@ html {
 body {
   min-height: 100vh;
   background:
-    linear-gradient(90deg, rgba(29, 78, 216, 0.045) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(29, 78, 216, 0.035) 1px, transparent 1px),
-    radial-gradient(circle at 18% -10rem, rgba(29, 78, 216, 0.13), transparent 30rem),
-    radial-gradient(circle at 94% 8rem, rgba(180, 83, 9, 0.08), transparent 25rem),
-    linear-gradient(180deg, #fbf7ee 0%, var(--color-background) 36rem);
-  background-size: 32px 32px, 32px 32px, auto, auto, auto;
+    linear-gradient(90deg, var(--body-grid) 1px, transparent 1px),
+    linear-gradient(180deg, var(--body-grid) 1px, transparent 1px),
+    linear-gradient(180deg, var(--body-top) 0%, var(--color-background) 36rem);
+  background-size: 32px 32px, 32px 32px, auto;
   color: var(--color-foreground);
   font-family: var(--font-sans);
 }

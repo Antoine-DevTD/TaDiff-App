@@ -14,9 +14,9 @@ export default async function PipelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Pipeline diffusion</h2>
+        <h2 className="text-2xl font-semibold">Diffusion en cours</h2>
         <p className="mt-1 text-sm text-muted">
-          Suivez les opportunites, priorisez les relances et estimez le CA probable.
+          Suivez les dates possibles, priorisez les relances et estimez le CA probable.
         </p>
       </div>
 
@@ -24,8 +24,8 @@ export default async function PipelinePage() {
 
       {deals.length === 0 ? (
         <EmptyState
-          title="Aucune opportunite"
-          description="Creez une premiere opportunite pour commencer le suivi de diffusion."
+          title="Aucune date possible"
+          description="Creez un premier dossier de diffusion pour commencer le suivi."
         />
       ) : (
         <>

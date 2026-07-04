@@ -52,7 +52,7 @@ export default async function BillingPage() {
           <div>
             <p className="text-base font-semibold">Devis et echeances</p>
             <p className="mt-1 text-sm text-muted">
-              Les devis sont rattaches au pipeline et alimentent acomptes, soldes et priorites cash.
+              Les devis sont rattaches aux dates possibles et alimentent acomptes, soldes et priorites cash.
             </p>
           </div>
           <div className="space-y-3">

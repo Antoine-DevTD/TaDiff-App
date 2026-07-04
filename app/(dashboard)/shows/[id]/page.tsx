@@ -173,12 +173,12 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Rentabilite opportunites</CardTitle>
+            <CardTitle>Rentabilite des dates</CardTitle>
             <CardDescription>Les dates a perte remontent avant signature.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
             {profitabilityRows.length === 0 ? (
-              <EmptyPanel text="Aucune opportunite a calculer." />
+              <EmptyPanel text="Aucune date a calculer." />
             ) : (
               profitabilityRows.map(({ deal, result }) => {
                 const verdict = getVerdictMeta(result.verdict);
@@ -205,12 +205,12 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Opportunites liees</CardTitle>
+            <CardTitle>Dates liees</CardTitle>
             <CardDescription>Diffusion, negociation et prochaines actions sur ce spectacle.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
             {opportunities.length === 0 ? (
-              <EmptyPanel text="Aucune opportunite liee a ce spectacle." />
+              <EmptyPanel text="Aucune date liee a ce spectacle." />
             ) : (
               opportunities.map((deal) => (
                 <div
@@ -269,7 +269,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
             </CardHeader>
             <div className="flex flex-wrap gap-3">
               <ButtonLink href="/pipeline" variant="secondary">
-                Ouvrir le pipeline
+                Ouvrir la diffusion
               </ButtonLink>
               <ButtonLink href="/reminders" variant="secondary">
                 Voir les relances

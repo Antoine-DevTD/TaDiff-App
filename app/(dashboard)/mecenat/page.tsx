@@ -24,7 +24,7 @@ export default async function MecenatPage() {
         <div>
           <h2 className="text-2xl font-semibold">Mecenat</h2>
           <p className="mt-1 text-sm text-muted">
-            Pipeline entreprises, deduction fiscale loi Aillagon et packs de contreparties.
+            Entreprises a approcher, deduction fiscale loi Aillagon et packs de contreparties.
           </p>
         </div>
         <ButtonLink href="/campaigns" variant="secondary">

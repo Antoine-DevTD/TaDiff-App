@@ -19,7 +19,7 @@ export function PipelineCreatePanel({
     <>
       <div className="flex justify-end">
         <Button type="button" onClick={() => setIsOpen(true)}>
-          Ajouter une opportunite
+          Ajouter une date possible
         </Button>
       </div>
 
@@ -42,7 +42,7 @@ export function PipelineCreatePanel({
                   <p className="text-xs uppercase tracking-[0.16em] text-muted">
                     Nouvelle carte
                   </p>
-                  <h3 className="mt-1 text-xl font-semibold">Ajouter une opportunite</h3>
+                  <h3 className="mt-1 text-xl font-semibold">Ajouter une date possible</h3>
                   <p className="mt-1 text-sm text-muted">
                     Choisissez un contact existant ou creez-le directement ici.
                   </p>

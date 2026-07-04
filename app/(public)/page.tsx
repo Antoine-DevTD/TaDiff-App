@@ -9,10 +9,11 @@ import {
   quoteItems,
 } from "@/data/mock-data";
 import { formatCurrency } from "@/lib/finance";
+import { theatreThemes } from "@/lib/theatre-themes";
 
 const problems = [
   "Dates signees a perte sans le savoir",
-  "Relances oubliees et opportunites perdues",
+  "Relances oubliees et dates perdues",
   "Subventions manquees faute de deadline claire",
   "Administration eparpillee entre Excel, Drive et emails",
 ];
@@ -24,9 +25,9 @@ const modules = [
     tags: ["Point mort", "SACD", "Couts tournee"],
   },
   {
-    title: "CRM diffusion",
-    detail: "Contacts, pipeline, relances et priorites commerciales dans une vue commune.",
-    tags: ["Score", "Kanban", "Relances"],
+    title: "Carnet de diffusion",
+    detail: "Programmateurs, lieux, relances et dates possibles dans une vue commune.",
+    tags: ["Contacts", "Dates", "Relances"],
   },
   {
     title: "Radar subventions",
@@ -35,12 +36,12 @@ const modules = [
   },
   {
     title: "Finances et devis",
-    detail: "CA signe, previsionnel, acomptes, soldes et export FEC prepare.",
+    detail: "CA signe, previsionnel, acomptes, soldes et export comptable prepare.",
     tags: ["Acomptes", "FEC", "Tresorerie"],
   },
   {
     title: "Mecenat",
-    detail: "Pipeline entreprise, deduction loi Aillagon et packs prets a envoyer.",
+    detail: "Entreprises a approcher, deduction loi Aillagon et packs prets a envoyer.",
     tags: ["60%", "Packs", "Argumentaire"],
   },
   {
@@ -63,13 +64,13 @@ export default function LandingPage() {
       <section className="border-b border-border bg-ink text-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center">
-            <Badge className="w-fit bg-white/10 text-white">SaaS spectacle vivant</Badge>
+            <Badge className="w-fit bg-white/10 text-white">Cockpit spectacle vivant</Badge>
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Pilotez votre diffusion. Vendez plus. Perdez moins.
+              Votre compagnie lisible en un coup d&apos;oeil.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">
-              TaDiff rassemble CRM, pipeline, rentabilite, subventions, mecenat, devis et
-              finances dans un cockpit concu pour les compagnies de spectacle vivant.
+              TaDiff rassemble spectacles, contacts, dates a vendre, relances,
+              aides, devis et tresorerie dans un cockpit concu pour les compagnies.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href="/beta">Reserver la beta</ButtonLink>
@@ -82,13 +83,13 @@ export default function LandingPage() {
               prioritaire pour les 30 suivantes.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <HeroMetric label="Pipeline pondere" value={formatCurrency(signedOrWeighted)} />
+              <HeroMetric label="Dates a vendre" value={formatCurrency(signedOrWeighted)} />
               <HeroMetric label="Aides suivies" value={formatCurrency(grantsTotal)} />
               <HeroMetric label="Devis actifs" value={formatCurrency(quotesTotal)} />
             </div>
           </div>
 
-          <Card className="grid gap-4 bg-white p-4 text-ink">
+          <Card className="grid gap-4 bg-panel p-4 text-foreground">
             <div className="grid grid-cols-2 gap-3">
               <PreviewMetric label="Rentabilite" value="Avant signature" />
               <PreviewMetric label="Relances" value="Priorisees" />
@@ -97,7 +98,7 @@ export default function LandingPage() {
             </div>
             <div className="rounded-lg border border-border bg-panel-strong/50 p-4">
               <div className="flex items-center justify-between">
-                <p className="font-semibold">Pipeline de diffusion</p>
+                <p className="font-semibold">Dates a faire avancer</p>
                 <Badge tone="warning">A traiter</Badge>
               </div>
               <div className="mt-4 space-y-3">
@@ -140,10 +141,49 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="border-y border-border bg-panel">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <Badge>5 interfaces</Badge>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight">
+              Cinq directions de cockpit, toutes ancrees dans le theatre.
+            </h2>
+            <p className="mt-4 text-muted">
+              Le bandeau de direction artistique permet de tester ces univers
+              sur la landing et dans le cockpit sans changer le produit.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 lg:grid-cols-5">
+            {theatreThemes.map((theme) => (
+              <Card key={theme.id} className="flex flex-col p-4">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-4 w-4 rounded-full border border-border"
+                    style={{ background: theme.accent }}
+                  />
+                  <p className="font-semibold">{theme.name}</p>
+                </div>
+                <p className="mt-3 text-sm text-muted">{theme.mood}</p>
+                <div className="mt-4 space-y-3 text-sm">
+                  <div>
+                    <p className="font-medium">Landing</p>
+                    <p className="mt-1 text-muted">{theme.landing}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Cockpit</p>
+                    <p className="mt-1 text-muted">{theme.cockpit}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="fonctionnalites" className="border-y border-border bg-panel">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <Badge>Modules</Badge>
+            <Badge>Ateliers</Badge>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight">
               Tout ce dont une compagnie a besoin pour diffuser proprement.
             </h2>
@@ -177,7 +217,7 @@ export default function LandingPage() {
             </h2>
             <p className="mt-4 text-muted">
               Le dashboard garde les dispositifs, montants attendus et prochaines
-              deadlines au meme endroit que les spectacles et le pipeline.
+              deadlines au meme endroit que les spectacles et les dates a vendre.
             </p>
             <ButtonLink href="/subventions" className="mt-6">
               Ouvrir le radar

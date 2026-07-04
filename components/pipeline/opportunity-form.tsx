@@ -77,7 +77,7 @@ export function OpportunityForm({
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Opportunite" error={errors.title?.message}>
+      <Field label="Date possible" error={errors.title?.message}>
         <Input placeholder="Serie scolaire automne" {...register("title")} />
       </Field>
 
@@ -232,7 +232,7 @@ export function OpportunityForm({
       ) : null}
 
       <Button type="submit" disabled={isSubmitting || isPending}>
-        Creer opportunite
+        Creer la date
       </Button>
     </form>
   );
