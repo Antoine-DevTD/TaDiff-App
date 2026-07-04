@@ -38,7 +38,7 @@ create table if not exists public.beta_signups (
   main_need text not null,
   status text not null
     check (status in ('reserved', 'waitlist')),
-  position integer not null,
+  "position" integer not null,
   created_at timestamptz not null default now()
 );
 
@@ -67,7 +67,7 @@ create or replace function public.register_beta_signup(
   signup_discipline text,
   signup_main_need text
 )
-returns table(status text, position integer)
+returns table(status text, "position" integer)
 language plpgsql
 security definer
 set search_path = public
@@ -78,7 +78,7 @@ declare
   next_status text;
 begin
   return query
-    select beta_signups.status, beta_signups.position
+    select beta_signups.status, beta_signups."position"
     from public.beta_signups
     where lower(beta_signups.email) = normalized_email
     limit 1;
@@ -106,7 +106,7 @@ begin
     discipline,
     main_need,
     status,
-    position
+    "position"
   )
   values (
     trim(signup_company_name),
@@ -121,7 +121,7 @@ begin
   );
 
   status := next_status;
-  position := next_position;
+  "position" := next_position;
   return next;
 end;
 $$;
