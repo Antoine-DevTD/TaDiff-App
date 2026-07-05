@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #f6f8fc;
+  --color-background: #e8eef7;
   --color-foreground: #0f172a;
   --color-panel: #ffffff;
   --color-panel-strong: #eef2f9;
-  --color-border: #d8e0ef;
-  --color-muted: #5b6675;
+  --color-border: #c3d2ea;
+  --color-muted: #4f5a6b;
   --color-accent: #1d4ed8;
   --color-accent-strong: #1e40af;
   --color-ink: #0b1220;
@@ -24,12 +24,12 @@
 }
 
 html[data-theatre-theme="velours"] {
-  --color-background: #f6f8fc;
+  --color-background: #e8eef7;
   --color-foreground: #0f172a;
   --color-panel: #ffffff;
   --color-panel-strong: #eef2f9;
-  --color-border: #d8e0ef;
-  --color-muted: #5b6675;
+  --color-border: #c3d2ea;
+  --color-muted: #4f5a6b;
   --color-accent: #1d4ed8;
   --color-accent-strong: #1e40af;
   --color-ink: #0b1220;

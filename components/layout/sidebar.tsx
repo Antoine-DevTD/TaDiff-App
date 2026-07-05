@@ -31,7 +31,7 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
 
   if (variant === "admin") {
     return (
-      <aside className="hidden min-h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-bold shadow-sm shadow-accent/30">
             TD
@@ -107,7 +107,7 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
   }
 
   return (
-    <aside className="hidden min-h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-bold shadow-sm shadow-accent/30">
           TD
