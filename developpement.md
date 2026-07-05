@@ -1,7 +1,7 @@
 # TaDiff - Developpement produit
 
-Derniere mise a jour : 2026-07-04  
-Contexte : retour de reunion avec le directeur. Contrat en cours de redaction, objectif possible de 30% pour le role technique/produit.
+Derniere mise a jour : 2026-07-05  
+Contexte : retour de reunion avec le directeur + notes produit Tony dans `ressources/Application TADIFF Informations VF .pdf`. Contrat en cours de redaction, objectif de proteger le role technique/produit.
 
 ## 1. Vision
 
@@ -116,7 +116,317 @@ Base deja en place cote application :
 - heartbeat Supabase via GitHub Actions ;
 - premiers flux en cours : import CSV contacts, creation de devis depuis le pipeline, export workspace, page devis imprimable.
 
+Avancement au 2026-07-05 (migrations 009 a 011 appliquees) :
+
+- billing_status/plan_code/comped sur companies, roles verrouilles (owner/admin/member/readonly), anti auto-promotion, helpers d'acces, garde d'ecriture sur toutes les mutations ;
+- saisie du solde de tresorerie avec historique : cockpit et finances calculent projection et date de risque sur le vrai solde ;
+- upload reel de documents sur Supabase Storage (bucket prive 20 Mo, URLs signees, suppression) ; le zip de depot subvention embarque les vrais fichiers ;
+- CRUD complet : spectacles et contacts (edition + suppression), devis (statut, montants, echeance, suppression), frais fixes et relances (suppression) ;
+- radar subventions branche sur la base : formulaire d'ajout, changement de statut, suppression, import en un clic de 10 dispositifs de reference (CNM verifie, autres dates indicatives signalees) ;
+- etats honnetes "Fonction prevue - non branchee" / "Donnees de demonstration" sur campagnes, mecenat, Stripe, export FEC ;
+- Stripe : reste en placeholder assume (voir instruction.md section 4), a brancher avant la beta.
+
 Important : garder le principe actuel de vues coherentes derivees du meme graphe de donnees : compagnie, spectacle, contact, opportunite, relance, document, contrat, finance.
+
+## 4 bis. Exigences produit issues des notes Tony
+
+Source : `ressources/Application TADIFF Informations VF .pdf`, extrait le 2026-07-05.
+
+Tony formule TADIFF comme une application SaaS fonctionnelle, pas comme une vitrine ni une maquette. Le document insiste sur un point central :
+
+> Tout ce qui se trouve derriere la connexion doit fonctionner vraiment.
+
+Regles produit a respecter :
+
+- ne pas refaire seulement le design ;
+- ne pas laisser de faux boutons ;
+- ne pas laisser de modules uniquement simules ;
+- chaque action visible doit soit fonctionner, soit etre clairement marquee comme "Fonction prevue - non branchee dans cette version" ;
+- les donnees doivent etre persistantes ;
+- l'application doit pouvoir etre utilisee par une vraie compagnie ;
+- commencer par rendre le cockpit connecte vraiment utilisable, puis elargir module par module.
+
+Actions visibles qui doivent avoir une vraie action ou un etat "a venir" :
+
+- creer ;
+- modifier ;
+- sauvegarder ;
+- supprimer / archiver ;
+- importer ;
+- exporter ;
+- envoyer ;
+- filtrer ;
+- relancer ;
+- afficher une donnee reelle.
+
+### Stack souhaitee par Tony
+
+Tony mentionne idealement :
+
+- Next.js + TypeScript ;
+- PostgreSQL / Supabase ;
+- Prisma ;
+- authentification Clerk ou equivalent ;
+- stockage fichiers Supabase Storage ou equivalent ;
+- emails via Resend ou equivalent ;
+- Stripe plus tard, pas prioritaire au premier sprint.
+
+Decision actuelle cote projet :
+
+- Next.js + TypeScript : deja en place ;
+- Supabase : deja retenu pour auth, base et stockage possible ;
+- Prisma : pas retenu pour l'instant, car le projet utilise Supabase + types SQL/RLS ; a reevaluer seulement si le modele de donnees devient trop complexe ;
+- Clerk : pas retenu pour l'instant, car Supabase Auth est deja coherent avec RLS et workspace ;
+- Resend : a brancher pour les emails ;
+- Stripe : a brancher apres stabilisation beta/paiement.
+
+### Authentification et multi-compagnie
+
+Fonctions attendues :
+
+- inscription ;
+- connexion ;
+- deconnexion ;
+- session persistante ;
+- recuperation mot de passe a terme.
+
+Modele attendu :
+
+- une compagnie = un espace de travail ;
+- un utilisateur appartient a une compagnie ;
+- les donnees sont isolees par compagnie ;
+- prevoir les roles.
+
+Roles cibles :
+
+- admin ;
+- commercial / diffusion ;
+- comptable ;
+- collaborateur ;
+- lecture seule.
+
+### Dashboard et KPI minimum
+
+Le dashboard doit afficher des donnees calculees depuis la base.
+
+KPI minimum demandes :
+
+- chiffre d'affaires securise ;
+- dates confirmees ;
+- opportunites en cours ;
+- relances urgentes ;
+- tresorerie disponible ;
+- marge previsionnelle ;
+- contrats en attente ;
+- subventions en cours ;
+- factures a encaisser ;
+- actions prioritaires.
+
+Le dashboard doit se mettre a jour quand on modifie :
+
+- une opportunite ;
+- un contact ;
+- une facture ;
+- une subvention ;
+- une date ;
+- une transaction ;
+- un contrat.
+
+### CRM / pipeline commercial
+
+Fonctions attendues :
+
+- ajouter un contact ;
+- modifier un contact ;
+- supprimer / archiver un contact ;
+- rechercher / filtrer les contacts ;
+- importer CSV ou Excel ;
+- exporter les contacts.
+
+Champs contact minimum :
+
+- nom ;
+- prenom ;
+- structure ;
+- fonction ;
+- email ;
+- telephone ;
+- ville ;
+- type : programmateur, collectivite, mecene, partenaire, fournisseur, presse, autre ;
+- priorite ;
+- statut ;
+- source ;
+- derniere relance ;
+- prochaine action ;
+- notes ;
+- tags.
+
+Etats pipeline demandes :
+
+- a contacter ;
+- contacte ;
+- relance ;
+- negociation ;
+- devis envoye ;
+- signe ;
+- perdu ;
+- a reactiver.
+
+Chaque contact doit avoir :
+
+- historique des echanges ;
+- emails envoyes ;
+- fichiers lies ;
+- opportunites liees ;
+- taches / relances liees.
+
+### Emails
+
+Fonctions attendues :
+
+- rediger un email depuis une fiche contact ;
+- utiliser un modele ;
+- personnaliser objet et corps ;
+- envoyer via Resend ou equivalent ;
+- sauvegarder l'email dans l'historique du contact ;
+- creer un brouillon si l'envoi reel n'est pas encore branche.
+
+Modeles minimum :
+
+- premier contact ;
+- relance ;
+- envoi dossier spectacle ;
+- envoi devis ;
+- confirmation rendez-vous ;
+- remerciement ;
+- relance facture ;
+- relance subvention / partenaire.
+
+Suivi cible :
+
+- brouillon ;
+- envoye ;
+- ouvert si tracking possible ;
+- repondu si integration email possible plus tard.
+
+### Import / gestion de fichiers
+
+Fonctions attendues :
+
+- importer CSV ;
+- importer Excel ;
+- importer PDF ;
+- stocker les fichiers ;
+- associer un fichier a un contact, spectacle, contrat, devis, subvention ou facture ;
+- visualiser / telecharger ;
+- supprimer.
+
+Cas prioritaires :
+
+- import CSV/Excel de contacts CRM ;
+- dossiers de spectacle ;
+- fiches techniques ;
+- contrats PDF ;
+- justificatifs comptables ;
+- dossiers de subventions.
+
+Contraintes :
+
+- validation du format ;
+- taille maximum ;
+- message d'erreur clair ;
+- stockage securise par compagnie.
+
+### Base de donnees minimale demandee
+
+Tables minimum demandees par Tony :
+
+- users ;
+- organizations / companies ;
+- memberships ;
+- contacts ;
+- opportunities ;
+- shows ;
+- profitability_simulations ;
+- emails ;
+- files ;
+- contracts ;
+- quotes ;
+- invoices ;
+- transactions ;
+- subsidies ;
+- tasks ;
+- calendar_events ;
+- notes ;
+- activity_logs.
+
+Toutes les tables metier doivent contenir :
+
+- id ;
+- companyId / orgId ;
+- createdAt ;
+- updatedAt ;
+- createdBy ;
+- status si pertinent.
+
+### Securite
+
+Regles demandees :
+
+- isolation stricte par compagnie ;
+- validation cote serveur ;
+- ne jamais exposer les secrets API cote client ;
+- upload securise ;
+- verifier les droits utilisateur avant chaque action ;
+- prevoir logs d'activite.
+
+### Experience utilisateur
+
+Tony demande une interface :
+
+- premium ;
+- simple ;
+- lisible ;
+- style Apple / SaaS haut de gamme ;
+- pas trop coloree ;
+- avec beaucoup d'air ;
+- claire pour des compagnies non techniques.
+
+Regle UX :
+
+- chaque ecran doit etre utilisable sans explication.
+
+### Livrables attendus selon Tony
+
+Livrables mentionnes :
+
+1. audit rapide du prototype HTML existant ;
+2. proposition d'architecture ;
+3. schema de base de donnees ;
+4. plan de developpement en sprints ;
+5. premiere version fonctionnelle avec :
+   - vraie connexion ;
+   - dashboard reel ;
+   - CRM contacts ;
+   - pipeline commercial ;
+   - ajout / modification contact ;
+   - import CSV contacts ;
+   - calculateur sauvegarde ;
+   - opportunites ;
+   - taches / relances ;
+   - finances de base ;
+   - stockage fichier minimum ;
+6. instructions pour lancer en local ;
+7. liste de ce qui fonctionne ;
+8. liste de ce qui reste a brancher ;
+9. recommandations pour passer ensuite en production.
+
+Interpretation produit :
+
+- le coeur de valeur court terme est le cockpit fonctionnel apres connexion ;
+- la demo doit assumer les fonctions non branchees avec un etat clair ;
+- les modules doivent etre relies au meme graphe de donnees ;
+- les donnees persistantes et les actions CRUD sont plus importantes que l'ajout de nouvelles pages.
 
 ## 5. Modules a construire
 
@@ -380,6 +690,32 @@ Les devis doivent integrer :
 
 Objectif : aider une compagnie a ne pas vendre a perte.
 
+### Editeur de budget avance et corealisation (backlog, apres le 23 juillet)
+
+Demande Titouan du 2026-07-05. Deux briques liees :
+
+1. Editeur de budget par spectacle, plus complet que la structure de couts actuelle :
+   - cout plateau (salaires + charges par representation) ;
+   - budget de production (creation, decors, costumes, repetitions) ;
+   - budget de diffusion (transport, hebergement, communication, commissions) ;
+   - simulation de remplissage : jauge x prix des places x taux de remplissage
+     (hypotheses basse/moyenne/haute) -> recette billetterie previsionnelle ;
+   - comparaison recette previsionnelle vs cout plateau + quote-part frais fixes
+     -> verdict rentable / a risque / a perte par scenario.
+
+2. Modes de contrat sur une date, avec regles de partage des recettes :
+   - cession : prix de vente fixe (modele actuel) ;
+   - corealisation : minimum garanti pour le lieu (ex. 350 EUR), minimum garanti
+     pour la compagnie (ex. 350 EUR), puis partage du solde des recettes
+     (ex. 50/50 ; taux parametrable, ordre des MG parametrable) ;
+   - coproduction : apports respectifs + partage ;
+   - le calcul doit montrer, pour un remplissage donne, ce que touche reellement
+     la compagnie et a partir de combien d'entrees la date devient rentable.
+
+Impact technique prevu : champs de type de contrat + parametres de partage sur
+l'opportunite (ou une table deal_terms), extension du calculateur de rentabilite,
+integration dans devis et projection de tresorerie.
+
 ### Contrats
 
 Templates a prevoir :
@@ -450,6 +786,48 @@ Pour les emails automatises :
 - personnaliser par lieu, discipline, historique, ville, spectacle ;
 - garder un ton humain ;
 - laisser l'utilisateur valider avant envoi au debut.
+
+### Console super admin (demande Titouan 2026-07-05, a construire par phases)
+
+Objectif : un espace interne reserve a Titouan/Tony, separe du produit compagnie,
+pour superviser le service sans passer par le SQL editor.
+
+Acces et securite :
+
+- colonne `is_super_admin` sur profiles, modifiable uniquement en SQL (jamais depuis l'app) ;
+- routes `/admin/*` protegees par un helper serveur `requireSuperAdmin` ;
+- les lectures cross-compagnies passent par des fonctions RPC security definer
+  qui verifient `is_super_admin` (on ne casse pas le RLS des tables) ;
+- jamais de lien vers /admin dans la navigation produit.
+
+Phase A - Supervision (la base) :
+
+- liste des compagnies : nom, billing_status, plan, comped_until, nb spectacles/contacts/dates,
+  derniere activite (via activity_logs) ;
+- actions : passer une compagnie en comped/active/past_due/cancelled, editer billing_notes
+  (remplace la procedure SQL manuelle de sql/README_comped.md) ;
+- vue des inscriptions beta (beta_signups) : 10 places, liste d'attente, contacts.
+
+Phase B - Retours et bugs :
+
+- table `feedback` : company_id, auteur, page, type (bug / idee / avis), message,
+  statut (nouveau / en cours / traite), reponse ;
+- bouton "Donner un retour" dans la topbar de l'app compagnie (formulaire simple) ;
+- vue admin : trier par type/statut, marquer traite - c'est le canal de support de la beta.
+
+Phase C - Catalogues globaux :
+
+- table `grant_catalog` (sans company_id) : dispositifs de subventions geres par l'admin,
+  visibles par toutes les compagnies ; le radar propose "ajouter depuis le catalogue"
+  (copie dans grant_opportunities de la compagnie, editable ensuite) ;
+- meme logique pour un `patronage_catalog` (fondations/entreprises mecenes types) ;
+- remplace a terme l'import statique data/reference-grants.ts.
+
+Phase D - Confort :
+
+- journal d'activite global (toutes compagnies) ;
+- statistiques d'usage simples (compagnies actives, volumes par module) ;
+- acces au workspace d'une compagnie en lecture pour le support (avec consentement).
 
 ### Tutoriels et onboarding
 
@@ -762,18 +1140,20 @@ Les frais de paiement et l'IA peuvent depasser l'infra classique.
 
 ## 11. Priorites immediates avant le 23 juillet
 
-1. Page beta : 10 places + liste d'attente 30.
-2. Cockpit demo : tresorerie, alertes, prochaines actions.
-3. Spectacle : affiche + documents.
-4. Radar subventions : 10 dispositifs bien renseignes.
-5. Export .zip des pieces d'un dossier.
-6. Finance : frais fixes + projection tresorerie.
-7. Calendrier : subventions + frais fixes + relances.
-8. CRM : import contacts + relance personnalisee.
-9. Devis : prix avec frais fixes lisses.
-10. Contrats : galerie de templates.
-11. Stripe test.
-12. Donnees demo realistes.
+Etat au 2026-07-05 :
+
+1. Page beta : 10 places + liste d'attente 30. -> existe, a re-tester en conditions reelles.
+2. Cockpit demo : tresorerie, alertes, prochaines actions. -> fait (tresorerie reelle saisie).
+3. Spectacle : affiche + documents. -> fait (upload reel Supabase Storage).
+4. Radar subventions : 10 dispositifs bien renseignes. -> fait (import de reference, verifier les dates indicatives).
+5. Export .zip des pieces d'un dossier. -> fait (avec les vrais fichiers stockes).
+6. Finance : frais fixes + projection tresorerie. -> fait.
+7. Calendrier : subventions + frais fixes + relances. -> fait (vue liste ; vue mois/semaine a venir).
+8. CRM : import contacts + relance personnalisee. -> import fait ; email personnalise a brancher (Resend).
+9. Devis : prix avec frais fixes lisses. -> devis editables ; lissage affiche, integration auto dans le montant a renforcer.
+10. Contrats : galerie de templates. -> en attente des templates fournis par Tony.
+11. Stripe test. -> placeholder assume, a brancher (priorite suivante).
+12. Donnees demo realistes. -> fait : bouton "Installer la compagnie de demonstration" dans /settings (Compagnie de l'Estran, dates relatives au jour J, espace vierge requis).
 
 ## 12. Phrase produit de travail
 
