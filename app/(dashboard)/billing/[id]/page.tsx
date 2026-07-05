@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/billing/print-button";
+import { QuoteEditForm } from "@/components/billing/quote-edit-form";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -118,6 +119,16 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
           <SignatureBlock label="Pour la compagnie" />
           <SignatureBlock label="Bon pour accord" />
         </section>
+      </Card>
+
+      <Card className="no-print mx-auto max-w-4xl space-y-4 p-6">
+        <div>
+          <p className="text-base font-semibold">Modifier le devis</p>
+          <p className="mt-1 text-sm text-muted">
+            Statut, montants et echeance alimentent la facturation, la tresorerie et le cockpit.
+          </p>
+        </div>
+        <QuoteEditForm quote={quote} />
       </Card>
 
       <p className="no-print text-center text-sm text-muted">

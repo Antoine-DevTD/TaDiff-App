@@ -20,3 +20,14 @@ export const fixedCostSchema = z.object({
 
 export type FixedCostFormInput = z.input<typeof fixedCostSchema>;
 export type FixedCostFormValues = z.infer<typeof fixedCostSchema>;
+
+export const treasuryBalanceSchema = z.object({
+  balance: z.coerce
+    .number()
+    .min(-1000000, "Le solde est trop bas")
+    .max(10000000, "Le solde est trop haut"),
+  note: z.string().max(300, "La note est trop longue").optional(),
+});
+
+export type TreasuryBalanceFormInput = z.input<typeof treasuryBalanceSchema>;
+export type TreasuryBalanceFormValues = z.infer<typeof treasuryBalanceSchema>;

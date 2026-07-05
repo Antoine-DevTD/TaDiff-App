@@ -1,8 +1,14 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { PageTitle } from "@/components/ui/page-title";
+import { DemoCompanyPanel } from "@/components/settings/demo-company-panel";
 import { WorkspaceExportPanel } from "@/components/settings/workspace-export-panel";
 import { hasSupabaseEnv } from "@/lib/env";
+import { getWorkspaceAccess, type BillingStatus, type CompanyRole } from "@/lib/supabase/access";
+import { isSuperAdmin } from "@/lib/supabase/admin";
 import {
+  getActivityLog,
   getBillingPlans,
   getCommercialPacks,
   getDashboardData,
@@ -21,6 +27,9 @@ export default async function SettingsPage() {
     campaigns,
     plans,
     quotes,
+    access,
+    activity,
+    superAdmin,
   ] = await Promise.all([
     getDashboardData(),
     getCommercialPacks(),
@@ -29,6 +38,9 @@ export default async function SettingsPage() {
     getEmailCampaigns(),
     getBillingPlans(),
     getQuoteItems(),
+    getWorkspaceAccess(),
+    getActivityLog(15),
+    isSuperAdmin(),
   ]);
   const currentPlan = plans.find((plan) => plan.current) ?? plans[0];
   const backup = {
@@ -47,7 +59,7 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Parametres</h2>
+        <PageTitle href="/settings">Parametres</PageTitle>
         <p className="mt-1 text-sm text-muted">
           Etat technique, integrateurs et sauvegarde des donnees operationnelles.
         </p>
@@ -61,6 +73,7 @@ export default async function SettingsPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <div className="space-y-6">
         <Card className="space-y-4 p-5">
           <div>
             <p className="text-base font-semibold">Integrations</p>
@@ -90,28 +103,148 @@ export default async function SettingsPage() {
           />
         </Card>
 
-        <WorkspaceExportPanel backup={backup} />
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">Compagnie et acces</p>
+            <p className="mt-1 text-sm text-muted">
+              Statut d abonnement et role lus depuis la base. Le paiement Stripe viendra alimenter
+              ce statut automatiquement.
+            </p>
+          </div>
+          <IntegrationRow
+            label="Statut compagnie"
+            detail={getBillingStatusLabel(access.billingStatus, access.compedUntil)}
+            enabled={access.hasAccess}
+          />
+          <IntegrationRow
+            label="Plan"
+            detail={access.planCode ? `Code plan : ${access.planCode}` : "Aucun plan enregistre"}
+            enabled={Boolean(access.planCode)}
+          />
+          <IntegrationRow
+            label="Votre role"
+            detail={getRoleLabel(access.role)}
+            enabled={access.role !== "readonly"}
+          />
+          {superAdmin ? (
+            <IntegrationRow
+              label="Console interne"
+              detail="Supervision des compagnies et des inscriptions beta"
+              enabled
+              href="/admin"
+            />
+          ) : null}
+        </Card>
+        </div>
+
+        <div className="space-y-6">
+          <WorkspaceExportPanel backup={backup} />
+          <DemoCompanyPanel />
+
+          <Card className="space-y-4 p-5">
+            <div>
+              <p className="text-base font-semibold">Activite recente</p>
+              <p className="mt-1 text-sm text-muted">
+                Les 15 dernieres actions de la compagnie (creations, modifications,
+                suppressions, statuts).
+              </p>
+            </div>
+            {activity.length === 0 ? (
+              <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+                Aucune activite enregistree pour le moment. Le journal demarre avec la
+                migration 012 : chaque action metier y sera tracee.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {activity.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex flex-col gap-1 rounded-md border border-border bg-panel-strong/35 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <p className="min-w-0">
+                      <span className="font-medium">{entry.actorName}</span>{" "}
+                      <span className="text-muted">{entry.action}</span>
+                      {entry.entityLabel ? (
+                        <span className="font-medium"> {entry.entityLabel}</span>
+                      ) : null}
+                    </p>
+                    <p className="shrink-0 text-xs text-muted">
+                      {new Date(entry.createdAt).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
       </section>
     </div>
   );
 }
 
+function getBillingStatusLabel(status: BillingStatus | null, compedUntil: string | null) {
+  if (!status) return "Statut inconnu (mode demo ou profil incomplet)";
+  if (status === "trial") return "Periode d essai";
+  if (status === "active") return "Abonnement actif";
+  if (status === "comped") {
+    return compedUntil
+      ? `Compte offert jusqu au ${new Date(compedUntil).toLocaleDateString("fr-FR")}`
+      : "Compte offert (sans limite)";
+  }
+  if (status === "past_due") return "Paiement en retard";
+  return "Abonnement resilie";
+}
+
+function getRoleLabel(role: CompanyRole | null) {
+  if (!role) return "Role inconnu";
+  if (role === "owner") return "Owner - responsable de la compagnie";
+  if (role === "admin") return "Admin - gestion complete";
+  if (role === "member") return "Membre - edition courante";
+  return "Lecture seule";
+}
+
 function IntegrationRow({
   detail,
   enabled,
+  href,
   label,
 }: {
   detail: string;
   enabled: boolean;
+  href?: string;
   label: string;
 }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-strong/35 p-4">
+  const content = (
+    <>
       <div>
         <p className="font-medium">{label}</p>
         <p className="mt-1 text-sm text-muted">{detail}</p>
       </div>
-      <Badge tone={enabled ? "success" : "warning"}>{enabled ? "Actif" : "A brancher"}</Badge>
+      <Badge tone={enabled ? "success" : "warning"}>
+        {href ? "Ouvrir" : enabled ? "Actif" : "A brancher"}
+      </Badge>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/40 hover:bg-panel-strong/60"
+        href={href}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-strong/35 p-4">
+      {content}
     </div>
   );
 }

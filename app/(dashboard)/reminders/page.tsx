@@ -2,6 +2,7 @@ import { ReminderForm } from "@/components/reminders/reminder-form";
 import { RemindersWorkspace } from "@/components/reminders/reminders-workspace";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageTitle } from "@/components/ui/page-title";
 import { getReminders } from "@/lib/supabase/queries";
 
 export default async function RemindersPage() {
@@ -10,7 +11,7 @@ export default async function RemindersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Relances</h2>
+        <PageTitle href="/reminders">Relances</PageTitle>
         <p className="mt-1 text-sm text-muted">
           La vue d execution pour traiter les suivis du jour sans se perdre.
         </p>

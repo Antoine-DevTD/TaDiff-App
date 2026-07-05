@@ -1,17 +1,52 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/activity-log";
 import { hasSupabaseEnv } from "@/lib/env";
+import { requireManagerAccess, requireWriteAccess } from "@/lib/supabase/access";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateWorkspace } from "@/lib/supabase/workspace";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
 import {
+  documentUploadRequestSchema,
   showDocumentSchema,
+  type DocumentUploadRequest,
   type ShowDocumentFormInput,
 } from "@/lib/validation/document";
+import { getDocumentFileError, sanitizeDocumentFilename } from "@/lib/documents-upload";
+import { quoteSchema, type QuoteFormInput } from "@/lib/validation/billing";
+import {
+  grantSchema,
+  grantStatuses,
+  type GrantFormInput,
+} from "@/lib/validation/grant";
+import {
+  patronageSchema,
+  patronageStatuses,
+  type PatronageFormInput,
+} from "@/lib/validation/patronage";
+import { referenceGrants } from "@/data/reference-grants";
+import type { PatronageStatus } from "@/types";
+import {
+  demoCompanyName,
+  demoContacts,
+  demoDate,
+  demoDocuments,
+  demoFixedCosts,
+  demoGrants,
+  demoOpportunities,
+  demoPatronageDeals,
+  demoQuotes,
+  demoReminders,
+  demoShows,
+  demoTreasury,
+} from "@/data/demo-company";
+import type { GrantStatus } from "@/types";
 import {
   fixedCostSchema,
+  treasuryBalanceSchema,
   type FixedCostFormInput,
+  type TreasuryBalanceFormInput,
 } from "@/lib/validation/finance";
 import {
   opportunitySchema,
@@ -108,6 +143,12 @@ export async function createShow(values: ShowFormInput): Promise<ActionResult> {
     return { ok: true, message: "Mode demo : spectacle valide, non enregistre." };
   }
 
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
   const workspace = await getOrCreateWorkspace();
 
   if (!workspace.companyId) {
@@ -130,10 +171,291 @@ export async function createShow(values: ShowFormInput): Promise<ActionResult> {
     return { ok: false, message: error.message };
   }
 
+  await logActivity("a cree le spectacle", "spectacle", parsed.data.title);
+
   revalidatePath("/shows");
   revalidatePath("/dashboard");
 
   return { ok: true, message: "Spectacle cree." };
+}
+
+export async function updateShow(showId: string, values: ShowFormInput): Promise<ActionResult> {
+  const parsed = showSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire spectacle contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : spectacle mis a jour, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("shows")
+    .update({
+      title: parsed.data.title,
+      discipline: parsed.data.discipline,
+      status: parsed.data.status,
+      next_date: parsed.data.nextDate || null,
+      budget: parsed.data.budget ?? 0,
+      poster_url: parsed.data.posterUrl || null,
+      notes: parsed.data.notes || null,
+    })
+    .eq("id", showId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/shows");
+  revalidatePath(`/shows/${showId}`);
+  revalidatePath("/pipeline");
+  revalidatePath("/documents");
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+
+  await logActivity("a modifie le spectacle", "spectacle", parsed.data.title);
+
+  return { ok: true, message: "Spectacle mis a jour." };
+}
+
+export async function deleteShow(showId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : spectacle supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+
+  // Les documents lies sont supprimes en cascade : on nettoie d'abord
+  // leurs fichiers stockes pour ne pas laisser d'orphelins dans le bucket.
+  const storagePrefix = `${workspace.companyId}/${showId}`;
+  const { data: storedFiles } = await supabase.storage
+    .from("documents")
+    .list(storagePrefix, { limit: 1000 });
+
+  if (storedFiles && storedFiles.length > 0) {
+    await supabase.storage
+      .from("documents")
+      .remove(storedFiles.map((file) => `${storagePrefix}/${file.name}`));
+  }
+
+  const { error } = await supabase.from("shows").delete().eq("id", showId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/shows");
+  revalidatePath("/pipeline");
+  revalidatePath("/reminders");
+  revalidatePath("/documents");
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+
+  await logActivity("a supprime un spectacle", "spectacle");
+
+  return { ok: true, message: "Spectacle supprime, dates detachees." };
+}
+
+export async function updateContact(
+  contactId: string,
+  values: ContactFormValues,
+): Promise<ActionResult> {
+  const parsed = contactSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire contact contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : contact mis a jour, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("contacts")
+    .update({
+      name: parsed.data.name,
+      organization: parsed.data.organization,
+      role: parsed.data.role || null,
+      email: parsed.data.email || null,
+      city: parsed.data.city || null,
+      status: parsed.data.status,
+    })
+    .eq("id", contactId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/contacts");
+  revalidatePath(`/contacts/${contactId}`);
+  revalidatePath("/pipeline");
+  revalidatePath("/dashboard");
+
+  await logActivity("a modifie le contact", "contact", parsed.data.name);
+
+  return { ok: true, message: "Contact mis a jour." };
+}
+
+export async function deleteContact(contactId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : contact supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("contacts").delete().eq("id", contactId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/contacts");
+  revalidatePath("/pipeline");
+  revalidatePath("/reminders");
+  revalidatePath("/dashboard");
+
+  await logActivity("a supprime un contact", "contact");
+
+  return { ok: true, message: "Contact supprime, dates et relances detachees." };
+}
+
+export async function updateFixedCost(
+  fixedCostId: string,
+  values: FixedCostFormInput,
+): Promise<ActionResult> {
+  const parsed = fixedCostSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire frais fixe contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : frais fixe mis a jour, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("fixed_costs")
+    .update({
+      label: parsed.data.label,
+      category: parsed.data.category,
+      amount: parsed.data.amount,
+      frequency: parsed.data.frequency,
+      next_due_date: parsed.data.nextDueDate,
+      notes: parsed.data.notes || null,
+    })
+    .eq("id", fixedCostId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/finances");
+  revalidatePath("/billing");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+
+  await logActivity("a modifie le frais fixe", "frais fixe", parsed.data.label);
+
+  return { ok: true, message: "Frais fixe mis a jour." };
+}
+
+export async function deleteFixedCost(fixedCostId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : frais fixe supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("fixed_costs").delete().eq("id", fixedCostId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/finances");
+  revalidatePath("/billing");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+
+  await logActivity("a supprime un frais fixe", "frais fixe");
+
+  return { ok: true, message: "Frais fixe supprime." };
+}
+
+export async function deleteReminder(reminderId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : relance supprimee." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("reminders").delete().eq("id", reminderId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/reminders");
+  revalidatePath("/pipeline");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+
+  await logActivity("a supprime une relance", "relance");
+
+  return { ok: true, message: "Relance supprimee." };
 }
 
 export async function createShowDocument(values: ShowDocumentFormInput): Promise<ActionResult> {
@@ -145,6 +467,12 @@ export async function createShowDocument(values: ShowDocumentFormInput): Promise
 
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : document valide, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -161,6 +489,7 @@ export async function createShowDocument(values: ShowDocumentFormInput): Promise
     document_type: parsed.data.documentType,
     status: parsed.data.status,
     file_url: parsed.data.fileUrl || null,
+    storage_path: parsed.data.storagePath || null,
     notes: parsed.data.notes || null,
     updated_at: new Date().toISOString(),
   });
@@ -172,9 +501,116 @@ export async function createShowDocument(values: ShowDocumentFormInput): Promise
   revalidatePath(`/shows/${parsed.data.showId}`);
   revalidatePath("/shows");
   revalidatePath("/documents");
+  revalidatePath("/subventions");
   revalidatePath("/dashboard");
 
+  await logActivity("a ajoute le document", "document", parsed.data.title);
+
   return { ok: true, message: "Document ajoute au spectacle." };
+}
+
+export async function prepareDocumentUpload(
+  values: DocumentUploadRequest,
+): Promise<ActionResult & { signedUrl?: string; storagePath?: string }> {
+  const parsed = documentUploadRequestSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "La demande d'upload n'est pas valide." };
+  }
+
+  const fileError = getDocumentFileError({
+    size: parsed.data.fileSize,
+    type: parsed.data.fileType,
+  });
+
+  if (fileError) {
+    return { ok: false, message: fileError };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: false,
+      message: "Mode demo : l'upload de fichier demande une base Supabase connectee.",
+    };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const storagePath = `${workspace.companyId}/${parsed.data.showId}/${crypto.randomUUID()}-${sanitizeDocumentFilename(parsed.data.fileName)}`;
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.storage
+    .from("documents")
+    .createSignedUploadUrl(storagePath);
+
+  if (error || !data) {
+    return { ok: false, message: error?.message ?? "Impossible de preparer l'upload." };
+  }
+
+  return {
+    ok: true,
+    message: "Upload pret.",
+    signedUrl: data.signedUrl,
+    storagePath,
+  };
+}
+
+export async function deleteShowDocument(documentId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : document supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: document, error: lookupError } = await supabase
+    .from("show_documents")
+    .select("id,show_id,title,storage_path")
+    .eq("id", documentId)
+    .maybeSingle();
+
+  if (lookupError || !document) {
+    return { ok: false, message: lookupError?.message ?? "Document introuvable." };
+  }
+
+  if (document.storage_path) {
+    const { error: storageError } = await supabase.storage
+      .from("documents")
+      .remove([document.storage_path]);
+
+    if (storageError) {
+      return { ok: false, message: storageError.message };
+    }
+  }
+
+  const { error } = await supabase.from("show_documents").delete().eq("id", documentId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath(`/shows/${document.show_id}`);
+  revalidatePath("/shows");
+  revalidatePath("/documents");
+  revalidatePath("/subventions");
+  revalidatePath("/dashboard");
+
+  await logActivity("a supprime le document", "document", document.title);
+
+  return { ok: true, message: "Document supprime." };
 }
 
 export async function createFixedCost(values: FixedCostFormInput): Promise<ActionResult> {
@@ -186,6 +622,12 @@ export async function createFixedCost(values: FixedCostFormInput): Promise<Actio
 
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : frais fixe valide, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -214,7 +656,57 @@ export async function createFixedCost(values: FixedCostFormInput): Promise<Actio
   revalidatePath("/billing");
   revalidatePath("/calendar");
 
+  await logActivity("a ajoute le frais fixe", "frais fixe", parsed.data.label);
+
   return { ok: true, message: "Frais fixe ajoute." };
+}
+
+export async function recordTreasuryBalance(
+  values: TreasuryBalanceFormInput,
+): Promise<ActionResult> {
+  const parsed = treasuryBalanceSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le solde saisi n'est pas valide." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : solde valide, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("treasury_snapshots").insert({
+    company_id: workspace.companyId,
+    balance: parsed.data.balance,
+    note: parsed.data.note || null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+
+  await logActivity(
+    "a mis a jour le solde de tresorerie",
+    "tresorerie",
+    `${parsed.data.balance.toLocaleString("fr-FR")} EUR`,
+  );
+
+  return { ok: true, message: "Solde de tresorerie mis a jour." };
 }
 
 export async function createContact(values: ContactFormValues): Promise<ActionResult> {
@@ -226,6 +718,12 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
 
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : contact valide, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -251,6 +749,8 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
 
   revalidatePath("/contacts");
   revalidatePath("/dashboard");
+
+  await logActivity("a cree le contact", "contact", parsed.data.name);
 
   return { ok: true, message: "Contact cree." };
 }
@@ -281,6 +781,12 @@ export async function importContacts(
       skipped,
       message: `Mode demo : ${parsedContacts.length} contact(s) CSV valide(s), non enregistre(s).`,
     };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, imported: 0, skipped: values.length, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -315,6 +821,12 @@ export async function importContacts(
   revalidatePath("/pipeline");
   revalidatePath("/dashboard");
 
+  await logActivity(
+    "a importe des contacts CSV",
+    "contact",
+    `${parsedContacts.length} contact(s)`,
+  );
+
   return {
     ok: true,
     imported: parsedContacts.length,
@@ -339,6 +851,12 @@ export async function createOpportunityWithNewContact(
 
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : contact et date valides, non enregistres." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -381,6 +899,12 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
 
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : date valide, non enregistree." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -427,6 +951,8 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
+  await logActivity("a cree la date possible", "diffusion", parsed.data.title);
+
   return {
     ok: true,
     message: parsed.data.nextFollowUpAt
@@ -447,6 +973,12 @@ export async function updateOpportunity(
 
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : date mise a jour." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -497,6 +1029,8 @@ export async function updateOpportunity(
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
+  await logActivity("a modifie la date possible", "diffusion", parsed.data.title);
+
   return { ok: true, message: "Date mise a jour." };
 }
 
@@ -509,6 +1043,12 @@ export async function createQuoteFromOpportunity(
       quoteId: `quote-${opportunityId}`,
       message: "Mode demo : devis prepare depuis la date.",
     };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -591,12 +1131,104 @@ export async function createQuoteFromOpportunity(
   revalidatePath("/pipeline");
   revalidatePath("/dashboard");
 
+  await logActivity("a cree le devis", "devis", number);
+
   return { ok: true, quoteId: quote.id, message: `Devis ${number} cree.` };
+}
+
+export async function updateQuote(
+  quoteId: string,
+  values: QuoteFormInput,
+): Promise<ActionResult> {
+  const parsed = quoteSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire devis contient des erreurs." };
+  }
+
+  if (parsed.data.depositDue + parsed.data.balanceDue > parsed.data.amount) {
+    return {
+      ok: false,
+      message: "Acompte + solde ne peuvent pas depasser le montant total.",
+    };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : devis mis a jour, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("quotes")
+    .update({
+      title: parsed.data.title,
+      organization: parsed.data.organization,
+      status: parsed.data.status,
+      amount: parsed.data.amount,
+      deposit_due: parsed.data.depositDue,
+      balance_due: parsed.data.balanceDue,
+      due_date: parsed.data.dueDate || null,
+    })
+    .eq("id", quoteId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/billing");
+  revalidatePath(`/billing/${quoteId}`);
+  revalidatePath("/finances");
+  revalidatePath("/contracts");
+  revalidatePath("/dashboard");
+
+  await logActivity("a modifie le devis", "devis", parsed.data.title);
+
+  return { ok: true, message: "Devis mis a jour." };
+}
+
+export async function deleteQuote(quoteId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : devis supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("quotes").delete().eq("id", quoteId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/billing");
+  revalidatePath("/finances");
+  revalidatePath("/contracts");
+  revalidatePath("/dashboard");
+
+  await logActivity("a supprime un devis", "devis");
+
+  return { ok: true, message: "Devis supprime." };
 }
 
 export async function deleteOpportunity(opportunityId: string): Promise<ActionResult> {
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : date supprimee." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -610,6 +1242,8 @@ export async function deleteOpportunity(opportunityId: string): Promise<ActionRe
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
+  await logActivity("a supprime une date possible", "diffusion");
+
   return { ok: true, message: "Date supprimee." };
 }
 
@@ -619,6 +1253,12 @@ export async function updateOpportunityStage(
 ): Promise<ActionResult> {
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : statut mis a jour." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -684,6 +1324,8 @@ export async function updateOpportunityStage(
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
+  await logActivity("a change le statut d'une date", "diffusion", stage);
+
   return { ok: true, message: "Diffusion mise a jour." };
 }
 
@@ -697,6 +1339,12 @@ export async function scheduleOpportunityFollowUp(
       message: `Mode demo : relance planifiee a J+${days}.`,
       dueDate: getDateAfterDays(days),
     };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -751,10 +1399,594 @@ export async function scheduleOpportunityFollowUp(
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
+  await logActivity("a planifie une relance", "diffusion", opportunity.title);
+
   return {
     ok: true,
     message: days === 3 ? "Relance prioritaire planifiee a J+3." : "Relance planifiee a J+7.",
     dueDate,
+  };
+}
+
+export async function seedDemoCompany(): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: false,
+      message: "Mode demo : les donnees mock sont deja affichees sans Supabase.",
+    };
+  }
+
+  const accessError = await requireManagerAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+
+  // Garde-fou : ne jamais injecter la demo dans un espace deja utilise.
+  const [{ count: showCount }, { count: contactCount }] = await Promise.all([
+    supabase.from("shows").select("id", { count: "exact", head: true }),
+    supabase.from("contacts").select("id", { count: "exact", head: true }),
+  ]);
+
+  if ((showCount ?? 0) > 0 || (contactCount ?? 0) > 0) {
+    return {
+      ok: false,
+      message:
+        "Cet espace contient deja des spectacles ou des contacts. Utilisez un compte vierge pour la compagnie de demonstration.",
+    };
+  }
+
+  const companyId = workspace.companyId;
+
+  const { error: companyError } = await supabase
+    .from("companies")
+    .update({ name: demoCompanyName })
+    .eq("id", companyId);
+
+  if (companyError) {
+    return { ok: false, message: companyError.message };
+  }
+
+  const { data: insertedShows, error: showsError } = await supabase
+    .from("shows")
+    .insert(
+      demoShows.map((show) => ({
+        company_id: companyId,
+        title: show.title,
+        discipline: show.discipline,
+        status: show.status,
+        next_date: show.nextDateInDays === null ? null : demoDate(show.nextDateInDays),
+        budget: show.budget,
+        poster_url: show.posterUrl,
+        notes: show.notes,
+      })),
+    )
+    .select("id,title");
+
+  if (showsError || !insertedShows) {
+    return { ok: false, message: showsError?.message ?? "Spectacles demo non crees." };
+  }
+
+  const showIdByKey = new Map(
+    demoShows.map((show) => [
+      show.key,
+      insertedShows.find((inserted) => inserted.title === show.title)?.id ?? null,
+    ]),
+  );
+
+  const { data: insertedContacts, error: contactsError } = await supabase
+    .from("contacts")
+    .insert(
+      demoContacts.map((contact) => ({
+        company_id: companyId,
+        name: contact.name,
+        organization: contact.organization,
+        role: contact.role,
+        email: contact.email,
+        city: contact.city,
+        status: contact.status,
+      })),
+    )
+    .select("id,name");
+
+  if (contactsError || !insertedContacts) {
+    return { ok: false, message: contactsError?.message ?? "Contacts demo non crees." };
+  }
+
+  const contactIdByKey = new Map(
+    demoContacts.map((contact) => [
+      contact.key,
+      insertedContacts.find((inserted) => inserted.name === contact.name)?.id ?? null,
+    ]),
+  );
+
+  const { data: insertedOpportunities, error: opportunitiesError } = await supabase
+    .from("opportunities")
+    .insert(
+      demoOpportunities.map((opportunity) => ({
+        company_id: companyId,
+        contact_id: contactIdByKey.get(opportunity.contactKey) ?? null,
+        show_id: showIdByKey.get(opportunity.showKey) ?? null,
+        title: opportunity.title,
+        stage: opportunity.stage,
+        value: opportunity.value,
+        probability: opportunity.probability,
+        next_action: opportunity.nextAction || null,
+        next_follow_up_at:
+          opportunity.nextFollowUpInDays === null
+            ? null
+            : demoDate(opportunity.nextFollowUpInDays),
+        lost_reason:
+          opportunity.stage === "Perdu" ? "Programmation complete sur la saison." : null,
+      })),
+    )
+    .select("id,title");
+
+  if (opportunitiesError || !insertedOpportunities) {
+    return {
+      ok: false,
+      message: opportunitiesError?.message ?? "Dates demo non creees.",
+    };
+  }
+
+  const opportunityIdByTitle = new Map(
+    insertedOpportunities.map((opportunity) => [opportunity.title, opportunity.id]),
+  );
+
+  const { error: remindersError } = await supabase.from("reminders").insert(
+    demoReminders.map((reminder) => ({
+      company_id: companyId,
+      title: reminder.title,
+      due_date: demoDate(reminder.dueInDays),
+      related_to: reminder.relatedTo,
+      priority: reminder.priority,
+      opportunity_id: opportunityIdByTitle.get(reminder.relatedTo) ?? null,
+    })),
+  );
+
+  if (remindersError) {
+    return { ok: false, message: remindersError.message };
+  }
+
+  const { error: fixedCostsError } = await supabase.from("fixed_costs").insert(
+    demoFixedCosts.map((cost) => ({
+      company_id: companyId,
+      label: cost.label,
+      category: cost.category,
+      amount: cost.amount,
+      frequency: cost.frequency,
+      next_due_date: demoDate(cost.nextDueInDays),
+      notes: cost.notes,
+    })),
+  );
+
+  if (fixedCostsError) {
+    return { ok: false, message: fixedCostsError.message };
+  }
+
+  const { error: treasuryError } = await supabase.from("treasury_snapshots").insert({
+    company_id: companyId,
+    balance: demoTreasury.balance,
+    note: demoTreasury.note,
+  });
+
+  if (treasuryError) {
+    return { ok: false, message: treasuryError.message };
+  }
+
+  const { error: documentsError } = await supabase.from("show_documents").insert(
+    demoDocuments
+      .filter((document) => showIdByKey.get(document.showKey))
+      .map((document) => ({
+        company_id: companyId,
+        show_id: showIdByKey.get(document.showKey) as string,
+        title: document.title,
+        document_type: document.documentType,
+        status: document.status,
+        notes: document.notes || null,
+        updated_at: new Date().toISOString(),
+      })),
+  );
+
+  if (documentsError) {
+    return { ok: false, message: documentsError.message };
+  }
+
+  const { error: quotesError } = await supabase.from("quotes").insert(
+    demoQuotes.map((quote) => ({
+      company_id: companyId,
+      opportunity_id: opportunityIdByTitle.get(quote.opportunityTitle) ?? null,
+      number: quote.number,
+      title: quote.title,
+      organization: quote.organization,
+      amount: quote.amount,
+      deposit_due: quote.depositDue,
+      balance_due: quote.balanceDue,
+      status: quote.status,
+      due_date: demoDate(quote.dueInDays),
+    })),
+  );
+
+  if (quotesError) {
+    return { ok: false, message: quotesError.message };
+  }
+
+  const { error: grantsError } = await supabase.from("grant_opportunities").insert(
+    demoGrants.map((grant) => ({
+      company_id: companyId,
+      show_id: grant.showKey ? (showIdByKey.get(grant.showKey) ?? null) : null,
+      title: grant.title,
+      funder: grant.funder,
+      territory: grant.territory,
+      discipline: grant.discipline,
+      deadline: demoDate(grant.deadlineInDays),
+      amount: grant.amount,
+      status: grant.status,
+      requirements: grant.requirements,
+      eligibility: grant.eligibility,
+      source_url: grant.sourceUrl,
+    })),
+  );
+
+  if (grantsError) {
+    return { ok: false, message: grantsError.message };
+  }
+
+  const { error: patronageError } = await supabase.from("patronage_deals").insert(
+    demoPatronageDeals.map((deal) => ({
+      company_id: companyId,
+      company_name: deal.companyName,
+      contact_name: deal.contactName,
+      amount: deal.amount,
+      status: deal.status,
+      next_action: deal.nextAction,
+      next_follow_up_at:
+        deal.nextFollowUpInDays === null ? null : demoDate(deal.nextFollowUpInDays),
+    })),
+  );
+
+  if (patronageError) {
+    return { ok: false, message: patronageError.message };
+  }
+
+  revalidatePath("/mecenat");
+  revalidatePath("/dashboard");
+  revalidatePath("/shows");
+  revalidatePath("/contacts");
+  revalidatePath("/pipeline");
+  revalidatePath("/reminders");
+  revalidatePath("/finances");
+  revalidatePath("/billing");
+  revalidatePath("/subventions");
+  revalidatePath("/documents");
+  revalidatePath("/calendar");
+  revalidatePath("/contracts");
+  revalidatePath("/settings");
+
+  await logActivity("a installe la compagnie de demonstration", "compagnie", demoCompanyName);
+
+  return {
+    ok: true,
+    message: `Compagnie de demonstration installee : ${demoShows.length} spectacles, ${demoContacts.length} contacts, ${demoOpportunities.length} dates, ${demoQuotes.length} devis, ${demoGrants.length} subventions, ${demoPatronageDeals.length} partenaires mecenat.`,
+  };
+}
+
+export async function createPatronageDeal(values: PatronageFormInput): Promise<ActionResult> {
+  const parsed = patronageSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire mecenat contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : partenaire valide, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("patronage_deals").insert({
+    company_id: workspace.companyId,
+    company_name: parsed.data.companyName,
+    contact_name: parsed.data.contactName || null,
+    amount: parsed.data.amount,
+    status: parsed.data.status,
+    next_action: parsed.data.nextAction || null,
+    next_follow_up_at: parsed.data.nextFollowUpAt || null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/mecenat");
+  revalidatePath("/dashboard");
+
+  await logActivity("a ajoute le partenaire mecenat", "mecenat", parsed.data.companyName);
+
+  return { ok: true, message: "Partenaire ajoute au suivi mecenat." };
+}
+
+export async function updatePatronageStatus(
+  dealId: string,
+  status: PatronageStatus,
+): Promise<ActionResult> {
+  if (!patronageStatuses.includes(status)) {
+    return { ok: false, message: "Statut mecenat invalide." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : statut mis a jour." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("patronage_deals")
+    .update({ status })
+    .eq("id", dealId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/mecenat");
+  revalidatePath("/dashboard");
+
+  await logActivity("a change le statut d'un partenaire mecenat", "mecenat", status);
+
+  return { ok: true, message: "Statut du partenaire mis a jour." };
+}
+
+export async function deletePatronageDeal(dealId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : partenaire supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("patronage_deals").delete().eq("id", dealId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/mecenat");
+  revalidatePath("/dashboard");
+
+  await logActivity("a retire un partenaire mecenat", "mecenat");
+
+  return { ok: true, message: "Partenaire retire du suivi." };
+}
+
+export async function createGrantOpportunity(values: GrantFormInput): Promise<ActionResult> {
+  const parsed = grantSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire subvention contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : dispositif valide, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("grant_opportunities").insert({
+    company_id: workspace.companyId,
+    show_id: parsed.data.relatedShowId || null,
+    title: parsed.data.title,
+    funder: parsed.data.funder,
+    territory: parsed.data.territory || null,
+    discipline: parsed.data.discipline || null,
+    deadline: parsed.data.deadline,
+    amount: parsed.data.amount,
+    status: parsed.data.status,
+    requirements: parsed.data.requirements ?? [],
+    eligibility: parsed.data.eligibility || null,
+    source_url: parsed.data.sourceUrl || null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+
+  await logActivity("a ajoute la subvention", "subvention", parsed.data.title);
+
+  return { ok: true, message: "Dispositif ajoute au radar." };
+}
+
+export async function updateGrantStatus(
+  grantId: string,
+  status: GrantStatus,
+): Promise<ActionResult> {
+  if (!grantStatuses.includes(status)) {
+    return { ok: false, message: "Statut de subvention invalide." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : statut mis a jour." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("grant_opportunities")
+    .update({ status })
+    .eq("id", grantId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+
+  await logActivity("a change le statut d'une subvention", "subvention", status);
+
+  return { ok: true, message: "Statut du dispositif mis a jour." };
+}
+
+export async function deleteGrantOpportunity(grantId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : dispositif supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("grant_opportunities").delete().eq("id", grantId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+
+  await logActivity("a retire une subvention du radar", "subvention");
+
+  return { ok: true, message: "Dispositif retire du radar." };
+}
+
+export async function importReferenceGrants(): Promise<ActionResult & { imported: number }> {
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: true,
+      imported: referenceGrants.length,
+      message: "Mode demo : dispositifs de reference valides, non enregistres.",
+    };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, imported: 0, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, imported: 0, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("grant_opportunities")
+    .select("title,funder");
+
+  if (existingError) {
+    return { ok: false, imported: 0, message: existingError.message };
+  }
+
+  const existingKeys = new Set(
+    (existing ?? []).map((grant) => `${grant.funder}::${grant.title}`),
+  );
+  const toImport = referenceGrants.filter(
+    (grant) => !existingKeys.has(`${grant.funder}::${grant.title}`),
+  );
+
+  if (toImport.length === 0) {
+    return {
+      ok: true,
+      imported: 0,
+      message: "Les dispositifs de reference sont deja dans le radar.",
+    };
+  }
+
+  const { error } = await supabase.from("grant_opportunities").insert(
+    toImport.map((grant) => ({
+      company_id: workspace.companyId,
+      title: grant.title,
+      funder: grant.funder,
+      territory: grant.territory,
+      discipline: grant.discipline,
+      deadline: grant.deadline,
+      amount: grant.amount,
+      status: "A surveiller" as const,
+      requirements: grant.requirements,
+      eligibility: grant.eligibility,
+      source_url: grant.sourceUrl,
+      themes: grant.themes,
+    })),
+  );
+
+  if (error) {
+    return { ok: false, imported: 0, message: error.message };
+  }
+
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+
+  await logActivity(
+    "a importe les dispositifs de reference",
+    "subvention",
+    `${toImport.length} dispositif(s)`,
+  );
+
+  return {
+    ok: true,
+    imported: toImport.length,
+    message: `${toImport.length} dispositif(s) de reference ajoutes. Verifiez les dates indicatives avant depot.`,
   };
 }
 
@@ -767,6 +1999,12 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
 
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : relance valide, non enregistree." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const workspace = await getOrCreateWorkspace();
@@ -812,12 +2050,65 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
   revalidatePath("/pipeline");
   revalidatePath("/dashboard");
 
+  await logActivity("a cree la relance", "relance", parsed.data.title);
+
   return { ok: true, message: "Relance creee." };
+}
+
+export async function updateReminder(
+  reminderId: string,
+  values: ReminderFormInput,
+): Promise<ActionResult> {
+  const parsed = reminderSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le formulaire relance contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : relance mise a jour, non enregistree." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("reminders")
+    .update({
+      title: parsed.data.title,
+      due_date: parsed.data.dueDate,
+      related_to: parsed.data.relatedTo || null,
+      priority: parsed.data.priority,
+    })
+    .eq("id", reminderId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/reminders");
+  revalidatePath("/pipeline");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+
+  await logActivity("a modifie la relance", "relance", parsed.data.title);
+
+  return { ok: true, message: "Relance mise a jour." };
 }
 
 export async function completeReminder(reminderId: string): Promise<ActionResult> {
   if (!hasSupabaseEnv()) {
     return { ok: true, message: "Mode demo : relance terminee." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -832,6 +2123,8 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
 
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
+
+  await logActivity("a termine une relance", "relance");
 
   return { ok: true, message: "Relance terminee." };
 }

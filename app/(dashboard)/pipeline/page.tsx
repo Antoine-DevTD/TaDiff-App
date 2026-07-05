@@ -2,6 +2,7 @@ import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 import { PipelineCreatePanel } from "@/components/pipeline/pipeline-create-panel";
 import { PipelineInsights } from "@/components/pipeline/pipeline-insights";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageTitle } from "@/components/ui/page-title";
 import { getContacts, getPipelineDeals, getShows } from "@/lib/supabase/queries";
 
 export default async function PipelinePage() {
@@ -14,13 +15,15 @@ export default async function PipelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Diffusion en cours</h2>
+        <PageTitle href="/pipeline">Diffusion en cours</PageTitle>
         <p className="mt-1 text-sm text-muted">
           Suivez les dates possibles, priorisez les relances et estimez le CA probable.
         </p>
       </div>
 
-      <PipelineCreatePanel contacts={contacts} shows={shows} />
+      <div data-tour="diffusion-creation">
+        <PipelineCreatePanel contacts={contacts} shows={shows} />
+      </div>
 
       {deals.length === 0 ? (
         <EmptyState

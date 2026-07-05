@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { createShow } from "@/app/(dashboard)/actions";
+import { createShow, updateShow } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -14,6 +14,7 @@ import {
   type ShowFormInput,
   type ShowFormValues,
 } from "@/lib/validation/show";
+import type { Show } from "@/types";
 
 const defaultValues: ShowFormInput = {
   title: "",
@@ -25,7 +26,7 @@ const defaultValues: ShowFormInput = {
   notes: "",
 };
 
-export function ShowForm() {
+export function ShowForm({ show }: { show?: Show }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -35,16 +36,26 @@ export function ShowForm() {
     formState: { errors, isSubmitting },
   } = useForm<ShowFormInput, unknown, ShowFormValues>({
     resolver: zodResolver(showSchema),
-    defaultValues,
+    defaultValues: show
+      ? {
+          title: show.title,
+          discipline: show.discipline,
+          status: show.status,
+          nextDate: show.nextDate || "",
+          budget: show.budget,
+          posterUrl: show.posterUrl || "",
+          notes: show.notes || "",
+        }
+      : defaultValues,
   });
 
   function onSubmit(values: ShowFormValues) {
     startTransition(async () => {
-      const result = await createShow(values);
+      const result = show ? await updateShow(show.id, values) : await createShow(values);
       setMessage({ ok: result.ok, text: result.message });
 
       if (result.ok) {
-        router.push("/shows");
+        router.push(show ? `/shows/${show.id}` : "/shows");
         router.refresh();
       }
     });
@@ -109,7 +120,7 @@ export function ShowForm() {
       ) : null}
 
       <Button type="submit" disabled={isSubmitting || isPending}>
-        Creer le spectacle
+        {show ? "Enregistrer les modifications" : "Creer le spectacle"}
       </Button>
     </form>
   );

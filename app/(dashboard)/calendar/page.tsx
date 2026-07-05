@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageTitle } from "@/components/ui/page-title";
 import {
   getFixedCosts,
   getGrantOpportunities,
@@ -130,7 +131,7 @@ export default async function CalendarPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Calendrier</h2>
+        <PageTitle href="/calendar">Calendrier</PageTitle>
         <p className="mt-1 text-sm text-muted">
           Une seule vue pour les relances a sortir et les prochaines dates spectacle.
         </p>
@@ -171,7 +172,7 @@ export default async function CalendarPage() {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <Card className="space-y-4 p-5">
+            <Card className="space-y-4 p-5" data-tour="calendrier-avenir">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-base font-semibold">A venir</p>

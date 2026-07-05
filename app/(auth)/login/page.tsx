@@ -16,6 +16,11 @@ export default function LoginPage() {
           Creer un espace
         </Link>
       </p>
+      <p className="mt-2 text-center text-sm text-muted">
+        <Link href="/forgot-password" className="font-medium text-accent">
+          Mot de passe oublie ?
+        </Link>
+      </p>
     </Card>
   );
 }

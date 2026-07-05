@@ -1,6 +1,13 @@
+import { deletePatronageDeal } from "@/app/(dashboard)/actions";
+import { PatronageForm } from "@/components/patronage/patronage-form";
+import { PatronageStatusSelect } from "@/components/patronage/patronage-status-select";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { InlineDeleteButton } from "@/components/ui/inline-delete-button";
+import { PageTitle } from "@/components/ui/page-title";
+import { PlannedFeatureNotice } from "@/components/ui/planned-feature";
+import { hasSupabaseEnv } from "@/lib/env";
 import { formatCurrency } from "@/lib/finance";
 import { getCommercialPacks, getPatronageDeals } from "@/lib/supabase/queries";
 import type { PatronageDeal } from "@/types";
@@ -22,7 +29,7 @@ export default async function MecenatPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold">Mecenat</h2>
+          <PageTitle href="/mecenat">Mecenat</PageTitle>
           <p className="mt-1 text-sm text-muted">
             Entreprises a approcher, deduction fiscale loi Aillagon et packs de contreparties.
           </p>
@@ -31,6 +38,13 @@ export default async function MecenatPage() {
           Preparer une campagne
         </ButtonLink>
       </div>
+
+      {hasSupabaseEnv() ? null : (
+        <PlannedFeatureNotice
+          detail="Sans base Supabase connectee, le suivi mecenat affiche un jeu de demonstration."
+          kind="demo-data"
+        />
+      )}
 
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Partenaires" value={deals.length.toString()} detail="Entreprises suivies" />
@@ -98,6 +112,37 @@ export default async function MecenatPage() {
           />
         ))}
       </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">Ajouter un partenaire</p>
+            <p className="mt-1 text-sm text-muted">
+              Entreprise ou fondation a approcher : le suivi alimente le montant cible et
+              l&apos;argument fiscal des 60%.
+            </p>
+          </div>
+          <PatronageForm />
+        </Card>
+
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">L&apos;argument fiscal en bref</p>
+            <p className="mt-1 text-sm text-muted">
+              Loi Aillagon : 60% du don deductible de l&apos;impot de l&apos;entreprise, dans la
+              limite de 0,5% du chiffre d&apos;affaires.
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-panel-strong/35 p-4 text-sm text-muted">
+            <p className="font-medium text-foreground">Exemple a donner en rendez-vous</p>
+            <p className="mt-2">
+              Un don de 5 000 EUR ne coute reellement que 2 000 EUR a l&apos;entreprise, et la
+              compagnie peut proposer des contreparties (visibilite, representation privee)
+              jusqu&apos;a 25% du montant.
+            </p>
+          </div>
+        </Card>
+      </section>
     </div>
   );
 }
@@ -132,11 +177,19 @@ function PatronageColumn({
                 </div>
                 <Badge tone={getPatronageTone(deal.status)}>{formatCurrency(deal.amount)}</Badge>
               </div>
-              <p className="mt-3 text-sm text-muted">{deal.nextAction}</p>
+              <p className="mt-3 text-sm text-muted">
+                {deal.nextAction || "Prochaine action a definir"}
+              </p>
               <p className="mt-3 text-xs text-muted">
                 {packMap.get(deal.packId)?.name ?? "Pack a definir"} - relance{" "}
-                {new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")}
+                {deal.nextFollowUpAt
+                  ? new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")
+                  : "a planifier"}
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <PatronageStatusSelect dealId={deal.id} status={deal.status} />
+                <InlineDeleteButton action={deletePatronageDeal.bind(null, deal.id)} label="Retirer" />
+              </div>
             </div>
           ))}
         </div>

@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { createContact } from "@/app/(dashboard)/actions";
+import { createContact, updateContact } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
+import type { Contact } from "@/types";
 
 const defaultValues: ContactFormValues = {
   name: "",
@@ -19,7 +20,7 @@ const defaultValues: ContactFormValues = {
   status: "Prospect",
 };
 
-export function ContactForm() {
+export function ContactForm({ contact }: { contact?: Contact }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -29,16 +30,27 @@ export function ContactForm() {
     formState: { errors, isSubmitting },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
-    defaultValues,
+    defaultValues: contact
+      ? {
+          name: contact.name,
+          organization: contact.organization,
+          role: contact.role || "",
+          email: contact.email || "",
+          city: contact.city || "",
+          status: contact.status,
+        }
+      : defaultValues,
   });
 
   function onSubmit(values: ContactFormValues) {
     startTransition(async () => {
-      const result = await createContact(values);
+      const result = contact
+        ? await updateContact(contact.id, values)
+        : await createContact(values);
       setMessage({ ok: result.ok, text: result.message });
 
       if (result.ok) {
-        router.push("/contacts");
+        router.push(contact ? `/contacts/${contact.id}` : "/contacts");
         router.refresh();
       }
     });
@@ -90,7 +102,7 @@ export function ContactForm() {
       ) : null}
 
       <Button type="submit" disabled={isSubmitting || isPending}>
-        Creer le contact
+        {contact ? "Enregistrer les modifications" : "Creer le contact"}
       </Button>
     </form>
   );

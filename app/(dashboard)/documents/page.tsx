@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageTitle } from "@/components/ui/page-title";
 import {
   getPipelineDeals,
   getReminders,
@@ -134,7 +135,7 @@ export default async function DocumentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Documents</h2>
+        <PageTitle href="/documents">Documents</PageTitle>
         <p className="mt-1 text-sm text-muted">
           Hub documentaire des spectacles, derive de la diffusion, des relances et des contrats.
         </p>

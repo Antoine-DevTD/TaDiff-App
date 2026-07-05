@@ -36,6 +36,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
           <Badge tone={contact.status === "Partenaire" ? "success" : "neutral"}>
             {contact.status}
           </Badge>
+          <ButtonLink href={`/contacts/${contact.id}/edit`}>Modifier</ButtonLink>
           <ButtonLink href="/contacts/new" variant="secondary">
             Nouveau contact
           </ButtonLink>

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { createFixedCost } from "@/app/(dashboard)/actions";
+import { createFixedCost, updateFixedCost } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -14,6 +14,7 @@ import {
   type FixedCostFormInput,
   type FixedCostFormValues,
 } from "@/lib/validation/finance";
+import type { FixedCost } from "@/types";
 
 const defaultValues: FixedCostFormInput = {
   label: "",
@@ -24,7 +25,13 @@ const defaultValues: FixedCostFormInput = {
   notes: "",
 };
 
-export function FixedCostForm() {
+export function FixedCostForm({
+  cost,
+  onSaved,
+}: {
+  cost?: FixedCost;
+  onSaved?: () => void;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -35,16 +42,31 @@ export function FixedCostForm() {
     reset,
   } = useForm<FixedCostFormInput, unknown, FixedCostFormValues>({
     resolver: zodResolver(fixedCostSchema),
-    defaultValues,
+    defaultValues: cost
+      ? {
+          label: cost.label,
+          category: cost.category,
+          amount: cost.amount,
+          frequency: cost.frequency,
+          nextDueDate: cost.nextDueDate,
+          notes: cost.notes || "",
+        }
+      : defaultValues,
   });
 
   function onSubmit(values: FixedCostFormValues) {
     startTransition(async () => {
-      const result = await createFixedCost(values);
+      const result = cost
+        ? await updateFixedCost(cost.id, values)
+        : await createFixedCost(values);
       setMessage({ ok: result.ok, text: result.message });
 
       if (result.ok) {
-        reset(defaultValues);
+        if (!cost) {
+          reset(defaultValues);
+        }
+
+        onSaved?.();
         router.refresh();
       }
     });
@@ -110,7 +132,7 @@ export function FixedCostForm() {
       ) : null}
 
       <Button type="submit" disabled={isSubmitting || isPending}>
-        Ajouter le frais fixe
+        {cost ? "Enregistrer le frais fixe" : "Ajouter le frais fixe"}
       </Button>
     </form>
   );

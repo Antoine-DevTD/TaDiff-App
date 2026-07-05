@@ -1,0 +1,184 @@
+import { notFound } from "next/navigation";
+import { CompanyBillingForm } from "@/components/admin/company-billing-form";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/finance";
+import {
+  getAdminBetaSignups,
+  getAdminCompanies,
+  isSuperAdmin,
+  type AdminCompany,
+} from "@/lib/supabase/admin";
+import type { BillingStatus } from "@/lib/supabase/access";
+
+const statusMeta: Record<BillingStatus, { label: string; tone: "neutral" | "success" | "warning" | "danger" }> = {
+  trial: { label: "Essai", tone: "neutral" },
+  active: { label: "Actif", tone: "success" },
+  comped: { label: "Offert", tone: "success" },
+  past_due: { label: "Retard", tone: "warning" },
+  cancelled: { label: "Resilie", tone: "danger" },
+};
+
+export default async function AdminPage() {
+  if (!(await isSuperAdmin())) {
+    notFound();
+  }
+
+  const [companies, betaSignups] = await Promise.all([
+    getAdminCompanies(),
+    getAdminBetaSignups(),
+  ]);
+
+  const activeCount = companies.filter((company) => company.billingStatus === "active").length;
+  const compedCount = companies.filter((company) => company.billingStatus === "comped").length;
+  const reserved = betaSignups.filter((signup) => signup.status === "reserved");
+  const waitlist = betaSignups.filter((signup) => signup.status === "waitlist");
+  const monthlyRevenue = activeCount * 19.99;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs uppercase tracking-[0.18em] text-muted">Console interne</p>
+        <h2 className="mt-2 text-3xl font-semibold">Supervision TaDiff</h2>
+        <p className="mt-1 text-sm text-muted">
+          Reservee aux super admins. Compagnies, billing et inscriptions beta.
+        </p>
+      </div>
+
+      <section className="grid gap-4 md:grid-cols-4">
+        <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} active(s), ${compedCount} offerte(s)`} />
+        <MetricCard label="MRR beta" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) a 19,99 EUR`} />
+        <MetricCard label="Beta reservee" value={`${reserved.length}/10`} detail="Places confirmees" />
+        <MetricCard label="Liste d'attente" value={waitlist.length.toString()} detail="Compagnies en attente" />
+      </section>
+
+      <Card className="space-y-4 p-5">
+        <div>
+          <p className="text-base font-semibold">Compagnies</p>
+          <p className="mt-1 text-sm text-muted">
+            Statut d&apos;abonnement, volumes et derniere activite. Le billing se gere ici sans
+            passer par le SQL editor.
+          </p>
+        </div>
+        {companies.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+            Aucune compagnie inscrite pour le moment.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {companies.map((company) => (
+              <CompanyRow key={company.id} company={company} />
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <div>
+          <p className="text-base font-semibold">Inscriptions beta</p>
+          <p className="mt-1 text-sm text-muted">
+            10 places reservees puis liste d&apos;attente, dans l&apos;ordre d&apos;arrivee.
+          </p>
+        </div>
+        {betaSignups.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+            Aucune inscription beta pour le moment.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {betaSignups.map((signup) => (
+              <div
+                key={signup.id}
+                className="flex flex-col gap-2 rounded-md border border-border bg-panel-strong/35 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium">
+                    #{signup.position} {signup.companyName}
+                    <span className="ml-2 font-normal text-muted">
+                      {signup.contactName} · {signup.email}
+                      {signup.city ? ` · ${signup.city}` : ""}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {signup.discipline} — {signup.mainNeed}
+                  </p>
+                </div>
+                <Badge tone={signup.status === "reserved" ? "success" : "neutral"}>
+                  {signup.status === "reserved" ? "Place reservee" : "Liste d'attente"}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function CompanyRow({ company }: { company: AdminCompany }) {
+  const meta = statusMeta[company.billingStatus];
+
+  return (
+    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium">{company.name}</p>
+            <Badge tone={meta.tone}>{meta.label}</Badge>
+            <Badge>{company.planCode}</Badge>
+            {company.billingStatus === "comped" && company.compedUntil ? (
+              <Badge tone="warning">
+                jusqu&apos;au {new Date(company.compedUntil).toLocaleDateString("fr-FR")}
+              </Badge>
+            ) : null}
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            Creee le {new Date(company.createdAt).toLocaleDateString("fr-FR")} —{" "}
+            {company.lastActivity
+              ? `derniere activite le ${new Date(company.lastActivity).toLocaleDateString("fr-FR")}`
+              : "aucune activite journalisee"}
+          </p>
+          {company.billingNotes ? (
+            <p className="mt-2 text-sm text-muted">{company.billingNotes}</p>
+          ) : null}
+        </div>
+        <div className="grid shrink-0 grid-cols-4 gap-3 text-center text-sm">
+          <VolumeCell label="Membres" value={company.memberCount} />
+          <VolumeCell label="Spectacles" value={company.showCount} />
+          <VolumeCell label="Contacts" value={company.contactCount} />
+          <VolumeCell label="Dates" value={company.dealCount} />
+        </div>
+      </div>
+      <div className="mt-3">
+        <CompanyBillingForm company={company} />
+      </div>
+    </div>
+  );
+}
+
+function VolumeCell({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-border bg-panel px-2 py-1.5">
+      <p className="text-base font-semibold">{value}</p>
+      <p className="text-[11px] text-muted">{label}</p>
+    </div>
+  );
+}
+
+function MetricCard({
+  detail,
+  label,
+  value,
+}: {
+  detail: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Card className="p-4">
+      <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
+      <p className="mt-3 text-2xl font-semibold">{value}</p>
+      <p className="mt-2 text-xs text-muted">{detail}</p>
+    </Card>
+  );
+}

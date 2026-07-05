@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ShowDocumentDeleteButton } from "@/components/documents/show-document-delete-button";
 import { ShowDocumentForm } from "@/components/documents/show-document-form";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
@@ -48,6 +49,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone={show.status === "En diffusion" ? "success" : "neutral"}>{show.status}</Badge>
+          <ButtonLink href={`/shows/${show.id}/edit`}>Modifier</ButtonLink>
           <ButtonLink href="/shows/new" variant="secondary">
             Nouveau spectacle
           </ButtonLink>
@@ -111,7 +113,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
           <CardHeader>
             <CardTitle>Documents lies</CardTitle>
             <CardDescription>
-              Pieces deja referenciaes pour ce spectacle. Le vrai upload fichier arrive ensuite.
+              Pieces du spectacle : fichiers stockes dans TaDiff ou liens externes references.
             </CardDescription>
           </CardHeader>
           <div className="space-y-3">
@@ -130,16 +132,19 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                   {document.notes ? (
                     <p className="mt-3 text-sm text-muted">{document.notes}</p>
                   ) : null}
-                  {document.fileUrl ? (
-                    <a
-                      className="mt-3 inline-flex text-sm font-medium text-accent hover:text-accent-strong"
-                      href={document.fileUrl}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      Ouvrir le fichier
-                    </a>
-                  ) : null}
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    {document.fileUrl ? (
+                      <a
+                        className="inline-flex text-sm font-medium text-accent hover:text-accent-strong"
+                        href={document.fileUrl}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {document.storagePath ? "Telecharger le fichier" : "Ouvrir le lien"}
+                      </a>
+                    ) : null}
+                    <ShowDocumentDeleteButton documentId={document.id} />
+                  </div>
                 </div>
               ))
             )}
@@ -150,7 +155,8 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
           <CardHeader>
             <CardTitle>Ajouter une piece</CardTitle>
             <CardDescription>
-              Pour la demo, on reference un lien ou une piece deja stockee ailleurs.
+              Televersez le fichier dans TaDiff ou referencez un lien externe. Les pieces
+              stockees partent directement dans le zip de depot subvention.
             </CardDescription>
           </CardHeader>
           <ShowDocumentForm showId={show.id} />

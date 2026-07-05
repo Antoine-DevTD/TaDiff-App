@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageTitle } from "@/components/ui/page-title";
+import { PlannedFeatureNotice } from "@/components/ui/planned-feature";
 import { getEmailCampaigns } from "@/lib/supabase/queries";
 import type { EmailCampaign } from "@/types";
 
@@ -24,7 +26,7 @@ export default async function CampaignsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold">Campagnes email</h2>
+          <PageTitle href="/campaigns">Campagnes email</PageTitle>
           <p className="mt-1 text-sm text-muted">
             Templates, audiences, prochaines relances et suivi de performance.
           </p>
@@ -33,6 +35,8 @@ export default async function CampaignsPage() {
           Voir les contacts
         </ButtonLink>
       </div>
+
+      <PlannedFeatureNotice detail="Les campagnes affichees sont un jeu de demonstration et l'envoi reel d'emails n'est pas encore branche. Les templates serviront de base a l'envoi via Resend." />
 
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Campagnes" value={campaigns.length.toString()} detail="Sequences suivies" />

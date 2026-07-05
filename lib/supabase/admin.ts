@@ -1,0 +1,103 @@
+import { hasSupabaseEnv } from "@/lib/env";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { BillingStatus } from "@/lib/supabase/access";
+
+export type AdminCompany = {
+  id: string;
+  name: string;
+  billingStatus: BillingStatus;
+  planCode: string;
+  compedUntil: string | null;
+  billingNotes: string;
+  createdAt: string;
+  memberCount: number;
+  showCount: number;
+  contactCount: number;
+  dealCount: number;
+  lastActivity: string | null;
+};
+
+export type AdminBetaSignup = {
+  id: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  discipline: string;
+  mainNeed: string;
+  status: "reserved" | "waitlist";
+  position: number;
+  createdAt: string;
+};
+
+/** Le flag is_super_admin ne se donne qu'en SQL (voir sql/013_super_admin.sql). */
+export async function isSuperAdmin(): Promise<boolean> {
+  if (!hasSupabaseEnv()) {
+    return false;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("is_super_admin_user");
+
+  if (error) {
+    return false;
+  }
+
+  return data === true;
+}
+
+export async function getAdminCompanies(): Promise<AdminCompany[]> {
+  if (!hasSupabaseEnv()) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_companies");
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((company) => ({
+    id: company.id,
+    name: company.name,
+    billingStatus: company.billing_status,
+    planCode: company.plan_code,
+    compedUntil: company.comped_until,
+    billingNotes: company.billing_notes ?? "",
+    createdAt: company.created_at,
+    memberCount: company.member_count,
+    showCount: company.show_count,
+    contactCount: company.contact_count,
+    dealCount: company.deal_count,
+    lastActivity: company.last_activity,
+  }));
+}
+
+export async function getAdminBetaSignups(): Promise<AdminBetaSignup[]> {
+  if (!hasSupabaseEnv()) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_beta_signups");
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((signup) => ({
+    id: signup.id,
+    companyName: signup.company_name,
+    contactName: signup.contact_name,
+    email: signup.email,
+    phone: signup.phone ?? "",
+    city: signup.city ?? "",
+    discipline: signup.discipline,
+    mainNeed: signup.main_need,
+    status: signup.status,
+    position: signup.position,
+    createdAt: signup.created_at,
+  }));
+}

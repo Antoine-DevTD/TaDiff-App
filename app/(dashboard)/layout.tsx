@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
+import { GuidedTour } from "@/components/tour/guided-tour";
 import { TheatreThemeSwitcher } from "@/components/theme/theatre-theme-switcher";
 import { Topbar } from "@/components/layout/topbar";
 import { hasSupabaseEnv } from "@/lib/env";
@@ -34,6 +35,7 @@ export default async function DashboardLayout({
         <TheatreThemeSwitcher />
         <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
+      <GuidedTour />
     </div>
   );
 }

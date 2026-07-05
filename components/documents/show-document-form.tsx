@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { createShowDocument } from "@/app/(dashboard)/actions";
+import { createShowDocument, prepareDocumentUpload } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { documentAcceptAttribute, getDocumentFileError } from "@/lib/documents-upload";
 import { showDocumentStatuses, showDocumentTypes } from "@/lib/show-documents";
 import {
   showDocumentSchema,
@@ -24,6 +25,9 @@ export function ShowDocumentForm({ showId }: ShowDocumentFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const {
     register,
     handleSubmit,
@@ -41,20 +45,74 @@ export function ShowDocumentForm({ showId }: ShowDocumentFormProps) {
     },
   });
 
+  function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setSelectedFile(null);
+      setFileError(null);
+      return;
+    }
+
+    const error = getDocumentFileError(file);
+    setFileError(error);
+    setSelectedFile(error ? null : file);
+  }
+
+  function clearForm() {
+    reset({
+      showId,
+      title: "",
+      documentType: "Dossier artistique",
+      status: "Pret",
+      fileUrl: "",
+      notes: "",
+    });
+    setSelectedFile(null);
+    setFileError(null);
+    setFileInputKey((key) => key + 1);
+  }
+
   function onSubmit(values: ShowDocumentFormValues) {
     startTransition(async () => {
-      const result = await createShowDocument(values);
+      setMessage(null);
+      let storagePath: string | undefined;
+
+      if (selectedFile) {
+        const prepared = await prepareDocumentUpload({
+          showId,
+          fileName: selectedFile.name,
+          fileSize: selectedFile.size,
+          fileType: selectedFile.type,
+        });
+
+        if (!prepared.ok || !prepared.signedUrl || !prepared.storagePath) {
+          setMessage({ ok: false, text: prepared.message });
+          return;
+        }
+
+        const uploadResponse = await fetch(prepared.signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": selectedFile.type },
+          body: selectedFile,
+        });
+
+        if (!uploadResponse.ok) {
+          setMessage({
+            ok: false,
+            text: "L'envoi du fichier a echoue. Reessayez ou utilisez un lien externe.",
+          });
+          return;
+        }
+
+        storagePath = prepared.storagePath;
+      }
+
+      const result = await createShowDocument({ ...values, storagePath });
       setMessage({ ok: result.ok, text: result.message });
 
       if (result.ok) {
-        reset({
-          showId,
-          title: "",
-          documentType: "Dossier artistique",
-          status: "Pret",
-          fileUrl: "",
-          notes: "",
-        });
+        clearForm();
         router.refresh();
       }
     });
@@ -88,8 +146,18 @@ export function ShowDocumentForm({ showId }: ShowDocumentFormProps) {
         </Field>
       </div>
 
-      <Field label="Lien du fichier" error={errors.fileUrl?.message}>
-        <Input placeholder="https://drive... ou futur fichier TaDiff" type="url" {...register("fileUrl")} />
+      <Field label="Fichier (PDF, image, Word, Excel - 20 Mo max)" error={fileError ?? undefined}>
+        <input
+          key={fileInputKey}
+          accept={documentAcceptAttribute}
+          className="block w-full text-sm text-muted file:mr-3 file:rounded-md file:border file:border-border file:bg-panel-strong file:px-3 file:py-2 file:text-sm file:font-medium file:text-ink hover:file:border-accent/40"
+          type="file"
+          onChange={onFileChange}
+        />
+      </Field>
+
+      <Field label="Ou lien externe (Drive, site...)" error={errors.fileUrl?.message}>
+        <Input placeholder="https://drive.google.com/..." type="url" {...register("fileUrl")} />
       </Field>
 
       <Field label="Note" error={errors.notes?.message}>
@@ -108,8 +176,12 @@ export function ShowDocumentForm({ showId }: ShowDocumentFormProps) {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isSubmitting || isPending}>
-        Ajouter au dossier
+      <Button type="submit" disabled={isSubmitting || isPending || Boolean(fileError)}>
+        {isPending
+          ? selectedFile
+            ? "Envoi du fichier..."
+            : "Ajout..."
+          : "Ajouter au dossier"}
       </Button>
     </form>
   );

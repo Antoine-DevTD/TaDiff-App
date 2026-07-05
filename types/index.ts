@@ -33,6 +33,7 @@ export type ShowDocument = {
   documentType: ShowDocumentType;
   status: ShowDocumentStatus;
   fileUrl: string;
+  storagePath?: string;
   notes: string;
   updatedAt: string;
 };
@@ -239,4 +240,20 @@ export type FixedCost = {
   frequency: FixedCostFrequency;
   nextDueDate: string;
   notes: string;
+};
+
+export type TreasurySnapshot = {
+  id: string;
+  balance: number;
+  recordedOn: string;
+  note: string;
+};
+
+export type ActivityEntry = {
+  id: string;
+  actorName: string;
+  action: string;
+  entityType: string;
+  entityLabel: string;
+  createdAt: string;
 };

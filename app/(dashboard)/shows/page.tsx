@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageTitle } from "@/components/ui/page-title";
 import { getShows, getShowDocuments } from "@/lib/supabase/queries";
 import { getShowDocumentReadiness } from "@/lib/show-documents";
 import type { Show } from "@/types";
@@ -14,7 +15,7 @@ export default async function ShowsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold">Spectacles</h2>
+          <PageTitle href="/shows">Spectacles</PageTitle>
           <p className="mt-1 text-sm text-muted">
             Catalogue des creations, statuts de diffusion et prochaines dates.
           </p>
@@ -30,7 +31,7 @@ export default async function ShowsPage() {
           actionHref="/shows/new"
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3" data-tour="shows-catalogue">
           {shows.map((show) => (
             <Link key={show.id} href={`/shows/${show.id}`}>
               <Card className="overflow-hidden p-0 transition hover:-translate-y-0.5 hover:border-accent/[0.45] hover:bg-panel-strong/70">

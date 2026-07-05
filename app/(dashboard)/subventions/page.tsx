@@ -1,8 +1,16 @@
+import { deleteGrantOpportunity } from "@/app/(dashboard)/actions";
 import { GrantDossierZipButton } from "@/components/grants/grant-dossier-zip-button";
+import { GrantForm } from "@/components/grants/grant-form";
+import { GrantImportButton } from "@/components/grants/grant-import-button";
+import { GrantStatusSelect } from "@/components/grants/grant-status-select";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { InlineDeleteButton } from "@/components/ui/inline-delete-button";
+import { PageTitle } from "@/components/ui/page-title";
+import { PlannedFeatureNotice } from "@/components/ui/planned-feature";
+import { hasSupabaseEnv } from "@/lib/env";
 import { formatCurrency } from "@/lib/finance";
 import {
   buildGrantDossierState,
@@ -81,20 +89,30 @@ export default async function SubventionsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold">Radar subventions</h2>
+          <PageTitle href="/subventions">Radar subventions</PageTitle>
           <p className="mt-1 text-sm text-muted">
             Suivez les aides, montants attendus, territoires et deadlines avant qu elles ne sortent du radar.
           </p>
         </div>
-        <ButtonLink href="/calendar" variant="secondary">
-          Voir les echeances
-        </ButtonLink>
+        <div className="flex flex-wrap items-center gap-3">
+          <GrantImportButton />
+          <ButtonLink href="/calendar" variant="secondary">
+            Voir les echeances
+          </ButtonLink>
+        </div>
       </div>
+
+      {hasSupabaseEnv() ? null : (
+        <PlannedFeatureNotice
+          detail="Sans base Supabase connectee, le radar affiche un jeu de dispositifs de demonstration."
+          kind="demo-data"
+        />
+      )}
 
       {grants.length === 0 ? (
         <EmptyState
           title="Aucune aide suivie"
-          description="Ajoutez un dispositif DRAC, Region, Fondation ou SACD pour piloter les depots."
+          description="Importez les 10 dispositifs de reference ou ajoutez un dispositif DRAC, Region, Fondation ou SACD ci-dessous."
         />
       ) : (
         <>
@@ -105,7 +123,7 @@ export default async function SubventionsPage() {
             <MetricCard label="Montant cible" value={formatCurrency(totalExpected)} detail="Total attendu" />
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]" data-tour="radar-subventions">
             <Card className="space-y-4 p-5">
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted">Priorites</p>
@@ -150,6 +168,51 @@ export default async function SubventionsPage() {
           </section>
         </>
       )}
+
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">Ajouter un dispositif</p>
+            <p className="mt-1 text-sm text-muted">
+              Chaque dispositif suit ses pieces, sa deadline et alimente le calendrier et le
+              cockpit.
+            </p>
+          </div>
+          <GrantForm shows={shows} />
+        </Card>
+
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">Bien utiliser le radar</p>
+            <p className="mt-1 text-sm text-muted">
+              Le radar travaille pour la compagnie quand chaque dispositif est tenu a jour.
+            </p>
+          </div>
+          <div className="space-y-3 text-sm text-muted">
+            <TipBlock
+              title="Verifier les dates indicatives"
+              detail="Les dispositifs importes signalent dans leurs notes si la deadline est verifiee ou indicative. Corrigez la date des que le calendrier officiel est publie."
+            />
+            <TipBlock
+              title="Associer un spectacle"
+              detail="Un dispositif relie a un spectacle calcule automatiquement les pieces pretes et manquantes du dossier."
+            />
+            <TipBlock
+              title="Faire avancer le statut"
+              detail="A surveiller, en montage, depose, attribue : le statut alimente les priorites du cockpit."
+            />
+          </div>
+        </Card>
+      </section>
+    </div>
+  );
+}
+
+function TipBlock({ detail, title }: { detail: string; title: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
+      <p className="font-medium text-foreground">{title}</p>
+      <p className="mt-1">{detail}</p>
     </div>
   );
 }
@@ -223,12 +286,14 @@ function GrantRow({ state }: { state: GrantDossierState }) {
         ))}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3">
+        <GrantStatusSelect grantId={grant.id} status={grant.status} />
         {state.show ? (
           <ButtonLink href={`/shows/${state.show.id}`} variant="secondary">
             Voir le spectacle
           </ButtonLink>
         ) : null}
         <GrantDossierZipButton state={state} />
+        <InlineDeleteButton action={deleteGrantOpportunity.bind(null, grant.id)} label="Retirer" />
       </div>
     </div>
   );

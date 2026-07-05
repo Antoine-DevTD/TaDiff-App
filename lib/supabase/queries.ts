@@ -13,10 +13,12 @@ import {
   reminders,
   showDocuments,
   shows,
+  treasurySnapshot,
 } from "@/data/mock-data";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type {
+  ActivityEntry,
   BillingPlan,
   CommercialPack,
   Contact,
@@ -29,6 +31,7 @@ import type {
   Reminder,
   Show,
   ShowDocument,
+  TreasurySnapshot,
 } from "@/types";
 
 type DashboardStat = {
@@ -108,7 +111,7 @@ export async function getShowById(showId: string): Promise<{
         .order("created_at", { ascending: false }),
       supabase
         .from("show_documents")
-        .select("id,show_id,title,document_type,status,file_url,notes,updated_at")
+        .select("id,show_id,title,document_type,status,file_url,storage_path,notes,updated_at")
         .eq("show_id", showId)
         .order("updated_at", { ascending: false }),
     ]);
@@ -125,18 +128,7 @@ export async function getShowById(showId: string): Promise<{
   };
 
   const resolvedDocuments: ShowDocument[] =
-    documentsError || !documents
-      ? []
-      : documents.map((document) => ({
-          id: document.id,
-          showId: document.show_id,
-          title: document.title,
-          documentType: document.document_type as ShowDocument["documentType"],
-          status: document.status as ShowDocument["status"],
-          fileUrl: document.file_url ?? "",
-          notes: document.notes ?? "",
-          updatedAt: document.updated_at,
-        }));
+    documentsError || !documents ? [] : await mapShowDocumentRows(documents);
 
   const resolvedOpportunities: PipelineDeal[] =
     opportunitiesError || !opportunities
@@ -417,6 +409,55 @@ export async function getReminders(): Promise<Reminder[]> {
   }));
 }
 
+type ShowDocumentRow = {
+  id: string;
+  show_id: string;
+  title: string;
+  document_type: string;
+  status: string;
+  file_url: string | null;
+  storage_path: string | null;
+  notes: string | null;
+  updated_at: string;
+};
+
+// Les fichiers stockes dans TaDiff (bucket prive "documents") sont exposes
+// via des URLs signees d'une heure ; file_url reste utilise pour les liens externes.
+async function mapShowDocumentRows(rows: ShowDocumentRow[]): Promise<ShowDocument[]> {
+  const storagePaths = rows
+    .map((row) => row.storage_path)
+    .filter((path): path is string => Boolean(path));
+  const urlByPath = new Map<string, string>();
+
+  if (storagePaths.length > 0) {
+    const supabase = await getSupabaseServerClient();
+    const { data } = await supabase.storage
+      .from("documents")
+      .createSignedUrls(storagePaths, 3600);
+
+    for (const item of data ?? []) {
+      if (item.path && item.signedUrl) {
+        urlByPath.set(item.path, item.signedUrl);
+      }
+    }
+  }
+
+  return rows.map((document) => ({
+    id: document.id,
+    showId: document.show_id,
+    title: document.title,
+    documentType: document.document_type as ShowDocument["documentType"],
+    status: document.status as ShowDocument["status"],
+    fileUrl:
+      (document.storage_path ? urlByPath.get(document.storage_path) : undefined) ??
+      document.file_url ??
+      "",
+    storagePath: document.storage_path ?? "",
+    notes: document.notes ?? "",
+    updatedAt: document.updated_at,
+  }));
+}
+
 export async function getShowDocuments(showId?: string): Promise<ShowDocument[]> {
   if (!hasSupabaseEnv()) {
     return showId
@@ -427,7 +468,7 @@ export async function getShowDocuments(showId?: string): Promise<ShowDocument[]>
   const supabase = await getSupabaseServerClient();
   let query = supabase
     .from("show_documents")
-    .select("id,show_id,title,document_type,status,file_url,notes,updated_at")
+    .select("id,show_id,title,document_type,status,file_url,storage_path,notes,updated_at")
     .order("updated_at", { ascending: false });
 
   if (showId) {
@@ -440,16 +481,7 @@ export async function getShowDocuments(showId?: string): Promise<ShowDocument[]>
     return [];
   }
 
-  return data.map((document) => ({
-    id: document.id,
-    showId: document.show_id,
-    title: document.title,
-    documentType: document.document_type as ShowDocument["documentType"],
-    status: document.status as ShowDocument["status"],
-    fileUrl: document.file_url ?? "",
-    notes: document.notes ?? "",
-    updatedAt: document.updated_at,
-  }));
+  return mapShowDocumentRows(data);
 }
 
 export async function getBetaSignupStats(): Promise<{
@@ -512,11 +544,64 @@ export async function getCommercialPacks(): Promise<CommercialPack[]> {
 }
 
 export async function getGrantOpportunities(): Promise<GrantOpportunity[]> {
-  return grantOpportunities;
+  if (!hasSupabaseEnv()) {
+    return grantOpportunities;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("grant_opportunities")
+    .select(
+      "id,show_id,title,funder,territory,discipline,deadline,amount,status,requirements,eligibility,source_url,themes",
+    )
+    .order("deadline", { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((grant) => ({
+    id: grant.id,
+    title: grant.title,
+    funder: grant.funder,
+    territory: grant.territory ?? "",
+    discipline: grant.discipline ?? "",
+    deadline: grant.deadline,
+    amount: grant.amount,
+    status: grant.status,
+    relatedShowId: grant.show_id ?? undefined,
+    requirements: (grant.requirements ?? []) as GrantOpportunity["requirements"],
+    eligibility: grant.eligibility ?? undefined,
+    sourceUrl: grant.source_url ?? undefined,
+    themes: grant.themes ?? [],
+  }));
 }
 
 export async function getPatronageDeals(): Promise<PatronageDeal[]> {
-  return patronageDeals;
+  if (!hasSupabaseEnv()) {
+    return patronageDeals;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("patronage_deals")
+    .select("id,company_name,contact_name,amount,status,next_action,next_follow_up_at,pack_id")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((deal) => ({
+    id: deal.id,
+    companyName: deal.company_name,
+    contactName: deal.contact_name ?? "",
+    amount: deal.amount,
+    status: deal.status,
+    nextAction: deal.next_action ?? "",
+    nextFollowUpAt: deal.next_follow_up_at ?? "",
+    packId: deal.pack_id ?? "",
+  }));
 }
 
 export async function getEmailCampaigns(): Promise<EmailCampaign[]> {
@@ -610,6 +695,58 @@ export async function getFixedCosts(): Promise<FixedCost[]> {
     nextDueDate: cost.next_due_date,
     notes: cost.notes ?? "",
   }));
+}
+
+export async function getActivityLog(limit = 15): Promise<ActivityEntry[]> {
+  if (!hasSupabaseEnv()) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("activity_logs")
+    .select("id,actor_name,action,entity_type,entity_label,created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((entry) => ({
+    id: entry.id,
+    actorName: entry.actor_name,
+    action: entry.action,
+    entityType: entry.entity_type,
+    entityLabel: entry.entity_label ?? "",
+    createdAt: entry.created_at,
+  }));
+}
+
+export async function getLatestTreasurySnapshot(): Promise<TreasurySnapshot | null> {
+  if (!hasSupabaseEnv()) {
+    return treasurySnapshot;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("treasury_snapshots")
+    .select("id,balance,recorded_on,note")
+    .order("recorded_on", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    balance: data.balance,
+    recordedOn: data.recorded_on,
+    note: data.note ?? "",
+  };
 }
 
 function buildDashboardStats({

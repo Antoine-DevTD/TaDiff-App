@@ -3,17 +3,32 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { hasSupabaseEnv } from "@/lib/env";
 import {
   getDashboardData,
   getFixedCosts,
   getGrantOpportunities,
+  getLatestTreasurySnapshot,
   getQuoteItems,
   getShowDocuments,
 } from "@/lib/supabase/queries";
 import { formatCurrency, getMonthlyFixedCostsTotal } from "@/lib/finance";
 import { getPipelinePriorityScore } from "@/lib/pipeline";
 import { getShowDocumentReadiness } from "@/lib/show-documents";
-import type { FixedCost, GrantOpportunity, PipelineDeal, QuoteItem, Reminder, Show, ShowDocument } from "@/types";
+import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
+import { GettingStarted, type OnboardingStep } from "@/components/onboarding/getting-started";
+import { TourLauncher } from "@/components/tour/tour-launcher";
+import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
+import type {
+  FixedCost,
+  GrantOpportunity,
+  PipelineDeal,
+  QuoteItem,
+  Reminder,
+  Show,
+  ShowDocument,
+  TreasurySnapshot,
+} from "@/types";
 
 type Tone = "danger" | "neutral" | "success" | "warning";
 
@@ -93,15 +108,17 @@ function buildCashPilot({
   fixedCosts,
   quotes,
   shows,
+  treasury,
 }: {
   deals: PipelineDeal[];
   fixedCosts: FixedCost[];
   quotes: QuoteItem[];
   shows: Show[];
+  treasury: TreasurySnapshot | null;
 }) {
   const activeShows = shows.filter((show) => show.status !== "En pause");
   const monthlyFixedCosts = getMonthlyFixedCostsTotal(fixedCosts);
-  const currentCash = 18400;
+  const currentCash = treasury?.balance ?? 0;
   const expectedQuotes30 = quotes
     .filter((quote) => quote.dueDate && getDaysUntil(quote.dueDate) <= 30)
     .reduce((total, quote) => total + quote.depositDue + quote.balanceDue, 0);
@@ -222,14 +239,16 @@ function buildShowReadiness(shows: Show[], documents: ShowDocument[]) {
 }
 
 export default async function DashboardPage() {
-  const [{ contacts, pipelineDeals, reminders, shows }, grants, quotes, documents, fixedCosts] =
+  const [{ contacts, pipelineDeals, reminders, shows }, grants, quotes, documents, fixedCosts, treasury] =
     await Promise.all([
       getDashboardData(),
       getGrantOpportunities(),
       getQuoteItems(),
       getShowDocuments(),
       getFixedCosts(),
+      getLatestTreasurySnapshot(),
     ]);
+  const isDemoTreasury = !hasSupabaseEnv();
 
   const activeDeals = pipelineDeals
     .filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu")
@@ -242,7 +261,7 @@ export default async function DashboardPage() {
   const nextShows = [...activeShows]
     .sort((a, b) => new Date(a.nextDate || "2999-12-31").getTime() - new Date(b.nextDate || "2999-12-31").getTime())
     .slice(0, 3);
-  const cashPilot = buildCashPilot({ deals: pipelineDeals, fixedCosts, quotes, shows });
+  const cashPilot = buildCashPilot({ deals: pipelineDeals, fixedCosts, quotes, shows, treasury });
   const showReadiness = buildShowReadiness(activeShows, documents);
   const documentMissingCount = showReadiness.reduce(
     (total, item) => total + item.readiness.missingCount,
@@ -261,6 +280,59 @@ export default async function DashboardPage() {
     reminders,
   });
   const mainAction = theatreActions[0] ?? null;
+  const firstShowId = shows[0]?.id ?? null;
+  const onboardingSteps: OnboardingStep[] = [
+    {
+      id: "show",
+      label: "Creer votre premier spectacle",
+      detail: "Titre, discipline, budget : le dossier central de la compagnie.",
+      href: "/shows/new",
+      done: shows.length > 0,
+    },
+    {
+      id: "documents",
+      label: "Ajouter les pieces du dossier",
+      detail: "Affiche, dossier artistique, budget : tout part de la fiche spectacle.",
+      href: firstShowId ? `/shows/${firstShowId}` : "/shows",
+      done: documents.length > 0,
+    },
+    {
+      id: "fixed-costs",
+      label: "Renseigner vos frais fixes",
+      detail: "Assurance, comptable, local : la base de la projection.",
+      href: "/finances",
+      done: fixedCosts.length > 0,
+    },
+    {
+      id: "treasury",
+      label: "Saisir votre solde de tresorerie",
+      detail: "Le cockpit calcule votre marge et votre date de risque.",
+      href: "/finances",
+      done: treasury !== null,
+    },
+    {
+      id: "contacts",
+      label: "Ajouter ou importer vos contacts",
+      detail: "A la main ou en CSV : votre carnet de diffusion.",
+      href: "/contacts/new",
+      done: contacts.length > 0,
+    },
+    {
+      id: "opportunity",
+      label: "Creer une premiere date possible",
+      detail: "Un contact + un spectacle = une date a faire avancer.",
+      href: "/pipeline",
+      done: pipelineDeals.length > 0,
+    },
+    {
+      id: "reminder",
+      label: "Planifier une relance",
+      detail: "TaDiff vous rappelle qui relancer et quand.",
+      href: "/reminders",
+      done: reminders.length > 0,
+    },
+  ];
+  const onboardingComplete = onboardingSteps.every((step) => step.done);
   const productionTone: Tone =
     documentMissingCount === 0 ? "success" : documentMissingCount <= 4 ? "warning" : "danger";
   const agendaTone: Tone =
@@ -268,22 +340,28 @@ export default async function DashboardPage() {
   const salesTone: Tone = activeDeals.length > 0 ? "success" : "warning";
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="overflow-hidden p-0">
+    <div className="theme-cockpit-shell">
+      {onboardingComplete ? null : <GettingStarted steps={onboardingSteps} />}
+
+      <section className="theme-cockpit-section theme-cockpit-hero-section grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card className="theme-cockpit-status overflow-hidden p-0" data-tour="cockpit-pulse">
           <div className="border-b border-border bg-panel-strong/55 p-5">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                   Cockpit du jour
                 </p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-normal">
-                  {cashPilot.status === "success"
-                    ? "La compagnie tient le cap."
-                    : cashPilot.status === "warning"
-                      ? "La compagnie tient, mais il faut surveiller."
-                      : "La compagnie risque de passer dans le rouge."}
-                </h2>
+                <DashboardSectionTitle
+                  className="text-3xl tracking-normal"
+                  href="/dashboard"
+                  title={
+                    cashPilot.status === "success"
+                      ? "La compagnie tient le cap."
+                      : cashPilot.status === "warning"
+                        ? "La compagnie tient, mais il faut surveiller."
+                        : "La compagnie risque de passer dans le rouge."
+                  }
+                />
                 <p className="mt-3 max-w-2xl text-sm text-muted">
                   Tresorerie, diffusion, dossiers et echeances reunis dans une seule lecture.
                 </p>
@@ -318,17 +396,45 @@ export default async function DashboardPage() {
               value={agendaTone === "success" ? "Calme" : getToneLabel(agendaTone)}
             />
           </div>
+
+          <div className="flex flex-wrap items-center gap-2 border-t border-border p-4 text-xs text-muted">
+            {isDemoTreasury ? (
+              <>
+                <PlannedFeatureBadge kind="demo-data" />
+                <span>
+                  Le solde de tresorerie est une valeur de demonstration. Connectez Supabase pour
+                  saisir le solde reel.
+                </span>
+              </>
+            ) : treasury ? (
+              <span>
+                Solde bancaire saisi le {new Date(treasury.recordedOn).toLocaleDateString("fr-FR")}.{" "}
+                <Link className="font-medium text-accent hover:text-accent-strong" href="/finances">
+                  Mettre a jour dans Finances
+                </Link>
+              </span>
+            ) : (
+              <span className="text-warning">
+                Aucun solde bancaire saisi : la lecture part de 0 EUR.{" "}
+                <Link className="font-medium text-accent hover:text-accent-strong" href="/finances">
+                  Renseigner le solde dans Finances
+                </Link>
+              </span>
+            )}
+          </div>
         </Card>
 
-        <Card className="space-y-4 p-5">
+        <Card className="theme-cockpit-priority space-y-4 p-5" data-tour="cockpit-priorite">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Priorite
               </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                {mainAction?.title ?? "Rien ne bloque aujourd'hui."}
-              </h2>
+              <DashboardSectionTitle
+                className="text-2xl"
+                href={mainAction?.href ?? "/reminders"}
+                title={mainAction?.title ?? "Rien ne bloque aujourd'hui."}
+              />
             </div>
             {mainAction ? <Badge tone={mainAction.tone}>{mainAction.label}</Badge> : null}
           </div>
@@ -345,17 +451,18 @@ export default async function DashboardPage() {
             <ButtonLink href="/calendar" variant="secondary">
               Voir l&apos;agenda
             </ButtonLink>
+            {onboardingComplete ? <TourLauncher label="Visite guidee" /> : null}
           </div>
         </Card>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <Card className="space-y-4 p-5">
+      <section className="theme-cockpit-section theme-cockpit-route-section grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card className="theme-cockpit-roadmap space-y-4 p-5" data-tour="cockpit-plan">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
               Plan de route
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">Les 5 sorties utiles</h2>
+            <DashboardSectionTitle className="text-2xl" href="/reminders" title="Les 5 sorties utiles" />
           </div>
           {theatreActions.length === 0 ? (
             <EmptyBlock text="Aucune sortie critique pour le moment." />
@@ -383,7 +490,7 @@ export default async function DashboardPage() {
           )}
         </Card>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="theme-cockpit-workflow-grid grid gap-6 md:grid-cols-2">
           <WorkflowCard
             detail={`${priorityDeals.length} dossier(s) de diffusion a pousser`}
             href="/pipeline"
@@ -415,14 +522,18 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <section className="theme-cockpit-section theme-cockpit-sales-section grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="space-y-4 p-5">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Spectacles
               </p>
-              <h2 className="mt-2 text-xl font-semibold">Ce qui peut etre vendu ou depose</h2>
+              <DashboardSectionTitle
+                className="text-xl"
+                href="/shows"
+                title="Ce qui peut etre vendu ou depose"
+              />
             </div>
             <ButtonLink href="/shows" variant="secondary">
               Tous les spectacles
@@ -480,7 +591,7 @@ export default async function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Diffusion
               </p>
-              <h2 className="mt-2 text-xl font-semibold">Les dates a faire avancer</h2>
+              <DashboardSectionTitle className="text-xl" href="/pipeline" title="Les dates a faire avancer" />
             </div>
             <ButtonLink href="/pipeline" variant="secondary">
               Diffusion
@@ -530,14 +641,14 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="theme-cockpit-section theme-cockpit-agenda-section grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card className="space-y-4 p-5">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Aujourd&apos;hui
               </p>
-              <h2 className="mt-2 text-xl font-semibold">Relances et echeances</h2>
+              <DashboardSectionTitle className="text-xl" href="/reminders" title="Relances et echeances" />
             </div>
             <ButtonLink href="/reminders" variant="secondary">
               A faire
@@ -573,7 +684,7 @@ export default async function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Repertoire
               </p>
-              <h2 className="mt-2 text-xl font-semibold">Contacts a activer</h2>
+              <DashboardSectionTitle className="text-xl" href="/contacts" title="Contacts a activer" />
             </div>
             <ButtonLink href="/contacts" variant="secondary">
               Contacts
@@ -645,6 +756,25 @@ function PulseMetric({
       </div>
       <p className="mt-3 text-xl font-semibold">{value}</p>
       <p className="mt-1 text-xs text-muted">{detail}</p>
+    </div>
+  );
+}
+
+function DashboardSectionTitle({
+  className,
+  href,
+  title,
+}: {
+  className: string;
+  href: string;
+  title: string;
+}) {
+  return (
+    <div className="mt-2 flex min-w-0 items-start gap-2">
+      <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-panel-strong text-accent">
+        <DashboardNavIcon className="h-4 w-4" href={href} />
+      </span>
+      <h2 className={`${className} min-w-0 font-semibold`}>{title}</h2>
     </div>
   );
 }

@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { FixedCostForm } from "@/components/finance/fixed-cost-form";
+import { FixedCostRowActions } from "@/components/finance/fixed-cost-row-actions";
+import { TreasuryBalanceForm } from "@/components/finance/treasury-balance-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageTitle } from "@/components/ui/page-title";
+import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
 import {
   buildDealProfitability,
   buildTreasuryProjection,
@@ -12,9 +16,11 @@ import {
   getMonthlyFixedCostsTotal,
   getVerdictMeta,
 } from "@/lib/finance";
+import { hasSupabaseEnv } from "@/lib/env";
 import {
   getFixedCosts,
   getGrantOpportunities,
+  getLatestTreasurySnapshot,
   getPipelineDeals,
   getQuoteItems,
   getReminders,
@@ -22,7 +28,6 @@ import {
 } from "@/lib/supabase/queries";
 import type { FixedCost, PipelineDeal, Reminder } from "@/types";
 
-const demoCurrentCash = 18400;
 const targetPerformancesPerYear = 24;
 
 function getWeightedValue(deal: PipelineDeal) {
@@ -82,14 +87,16 @@ function getFixedCostTone(cost: FixedCost) {
 }
 
 export default async function FinancesPage() {
-  const [deals, reminders, shows, quotes, fixedCosts, grants] = await Promise.all([
+  const [deals, reminders, shows, quotes, fixedCosts, grants, treasury] = await Promise.all([
     getPipelineDeals(),
     getReminders(),
     getShows(),
     getQuoteItems(),
     getFixedCosts(),
     getGrantOpportunities(),
+    getLatestTreasurySnapshot(),
   ]);
+  const isDemoTreasury = !hasSupabaseEnv();
 
   const signedDeals = deals.filter((deal) => deal.stage === "Confirme");
   const activeDeals = deals.filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu");
@@ -103,7 +110,7 @@ export default async function FinancesPage() {
     targetPerformancesPerYear,
   });
   const projection = buildTreasuryProjection({
-    currentCash: demoCurrentCash,
+    currentCash: treasury?.balance ?? 0,
     fixedCosts,
     grants,
     quotes,
@@ -131,7 +138,7 @@ export default async function FinancesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Finances</h2>
+        <PageTitle href="/finances">Finances</PageTitle>
         <p className="mt-1 text-sm text-muted">
           Tresorerie, frais fixes, projection et prix minimum lisible pour une compagnie.
         </p>
@@ -147,7 +154,7 @@ export default async function FinancesPage() {
       ) : (
         <>
           <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-            <Card className="space-y-5 p-5">
+            <Card className="space-y-5 p-5" data-tour="finance-tresorerie">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-muted">Tresorerie</p>
@@ -173,7 +180,17 @@ export default async function FinancesPage() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-4">
-                <MetricPanel label="Cash actuel" value={formatCurrency(projection.currentCash)} detail="Demo" />
+                <MetricPanel
+                  label="Cash actuel"
+                  value={formatCurrency(projection.currentCash)}
+                  detail={
+                    isDemoTreasury
+                      ? "Demo"
+                      : treasury
+                        ? `Saisi le ${new Date(treasury.recordedOn).toLocaleDateString("fr-FR")}`
+                        : "A renseigner"
+                  }
+                />
                 <MetricPanel label="Frais fixes / mois" value={formatCurrency(monthlyFixedCosts)} detail={`${fixedCosts.length} lignes`} />
                 <MetricPanel label="Risque rouge" value={projection.riskDate.toLocaleDateString("fr-FR")} detail={`${projection.runwayDays} jours`} />
                 <MetricPanel label="A encaisser 30 j" value={formatCurrency(projection.expectedQuotes30)} detail="Devis actifs" />
@@ -184,6 +201,38 @@ export default async function FinancesPage() {
                 <ProjectionCard label="Projection 60 j" value={projection.cash60} />
                 <ProjectionCard label="Projection 90 j" value={projection.cash90} />
               </div>
+
+              {isDemoTreasury ? (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                  <PlannedFeatureBadge kind="demo-data" />
+                  <span>
+                    Le cash actuel est une valeur de demonstration. Connectez Supabase pour saisir
+                    le solde reel.
+                  </span>
+                </div>
+              ) : treasury ? (
+                <p className="text-xs text-muted">
+                  Solde saisi le {new Date(treasury.recordedOn).toLocaleDateString("fr-FR")}
+                  {treasury.note ? ` - ${treasury.note}` : ""}. L&apos;import bancaire CSV arrive
+                  dans un prochain lot.
+                </p>
+              ) : (
+                <p className="rounded-md bg-warning/10 px-3 py-2 text-xs text-warning">
+                  Aucun solde saisi : la projection part de 0 EUR. Renseignez votre solde bancaire
+                  ci-contre pour une lecture fiable.
+                </p>
+              )}
+            </Card>
+
+            <div className="space-y-6">
+            <Card className="space-y-4 p-5">
+              <div>
+                <p className="text-base font-semibold">Mettre a jour le solde</p>
+                <p className="mt-1 text-sm text-muted">
+                  Le solde bancaire saisi alimente le cockpit, la projection et la date de risque.
+                </p>
+              </div>
+              <TreasuryBalanceForm currentBalance={treasury?.balance ?? null} />
             </Card>
 
             <Card className="space-y-4 p-5">
@@ -208,6 +257,7 @@ export default async function FinancesPage() {
                 />
               </div>
             </Card>
+            </div>
           </section>
 
           <section className="grid gap-4 md:grid-cols-4">
@@ -247,6 +297,7 @@ export default async function FinancesPage() {
                       />
                     </div>
                     {cost.notes ? <p className="mt-3 text-sm text-muted">{cost.notes}</p> : null}
+                    <FixedCostRowActions cost={cost} />
                   </div>
                 ))}
               </div>

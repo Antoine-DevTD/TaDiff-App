@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageTitle } from "@/components/ui/page-title";
+import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
 import { formatCurrency, getFixedCostSharePerPerformance } from "@/lib/finance";
 import { getBillingPlans, getFixedCosts, getQuoteItems } from "@/lib/supabase/queries";
 import type { QuoteItem } from "@/types";
@@ -30,7 +32,7 @@ export default async function BillingPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold">Facturation</h2>
+          <PageTitle href="/billing">Facturation</PageTitle>
           <p className="mt-1 text-sm text-muted">
             Devis, acomptes, soldes, abonnement cible et export FEC pret a brancher.
           </p>
@@ -92,7 +94,7 @@ export default async function BillingPage() {
                   Les plans sont modelises. L activation attend les cles Stripe et le webhook.
                 </p>
               </div>
-              <Badge tone="warning">A brancher</Badge>
+              <PlannedFeatureBadge className="shrink-0" />
             </div>
             <div className="space-y-3">
               {plans.map((plan) => (
@@ -117,7 +119,7 @@ export default async function BillingPage() {
                   Les lignes comptables sont preparees depuis devis, acomptes et soldes.
                 </p>
               </div>
-              <Badge>Preview</Badge>
+              <PlannedFeatureBadge className="shrink-0" />
             </div>
             <div className="rounded-lg border border-border bg-panel-strong/35 p-4 text-sm">
               <div className="grid grid-cols-[90px_1fr_110px] gap-3 text-xs uppercase tracking-[0.12em] text-muted">

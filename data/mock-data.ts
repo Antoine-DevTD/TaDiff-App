@@ -13,6 +13,7 @@ import type {
   Reminder,
   Show,
   ShowDocument,
+  TreasurySnapshot,
 } from "@/types";
 
 export const defaultCostProfile: CostProfile = {
@@ -589,3 +590,10 @@ export const fixedCosts: FixedCost[] = [
     notes: "Outils admin, creation et communication.",
   },
 ];
+
+export const treasurySnapshot: TreasurySnapshot = {
+  id: "treasury-demo",
+  balance: 18400,
+  recordedOn: "2026-07-01",
+  note: "Solde de demonstration.",
+};

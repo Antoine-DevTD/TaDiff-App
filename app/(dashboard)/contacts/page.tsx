@@ -1,6 +1,7 @@
 import { ButtonLink } from "@/components/ui/button";
 import { ContactImportPanel } from "@/components/contacts/contact-import-panel";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageTitle } from "@/components/ui/page-title";
 import { ContactsTable } from "@/components/tables/contacts-table";
 import { getContacts } from "@/lib/supabase/queries";
 
@@ -11,7 +12,7 @@ export default async function ContactsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold">Carnet de diffusion</h2>
+          <PageTitle href="/contacts">Carnet de diffusion</PageTitle>
           <p className="mt-1 text-sm text-muted">
             Programmateurs, lieux, partenaires et personnes a relancer.
           </p>
