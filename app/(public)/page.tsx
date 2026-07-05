@@ -61,9 +61,9 @@ export default function LandingPage() {
 
   return (
     <main>
-      <section className="border-b border-border bg-ink text-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-20">
-          <div className="flex flex-col justify-center">
+      <section className="theme-landing-hero border-b border-border">
+        <div className="theme-landing-hero-inner mx-auto max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+          <div className="theme-landing-copy flex flex-col justify-center">
             <Badge className="w-fit bg-white/10 text-white">Cockpit spectacle vivant</Badge>
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
               Votre compagnie lisible en un coup d&apos;oeil.
@@ -82,14 +82,14 @@ export default function LandingPage() {
               Beta limitee a 10 compagnies le 6 aout, puis liste d&apos;attente
               prioritaire pour les 30 suivantes.
             </p>
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <div className="theme-landing-proof-grid mt-8">
               <HeroMetric label="Dates a vendre" value={formatCurrency(signedOrWeighted)} />
               <HeroMetric label="Aides suivies" value={formatCurrency(grantsTotal)} />
               <HeroMetric label="Devis actifs" value={formatCurrency(quotesTotal)} />
             </div>
           </div>
 
-          <Card className="grid gap-4 bg-panel p-4 text-foreground">
+          <Card className="theme-landing-preview grid gap-4 bg-panel p-4 text-foreground">
             <div className="grid grid-cols-2 gap-3">
               <PreviewMetric label="Rentabilite" value="Avant signature" />
               <PreviewMetric label="Relances" value="Priorisees" />
@@ -144,16 +144,16 @@ export default function LandingPage() {
       <section className="border-y border-border bg-panel">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <Badge>5 interfaces</Badge>
+            <Badge>5 agencements</Badge>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight">
-              Cinq directions de cockpit, toutes ancrees dans le theatre.
+              Cinq compositions d&apos;interface, toutes ancrees dans le theatre.
             </h2>
             <p className="mt-4 text-muted">
-              Le bandeau de direction artistique permet de tester ces univers
-              sur la landing et dans le cockpit sans changer le produit.
+              Le bandeau ne change pas seulement la couleur : il teste une structure
+              de landing et une structure de cockpit pour trouver la plus intuitive.
             </p>
           </div>
-          <div className="mt-8 grid gap-4 lg:grid-cols-5">
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {theatreThemes.map((theme) => (
               <Card key={theme.id} className="flex flex-col p-4">
                 <div className="flex items-center gap-2">
@@ -163,15 +163,17 @@ export default function LandingPage() {
                   />
                   <p className="font-semibold">{theme.name}</p>
                 </div>
-                <p className="mt-3 text-sm text-muted">{theme.mood}</p>
+                <p className="mt-2 text-sm font-medium">{theme.layoutName}</p>
+                <p className="mt-1 text-sm text-muted">{theme.layoutSummary}</p>
+                <LayoutPreview theme={theme} />
                 <div className="mt-4 space-y-3 text-sm">
                   <div>
                     <p className="font-medium">Landing</p>
-                    <p className="mt-1 text-muted">{theme.landing}</p>
+                    <p className="mt-1 text-muted">{theme.landingArrangement}</p>
                   </div>
                   <div>
                     <p className="font-medium">Cockpit</p>
-                    <p className="mt-1 text-muted">{theme.cockpit}</p>
+                    <p className="mt-1 text-muted">{theme.cockpitArrangement}</p>
                   </div>
                 </div>
               </Card>
@@ -273,6 +275,25 @@ function PreviewMetric({ label, value }: { label: string; value: string }) {
     <div className="rounded-md border border-border bg-panel p-3">
       <p className="text-xs uppercase tracking-[0.12em] text-muted">{label}</p>
       <p className="mt-1 font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function LayoutPreview({ theme }: { theme: (typeof theatreThemes)[number] }) {
+  return (
+    <div
+      className={`theme-layout-preview theme-layout-preview-${theme.id} mt-4 rounded-md border p-2`}
+      style={{
+        background: theme.background,
+        borderColor: theme.border,
+        color: theme.foreground,
+      }}
+      aria-hidden="true"
+    >
+      <span className="block-a rounded-sm" style={{ background: theme.accent }} />
+      <span className="block-b rounded-sm" style={{ background: theme.foreground }} />
+      <span className="block-c rounded-sm" style={{ background: theme.border }} />
+      <span className="block-d rounded-sm" style={{ background: theme.background }} />
     </div>
   );
 }

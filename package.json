@@ -16,6 +16,7 @@
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tanstack/react-table": "^8.21.3",
+    "lucide-react": "^1.23.0",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",

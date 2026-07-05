@@ -7,8 +7,12 @@ export type TheatreTheme = {
   background: string;
   border: string;
   cockpit: string;
+  cockpitArrangement: string;
   foreground: string;
   landing: string;
+  landingArrangement: string;
+  layoutName: string;
+  layoutSummary: string;
   mood: string;
 };
 
@@ -22,8 +26,12 @@ export const theatreThemes: TheatreTheme[] = [
     background: "#f4eadb",
     border: "#d7beaa",
     cockpit: "Un bureau de production chaleureux, avec alertes lisibles et priorites du jour.",
+    cockpitArrangement: "Grande synthese en haut, priorite du jour a droite, puis ateliers par action.",
     foreground: "#1f1615",
     landing: "Une arrivee rideau rouge, promesse directe et apercu du cockpit en pleine activite.",
+    landingArrangement: "Hero classique en deux actes : promesse a gauche, cockpit vivant a droite.",
+    layoutName: "Rideau + console",
+    layoutSummary: "Lecture rassurante pour une compagnie qui veut comprendre vite sans perdre la richesse.",
     mood: "Rideau, laiton, papier creme.",
   },
   {
@@ -33,8 +41,12 @@ export const theatreThemes: TheatreTheme[] = [
     background: "#100f0f",
     border: "#3b302b",
     cockpit: "Une regie sombre, tres contrastee, pour faire ressortir les urgences et statuts.",
+    cockpitArrangement: "Plein ecran d'alerte, priorites empilees, contraste fort pour les decisions critiques.",
     foreground: "#f4efe5",
     landing: "Un plein feu sur le produit, fond noir mat, peu de texte, tres demonstratif.",
+    landingArrangement: "Scene immersive : peu de texte, grand apercu produit, lecture comme sous projecteur.",
+    layoutName: "Plein feu",
+    layoutSummary: "Agencement plus spectaculaire, utile pour une demo qui doit marquer vite.",
     mood: "Scene noire, projecteur chaud.",
   },
   {
@@ -44,8 +56,12 @@ export const theatreThemes: TheatreTheme[] = [
     background: "#f7f1e3",
     border: "#d8c9ab",
     cockpit: "Un tableau d'administration clair, proche d'un dossier imprime annote.",
+    cockpitArrangement: "Grille editorialisee : dossiers, colonnes nettes, blocs de decision comme des affiches.",
     foreground: "#171717",
     landing: "Une page affiche culturelle, blocs francs, typographie editorialisee.",
+    landingArrangement: "Composition affiche : gros titre, blocs asymetriques, preuves produit en mosaique.",
+    layoutName: "Affiche imprimee",
+    layoutSummary: "Plus culturel et moins SaaS, bon pour parler aux compagnies et lieux.",
     mood: "Papier, encre, rouge imprime.",
   },
   {
@@ -55,8 +71,12 @@ export const theatreThemes: TheatreTheme[] = [
     background: "#f1e7e0",
     border: "#d4b9b0",
     cockpit: "Une interface plus douce, pensee pour accompagner sans intimider.",
+    cockpitArrangement: "Parcours guide : prochaine action d'abord, puis explication et pieces associees.",
     foreground: "#211616",
     landing: "Une promesse humaine, compagnie accompagnee, ambiance coulisses.",
+    landingArrangement: "Narration verticale : probleme, accompagnement, action suivante, sans effet tunnel.",
+    layoutName: "Coulisses guidees",
+    layoutSummary: "Agencement pedagogique pour les profils qui ne veulent pas apprendre un logiciel.",
     mood: "Bois, miroir, rose sourd.",
   },
   {
@@ -66,8 +86,12 @@ export const theatreThemes: TheatreTheme[] = [
     background: "#e9ece6",
     border: "#b8c2b7",
     cockpit: "Un poste de pilotage dense, calme, ideal pour tresorerie et echeances.",
+    cockpitArrangement: "Table de regie : bandeau d'indicateurs, rails operationnels, agenda et cash visibles.",
     foreground: "#101615",
     landing: "Une demonstration operationnelle : indicateurs, planning et decisions.",
+    landingArrangement: "Landing de pilotage : indicateurs, planning, modules et decisions en grille dense.",
+    layoutName: "Table de regie",
+    layoutSummary: "Le plus operationnel pour vendre l'idee de remplacer une administration de production.",
     mood: "Console, vert sourd, signal.",
   },
 ];

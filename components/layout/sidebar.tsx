@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { dashboardNavItems } from "@/lib/constants";
 import { SignOutButton } from "@/components/layout/sign-out-button";
+import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
 
 const navGroups = dashboardNavItems.reduce<Record<string, typeof dashboardNavItems>>((groups, item) => {
   groups[item.group] = [...(groups[item.group] ?? []), item];
@@ -51,10 +52,12 @@ export function Sidebar() {
                   >
                     <span
                       className={cn(
-                        "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/25 transition group-hover:bg-accent",
-                        active && "bg-accent shadow-[0_0_14px_rgba(29,78,216,0.75)]",
+                        "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-white/50 transition group-hover:border-accent/35 group-hover:text-white",
+                        active && "border-accent/45 bg-accent text-white shadow-[0_0_16px_rgba(29,78,216,0.35)]",
                       )}
-                    />
+                    >
+                      <DashboardNavIcon className="h-4 w-4" href={item.href} />
+                    </span>
                     <span className="min-w-0">
                       <span className="block font-medium leading-5">{item.label}</span>
                       <span className="block truncate text-xs leading-4 text-white/[0.42]">

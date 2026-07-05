@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { dashboardNavItems } from "@/lib/constants";
+import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
 
 function titleFromPath(pathname: string) {
   const current = dashboardNavItems.find(
@@ -21,7 +22,12 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
       <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-muted">{workspaceLabel}</p>
-          <h1 className="text-lg font-semibold">{activeItem?.label ?? "Espace compagnie"}</h1>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-panel-strong text-accent">
+              <DashboardNavIcon className="h-4 w-4" href={activeItem?.href} />
+            </span>
+            <h1 className="text-lg font-semibold">{activeItem?.label ?? "Espace compagnie"}</h1>
+          </div>
           <p className="hidden text-xs text-muted sm:block">
             {activeItem?.summary ?? "Piloter la compagnie sans perdre le fil."}
           </p>
@@ -53,6 +59,7 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
                   : "shrink-0 rounded-full bg-panel-strong px-3 py-1.5 text-muted"
               }
             >
+              <DashboardNavIcon className="mr-1.5 inline h-3.5 w-3.5 align-[-2px]" href={item.href} />
               {item.label}
             </Link>
           );

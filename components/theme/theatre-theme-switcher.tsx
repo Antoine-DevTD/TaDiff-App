@@ -11,7 +11,10 @@ function isTheatreThemeId(value: string | null): value is TheatreThemeId {
 }
 
 function applyTheme(themeId: TheatreThemeId) {
+  const theme = theatreThemes.find((item) => item.id === themeId);
+
   document.documentElement.dataset.theatreTheme = themeId;
+  document.documentElement.dataset.theatreLayout = theme?.layoutName ?? themeId;
   window.localStorage.setItem(storageKey, themeId);
 }
 
@@ -37,13 +40,14 @@ export function TheatreThemeSwitcher() {
       <div className="mx-auto flex max-w-7xl flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Direction artistique
+            Direction artistique et agencement
           </p>
           <p className="mt-1 text-sm text-foreground">
-            {selectedTheme.name} - {selectedTheme.mood}
+            {selectedTheme.name} - {selectedTheme.layoutName}
           </p>
           <p className="mt-1 hidden max-w-3xl text-xs text-muted md:block">
-            Landing : {selectedTheme.landing} Cockpit : {selectedTheme.cockpit}
+            {selectedTheme.layoutSummary} Landing : {selectedTheme.landingArrangement} Cockpit :{" "}
+            {selectedTheme.cockpitArrangement}
           </p>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 xl:pb-0" aria-label="Themes visuels">
@@ -70,7 +74,12 @@ export function TheatreThemeSwitcher() {
                   className="h-4 w-4 rounded-full border border-white/30"
                   style={{ background: theme.accent }}
                 />
-                {theme.name}
+                <span className="flex flex-col items-start leading-tight">
+                  <span>{theme.name}</span>
+                  <span className={cn("hidden text-[11px]", active ? "text-white/75" : "text-muted", "sm:block")}>
+                    {theme.layoutName}
+                  </span>
+                </span>
               </button>
             );
           })}
