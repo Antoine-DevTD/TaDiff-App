@@ -1,42 +1,43 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #f4eadb;
-  --color-foreground: #1f1615;
-  --color-panel: #fffaf2;
-  --color-panel-strong: #f2dfcf;
-  --color-border: #d7beaa;
-  --color-muted: #6f5f58;
-  --color-accent: #8f2f2c;
-  --color-accent-strong: #682016;
-  --color-ink: #241313;
+  --color-background: #f6f8fc;
+  --color-foreground: #0f172a;
+  --color-panel: #ffffff;
+  --color-panel-strong: #eef2f9;
+  --color-border: #d8e0ef;
+  --color-muted: #5b6675;
+  --color-accent: #1d4ed8;
+  --color-accent-strong: #1e40af;
+  --color-ink: #0b1220;
   --color-success: #15803d;
   --color-warning: #b45309;
-  --color-danger: #b91c1c;
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --color-danger: #dc2626;
+  --color-info: #1d4ed8;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Menlo", monospace;
 }
 
 :root {
-  --body-top: #fbf6ed;
-  --body-grid: rgba(143, 47, 44, 0.075);
+  --body-top: #ffffff;
+  --body-grid: rgba(29, 78, 216, 0.06);
 }
 
 html[data-theatre-theme="velours"] {
-  --color-background: #f4eadb;
-  --color-foreground: #1f1615;
-  --color-panel: #fffaf2;
-  --color-panel-strong: #f2dfcf;
-  --color-border: #d7beaa;
-  --color-muted: #6f5f58;
-  --color-accent: #8f2f2c;
-  --color-accent-strong: #682016;
-  --color-ink: #241313;
-  --color-success: #28724f;
-  --color-warning: #a5621b;
-  --color-danger: #9d2b24;
-  --body-top: #fbf6ed;
-  --body-grid: rgba(143, 47, 44, 0.075);
+  --color-background: #f6f8fc;
+  --color-foreground: #0f172a;
+  --color-panel: #ffffff;
+  --color-panel-strong: #eef2f9;
+  --color-border: #d8e0ef;
+  --color-muted: #5b6675;
+  --color-accent: #1d4ed8;
+  --color-accent-strong: #1e40af;
+  --color-ink: #0b1220;
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #dc2626;
+  --body-top: #ffffff;
+  --body-grid: rgba(29, 78, 216, 0.06);
 }
 
 html[data-theatre-theme="plateau"] {

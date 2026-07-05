@@ -26,7 +26,7 @@ const defaultValues: ShowFormInput = {
   notes: "",
 };
 
-export function ShowForm({ show }: { show?: Show }) {
+export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => void }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -55,7 +55,11 @@ export function ShowForm({ show }: { show?: Show }) {
       setMessage({ ok: result.ok, text: result.message });
 
       if (result.ok) {
-        router.push(show ? `/shows/${show.id}` : "/shows");
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push(show ? `/shows/${show.id}` : "/shows");
+        }
         router.refresh();
       }
     });
