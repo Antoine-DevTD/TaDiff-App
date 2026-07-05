@@ -264,7 +264,7 @@ Ordre connu :
 10. `010_treasury_snapshots.sql` (saisie du solde de tresorerie avec historique ; le cockpit et les finances lisent le dernier solde saisi, plus de valeur codee en dur)
 11. `011_documents_storage.sql` (bucket prive "documents" 20 Mo, isolation par compagnie via le chemin, colonne show_documents.storage_path ; upload reel + suppression + URLs signees branches dans l'app)
 12. `012_activity_logs.sql` (journal d'activite par compagnie : table activity_logs en lecture seule cote client + fonction log_activity security definer ; toutes les Server Actions de mutation journalisent ; affichage dans /settings)
-13. `013_super_admin.sql` (console admin Phase A : flag profiles.is_super_admin modifiable uniquement en SQL, RPC security definer admin_list_companies / admin_set_company_billing / admin_list_beta_signups ; page /admin cachee, notFound pour les non-admins, lien discret dans /settings ; pour donner l'acces : `update public.profiles set is_super_admin = true where id = '<user_id>';`)
+13. `013_super_admin.sql` (console admin Phase A : flag profiles.is_super_admin modifiable uniquement en SQL, RPC security definer admin_list_companies / admin_set_company_billing / admin_list_beta_signups ; page /admin cachee, notFound pour les non-admins ; pour donner l'acces : `update public.profiles set is_super_admin = true where id = '<user_id>';`. Un super admin n'a PAS de cockpit compagnie : sidebar admin dediee (variant "admin"), /dashboard redirige vers /admin, visite guidee desactivee)
 
 En cas de doute sur l'etat du schema en production (erreur "Could not find column ... in the schema cache"),
 executer `sql/diagnostic_schema.sql` dans le SQL editor : il liste les colonnes/fonctions/bucket

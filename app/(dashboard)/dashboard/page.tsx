@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { hasSupabaseEnv } from "@/lib/env";
+import { isSuperAdmin } from "@/lib/supabase/admin";
 import {
   getDashboardData,
   getFixedCosts,
@@ -239,6 +241,11 @@ function buildShowReadiness(shows: Show[], documents: ShowDocument[]) {
 }
 
 export default async function DashboardPage() {
+  // Un super admin n'a pas de cockpit compagnie : direction la console interne.
+  if (await isSuperAdmin()) {
+    redirect("/admin");
+  }
+
   const [{ contacts, pipelineDeals, reminders, shows }, grants, quotes, documents, fixedCosts, treasury] =
     await Promise.all([
       getDashboardData(),
