@@ -20,6 +20,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ActivityEntry,
   BillingPlan,
+  CalendarEvent,
   CommercialPack,
   CompanyMember,
   CompanyProfile,
@@ -804,6 +805,29 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
     logoUrl: data.logo_url ?? "",
     description: data.description ?? "",
   };
+}
+
+export async function getCalendarEvents(): Promise<CalendarEvent[]> {
+  if (!hasSupabaseEnv()) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("calendar_events")
+    .select("id,title,event_date,kind,related_show_id,note")
+    .order("event_date", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((event) => ({
+    id: event.id,
+    title: event.title,
+    eventDate: event.event_date,
+    kind: event.kind,
+    relatedShowId: event.related_show_id,
+    note: event.note ?? "",
+  }));
 }
 
 export async function getCompanyMembers(): Promise<CompanyMember[]> {

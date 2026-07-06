@@ -67,6 +67,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      calendar_events: {
+        Row: {
+          id: string;
+          company_id: string;
+          title: string;
+          event_date: string;
+          kind: "event" | "deadline" | "show";
+          related_show_id: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          title: string;
+          event_date: string;
+          kind?: "event" | "deadline" | "show";
+          related_show_id?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          title?: string;
+          event_date?: string;
+          kind?: "event" | "deadline" | "show";
+          related_show_id?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;

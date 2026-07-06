@@ -1,5 +1,16 @@
 export type ShowStatus = "En diffusion" | "Creation" | "En pause";
 
+export type CalendarEventKind = "event" | "deadline" | "show";
+
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  eventDate: string;
+  kind: CalendarEventKind;
+  relatedShowId: string | null;
+  note: string;
+};
+
 export type CompanyRoleValue = "owner" | "admin" | "member" | "readonly";
 
 export type CompanyMember = {

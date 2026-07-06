@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { requireManagerAccess, requireWriteAccess } from "@/lib/supabase/access";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateWorkspace } from "@/lib/supabase/workspace";
+import { calendarEventSchema, type CalendarEventInput } from "@/lib/validation/calendar";
 import { companyProfileSchema, type CompanyProfileInput } from "@/lib/validation/company";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
 import {
@@ -617,6 +618,74 @@ export async function updateCompanyProfile(
   await logActivity("a mis a jour le profil de la compagnie", "company", parsed.data.name);
 
   return { ok: true, message: "Profil de la compagnie enregistre." };
+}
+
+export async function createCalendarEvent(
+  values: CalendarEventInput,
+): Promise<ActionResult> {
+  const parsed = calendarEventSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "L'evenement contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : evenement valide sans enregistrement." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("calendar_events").insert({
+    company_id: workspace.companyId,
+    title: parsed.data.title,
+    event_date: parsed.data.eventDate,
+    kind: parsed.data.kind,
+    related_show_id: parsed.data.relatedShowId || null,
+    note: parsed.data.note || null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+  await logActivity("a ajoute un evenement a l agenda", "calendar", parsed.data.title);
+
+  return { ok: true, message: "Evenement ajoute a l'agenda." };
+}
+
+export async function deleteCalendarEvent(eventId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : evenement supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("calendar_events").delete().eq("id", eventId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/calendar");
+  return { ok: true, message: "Evenement supprime." };
 }
 
 export async function setMemberRole(

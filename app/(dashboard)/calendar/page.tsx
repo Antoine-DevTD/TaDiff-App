@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTitle } from "@/components/ui/page-title";
 import {
+  getCalendarEvents,
   getFixedCosts,
   getGrantOpportunities,
   getReminders,
@@ -15,7 +16,7 @@ type CalendarItem = {
   id: string;
   date: string;
   href: string;
-  kind: "fixed-cost" | "grant" | "show" | "reminder";
+  kind: "fixed-cost" | "grant" | "show" | "reminder" | "event" | "deadline";
   label: string;
   meta: string;
   tone: "neutral" | "success" | "warning" | "danger";
@@ -49,16 +50,27 @@ function getReminderLabel(date: string) {
 }
 
 function buildCalendarItems({
+  events,
   fixedCosts,
   grants,
   reminders,
   shows,
 }: {
+  events: Awaited<ReturnType<typeof getCalendarEvents>>;
   fixedCosts: Awaited<ReturnType<typeof getFixedCosts>>;
   grants: Awaited<ReturnType<typeof getGrantOpportunities>>;
   reminders: Awaited<ReturnType<typeof getReminders>>;
   shows: Awaited<ReturnType<typeof getShows>>;
 }): CalendarItem[] {
+  const eventItems: CalendarItem[] = events.map((event) => ({
+    id: `event-${event.id}`,
+    date: event.eventDate,
+    href: "/calendar",
+    kind: event.kind,
+    label: event.title,
+    meta: event.note || (event.kind === "deadline" ? "Deadline perso" : "Evenement"),
+    tone: event.kind === "deadline" ? "danger" : "success",
+  }));
   const reminderItems: CalendarItem[] = reminders.map((reminder) => ({
     id: `reminder-${reminder.id}`,
     date: reminder.dueDate,
@@ -101,19 +113,20 @@ function buildCalendarItems({
     tone: getReminderTone(cost.nextDueDate),
   }));
 
-  return [...reminderItems, ...showItems, ...grantItems, ...fixedCostItems].sort(
+  return [...reminderItems, ...showItems, ...grantItems, ...fixedCostItems, ...eventItems].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   );
 }
 
 export default async function CalendarPage() {
-  const [shows, reminders, grants, fixedCosts] = await Promise.all([
+  const [shows, reminders, grants, fixedCosts, events] = await Promise.all([
     getShows(),
     getReminders(),
     getGrantOpportunities(),
     getFixedCosts(),
+    getCalendarEvents(),
   ]);
-  const items = buildCalendarItems({ fixedCosts, grants, reminders, shows });
+  const items = buildCalendarItems({ events, fixedCosts, grants, reminders, shows });
   const upcomingItems = items.slice(0, 5);
 
   return (
@@ -160,7 +173,10 @@ export default async function CalendarPage() {
           </section>
 
           <Card className="p-5">
-            <CalendarBoard items={items} />
+            <CalendarBoard
+              items={items}
+              shows={shows.map((show) => ({ id: show.id, title: show.title }))}
+            />
           </Card>
 
           <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -228,6 +244,15 @@ function MetricCard({
   );
 }
 
+function getKindLabel(kind: CalendarItem["kind"]) {
+  if (kind === "reminder") return "Relance";
+  if (kind === "grant") return "Subvention";
+  if (kind === "fixed-cost") return "Frais fixe";
+  if (kind === "deadline") return "Deadline";
+  if (kind === "event") return "Evenement";
+  return "Spectacle";
+}
+
 function TimelineRow({ item }: { item: CalendarItem }) {
   return (
     <Link
@@ -237,15 +262,7 @@ function TimelineRow({ item }: { item: CalendarItem }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{item.label}</p>
-          <Badge tone={item.tone}>
-            {item.kind === "reminder"
-              ? "Relance"
-              : item.kind === "grant"
-                ? "Subvention"
-                : item.kind === "fixed-cost"
-                  ? "Frais fixe"
-                  : "Spectacle"}
-          </Badge>
+          <Badge tone={item.tone}>{getKindLabel(item.kind)}</Badge>
         </div>
         <p className="mt-1 text-sm text-muted">
           {item.meta} - {new Date(item.date).toLocaleDateString("fr-FR")}
