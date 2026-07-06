@@ -749,6 +749,43 @@ export async function getLatestTreasurySnapshot(): Promise<TreasurySnapshot | nu
   };
 }
 
+export async function getTreasurySnapshots(): Promise<TreasurySnapshot[]> {
+  if (!hasSupabaseEnv()) {
+    // Historique synthetique de demonstration (6 points) autour du solde demo.
+    const base = treasurySnapshot.balance;
+    const points = [-0.28, -0.12, 0.05, -0.05, 0.14, 0];
+    return points.map((delta, index) => {
+      const date = new Date(treasurySnapshot.recordedOn);
+      date.setMonth(date.getMonth() - (points.length - 1 - index));
+      return {
+        id: `treasury-demo-${index}`,
+        balance: Math.round(base * (1 + delta)),
+        recordedOn: date.toISOString().slice(0, 10),
+        note: "",
+      };
+    });
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("treasury_snapshots")
+    .select("id,balance,recorded_on,note")
+    .order("recorded_on", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(60);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((entry) => ({
+    id: entry.id,
+    balance: entry.balance,
+    recordedOn: entry.recorded_on,
+    note: entry.note ?? "",
+  }));
+}
+
 function buildDashboardStats({
   contacts,
   deals,

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { FixedCostForm } from "@/components/finance/fixed-cost-form";
+import { FixedCostCreateDialog } from "@/components/finance/fixed-cost-create-dialog";
 import { FixedCostRowActions } from "@/components/finance/fixed-cost-row-actions";
 import { TreasuryBalanceForm } from "@/components/finance/treasury-balance-form";
+import { TreasuryChart } from "@/components/finance/treasury-chart";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -25,6 +26,7 @@ import {
   getQuoteItems,
   getReminders,
   getShows,
+  getTreasurySnapshots,
 } from "@/lib/supabase/queries";
 import type { FixedCost, PipelineDeal, Reminder } from "@/types";
 
@@ -87,15 +89,17 @@ function getFixedCostTone(cost: FixedCost) {
 }
 
 export default async function FinancesPage() {
-  const [deals, reminders, shows, quotes, fixedCosts, grants, treasury] = await Promise.all([
-    getPipelineDeals(),
-    getReminders(),
-    getShows(),
-    getQuoteItems(),
-    getFixedCosts(),
-    getGrantOpportunities(),
-    getLatestTreasurySnapshot(),
-  ]);
+  const [deals, reminders, shows, quotes, fixedCosts, grants, treasury, treasuryHistory] =
+    await Promise.all([
+      getPipelineDeals(),
+      getReminders(),
+      getShows(),
+      getQuoteItems(),
+      getFixedCosts(),
+      getGrantOpportunities(),
+      getLatestTreasurySnapshot(),
+      getTreasurySnapshots(),
+    ]);
   const isDemoTreasury = !hasSupabaseEnv();
 
   const signedDeals = deals.filter((deal) => deal.stage === "Confirme");
@@ -227,6 +231,16 @@ export default async function FinancesPage() {
             <div className="space-y-6">
             <Card className="space-y-4 p-5">
               <div>
+                <p className="text-base font-semibold">Suivi de tresorerie</p>
+                <p className="mt-1 text-sm text-muted">
+                  Evolution de ton solde a chaque saisie.
+                </p>
+              </div>
+              <TreasuryChart snapshots={treasuryHistory} />
+            </Card>
+
+            <Card className="space-y-4 p-5">
+              <div>
                 <p className="text-base font-semibold">Mettre a jour le solde</p>
                 <p className="mt-1 text-sm text-muted">
                   Le solde bancaire saisi alimente le cockpit, la projection et la date de risque.
@@ -234,30 +248,22 @@ export default async function FinancesPage() {
               </div>
               <TreasuryBalanceForm currentBalance={treasury?.balance ?? null} />
             </Card>
-
-            <Card className="space-y-4 p-5">
-              <div>
-                <p className="text-base font-semibold">Ce que ca veut dire</p>
-                <p className="mt-1 text-sm text-muted">
-                  Traduction simple pour prendre une decision sans ouvrir un tableur.
-                </p>
-              </div>
-              <div className="space-y-3">
-                <AdviceBlock
-                  title={`${formatCurrency(fixedCostShare)} a lisser par date`}
-                  detail={`Base : ${targetPerformancesPerYear} dates par an pour couvrir ${formatCurrency(monthlyFixedCosts)} de frais fixes mensuels.`}
-                />
-                <AdviceBlock
-                  title={`${formatCurrency(weightedRevenue)} de dates ponderees`}
-                  detail="Ce n est pas encore du cash. Les relances servent a transformer cette probabilite en encaissement."
-                />
-                <AdviceBlock
-                  title={`${formatCurrency(quoteBalance)} reste a encaisser`}
-                  detail="Les devis actifs alimentent la projection, mais doivent etre suivis jusqu au solde."
-                />
-              </div>
-            </Card>
             </div>
+          </section>
+
+          <section className="grid gap-3 md:grid-cols-3">
+            <AdviceBlock
+              title={`${formatCurrency(fixedCostShare)} a lisser par date`}
+              detail={`Base : ${targetPerformancesPerYear} dates/an pour couvrir ${formatCurrency(monthlyFixedCosts)} de frais fixes mensuels.`}
+            />
+            <AdviceBlock
+              title={`${formatCurrency(weightedRevenue)} de dates ponderees`}
+              detail="Pas encore du cash. Les relances transforment cette probabilite en encaissement."
+            />
+            <AdviceBlock
+              title={`${formatCurrency(quoteBalance)} reste a encaisser`}
+              detail="Les devis actifs alimentent la projection, a suivre jusqu au solde."
+            />
           </section>
 
           <section className="grid gap-4 md:grid-cols-4">
@@ -267,15 +273,22 @@ export default async function FinancesPage() {
             <MetricCard label="Frais fixes annuels" value={formatCurrency(monthlyFixedCosts * 12)} detail="Equivalent annuel" />
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-            <Card className="space-y-4 p-5">
+          <Card className="space-y-4 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-base font-semibold">Frais fixes</p>
                 <p className="mt-1 text-sm text-muted">
-                  Assurance, banque, comptable, stockage et outils doivent etre lisses dans les prix.
+                  Assurance, banque, comptable, stockage et outils a lisser dans les prix.
                 </p>
               </div>
-              <div className="space-y-3">
+              <FixedCostCreateDialog />
+            </div>
+            {nextFixedCosts.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+                Aucun frais fixe. Ajoutez-en un pour fiabiliser la projection.
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
                 {nextFixedCosts.map((cost) => (
                   <div key={cost.id} className="rounded-lg border border-border bg-panel-strong/35 p-4">
                     <div className="flex items-start justify-between gap-3">
@@ -301,18 +314,8 @@ export default async function FinancesPage() {
                   </div>
                 ))}
               </div>
-            </Card>
-
-            <Card className="space-y-4 p-5">
-              <div>
-                <p className="text-base font-semibold">Ajouter un frais fixe</p>
-                <p className="mt-1 text-sm text-muted">
-                  En mode demo, le formulaire valide sans enregistrer. Avec Supabase migre, il persiste en base.
-                </p>
-              </div>
-              <FixedCostForm />
-            </Card>
-          </section>
+            )}
+          </Card>
 
           <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
             <Card className="space-y-4 p-5">
