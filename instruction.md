@@ -265,6 +265,11 @@ Ordre connu :
 11. `011_documents_storage.sql` (bucket prive "documents" 20 Mo, isolation par compagnie via le chemin, colonne show_documents.storage_path ; upload reel + suppression + URLs signees branches dans l'app)
 12. `012_activity_logs.sql` (journal d'activite par compagnie : table activity_logs en lecture seule cote client + fonction log_activity security definer ; toutes les Server Actions de mutation journalisent ; affichage dans /settings)
 13. `013_super_admin.sql` (console admin Phase A : flag profiles.is_super_admin modifiable uniquement en SQL, RPC security definer admin_list_companies / admin_set_company_billing / admin_list_beta_signups ; page /admin cachee, notFound pour les non-admins ; pour donner l'acces : `update public.profiles set is_super_admin = true where id = '<user_id>';`. Un super admin n'a PAS de cockpit compagnie : sidebar admin dediee (variant "admin"), /dashboard redirige vers /admin, visite guidee desactivee)
+14. `014_show_posters.sql` (upload d'affiche de spectacle - lot session parallele)
+15. `015_company_profile.sql` (profil compagnie editable dans /settings - lot session parallele)
+16. `016_company_team.sql` (equipe et acces : membres, roles, invitation par code - lot session parallele)
+17. `017_calendar_events.sql` (evenements d'agenda perso via clic droit sur un jour - lot session parallele)
+18. `018_feedback.sql` (retours/signalements = console admin Phase B : table feedback + RPC submit_feedback (security definer, cote compagnie) + admin_list_feedback / admin_set_feedback_status (super admin) ; bouton "Donner un retour" dans la topbar compagnie, section de tri dans /admin avec statut nouveau/en_cours/traite et reponse visible par la compagnie)
 
 En cas de doute sur l'etat du schema en production (erreur "Could not find column ... in the schema cache"),
 executer `sql/diagnostic_schema.sql` dans le SQL editor : il liste les colonnes/fonctions/bucket
@@ -450,7 +455,7 @@ Si aucune tache plus precise n'est donnee, travailler sur :
 2. emails Resend : envoi depuis fiche contact, templates, historique, brouillons si non branche (attend la cle Resend) ;
 3. page beta : verifier compteur 10 places + liste d'attente 30 en conditions reelles ;
 4. editeur de budget avance + contrats de corealisation (minimum garanti lieu/compagnie puis partage des recettes, simulation de remplissage jauge x prix x taux) : cadre dans developpement.md section Devis, backlog apres le 23 juillet ;
-5. console super admin par phases (voir developpement.md "Console super admin") : Phase A supervision compagnies + billing, Phase B feedback/bugs, Phase C catalogues globaux subventions/mecenat ;
+5. console super admin : Phase A (supervision + billing) et Phase B (retours/bugs) FAITES ; reste Phase C catalogues globaux subventions/mecenat (voir developpement.md "Console super admin") ;
 6. association documents <-> contact/devis/contrat + upload direct depuis la page Documents ;
 7. vue mois/semaine du calendrier.
 

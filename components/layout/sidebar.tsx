@@ -16,13 +16,12 @@ const adminNavItems = [
   {
     href: "/admin",
     label: "Supervision",
-    summary: "Compagnies, billing, beta",
+    summary: "Compagnies, billing, beta, retours",
     initials: "SU",
   },
 ];
 
 const adminPlannedItems = [
-  { label: "Retours et bugs", summary: "Fonction prevue - Phase B", initials: "RB" },
   { label: "Catalogues subventions", summary: "Fonction prevue - Phase C", initials: "CA" },
 ];
 

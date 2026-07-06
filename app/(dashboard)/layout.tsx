@@ -35,7 +35,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen bg-background">
       <Sidebar variant={superAdmin ? "admin" : "company"} />
       <div className="min-w-0 flex-1">
-        <Topbar workspaceLabel={workspaceLabel} />
+        <Topbar showFeedback={!superAdmin} workspaceLabel={workspaceLabel} />
         <TheatreThemeSwitcher />
         <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>

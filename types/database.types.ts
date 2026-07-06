@@ -579,6 +579,50 @@ export type Database = {
           },
         ];
       };
+      feedback: {
+        Row: {
+          id: string;
+          company_id: string;
+          actor_id: string | null;
+          actor_name: string;
+          page: string | null;
+          kind: "bug" | "idee" | "avis";
+          message: string;
+          status: "nouveau" | "en_cours" | "traite";
+          admin_response: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          actor_id?: string | null;
+          actor_name?: string;
+          page?: string | null;
+          kind?: "bug" | "idee" | "avis";
+          message: string;
+          status?: "nouveau" | "en_cours" | "traite";
+          admin_response?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          kind?: "bug" | "idee" | "avis";
+          message?: string;
+          status?: "nouveau" | "en_cours" | "traite";
+          admin_response?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feedback_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       patronage_deals: {
         Row: {
           id: string;
@@ -910,6 +954,37 @@ export type Database = {
           status: "reserved" | "waitlist";
           position: number;
         }[];
+      };
+      submit_feedback: {
+        Args: {
+          feedback_kind: string;
+          feedback_message: string;
+          feedback_page?: string | null;
+        };
+        Returns: undefined;
+      };
+      admin_list_feedback: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          company_id: string;
+          company_name: string;
+          actor_name: string;
+          page: string | null;
+          kind: "bug" | "idee" | "avis";
+          message: string;
+          status: "nouveau" | "en_cours" | "traite";
+          admin_response: string | null;
+          created_at: string;
+        }[];
+      };
+      admin_set_feedback_status: {
+        Args: {
+          target_feedback_id: string;
+          new_status: string;
+          new_response?: string | null;
+        };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

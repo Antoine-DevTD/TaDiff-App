@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { CompanyBillingForm } from "@/components/admin/company-billing-form";
+import { FeedbackRow } from "@/components/admin/feedback-row";
 import { RevenueForecastChart } from "@/components/admin/revenue-forecast-chart";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { formatCurrency } from "@/lib/finance";
 import {
   getAdminBetaSignups,
   getAdminCompanies,
+  getAdminFeedback,
   isSuperAdmin,
   type AdminCompany,
 } from "@/lib/supabase/admin";
@@ -26,9 +28,10 @@ export default async function AdminPage() {
     notFound();
   }
 
-  const [companies, betaSignups] = await Promise.all([
+  const [companies, betaSignups, feedback] = await Promise.all([
     getAdminCompanies(),
     getAdminBetaSignups(),
+    getAdminFeedback(),
   ]);
 
   const activeCount = companies.filter((company) => company.billingStatus === "active").length;
@@ -37,6 +40,7 @@ export default async function AdminPage() {
   const waitlist = betaSignups.filter((signup) => signup.status === "waitlist");
   const monthlyRevenue = activeCount * 19.99;
   const forecast = buildRevenueForecast(companies);
+  const openFeedback = feedback.filter((entry) => entry.status !== "traite").length;
 
   return (
     <div className="space-y-6">
@@ -121,6 +125,34 @@ export default async function AdminPage() {
                   {signup.status === "reserved" ? "Place reservee" : "Liste d'attente"}
                 </Badge>
               </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-base font-semibold">Retours et signalements</p>
+            <p className="mt-1 text-sm text-muted">
+              Bugs, idees et avis envoyes par les compagnies. Les nouveaux remontent en premier.
+            </p>
+          </div>
+          {openFeedback > 0 ? (
+            <Badge tone="warning">{openFeedback} a traiter</Badge>
+          ) : (
+            <Badge tone="success">A jour</Badge>
+          )}
+        </div>
+        {feedback.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+            Aucun retour pour le moment. Le bouton &laquo;&nbsp;Donner un retour&nbsp;&raquo; apparait
+            dans l&apos;application des compagnies.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {feedback.map((entry) => (
+              <FeedbackRow key={entry.id} feedback={entry} />
             ))}
           </div>
         )}

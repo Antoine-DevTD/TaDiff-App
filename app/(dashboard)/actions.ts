@@ -58,6 +58,7 @@ import {
   type ReminderFormInput,
 } from "@/lib/validation/pipeline";
 import { showSchema, type ShowFormInput } from "@/lib/validation/show";
+import { feedbackSchema, type FeedbackFormInput } from "@/lib/validation/feedback";
 import { getDefaultProbability } from "@/lib/pipeline";
 import type { PipelineStage } from "@/types";
 
@@ -65,6 +66,31 @@ type ActionResult = {
   ok: boolean;
   message: string;
 };
+
+export async function submitFeedback(values: FeedbackFormInput): Promise<ActionResult> {
+  const parsed = feedbackSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Merci de completer le message." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : retour bien recu (non enregistre)." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.rpc("submit_feedback", {
+    feedback_kind: parsed.data.kind,
+    feedback_message: parsed.data.message,
+    feedback_page: parsed.data.page || null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  return { ok: true, message: "Merci, votre retour a bien ete envoye." };
+}
 
 function getDateAfterDays(days: number) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);

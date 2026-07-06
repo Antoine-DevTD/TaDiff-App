@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { dashboardNavItems } from "@/lib/constants";
 import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
+import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 import { ShowCreateDialog } from "@/components/shows/show-create-dialog";
 
 function titleFromPath(pathname: string) {
@@ -14,7 +15,13 @@ function titleFromPath(pathname: string) {
   return current ?? null;
 }
 
-export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
+export function Topbar({
+  showFeedback = true,
+  workspaceLabel,
+}: {
+  showFeedback?: boolean;
+  workspaceLabel: string;
+}) {
   const pathname = usePathname();
   const activeItem = titleFromPath(pathname);
 
@@ -34,6 +41,9 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {showFeedback ? (
+            <FeedbackWidget triggerClassName="hidden rounded-md border border-border bg-panel px-3 py-2 text-sm font-medium shadow-sm shadow-ink/5 transition hover:bg-panel-strong sm:inline-flex" />
+          ) : null}
           <ShowCreateDialog
             label="Ajouter un spectacle"
             triggerClassName="hidden rounded-md border border-border bg-panel px-3 py-2 text-sm font-medium shadow-sm shadow-ink/5 transition hover:bg-panel-strong sm:inline-flex"

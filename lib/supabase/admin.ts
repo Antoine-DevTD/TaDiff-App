@@ -31,6 +31,22 @@ export type AdminBetaSignup = {
   createdAt: string;
 };
 
+export type FeedbackKind = "bug" | "idee" | "avis";
+export type FeedbackStatus = "nouveau" | "en_cours" | "traite";
+
+export type AdminFeedback = {
+  id: string;
+  companyId: string;
+  companyName: string;
+  actorName: string;
+  page: string;
+  kind: FeedbackKind;
+  message: string;
+  status: FeedbackStatus;
+  adminResponse: string;
+  createdAt: string;
+};
+
 /** Le flag is_super_admin ne se donne qu'en SQL (voir sql/013_super_admin.sql). */
 export async function isSuperAdmin(): Promise<boolean> {
   if (!hasSupabaseEnv()) {
@@ -99,5 +115,31 @@ export async function getAdminBetaSignups(): Promise<AdminBetaSignup[]> {
     status: signup.status,
     position: signup.position,
     createdAt: signup.created_at,
+  }));
+}
+
+export async function getAdminFeedback(): Promise<AdminFeedback[]> {
+  if (!hasSupabaseEnv()) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_feedback");
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((entry) => ({
+    id: entry.id,
+    companyId: entry.company_id,
+    companyName: entry.company_name,
+    actorName: entry.actor_name,
+    page: entry.page ?? "",
+    kind: entry.kind,
+    message: entry.message,
+    status: entry.status,
+    adminResponse: entry.admin_response ?? "",
+    createdAt: entry.created_at,
   }));
 }
