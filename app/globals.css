@@ -196,6 +196,38 @@ html[data-theatre-theme="regie"] {
 }
 
 /* Loader "servante" : la petite lumiere de scene + orbes fantomatiques. */
+
+/* Entree : la servante monte du sol. */
+@keyframes servante-rise {
+  0% {
+    transform: translateY(52px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Allumage de l'ampoule apres la montee. */
+@keyframes servante-ignite {
+  0% {
+    opacity: 0.12;
+    transform: scale(0.85);
+    box-shadow: 0 0 0 0 rgba(253, 224, 150, 0);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.25);
+    box-shadow: 0 0 40px 16px rgba(253, 224, 150, 0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 22px 8px rgba(253, 224, 150, 0.6);
+  }
+}
+
 @keyframes servante-glow {
   0%,
   100% {
@@ -208,89 +240,119 @@ html[data-theatre-theme="regie"] {
   }
 }
 
+/* Halo : apparait avec l'allumage puis respire. */
 @keyframes servante-halo {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: scale(1);
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
   }
-  50% {
+  60% {
     opacity: 0.6;
-    transform: scale(1.08);
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
   }
 }
 
+/* Orbes : trajectoires larges qui bouclent (mouvement continu et ample). */
 @keyframes orb-a {
   0% {
     transform: translate(0, 0) scale(1);
-    opacity: 0.5;
+    opacity: 0.35;
+  }
+  25% {
+    transform: translate(66px, -44px) scale(1.25);
+    opacity: 0.9;
   }
   50% {
-    transform: translate(38px, -46px) scale(1.15);
+    transform: translate(18px, -104px) scale(0.85);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translate(-60px, -54px) scale(1.15);
     opacity: 0.85;
   }
   100% {
-    transform: translate(-24px, -90px) scale(0.9);
-    opacity: 0;
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
   }
 }
 
 @keyframes orb-b {
   0% {
     transform: translate(0, 0) scale(0.9);
-    opacity: 0.4;
+    opacity: 0.3;
   }
-  50% {
-    transform: translate(-42px, -38px) scale(1.1);
-    opacity: 0.75;
+  30% {
+    transform: translate(-72px, -36px) scale(1.2);
+    opacity: 0.85;
+  }
+  60% {
+    transform: translate(-14px, -98px) scale(0.8);
+    opacity: 0.55;
   }
   100% {
-    transform: translate(20px, -84px) scale(0.85);
-    opacity: 0;
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0.3;
   }
 }
 
 @keyframes orb-c {
   0% {
     transform: translate(0, 0) scale(1);
-    opacity: 0.45;
+    opacity: 0.35;
   }
-  50% {
-    transform: translate(26px, -34px) scale(1.2);
-    opacity: 0.7;
+  35% {
+    transform: translate(52px, -30px) scale(1.3);
+    opacity: 0.8;
+  }
+  70% {
+    transform: translate(70px, -92px) scale(0.85);
+    opacity: 0.5;
   }
   100% {
-    transform: translate(48px, -78px) scale(0.8);
-    opacity: 0;
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
   }
+}
+
+.servante-stage {
+  animation: servante-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .servante-bulb {
-  animation: servante-glow 2.4s ease-in-out infinite;
+  animation:
+    servante-ignite 0.8s ease-out 0.55s both,
+    servante-glow 2.6s ease-in-out 1.35s infinite;
 }
 
 .servante-halo {
-  animation: servante-halo 2.4s ease-in-out infinite;
+  animation:
+    servante-halo 1s ease-out 0.55s both,
+    servante-glow 2.6s ease-in-out 1.55s infinite;
 }
 
 .servante-orb {
   position: absolute;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(147, 197, 253, 0.55), rgba(147, 197, 253, 0) 70%);
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.6), rgba(147, 197, 253, 0) 70%);
   filter: blur(1px);
 }
 
 .servante-orb-a {
-  animation: orb-a 5.5s ease-in-out infinite;
+  animation: orb-a 4.2s ease-in-out infinite;
 }
 .servante-orb-b {
-  animation: orb-b 6.5s ease-in-out infinite 0.8s;
+  animation: orb-b 5s ease-in-out infinite 0.5s;
 }
 .servante-orb-c {
-  animation: orb-c 7s ease-in-out infinite 1.6s;
+  animation: orb-c 4.6s ease-in-out infinite 1s;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .servante-stage,
   .servante-bulb,
   .servante-halo,
   .servante-orb-a,

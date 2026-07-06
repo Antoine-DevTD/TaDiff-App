@@ -9,8 +9,8 @@ export default function Loading() {
         <span className="servante-orb servante-orb-b left-40 top-16 h-3.5 w-3.5" />
       </div>
 
-      {/* La servante : pied + tige + ampoule qui s'allume */}
-      <div className="relative flex flex-col items-center">
+      {/* La servante : pied + tige + ampoule qui s'allume, montee du sol */}
+      <div className="servante-stage relative flex flex-col items-center">
         <div className="relative">
           {/* halo lumineux */}
           <span className="servante-halo absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(253,224,150,0.55),rgba(253,224,150,0)_70%)]" />
