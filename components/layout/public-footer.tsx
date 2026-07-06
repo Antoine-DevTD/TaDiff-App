@@ -44,7 +44,7 @@ export function PublicFooter() {
             </p>
             <Link
               href="/beta"
-              className="mt-5 inline-flex min-h-10 items-center rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong"
+              className="mt-5 inline-flex min-h-10 items-center rounded-md bg-accent px-4 text-sm font-semibold !text-white transition hover:bg-accent-strong"
             >
               Reserver la beta
             </Link>

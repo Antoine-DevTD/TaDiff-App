@@ -106,7 +106,7 @@ export function SalesFunnel() {
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             href="/beta"
-            className="inline-flex min-h-11 items-center rounded-md bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong"
+            className="inline-flex min-h-11 items-center rounded-md bg-accent px-5 text-sm font-semibold !text-white transition hover:bg-accent-strong"
           >
             Reserver ma place beta
           </Link>
