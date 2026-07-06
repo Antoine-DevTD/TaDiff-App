@@ -115,7 +115,7 @@ export function TeamAccessPanel({
       <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
         <p className="text-sm font-semibold">Inviter un membre</p>
         <p className="mt-1 text-xs text-muted">
-          Partagez ce code : la personne cree son compte puis le saisit ci-dessous pour rejoindre
+          Partagez ce code : la personne crée son compte puis le saisit ci-dessous pour rejoindre
           la compagnie.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -123,7 +123,7 @@ export function TeamAccessPanel({
             {code || "—"}
           </code>
           <Button type="button" variant="secondary" onClick={onCopy} disabled={!code}>
-            {copied ? "Copie !" : "Copier"}
+            {copied ? "Copié !" : "Copier"}
           </Button>
           {canManage ? (
             <Button type="button" variant="ghost" onClick={onRegenerate} disabled={isPending}>

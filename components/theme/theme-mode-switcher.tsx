@@ -16,7 +16,7 @@ import {
 const options: { value: Exclude<ThemeMode, "custom">; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Clair", icon: Sun },
   { value: "dark", label: "Sombre", icon: Moon },
-  { value: "system", label: "Systeme", icon: Monitor },
+  { value: "system", label: "Système", icon: Monitor },
 ];
 
 export function ThemeModeSwitcher() {

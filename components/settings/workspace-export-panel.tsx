@@ -36,7 +36,7 @@ export function WorkspaceExportPanel({ backup }: WorkspaceExportPanelProps) {
       <div>
         <p className="text-base font-semibold">Sauvegarde</p>
         <p className="mt-1 text-sm text-muted">
-          Export JSON des donnees visibles du workspace : spectacles, contacts, diffusion, relances,
+          Export JSON des données visibles du workspace : spectacles, contacts, diffusion, relances,
           devis, subventions, mecenat et campagnes.
         </p>
       </div>

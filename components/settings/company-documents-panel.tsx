@@ -62,7 +62,7 @@ export function CompanyDocumentsPanel({
       });
 
       if (!uploadResponse.ok) {
-        setMessage({ ok: false, text: "L'envoi du fichier a echoue." });
+        setMessage({ ok: false, text: "L'envoi du fichier a échoué." });
         return;
       }
 
@@ -117,7 +117,7 @@ export function CompanyDocumentsPanel({
                   <Badge tone="info">{doc.docType}</Badge>
                 </div>
                 <p className="text-xs text-muted">
-                  Ajoute le {new Date(doc.createdAt).toLocaleDateString("fr-FR")}
+                  Ajouté le {new Date(doc.createdAt).toLocaleDateString("fr-FR")}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -128,7 +128,7 @@ export function CompanyDocumentsPanel({
                     rel="noreferrer"
                     target="_blank"
                   >
-                    Telecharger
+                    Télécharger
                   </a>
                 ) : null}
                 {canManage ? (
@@ -147,14 +147,14 @@ export function CompanyDocumentsPanel({
         </div>
       ) : (
         <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-          Aucun document. Ajoutez vos pieces une fois : elles seront disponibles pour tous les
+          Aucun document. Ajoutez vos pièces une fois : elles seront disponibles pour tous les
           dossiers.
         </p>
       )}
 
       {canManage ? (
         <div className="space-y-3 rounded-lg border border-border bg-panel-strong/25 p-4">
-          <p className="text-sm font-semibold">Ajouter une piece</p>
+          <p className="text-sm font-semibold">Ajouter une pièce</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block text-xs font-medium text-muted">
               Type

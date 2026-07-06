@@ -70,7 +70,7 @@ export function CompanyProfileForm({
             <Input placeholder="Brest" {...register("city")} />
           </Field>
           <Field label="Discipline principale" error={errors.discipline?.message}>
-            <Input placeholder="Theatre, danse..." {...register("discipline")} />
+            <Input placeholder="Théâtre, danse..." {...register("discipline")} />
           </Field>
         </div>
 
@@ -94,7 +94,7 @@ export function CompanyProfileForm({
             value={logoUrl}
             maxDimension={512}
             chooseLabel="Choisir un logo (JPG, PNG, WebP)"
-            emptyHint="Aucun logo pour l'instant. L'image sera stockee dans TaDiff."
+            emptyHint="Aucun logo pour l'instant. L'image sera stockée dans TaDiff."
             onChange={(url) =>
               setValue("logoUrl", url, { shouldDirty: true, shouldValidate: true })
             }
@@ -105,14 +105,14 @@ export function CompanyProfileForm({
           <Field label="SIRET" error={errors.siret?.message}>
             <Input placeholder="123 456 789 00012" {...register("siret")} />
           </Field>
-          <Field label="Numero de licence" error={errors.licenseNumber?.message}>
+          <Field label="Numéro de licence" error={errors.licenseNumber?.message}>
             <Input placeholder="PLATESV-..." {...register("licenseNumber")} />
           </Field>
         </div>
 
-        <Field label="Presentation courte" error={errors.description?.message}>
+        <Field label="Présentation courte" error={errors.description?.message}>
           <Textarea
-            placeholder="Objet de la compagnie, esthetique, projets phares..."
+            placeholder="Objet de la compagnie, esthétique, projets phares..."
             {...register("description")}
           />
         </Field>
@@ -135,7 +135,7 @@ export function CompanyProfileForm({
           </Button>
         ) : (
           <p className="text-xs text-muted">
-            Seuls les roles owner et admin peuvent modifier le profil de la compagnie.
+            Seuls les rôles owner et admin peuvent modifier le profil de la compagnie.
           </p>
         )}
       </fieldset>

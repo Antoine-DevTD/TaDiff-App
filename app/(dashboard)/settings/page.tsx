@@ -75,9 +75,9 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <PageTitle href="/settings">Parametres</PageTitle>
+        <PageTitle href="/settings">Paramètres</PageTitle>
         <p className="mt-1 text-sm text-muted">
-          Etat technique, integrateurs et sauvegarde des donnees operationnelles.
+          État technique, intégrateurs et sauvegarde des données opérationnelles.
         </p>
       </div>
 
@@ -93,7 +93,7 @@ export default async function SettingsPage() {
           <div>
             <p className="text-base font-semibold">Profil de la compagnie</p>
             <p className="mt-1 text-sm text-muted">
-              Ces informations identifient la compagnie et seront reutilisees dans les devis et
+              Ces informations identifient la compagnie et seront réutilisées dans les devis et
               les dossiers.
             </p>
           </div>
@@ -105,8 +105,8 @@ export default async function SettingsPage() {
         <div>
           <p className="text-base font-semibold">Documents de la compagnie</p>
           <p className="mt-1 text-sm text-muted">
-            RIB, statuts, licence, attestation d&apos;assurance... Ajoutes une fois, reutilisables
-            dans tous les dossiers sans re-televerser.
+            RIB, statuts, licence, attestation d&apos;assurance... Ajoutés une fois, réutilisables
+            dans tous les dossiers sans re-téléverser.
           </p>
         </div>
         <CompanyDocumentsPanel documents={companyDocuments} canManage={access.canManage} />
@@ -116,7 +116,7 @@ export default async function SettingsPage() {
         <div>
           <p className="text-base font-semibold">Apparence</p>
           <p className="mt-1 text-sm text-muted">
-            Mode clair, sombre ou systeme, puis direction artistique de l&apos;interface.
+            Mode clair, sombre ou système, puis direction artistique de l&apos;interface.
           </p>
         </div>
         <div>
@@ -132,9 +132,9 @@ export default async function SettingsPage() {
       {members.length > 0 ? (
         <Card className="space-y-4 p-5">
           <div>
-            <p className="text-base font-semibold">Equipe et acces</p>
+            <p className="text-base font-semibold">Équipe et accès</p>
             <p className="mt-1 text-sm text-muted">
-              Membres de la compagnie, roles et code d&apos;invitation.
+              Membres de la compagnie, rôles et code d&apos;invitation.
             </p>
           </div>
           <TeamAccessPanel
@@ -149,9 +149,9 @@ export default async function SettingsPage() {
         <div className="space-y-6">
         <Card className="space-y-4 p-5">
           <div>
-            <p className="text-base font-semibold">Compagnie et acces</p>
+            <p className="text-base font-semibold">Compagnie et accès</p>
             <p className="mt-1 text-sm text-muted">
-              Statut d abonnement et role lus depuis la base. Le paiement Stripe viendra alimenter
+              Statut d'abonnement et rôle lus depuis la base. Le paiement Stripe viendra alimenter
               ce statut automatiquement.
             </p>
           </div>
@@ -162,18 +162,18 @@ export default async function SettingsPage() {
           />
           <IntegrationRow
             label="Plan"
-            detail={access.planCode ? `Code plan : ${access.planCode}` : "Aucun plan enregistre"}
+            detail={access.planCode ? `Code plan : ${access.planCode}` : "Aucun plan enregistré"}
             enabled={Boolean(access.planCode)}
           />
           <IntegrationRow
-            label="Votre role"
+            label="Votre rôle"
             detail={getRoleLabel(access.role)}
             enabled={access.role !== "readonly"}
           />
           {superAdmin ? (
             <IntegrationRow
               label="Console interne"
-              detail="Supervision des compagnies et des inscriptions beta"
+              detail="Supervision des compagnies et des inscriptions bêta"
               enabled
               href="/admin"
             />
@@ -187,16 +187,16 @@ export default async function SettingsPage() {
 
           <Card className="space-y-4 p-5">
             <div>
-              <p className="text-base font-semibold">Activite recente</p>
+              <p className="text-base font-semibold">Activité récente</p>
               <p className="mt-1 text-sm text-muted">
-                Les 15 dernieres actions de la compagnie (creations, modifications,
+                Les 15 dernières actions de la compagnie (créations, modifications,
                 suppressions, statuts).
               </p>
             </div>
             {activity.length === 0 ? (
               <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-                Aucune activite enregistree pour le moment. Le journal demarre avec la
-                migration 012 : chaque action metier y sera tracee.
+                Aucune activité enregistrée pour le moment. Le journal démarre avec la
+                migration 012 : chaque action métier y sera tracée.
               </p>
             ) : (
               <div className="space-y-2">
@@ -232,23 +232,23 @@ export default async function SettingsPage() {
 }
 
 function getBillingStatusLabel(status: BillingStatus | null, compedUntil: string | null) {
-  if (!status) return "Statut inconnu (mode demo ou profil incomplet)";
-  if (status === "trial") return "Periode d essai";
+  if (!status) return "Statut inconnu (mode démo ou profil incomplet)";
+  if (status === "trial") return "Période d'essai";
   if (status === "active") return "Abonnement actif";
   if (status === "comped") {
     return compedUntil
-      ? `Compte offert jusqu au ${new Date(compedUntil).toLocaleDateString("fr-FR")}`
+      ? `Compte offert jusqu'au ${new Date(compedUntil).toLocaleDateString("fr-FR")}`
       : "Compte offert (sans limite)";
   }
   if (status === "past_due") return "Paiement en retard";
-  return "Abonnement resilie";
+  return "Abonnement résilié";
 }
 
 function getRoleLabel(role: CompanyRole | null) {
-  if (!role) return "Role inconnu";
+  if (!role) return "Rôle inconnu";
   if (role === "owner") return "Owner - responsable de la compagnie";
-  if (role === "admin") return "Admin - gestion complete";
-  if (role === "member") return "Membre - edition courante";
+  if (role === "admin") return "Admin - gestion complète";
+  if (role === "member") return "Membre - édition courante";
   return "Lecture seule";
 }
 

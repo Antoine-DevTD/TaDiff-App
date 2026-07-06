@@ -36,7 +36,7 @@ export function DemoCompanyPanel() {
         <p className="text-base font-semibold">Compagnie de demonstration</p>
         <p className="mt-1 text-sm text-muted">
           Installe la Compagnie de l&apos;Estran : 3 spectacles, 8 contacts, dates de diffusion,
-          relances, frais fixes, tresorerie, documents, devis et subventions, avec des echeances
+          relances, frais fixes, trésorerie, documents, devis et subventions, avec des échéances
           calees sur aujourd&apos;hui. Uniquement sur un espace vierge.
         </p>
       </div>
