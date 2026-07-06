@@ -112,6 +112,39 @@ html[data-theatre-theme="regie"] {
   box-sizing: border-box;
 }
 
+/* William : petit rebond + halo pulsant pour attirer l'oeil sans agacer. */
+@keyframes william-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes william-halo {
+  0% {
+    box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(29, 78, 216, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(29, 78, 216, 0);
+  }
+}
+
+.william-bubble-button {
+  animation: william-float 3s ease-in-out infinite, william-halo 2.4s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .william-bubble-button {
+    animation: none;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }

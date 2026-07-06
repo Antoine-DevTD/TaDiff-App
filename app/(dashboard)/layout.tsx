@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { GuidedTour } from "@/components/tour/guided-tour";
+import { WilliamAssistant } from "@/components/william/william-assistant";
 import { TheatreThemeSwitcher } from "@/components/theme/theatre-theme-switcher";
 import { Topbar } from "@/components/layout/topbar";
 import { hasSupabaseEnv } from "@/lib/env";
@@ -39,6 +40,7 @@ export default async function DashboardLayout({
         <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
       {superAdmin ? null : <GuidedTour />}
+      {superAdmin ? null : <WilliamAssistant />}
     </div>
   );
 }

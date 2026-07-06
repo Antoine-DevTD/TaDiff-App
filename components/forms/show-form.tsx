@@ -96,7 +96,11 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Prochaine date" error={errors.nextDate?.message}>
+        <Field
+          label="Date de premiere (optionnel)"
+          error={errors.nextDate?.message}
+          hint="Laissez vide si le spectacle est encore en creation."
+        >
           <Input type="date" {...register("nextDate")} />
         </Field>
         <Field label="Budget previsionnel" error={errors.budget?.message}>
@@ -141,16 +145,19 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
 function Field({
   children,
   error,
+  hint,
   label,
 }: {
   children: React.ReactNode;
   error?: string;
+  hint?: string;
   label: string;
 }) {
   return (
     <label className="block text-sm font-medium">
       {label}
       <div className="mt-2">{children}</div>
+      {hint ? <p className="mt-1.5 text-xs font-normal text-muted">{hint}</p> : null}
       {error ? <p className="mt-2 text-xs text-danger">{error}</p> : null}
     </label>
   );
