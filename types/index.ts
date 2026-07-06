@@ -1,5 +1,19 @@
 export type ShowStatus = "En diffusion" | "Creation" | "En pause";
 
+export type CompanyProfile = {
+  id: string;
+  name: string;
+  city: string;
+  discipline: string;
+  email: string;
+  phone: string;
+  website: string;
+  siret: string;
+  licenseNumber: string;
+  logoUrl: string;
+  description: string;
+};
+
 export type Show = {
   id: string;
   title: string;

@@ -21,6 +21,7 @@ import type {
   ActivityEntry,
   BillingPlan,
   CommercialPack,
+  CompanyProfile,
   Contact,
   EmailCampaign,
   FixedCost,
@@ -746,6 +747,61 @@ export async function getLatestTreasurySnapshot(): Promise<TreasurySnapshot | nu
     balance: data.balance,
     recordedOn: data.recorded_on,
     note: data.note ?? "",
+  };
+}
+
+export async function getCompanyProfile(): Promise<CompanyProfile | null> {
+  if (!hasSupabaseEnv()) {
+    return {
+      id: "company-demo",
+      name: "Compagnie de demonstration",
+      city: "",
+      discipline: "",
+      email: "",
+      phone: "",
+      website: "",
+      siret: "",
+      licenseNumber: "",
+      logoUrl: "",
+      description: "",
+    };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.company_id) return null;
+
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id,name,city,discipline,email,phone,website,siret,license_number,logo_url,description")
+    .eq("id", profile.company_id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    name: data.name ?? "",
+    city: data.city ?? "",
+    discipline: data.discipline ?? "",
+    email: data.email ?? "",
+    phone: data.phone ?? "",
+    website: data.website ?? "",
+    siret: data.siret ?? "",
+    licenseNumber: data.license_number ?? "",
+    logoUrl: data.logo_url ?? "",
+    description: data.description ?? "",
   };
 }
 

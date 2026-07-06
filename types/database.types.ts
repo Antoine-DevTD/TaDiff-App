@@ -17,6 +17,15 @@ export type Database = {
           plan_code: string;
           comped_until: string | null;
           billing_notes: string | null;
+          city: string | null;
+          discipline: string | null;
+          email: string | null;
+          phone: string | null;
+          website: string | null;
+          siret: string | null;
+          license_number: string | null;
+          logo_url: string | null;
+          description: string | null;
           created_at: string;
         };
         Insert: {
@@ -26,6 +35,15 @@ export type Database = {
           plan_code?: string;
           comped_until?: string | null;
           billing_notes?: string | null;
+          city?: string | null;
+          discipline?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          website?: string | null;
+          siret?: string | null;
+          license_number?: string | null;
+          logo_url?: string | null;
+          description?: string | null;
           created_at?: string;
         };
         Update: {
@@ -35,6 +53,15 @@ export type Database = {
           plan_code?: string;
           comped_until?: string | null;
           billing_notes?: string | null;
+          city?: string | null;
+          discipline?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          website?: string | null;
+          siret?: string | null;
+          license_number?: string | null;
+          logo_url?: string | null;
+          description?: string | null;
           created_at?: string;
         };
         Relationships: [];

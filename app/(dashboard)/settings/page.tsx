@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
+import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { DemoCompanyPanel } from "@/components/settings/demo-company-panel";
 import { WorkspaceExportPanel } from "@/components/settings/workspace-export-panel";
 import { hasSupabaseEnv } from "@/lib/env";
@@ -13,6 +14,7 @@ import {
   getCommercialPacks,
   getDashboardData,
   getEmailCampaigns,
+  getCompanyProfile,
   getGrantOpportunities,
   getPatronageDeals,
   getQuoteItems,
@@ -30,6 +32,7 @@ export default async function SettingsPage() {
     access,
     activity,
     superAdmin,
+    companyProfile,
   ] = await Promise.all([
     getDashboardData(),
     getCommercialPacks(),
@@ -41,6 +44,7 @@ export default async function SettingsPage() {
     getWorkspaceAccess(),
     getActivityLog(15),
     isSuperAdmin(),
+    getCompanyProfile(),
   ]);
   const currentPlan = plans.find((plan) => plan.current) ?? plans[0];
   const backup = {
@@ -71,6 +75,19 @@ export default async function SettingsPage() {
         <MetricCard label="Dates" value={dashboard.pipelineDeals.length.toString()} detail="Diffusion" />
         <MetricCard label="Devis" value={quotes.length.toString()} detail="Facturation" />
       </section>
+
+      {companyProfile ? (
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">Profil de la compagnie</p>
+            <p className="mt-1 text-sm text-muted">
+              Ces informations identifient la compagnie et seront reutilisees dans les devis et
+              les dossiers.
+            </p>
+          </div>
+          <CompanyProfileForm profile={companyProfile} canManage={access.canManage} />
+        </Card>
+      ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">

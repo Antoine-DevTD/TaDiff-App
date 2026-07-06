@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { requireManagerAccess, requireWriteAccess } from "@/lib/supabase/access";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateWorkspace } from "@/lib/supabase/workspace";
+import { companyProfileSchema, type CompanyProfileInput } from "@/lib/validation/company";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
 import {
   documentUploadRequestSchema,
@@ -563,6 +564,59 @@ export async function prepareDocumentUpload(
     signedUrl: data.signedUrl,
     storagePath,
   };
+}
+
+export async function updateCompanyProfile(
+  values: CompanyProfileInput,
+): Promise<ActionResult> {
+  const parsed = companyProfileSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le profil compagnie contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : profil valide sans enregistrement." };
+  }
+
+  const accessError = await requireManagerAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("companies")
+    .update({
+      name: parsed.data.name,
+      city: parsed.data.city || null,
+      discipline: parsed.data.discipline || null,
+      email: parsed.data.email || null,
+      phone: parsed.data.phone || null,
+      website: parsed.data.website || null,
+      siret: parsed.data.siret || null,
+      license_number: parsed.data.licenseNumber || null,
+      logo_url: parsed.data.logoUrl || null,
+      description: parsed.data.description || null,
+    })
+    .eq("id", workspace.companyId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  await logActivity("a mis a jour le profil de la compagnie", "company", parsed.data.name);
+
+  return { ok: true, message: "Profil de la compagnie enregistre." };
 }
 
 export async function prepareShowPosterUpload(values: {
