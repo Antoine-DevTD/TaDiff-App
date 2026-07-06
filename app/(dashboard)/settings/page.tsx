@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
+import { TheatreThemeSwitcher } from "@/components/theme/theatre-theme-switcher";
 import { CompanyDocumentsPanel } from "@/components/settings/company-documents-panel";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { TeamAccessPanel } from "@/components/settings/team-access-panel";
@@ -108,6 +109,16 @@ export default async function SettingsPage() {
           </p>
         </div>
         <CompanyDocumentsPanel documents={companyDocuments} canManage={access.canManage} />
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <div>
+          <p className="text-base font-semibold">Apparence</p>
+          <p className="mt-1 text-sm text-muted">
+            Direction artistique et agencement de l&apos;interface.
+          </p>
+        </div>
+        <TheatreThemeSwitcher embedded />
       </Card>
 
       {members.length > 0 ? (
