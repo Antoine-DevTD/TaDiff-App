@@ -260,7 +260,6 @@ export default async function DashboardPage() {
   const activeDeals = pipelineDeals
     .filter((deal) => deal.stage !== "Confirme" && deal.stage !== "Perdu")
     .sort((a, b) => getPipelinePriorityScore(b) - getPipelinePriorityScore(a));
-  const priorityDeals = activeDeals.slice(0, 3);
   const priorityReminders = [...reminders]
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 4);
@@ -463,16 +462,20 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
-      <section className="theme-cockpit-section theme-cockpit-route-section grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="theme-cockpit-section theme-cockpit-route-section">
         <Card className="theme-cockpit-roadmap space-y-4 p-5" data-tour="cockpit-plan">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Plan de route
+              A faire maintenant
             </p>
-            <DashboardSectionTitle className="text-2xl" href="/reminders" title="Les 5 sorties utiles" />
+            <DashboardSectionTitle
+              className="text-2xl"
+              href="/reminders"
+              title="Tes prochaines actions, dans l'ordre"
+            />
           </div>
           {theatreActions.length === 0 ? (
-            <EmptyBlock text="Aucune sortie critique pour le moment." />
+            <EmptyBlock text="Aucune action critique pour le moment. Tout est a jour." />
           ) : (
             <div className="space-y-3">
               {theatreActions.map((action, index) => (
@@ -481,7 +484,7 @@ export default async function DashboardPage() {
                   className="grid gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60 sm:grid-cols-[2.25rem_1fr_auto]"
                   href={action.href}
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-panel text-sm font-semibold text-muted">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-accent text-sm font-semibold text-white">
                     {index + 1}
                   </span>
                   <span className="min-w-0">
@@ -496,37 +499,6 @@ export default async function DashboardPage() {
             </div>
           )}
         </Card>
-
-        <div className="theme-cockpit-workflow-grid grid gap-6 md:grid-cols-2">
-          <WorkflowCard
-            detail={`${priorityDeals.length} dossier(s) de diffusion a pousser`}
-            href="/pipeline"
-            label="Vendre"
-            title="Transformer les contacts en dates"
-            value={formatCurrency(cashPilot.weightedPipeline)}
-          />
-          <WorkflowCard
-            detail={`${urgentGrantCount} echeance(s) subvention a moins de 30 jours`}
-            href="/subventions"
-            label="Financer"
-            title="Chercher l'argent qui evite le rouge"
-            value={formatCurrency(cashPilot.expectedQuotes30)}
-          />
-          <WorkflowCard
-            detail={`${documentMissingCount} piece(s) a completer`}
-            href="/documents"
-            label="Produire"
-            title="Rendre les spectacles deposables"
-            value={`${showReadiness.filter((item) => item.readiness.missingCount === 0).length} pret(s)`}
-          />
-          <WorkflowCard
-            detail={`${cashPilot.monthlyFixedCosts.toLocaleString("fr-FR")} EUR de frais fixes mensuels`}
-            href="/finances"
-            label="Piloter"
-            title="Voir quand la tresorerie se tend"
-            value={cashPilot.riskDate.toLocaleDateString("fr-FR")}
-          />
-        </div>
       </section>
 
       <section className="theme-cockpit-section theme-cockpit-sales-section grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -596,63 +568,6 @@ export default async function DashboardPage() {
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Diffusion
-              </p>
-              <DashboardSectionTitle className="text-xl" href="/pipeline" title="Les dates a faire avancer" />
-            </div>
-            <ButtonLink href="/pipeline" variant="secondary">
-              Diffusion
-            </ButtonLink>
-          </div>
-
-          {priorityDeals.length === 0 ? (
-            <EmptyBlock text="Aucune date active." />
-          ) : (
-            <div className="space-y-3">
-              {priorityDeals.map((deal) => (
-                <Link
-                  key={deal.id}
-                  className="block rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60"
-                  href="/pipeline"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{deal.title}</p>
-                      <p className="mt-1 text-sm text-muted">
-                        {deal.contactName} - {deal.showTitle}
-                      </p>
-                    </div>
-                    <Badge>{deal.stage}</Badge>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs text-muted">Valeur ponderee</p>
-                      <p className="mt-1 font-medium">{formatCurrency(getWeightedValue(deal))}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted">Prochaine relance</p>
-                      <p className="mt-1 font-medium">
-                        {deal.nextFollowUpAt
-                          ? new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")
-                          : "A poser"}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm text-muted">
-                    {deal.nextAction || "Prochaine action a definir"}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          )}
-        </Card>
-      </section>
-
-      <section className="theme-cockpit-section theme-cockpit-agenda-section grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <Card className="space-y-4 p-5">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Aujourd&apos;hui
               </p>
               <DashboardSectionTitle className="text-xl" href="/reminders" title="Relances et echeances" />
@@ -679,43 +594,6 @@ export default async function DashboardPage() {
                     </span>
                   </span>
                   <Badge tone={getReminderTone(reminder)}>{getReminderLabel(reminder)}</Badge>
-                </Link>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card className="space-y-4 p-5">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Repertoire
-              </p>
-              <DashboardSectionTitle className="text-xl" href="/contacts" title="Contacts a activer" />
-            </div>
-            <ButtonLink href="/contacts" variant="secondary">
-              Contacts
-            </ButtonLink>
-          </div>
-
-          {contacts.length === 0 ? (
-            <EmptyBlock text="Aucun contact cree." />
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2">
-              {contacts.slice(0, 4).map((contact) => (
-                <Link
-                  key={contact.id}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60"
-                  href={`/contacts/${contact.id}`}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{contact.name}</span>
-                    <span className="mt-1 block truncate text-sm text-muted">
-                      {[contact.organization, contact.city].filter(Boolean).join(" - ") ||
-                        "Contact sans detail"}
-                    </span>
-                  </span>
-                  <Badge>{contact.status}</Badge>
                 </Link>
               ))}
             </div>
@@ -786,31 +664,6 @@ function DashboardSectionTitle({
   );
 }
 
-function WorkflowCard({
-  detail,
-  href,
-  label,
-  title,
-  value,
-}: {
-  detail: string;
-  href: string;
-  label: string;
-  title: string;
-  value: string;
-}) {
-  return (
-    <Link
-      className="rounded-lg border border-border bg-panel p-5 shadow-sm shadow-ink/5 transition hover:-translate-y-0.5 hover:border-accent/35 hover:bg-panel-strong/55"
-      href={href}
-    >
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">{label}</p>
-      <p className="mt-3 text-lg font-semibold">{title}</p>
-      <p className="mt-4 text-2xl font-semibold">{value}</p>
-      <p className="mt-2 text-sm text-muted">{detail}</p>
-    </Link>
-  );
-}
 
 function EmptyBlock({ text }: { text: string }) {
   return (
