@@ -32,7 +32,7 @@ const defaultValues: GrantFormInput = {
   sourceUrl: "",
 };
 
-export function GrantForm({ shows }: { shows: Show[] }) {
+export function GrantForm({ shows, onSuccess }: { shows: Show[]; onSuccess?: () => void }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -54,6 +54,7 @@ export function GrantForm({ shows }: { shows: Show[] }) {
       if (result.ok) {
         reset(defaultValues);
         router.refresh();
+        onSuccess?.();
       }
     });
   }

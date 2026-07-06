@@ -1,6 +1,6 @@
 import { deleteGrantOpportunity } from "@/app/(dashboard)/actions";
+import { GrantCreateDialog } from "@/components/grants/grant-create-dialog";
 import { GrantDossierZipButton } from "@/components/grants/grant-dossier-zip-button";
-import { GrantForm } from "@/components/grants/grant-form";
 import { GrantImportButton } from "@/components/grants/grant-import-button";
 import { GrantStatusSelect } from "@/components/grants/grant-status-select";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,6 @@ import {
   buildGrantDossierState,
   getDossierReadinessPercent,
   getDossierTone,
-  getRequirementLabel,
   getRequirementTone,
   type GrantDossierState,
 } from "@/lib/grants";
@@ -95,6 +94,7 @@ export default async function SubventionsPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <GrantCreateDialog shows={shows} />
           <GrantImportButton />
           <ButtonLink href="/calendar" variant="secondary">
             Voir les echeances
@@ -123,40 +123,19 @@ export default async function SubventionsPage() {
             <MetricCard label="Montant cible" value={formatCurrency(totalExpected)} detail="Total attendu" />
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]" data-tour="radar-subventions">
-            <Card className="space-y-4 p-5">
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-muted">Priorites</p>
-                <p className="mt-2 text-xl font-semibold">
-                  {urgent[0]?.grant.title ?? mounted[0]?.grant.title ?? grants[0]?.title}
-                </p>
+          {[...urgent, ...mounted].length > 0 ? (
+            <Card className="space-y-3 p-5" data-tour="radar-subventions">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-base font-semibold">A traiter en priorite</p>
+                <Badge tone="warning">{[...urgent, ...mounted].length}</Badge>
               </div>
-              <div className="space-y-3">
-                {[...urgent, ...mounted].slice(0, 4).map((grant) => {
-                  return (
-                    <GrantRow
-                      key={grant.grant.id}
-                      state={grant}
-                    />
-                  );
-                })}
-              </div>
-            </Card>
-
-            <Card className="space-y-4 p-5">
-              <div>
-                <p className="text-base font-semibold">Depot simplifie</p>
-                <p className="mt-1 text-sm text-muted">
-                  TaDiff rapproche chaque subvention des pieces du spectacle et prepare un zip de depot.
-                </p>
-              </div>
-              <div className="grid gap-3">
-                {dossierStates.slice(0, 3).map((state) => (
-                  <DossierSummary key={state.grant.id} state={state} />
+              <div className="grid gap-2">
+                {[...urgent, ...mounted].slice(0, 4).map((state) => (
+                  <PriorityRow key={state.grant.id} state={state} />
                 ))}
               </div>
             </Card>
-          </section>
+          ) : null}
 
           <section className="grid gap-6 xl:grid-cols-3">
             <GrantColumn
@@ -168,51 +147,26 @@ export default async function SubventionsPage() {
           </section>
         </>
       )}
-
-      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="space-y-4 p-5">
-          <div>
-            <p className="text-base font-semibold">Ajouter un dispositif</p>
-            <p className="mt-1 text-sm text-muted">
-              Chaque dispositif suit ses pieces, sa deadline et alimente le calendrier et le
-              cockpit.
-            </p>
-          </div>
-          <GrantForm shows={shows} />
-        </Card>
-
-        <Card className="space-y-4 p-5">
-          <div>
-            <p className="text-base font-semibold">Bien utiliser le radar</p>
-            <p className="mt-1 text-sm text-muted">
-              Le radar travaille pour la compagnie quand chaque dispositif est tenu a jour.
-            </p>
-          </div>
-          <div className="space-y-3 text-sm text-muted">
-            <TipBlock
-              title="Verifier les dates indicatives"
-              detail="Les dispositifs importes signalent dans leurs notes si la deadline est verifiee ou indicative. Corrigez la date des que le calendrier officiel est publie."
-            />
-            <TipBlock
-              title="Associer un spectacle"
-              detail="Un dispositif relie a un spectacle calcule automatiquement les pieces pretes et manquantes du dossier."
-            />
-            <TipBlock
-              title="Faire avancer le statut"
-              detail="A surveiller, en montage, depose, attribue : le statut alimente les priorites du cockpit."
-            />
-          </div>
-        </Card>
-      </section>
     </div>
   );
 }
 
-function TipBlock({ detail, title }: { detail: string; title: string }) {
+function PriorityRow({ state }: { state: GrantDossierState }) {
+  const grant = state.grant;
+
   return (
-    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
-      <p className="font-medium text-foreground">{title}</p>
-      <p className="mt-1">{detail}</p>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-panel-strong/40 px-4 py-3">
+      <div className="min-w-0">
+        <p className="truncate font-medium">{grant.funder}</p>
+        <p className="truncate text-sm text-muted">{state.show?.title ?? grant.title}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium">{formatCurrency(grant.amount)}</span>
+        <Badge tone={getDossierTone(state)}>
+          {state.readyCount}/{state.totalCount}
+        </Badge>
+        <Badge tone={getGrantTone(grant)}>{getDeadlineLabel(grant.deadline)}</Badge>
+      </div>
     </div>
   );
 }
@@ -293,45 +247,18 @@ function GrantRow({ state }: { state: GrantDossierState }) {
           </ButtonLink>
         ) : null}
         <GrantDossierZipButton state={state} />
+        {grant.sourceUrl ? (
+          <a
+            className="inline-flex items-center gap-1 text-sm font-medium text-accent underline underline-offset-2 hover:text-accent-strong"
+            href={grant.sourceUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Source officielle ↗
+          </a>
+        ) : null}
         <InlineDeleteButton action={deleteGrantOpportunity.bind(null, grant.id)} label="Retirer" />
       </div>
-    </div>
-  );
-}
-
-function DossierSummary({ state }: { state: GrantDossierState }) {
-  return (
-    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-medium">{state.grant.funder}</p>
-          <p className="mt-1 text-sm text-muted">{state.grant.title}</p>
-        </div>
-        <Badge tone={getDossierTone(state)}>{getDossierReadinessPercent(state)}%</Badge>
-      </div>
-      {state.grant.eligibility ? (
-        <p className="mt-3 text-sm text-muted">{state.grant.eligibility}</p>
-      ) : null}
-      <div className="mt-3 grid gap-2">
-        {state.requirements.slice(0, 4).map((requirement) => (
-          <div key={requirement.type} className="flex items-center justify-between gap-3 text-sm">
-            <span>{requirement.type}</span>
-            <Badge tone={getRequirementTone(requirement.status)}>
-              {getRequirementLabel(requirement.status)}
-            </Badge>
-          </div>
-        ))}
-      </div>
-      {state.grant.sourceUrl ? (
-        <a
-          className="mt-4 inline-flex text-sm font-medium text-accent hover:text-accent-strong"
-          href={state.grant.sourceUrl}
-          rel="noreferrer"
-          target="_blank"
-        >
-          Source officielle
-        </a>
-      ) : null}
     </div>
   );
 }
