@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { CompanyBillingForm } from "@/components/admin/company-billing-form";
+import { RevenueForecastChart } from "@/components/admin/revenue-forecast-chart";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { buildRevenueForecast } from "@/lib/admin-forecast";
 import { formatCurrency } from "@/lib/finance";
 import {
   getAdminBetaSignups,
@@ -34,6 +36,7 @@ export default async function AdminPage() {
   const reserved = betaSignups.filter((signup) => signup.status === "reserved");
   const waitlist = betaSignups.filter((signup) => signup.status === "waitlist");
   const monthlyRevenue = activeCount * 19.99;
+  const forecast = buildRevenueForecast(companies);
 
   return (
     <div className="space-y-6">
@@ -51,6 +54,17 @@ export default async function AdminPage() {
         <MetricCard label="Beta reservee" value={`${reserved.length}/10`} detail="Places confirmees" />
         <MetricCard label="Liste d'attente" value={waitlist.length.toString()} detail="Compagnies en attente" />
       </section>
+
+      <Card className="space-y-4 p-5">
+        <div>
+          <p className="text-base font-semibold">Prevision de revenu</p>
+          <p className="mt-1 text-sm text-muted">
+            MRR estime depuis les abonnements actifs, prolonge sur 6 mois au rythme des nouvelles
+            souscriptions. Indicatif tant que Stripe n&apos;est pas branche.
+          </p>
+        </div>
+        <RevenueForecastChart forecast={forecast} />
+      </Card>
 
       <Card className="space-y-4 p-5">
         <div>
