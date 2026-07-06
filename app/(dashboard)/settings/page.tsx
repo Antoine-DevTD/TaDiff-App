@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
+import { CompanyDocumentsPanel } from "@/components/settings/company-documents-panel";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { TeamAccessPanel } from "@/components/settings/team-access-panel";
 import { DemoCompanyPanel } from "@/components/settings/demo-company-panel";
 import { WorkspaceExportPanel } from "@/components/settings/workspace-export-panel";
-import { hasSupabaseEnv } from "@/lib/env";
 import { getWorkspaceAccess, type BillingStatus, type CompanyRole } from "@/lib/supabase/access";
 import { isSuperAdmin } from "@/lib/supabase/admin";
 import {
@@ -15,6 +15,7 @@ import {
   getCommercialPacks,
   getDashboardData,
   getEmailCampaigns,
+  getCompanyDocuments,
   getCompanyInviteCode,
   getCompanyMembers,
   getCompanyProfile,
@@ -38,6 +39,7 @@ export default async function SettingsPage() {
     companyProfile,
     members,
     inviteCode,
+    companyDocuments,
   ] = await Promise.all([
     getDashboardData(),
     getCommercialPacks(),
@@ -52,6 +54,7 @@ export default async function SettingsPage() {
     getCompanyProfile(),
     getCompanyMembers(),
     getCompanyInviteCode(),
+    getCompanyDocuments(),
   ]);
   const currentPlan = plans.find((plan) => plan.current) ?? plans[0];
   const backup = {
@@ -96,6 +99,17 @@ export default async function SettingsPage() {
         </Card>
       ) : null}
 
+      <Card className="space-y-4 p-5">
+        <div>
+          <p className="text-base font-semibold">Documents de la compagnie</p>
+          <p className="mt-1 text-sm text-muted">
+            RIB, statuts, licence, attestation d&apos;assurance... Ajoutes une fois, reutilisables
+            dans tous les dossiers sans re-televerser.
+          </p>
+        </div>
+        <CompanyDocumentsPanel documents={companyDocuments} canManage={access.canManage} />
+      </Card>
+
       {members.length > 0 ? (
         <Card className="space-y-4 p-5">
           <div>
@@ -114,35 +128,6 @@ export default async function SettingsPage() {
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
-        <Card className="space-y-4 p-5">
-          <div>
-            <p className="text-base font-semibold">Integrations</p>
-            <p className="mt-1 text-sm text-muted">
-              Etat de branchement des services externes necessaires a la production.
-            </p>
-          </div>
-          <IntegrationRow
-            label="Supabase"
-            detail={hasSupabaseEnv() ? "Auth et base connectees" : "Mode demo / mock data"}
-            enabled={hasSupabaseEnv()}
-          />
-          <IntegrationRow
-            label="Stripe"
-            detail={process.env.STRIPE_SECRET_KEY ? "Cle serveur detectee" : "Paiement non active"}
-            enabled={Boolean(process.env.STRIPE_SECRET_KEY)}
-          />
-          <IntegrationRow
-            label="Email provider"
-            detail={process.env.RESEND_API_KEY ? "Cle Resend detectee" : "Envoi reel non active"}
-            enabled={Boolean(process.env.RESEND_API_KEY)}
-          />
-          <IntegrationRow
-            label="Plan cible"
-            detail={currentPlan ? `${currentPlan.name} - ${currentPlan.monthlyPrice} EUR / mois` : "Aucun plan"}
-            enabled={Boolean(currentPlan)}
-          />
-        </Card>
-
         <Card className="space-y-4 p-5">
           <div>
             <p className="text-base font-semibold">Compagnie et acces</p>

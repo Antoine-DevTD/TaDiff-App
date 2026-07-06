@@ -67,6 +67,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      company_documents: {
+        Row: {
+          id: string;
+          company_id: string;
+          title: string;
+          doc_type: string;
+          storage_path: string | null;
+          file_url: string | null;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          title: string;
+          doc_type?: string;
+          storage_path?: string | null;
+          file_url?: string | null;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          title?: string;
+          doc_type?: string;
+          storage_path?: string | null;
+          file_url?: string | null;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       calendar_events: {
         Row: {
           id: string;

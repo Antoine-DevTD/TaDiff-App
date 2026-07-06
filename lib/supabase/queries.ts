@@ -22,6 +22,7 @@ import type {
   BillingPlan,
   CalendarEvent,
   CommercialPack,
+  CompanyDocument,
   CompanyMember,
   CompanyProfile,
   Contact,
@@ -805,6 +806,45 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
     logoUrl: data.logo_url ?? "",
     description: data.description ?? "",
   };
+}
+
+export async function getCompanyDocuments(): Promise<CompanyDocument[]> {
+  if (!hasSupabaseEnv()) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("company_documents")
+    .select("id,title,doc_type,storage_path,file_url,note,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  const storagePaths = data
+    .map((row) => row.storage_path)
+    .filter((path): path is string => Boolean(path));
+  const urlByPath = new Map<string, string>();
+
+  if (storagePaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("documents")
+      .createSignedUrls(storagePaths, 3600);
+    for (const item of signed ?? []) {
+      if (item.path && item.signedUrl) urlByPath.set(item.path, item.signedUrl);
+    }
+  }
+
+  return data.map((row) => ({
+    id: row.id,
+    title: row.title,
+    docType: row.doc_type,
+    storagePath: row.storage_path ?? "",
+    fileUrl:
+      (row.storage_path ? urlByPath.get(row.storage_path) : undefined) ?? row.file_url ?? "",
+    note: row.note ?? "",
+    createdAt: row.created_at,
+  }));
 }
 
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {

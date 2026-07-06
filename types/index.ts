@@ -1,5 +1,15 @@
 export type ShowStatus = "En diffusion" | "Creation" | "En pause";
 
+export type CompanyDocument = {
+  id: string;
+  title: string;
+  docType: string;
+  storagePath: string;
+  fileUrl: string;
+  note: string;
+  createdAt: string;
+};
+
 export type CalendarEventKind = "event" | "deadline" | "show";
 
 export type CalendarEvent = {

@@ -8,6 +8,10 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateWorkspace } from "@/lib/supabase/workspace";
 import { calendarEventSchema, type CalendarEventInput } from "@/lib/validation/calendar";
 import { companyProfileSchema, type CompanyProfileInput } from "@/lib/validation/company";
+import {
+  companyDocumentSchema,
+  type CompanyDocumentInput,
+} from "@/lib/validation/company-document";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
 import {
   documentUploadRequestSchema,
@@ -644,6 +648,83 @@ export async function updateCompanyProfile(
   await logActivity("a mis a jour le profil de la compagnie", "company", parsed.data.name);
 
   return { ok: true, message: "Profil de la compagnie enregistre." };
+}
+
+export async function createCompanyDocument(
+  values: CompanyDocumentInput,
+): Promise<ActionResult> {
+  const parsed = companyDocumentSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Le document contient des erreurs." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : document valide sans enregistrement." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("company_documents").insert({
+    company_id: workspace.companyId,
+    title: parsed.data.title,
+    doc_type: parsed.data.docType,
+    storage_path: parsed.data.storagePath || null,
+    file_url: parsed.data.fileUrl || null,
+    note: parsed.data.note || null,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/settings");
+  await logActivity("a ajoute un document compagnie", "company_document", parsed.data.title);
+
+  return { ok: true, message: "Document de la compagnie enregistre." };
+}
+
+export async function deleteCompanyDocument(documentId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : document supprime." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: document } = await supabase
+    .from("company_documents")
+    .select("id,storage_path")
+    .eq("id", documentId)
+    .maybeSingle();
+
+  const { error } = await supabase.from("company_documents").delete().eq("id", documentId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (document?.storage_path) {
+    await supabase.storage.from("documents").remove([document.storage_path]);
+  }
+
+  revalidatePath("/settings");
+  return { ok: true, message: "Document supprime." };
 }
 
 export async function createCalendarEvent(
