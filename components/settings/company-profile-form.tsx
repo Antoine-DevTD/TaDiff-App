@@ -3,8 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { updateCompanyProfile } from "@/app/(dashboard)/actions";
+import { PosterUploadField } from "@/components/shows/poster-upload-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +29,8 @@ export function CompanyProfileForm({
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CompanyProfileInput, unknown, CompanyProfileValues>({
     resolver: zodResolver(companyProfileSchema),
@@ -44,6 +47,8 @@ export function CompanyProfileForm({
       description: profile.description,
     },
   });
+
+  const logoUrl = useWatch({ control, name: "logoUrl" }) ?? "";
 
   function onSubmit(values: CompanyProfileValues) {
     startTransition(async () => {
@@ -78,14 +83,23 @@ export function CompanyProfileForm({
           </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Site web" error={errors.website?.message}>
-            <Input type="url" placeholder="https://compagnie.fr" {...register("website")} />
-          </Field>
-          <Field label="Lien du logo" error={errors.logoUrl?.message}>
-            <Input type="url" placeholder="https://.../logo.png" {...register("logoUrl")} />
-          </Field>
-        </div>
+        <Field label="Site web" error={errors.website?.message}>
+          <Input type="url" placeholder="https://compagnie.fr" {...register("website")} />
+        </Field>
+
+        <Field label="Logo de la compagnie" error={errors.logoUrl?.message}>
+          <input type="hidden" {...register("logoUrl")} />
+          <PosterUploadField
+            showId="logo"
+            value={logoUrl}
+            maxDimension={512}
+            chooseLabel="Choisir un logo (JPG, PNG, WebP)"
+            emptyHint="Aucun logo pour l'instant. L'image sera stockee dans TaDiff."
+            onChange={(url) =>
+              setValue("logoUrl", url, { shouldDirty: true, shouldValidate: true })
+            }
+          />
+        </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="SIRET" error={errors.siret?.message}>

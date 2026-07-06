@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -41,12 +42,14 @@ export function Dialog({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  // Portal sur document.body : evite qu'un ancetre avec backdrop-filter
+  // (ex. le header sticky) ne pige la modale en position: fixed.
+  return createPortal(
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] grid place-items-center bg-ink/40 p-4 backdrop-blur-sm"
       role="dialog"
     >
       <button
@@ -72,6 +75,7 @@ export function Dialog({
         </div>
         <div className="p-5">{children}</div>
       </Card>
-    </div>
+    </div>,
+    document.body,
   );
 }
