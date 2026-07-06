@@ -1,5 +1,5 @@
+import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
-import { TheatreThemeSwitcher } from "@/components/theme/theatre-theme-switcher";
 
 export default function PublicLayout({
   children,
@@ -7,10 +7,10 @@ export default function PublicLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <PublicHeader />
-      <TheatreThemeSwitcher />
-      {children}
+      <div className="flex-1">{children}</div>
+      <PublicFooter />
     </div>
   );
 }

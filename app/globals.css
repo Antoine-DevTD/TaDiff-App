@@ -145,6 +145,56 @@ html[data-theatre-theme="regie"] {
   }
 }
 
+/* Bandeau beta : degrade anime + pastille pulsante. */
+@keyframes beta-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.beta-band {
+  background: linear-gradient(
+    115deg,
+    var(--color-accent-strong),
+    var(--color-accent),
+    #3b82f6,
+    var(--color-accent)
+  );
+  background-size: 260% 260%;
+  animation: beta-gradient 9s ease infinite;
+}
+
+@keyframes beta-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.35);
+  }
+}
+
+.beta-dot {
+  animation: beta-dot 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beta-band {
+    animation: none;
+  }
+  .beta-dot {
+    animation: none;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }

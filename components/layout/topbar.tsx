@@ -21,10 +21,10 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-panel/86 backdrop-blur-xl">
-      <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="flex min-h-20 items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-muted">{workspaceLabel}</p>
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-panel-strong text-accent">
               <DashboardNavIcon className="h-4 w-4" href={activeItem?.href} />
             </span>

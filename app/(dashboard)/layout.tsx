@@ -36,7 +36,7 @@ export default async function DashboardLayout({
       <Sidebar variant={superAdmin ? "admin" : "company"} />
       <div className="min-w-0 flex-1">
         <Topbar workspaceLabel={workspaceLabel} />
-        <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">{children}</main>
       </div>
       {superAdmin ? null : <GuidedTour />}
       {superAdmin ? null : <WilliamAssistant />}
