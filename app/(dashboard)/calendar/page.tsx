@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { CalendarBoard } from "@/components/calendar/calendar-board";
 import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTitle } from "@/components/ui/page-title";
@@ -46,12 +46,6 @@ function getReminderLabel(date: string) {
   if (diffDays === 1) return "Demain";
   if (diffDays <= 7) return `Dans ${diffDays} j`;
   return new Date(date).toLocaleDateString("fr-FR");
-}
-
-function getMonthKey(date: string) {
-  const current = new Date(date);
-  const month = current.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
-  return month.charAt(0).toUpperCase() + month.slice(1);
 }
 
 function buildCalendarItems({
@@ -121,12 +115,6 @@ export default async function CalendarPage() {
   ]);
   const items = buildCalendarItems({ fixedCosts, grants, reminders, shows });
   const upcomingItems = items.slice(0, 5);
-  const groupedByMonth = items.reduce<Record<string, CalendarItem[]>>((acc, item) => {
-    const key = getMonthKey(item.date);
-    acc[key] ??= [];
-    acc[key].push(item);
-    return acc;
-  }, {});
 
   return (
     <div className="space-y-6">
@@ -171,6 +159,10 @@ export default async function CalendarPage() {
             />
           </section>
 
+          <Card className="p-5">
+            <CalendarBoard items={items} />
+          </Card>
+
           <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <Card className="space-y-4 p-5" data-tour="calendrier-avenir">
               <div className="flex items-center justify-between gap-3">
@@ -211,24 +203,6 @@ export default async function CalendarPage() {
                 />
               </div>
             </Card>
-          </section>
-
-          <section className="space-y-4">
-            {Object.entries(groupedByMonth).map(([month, monthItems]) => (
-              <Card key={month} className="space-y-4 p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold">{month}</p>
-                    <p className="mt-1 text-sm text-muted">{monthItems.length} echeance(s)</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {monthItems.map((item) => (
-                    <MonthRow key={item.id} item={item} />
-                  ))}
-                </div>
-              </Card>
-            ))}
           </section>
         </>
       )}
@@ -283,47 +257,6 @@ function TimelineRow({ item }: { item: CalendarItem }) {
           : "Date programmee"}
       </Badge>
     </Link>
-  );
-}
-
-function MonthRow({ item }: { item: CalendarItem }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium">{item.label}</p>
-          <Badge tone={item.tone}>
-            {item.kind === "reminder"
-              ? "Relance"
-              : item.kind === "grant"
-                ? "Subvention"
-                : item.kind === "fixed-cost"
-                  ? "Frais fixe"
-                  : "Spectacle"}
-          </Badge>
-        </div>
-        <p className="mt-1 text-sm text-muted">{item.meta}</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="text-right">
-          <p className="text-sm font-medium">
-            {new Date(item.date).toLocaleDateString("fr-FR", {
-              weekday: "short",
-              day: "2-digit",
-              month: "2-digit",
-            })}
-          </p>
-          <p className="mt-1 text-xs text-muted">
-            {item.kind === "reminder" || item.kind === "grant" || item.kind === "fixed-cost"
-              ? getReminderLabel(item.date)
-              : "Prochaine date"}
-          </p>
-        </div>
-        <ButtonLink href={item.href} variant="secondary">
-          Ouvrir
-        </ButtonLink>
-      </div>
-    </div>
   );
 }
 

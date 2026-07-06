@@ -14,6 +14,7 @@ import {
   type ShowDocumentFormInput,
 } from "@/lib/validation/document";
 import { getDocumentFileError, sanitizeDocumentFilename } from "@/lib/documents-upload";
+import { getPosterFileError } from "@/lib/poster-upload";
 import { quoteSchema, type QuoteFormInput } from "@/lib/validation/billing";
 import {
   grantSchema,
@@ -560,6 +561,61 @@ export async function prepareDocumentUpload(
     ok: true,
     message: "Upload pret.",
     signedUrl: data.signedUrl,
+    storagePath,
+  };
+}
+
+export async function prepareShowPosterUpload(values: {
+  showId: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+}): Promise<ActionResult & { signedUrl?: string; publicUrl?: string; storagePath?: string }> {
+  const fileError = getPosterFileError({ size: values.fileSize, type: values.fileType });
+
+  if (fileError) {
+    return { ok: false, message: fileError };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: false,
+      message: "Mode demo : l'upload d'affiche demande une base Supabase connectee.",
+    };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const showSegment = values.showId || "sans-spectacle";
+  const storagePath = `${workspace.companyId}/${showSegment}/${crypto.randomUUID()}-${sanitizeDocumentFilename(values.fileName)}`;
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.storage
+    .from("posters")
+    .createSignedUploadUrl(storagePath);
+
+  if (error || !data) {
+    return { ok: false, message: error?.message ?? "Impossible de preparer l'upload." };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("posters").getPublicUrl(storagePath);
+
+  return {
+    ok: true,
+    message: "Upload pret.",
+    signedUrl: data.signedUrl,
+    publicUrl,
     storagePath,
   };
 }

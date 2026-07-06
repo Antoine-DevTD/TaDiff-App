@@ -3,8 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { createShow, updateShow } from "@/app/(dashboard)/actions";
+import { PosterUploadField } from "@/components/shows/poster-upload-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -33,6 +34,8 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ShowFormInput, unknown, ShowFormValues>({
     resolver: zodResolver(showSchema),
@@ -48,6 +51,8 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
         }
       : defaultValues,
   });
+
+  const posterUrl = useWatch({ control, name: "posterUrl" }) ?? "";
 
   function onSubmit(values: ShowFormValues) {
     startTransition(async () => {
@@ -99,11 +104,14 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
         </Field>
       </div>
 
-      <Field label="Lien de l'affiche" error={errors.posterUrl?.message}>
-        <Input
-          placeholder="https://.../affiche.jpg"
-          type="url"
-          {...register("posterUrl")}
+      <Field label="Affiche du spectacle" error={errors.posterUrl?.message}>
+        <input type="hidden" {...register("posterUrl")} />
+        <PosterUploadField
+          showId={show?.id ?? ""}
+          value={posterUrl}
+          onChange={(url) =>
+            setValue("posterUrl", url, { shouldDirty: true, shouldValidate: true })
+          }
         />
       </Field>
 
