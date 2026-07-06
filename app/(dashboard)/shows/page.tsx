@@ -17,7 +17,7 @@ export default async function ShowsPage() {
         <div>
           <PageTitle href="/shows">Spectacles</PageTitle>
           <p className="mt-1 text-sm text-muted">
-            Catalogue des creations, statuts de diffusion et prochaines dates.
+            Catalogue des créations, statuts de diffusion et prochaines dates.
           </p>
         </div>
         <ShowCreateDialog />
@@ -26,7 +26,7 @@ export default async function ShowsPage() {
       {shows.length === 0 ? (
         <EmptyState
           title="Aucun spectacle"
-          description="Creez votre premier spectacle pour suivre sa diffusion, son budget et ses prochaines dates."
+          description="Créez votre premier spectacle pour suivre sa diffusion, son budget et ses prochaines dates."
           actionLabel="Nouveau spectacle"
           actionHref="/shows/new"
         />
@@ -54,7 +54,7 @@ export default async function ShowsPage() {
                       <p className="mt-1 font-medium">
                         {show.nextDate
                           ? new Date(show.nextDate).toLocaleDateString("fr-FR")
-                          : "A planifier"}
+                          : "À planifier"}
                       </p>
                     </div>
                     <div>
@@ -116,7 +116,7 @@ function DocumentState({
       <div className="flex items-center justify-between gap-3 text-sm">
         <p className="font-medium">Dossier</p>
         <Badge tone={missingCount === 0 ? "success" : "warning"}>
-          {missingCount === 0 ? "Pret" : `${missingCount} manquant(s)`}
+          {missingCount === 0 ? "Prêt" : `${missingCount} manquant(s)`}
         </Badge>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">

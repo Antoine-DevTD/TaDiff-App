@@ -79,7 +79,7 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Discipline" error={errors.discipline?.message}>
           <Select {...register("discipline")}>
-            <option value="Theatre">Theatre</option>
+            <option value="Theatre">Théâtre</option>
             <option value="Danse">Danse</option>
             <option value="Musique">Musique</option>
             <option value="Cirque">Cirque</option>
@@ -89,7 +89,7 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
         <Field label="Statut" error={errors.status?.message}>
           <Select {...register("status")}>
             <option value="En diffusion">En diffusion</option>
-            <option value="Creation">Creation</option>
+            <option value="Creation">Création</option>
             <option value="En pause">En pause</option>
           </Select>
         </Field>
@@ -97,13 +97,13 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Date de premiere (optionnel)"
+          label="Date de première (optionnel)"
           error={errors.nextDate?.message}
-          hint="Laissez vide si le spectacle est encore en creation."
+          hint="Laissez vide si le spectacle est encore en création."
         >
           <Input type="date" {...register("nextDate")} />
         </Field>
-        <Field label="Budget previsionnel" error={errors.budget?.message}>
+        <Field label="Budget prévisionnel" error={errors.budget?.message}>
           <Input type="number" min="0" step="100" {...register("budget")} />
         </Field>
       </div>
@@ -136,7 +136,7 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
       ) : null}
 
       <Button type="submit" disabled={isSubmitting || isPending}>
-        {show ? "Enregistrer les modifications" : "Creer le spectacle"}
+        {show ? "Enregistrer les modifications" : "Créer le spectacle"}
       </Button>
     </form>
   );

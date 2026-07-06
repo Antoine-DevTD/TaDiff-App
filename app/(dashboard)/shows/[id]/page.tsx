@@ -57,10 +57,10 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
         <StatBlock label="Discipline" value={show.discipline} />
         <StatBlock
           label="Prochaine date"
-          value={show.nextDate ? new Date(show.nextDate).toLocaleDateString("fr-FR") : "A planifier"}
+          value={show.nextDate ? new Date(show.nextDate).toLocaleDateString("fr-FR") : "À planifier"}
         />
         <StatBlock label="Budget" value={`${show.budget.toLocaleString("fr-FR")} EUR`} />
-        <StatBlock label="CA pondere" value={`${weightedRevenue.toLocaleString("fr-FR")} EUR`} />
+        <StatBlock label="CA pondéré" value={`${weightedRevenue.toLocaleString("fr-FR")} EUR`} />
       </section>
 
       {/* Dossier & documents : affiche, avancement, checklist et pieces en un seul bloc. */}
@@ -83,8 +83,8 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
               </div>
               <p className="mt-3 text-sm text-muted">
                 {documentReadiness.missingCount === 0
-                  ? "Le dossier de base est pret pour un depot."
-                  : `${documentReadiness.missingCount} piece(s) restent a completer. Cliquez sur Modifier pour deposer vos fichiers.`}
+                  ? "Le dossier de base est prêt pour un dépôt."
+                  : `${documentReadiness.missingCount} pièce(s) restent à compléter. Cliquez sur Modifier pour déposer vos fichiers.`}
               </p>
             </div>
           </div>
@@ -92,9 +92,9 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
           <div className="space-y-5">
             <div>
               <CardHeader>
-                <CardTitle>Pieces du dossier</CardTitle>
+                <CardTitle>Pièces du dossier</CardTitle>
                 <CardDescription>
-                  Deposez vos fichiers via Modifier : le type est reconnu automatiquement.
+                  Déposez vos fichiers via Modifier : le type est reconnu automatiquement.
                 </CardDescription>
               </CardHeader>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -110,7 +110,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                       <div>
                         <p className="text-sm font-medium">{type}</p>
                         <p className="mt-0.5 text-xs text-muted">
-                          {document?.title || "A ajouter"}
+                          {document?.title || "À ajouter"}
                         </p>
                       </div>
                       <Badge tone={getDocumentStatusTone(status)}>{status}</Badge>
@@ -122,7 +122,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
 
             {documents.length > 0 ? (
               <div className="space-y-3 border-t border-border pt-4">
-                <p className="text-sm font-semibold">Fichiers lies</p>
+                <p className="text-sm font-semibold">Fichiers liés</p>
                 {documents.map((document) => (
                   <div
                     key={document.id}
@@ -140,7 +140,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                           rel="noreferrer"
                           target="_blank"
                         >
-                          {document.storagePath ? "Telecharger" : "Ouvrir"}
+                          {document.storagePath ? "Télécharger" : "Ouvrir"}
                         </a>
                       ) : null}
                       <ShowDocumentDeleteButton documentId={document.id} />
@@ -156,12 +156,12 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
       {/* Rentabilite : structure de couts + verdict des dates dans un seul bloc. */}
       <Card>
         <CardHeader>
-          <CardTitle>Rentabilite</CardTitle>
-          <CardDescription>Base de couts et verdict des dates avant signature.</CardDescription>
+          <CardTitle>Rentabilité</CardTitle>
+          <CardDescription>Base de coûts et verdict des dates avant signature.</CardDescription>
         </CardHeader>
         <div className="grid gap-6 xl:grid-cols-2">
           <div>
-            <p className="mb-3 text-sm font-semibold">Structure de couts</p>
+            <p className="mb-3 text-sm font-semibold">Structure de coûts</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <InfoCell label="Artistes" value={formatCurrency(costProfile.artistFees)} />
               <InfoCell label="Technique" value={formatCurrency(costProfile.technicalFees)} />
@@ -173,7 +173,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
             <p className="mb-3 text-sm font-semibold">Verdict des dates</p>
             <div className="space-y-3">
               {profitabilityRows.length === 0 ? (
-                <EmptyPanel text="Aucune date a calculer." />
+                <EmptyPanel text="Aucune date à calculer." />
               ) : (
                 profitabilityRows.map(({ deal, result }) => {
                   const verdict = getVerdictMeta(result.verdict);
@@ -204,13 +204,13 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
       <Card>
         <CardHeader>
           <CardTitle>Diffusion et relances</CardTitle>
-          <CardDescription>Dates, negociations et actions a suivre sur ce spectacle.</CardDescription>
+          <CardDescription>Dates, négociations et actions à suivre sur ce spectacle.</CardDescription>
         </CardHeader>
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Dates liees</p>
+            <p className="text-sm font-semibold">Dates liées</p>
             {opportunities.length === 0 ? (
-              <EmptyPanel text="Aucune date liee a ce spectacle." />
+              <EmptyPanel text="Aucune date liée à ce spectacle." />
             ) : (
               opportunities.map((deal) => (
                 <div

@@ -151,7 +151,7 @@ export default async function SettingsPage() {
           <div>
             <p className="text-base font-semibold">Compagnie et accès</p>
             <p className="mt-1 text-sm text-muted">
-              Statut d'abonnement et rôle lus depuis la base. Le paiement Stripe viendra alimenter
+              Statut d&apos;abonnement et rôle lus depuis la base. Le paiement Stripe viendra alimenter
               ce statut automatiquement.
             </p>
           </div>

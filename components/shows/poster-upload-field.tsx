@@ -42,7 +42,7 @@ export function PosterUploadField({
   value,
   onChange,
   chooseLabel = "Choisir une image (JPG, PNG, WebP)",
-  emptyHint = "Aucune affiche pour l'instant. L'image sera stockee dans TaDiff.",
+  emptyHint = "Aucune affiche pour l'instant. L'image sera stockée dans TaDiff.",
   maxDimension,
 }: {
   showId: string;
@@ -88,7 +88,7 @@ export function PosterUploadField({
       });
 
       if (!uploadResponse.ok) {
-        setError("L'envoi de l'image a echoue. Reessayez.");
+        setError("L'envoi de l'image a échoué. Réessayez.");
         return;
       }
 
@@ -105,7 +105,7 @@ export function PosterUploadField({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={value}
-            alt="Apercu de l'affiche"
+            alt="Aperçu de l'affiche"
             className="h-28 w-auto rounded-md border border-border object-cover"
           />
           <div className="space-y-2">

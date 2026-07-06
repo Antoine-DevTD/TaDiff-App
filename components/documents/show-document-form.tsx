@@ -100,7 +100,7 @@ export function ShowDocumentForm({ showId }: ShowDocumentFormProps) {
         if (!uploadResponse.ok) {
           setMessage({
             ok: false,
-            text: "L'envoi du fichier a echoue. Reessayez ou utilisez un lien externe.",
+            text: "L'envoi du fichier a échoué. Réessayez ou utilisez un lien externe.",
           });
           return;
         }
@@ -161,7 +161,7 @@ export function ShowDocumentForm({ showId }: ShowDocumentFormProps) {
       </Field>
 
       <Field label="Note" error={errors.notes?.message}>
-        <Textarea placeholder="Version, pieces a revoir, usage subvention..." {...register("notes")} />
+        <Textarea placeholder="Version, pièces à revoir, usage subvention..." {...register("notes")} />
       </Field>
 
       {message ? (

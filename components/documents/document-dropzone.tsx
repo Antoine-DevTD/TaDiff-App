@@ -117,7 +117,7 @@ export function DocumentDropzone({
         });
 
         if (!uploadResponse.ok) {
-          setMessage({ ok: false, text: `Envoi de "${item.file.name}" echoue.` });
+          setMessage({ ok: false, text: `Envoi de "${item.file.name}" échoué.` });
           continue;
         }
 
@@ -140,7 +140,7 @@ export function DocumentDropzone({
 
       if (success > 0) {
         setPending((current) => current.filter((item) => item.error));
-        setMessage({ ok: true, text: `${success} document(s) ajoute(s) au dossier.` });
+        setMessage({ ok: true, text: `${success} document(s) ajouté(s) au dossier.` });
         router.refresh();
         onUploaded?.();
       }
@@ -164,10 +164,10 @@ export function DocumentDropzone({
         onDrop={onDrop}
       >
         <p className="text-sm font-medium text-foreground">
-          Glissez-deposez vos documents ici
+          Glissez-déposez vos documents ici
         </p>
         <p className="mt-1 text-xs text-muted">
-          Le type est detecte automatiquement (affiche, note d&apos;intention, budget...). PDF,
+          Le type est détecté automatiquement (affiche, note d&apos;intention, budget...). PDF,
           image, Word, Excel - 20 Mo max.
         </p>
         <Button
@@ -222,7 +222,7 @@ export function DocumentDropzone({
                     />
                   </label>
                   <label className="block text-xs font-medium text-muted">
-                    Type (detecte)
+                    Type (détecté)
                     <Select
                       className="mt-1"
                       value={item.documentType}

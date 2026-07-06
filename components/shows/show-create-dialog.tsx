@@ -31,7 +31,7 @@ export function ShowCreateDialog({
         onClose={() => setOpen(false)}
         eyebrow="Catalogue"
         title="Nouveau spectacle"
-        description="Ajoutez une creation au catalogue de diffusion."
+        description="Ajoutez une création au catalogue de diffusion."
       >
         <ShowForm onSuccess={() => setOpen(false)} />
       </Dialog>
