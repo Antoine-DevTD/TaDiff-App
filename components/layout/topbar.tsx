@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { dashboardNavItems } from "@/lib/constants";
 import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
+import { AccountMenu } from "@/components/layout/account-menu";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 import { ShowCreateDialog } from "@/components/shows/show-create-dialog";
 
@@ -48,9 +49,7 @@ export function Topbar({
             label="Ajouter un spectacle"
             triggerClassName="hidden rounded-md border border-border bg-panel px-3 py-2 text-sm font-medium shadow-sm shadow-ink/5 transition hover:bg-panel-strong sm:inline-flex"
           />
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white">
-            TD
-          </div>
+          <AccountMenu />
         </div>
       </div>
       <nav className="flex gap-2 overflow-x-auto border-t border-border px-4 py-2 text-sm lg:hidden">
