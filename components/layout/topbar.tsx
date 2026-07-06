@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { dashboardNavItems } from "@/lib/constants";
 import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
+import { ShowCreateDialog } from "@/components/shows/show-create-dialog";
 
 function titleFromPath(pathname: string) {
   const current = dashboardNavItems.find(
@@ -33,12 +34,10 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/shows/new"
-            className="hidden rounded-md border border-border bg-panel px-3 py-2 text-sm font-medium shadow-sm shadow-ink/5 transition hover:bg-panel-strong sm:inline-flex"
-          >
-            Ajouter un spectacle
-          </Link>
+          <ShowCreateDialog
+            label="Ajouter un spectacle"
+            triggerClassName="hidden rounded-md border border-border bg-panel px-3 py-2 text-sm font-medium shadow-sm shadow-ink/5 transition hover:bg-panel-strong sm:inline-flex"
+          />
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white">
             TD
           </div>

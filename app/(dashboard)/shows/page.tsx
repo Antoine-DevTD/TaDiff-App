@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { ShowCreateDialog } from "@/components/shows/show-create-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTitle } from "@/components/ui/page-title";
@@ -20,7 +20,7 @@ export default async function ShowsPage() {
             Catalogue des creations, statuts de diffusion et prochaines dates.
           </p>
         </div>
-        <ButtonLink href="/shows/new">Nouveau spectacle</ButtonLink>
+        <ShowCreateDialog />
       </div>
 
       {shows.length === 0 ? (
