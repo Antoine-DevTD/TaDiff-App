@@ -619,6 +619,65 @@ export async function updateCompanyProfile(
   return { ok: true, message: "Profil de la compagnie enregistre." };
 }
 
+export async function setMemberRole(
+  targetUserId: string,
+  newRole: string,
+): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : role non modifie." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.rpc("set_member_role", {
+    target_user_id: targetUserId,
+    new_role: newRole,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/settings");
+  await logActivity("a change le role d un membre", "team", newRole);
+
+  return { ok: true, message: "Role mis a jour." };
+}
+
+export async function joinCompanyByCode(code: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: false, message: "Mode demo : rejoindre une compagnie demande Supabase." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("join_company_by_code", { code });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+
+  return { ok: true, message: `Vous avez rejoint ${data ?? "la compagnie"}.` };
+}
+
+export async function regenerateInviteCode(): Promise<ActionResult & { code?: string }> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo.", code: "DEMO1234" };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("regenerate_invite_code");
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/settings");
+
+  return { ok: true, message: "Nouveau code genere.", code: data ?? undefined };
+}
+
 export async function prepareShowPosterUpload(values: {
   showId: string;
   fileName: string;

@@ -1,5 +1,15 @@
 export type ShowStatus = "En diffusion" | "Creation" | "En pause";
 
+export type CompanyRoleValue = "owner" | "admin" | "member" | "readonly";
+
+export type CompanyMember = {
+  id: string;
+  fullName: string;
+  role: CompanyRoleValue;
+  email: string;
+  isSelf: boolean;
+};
+
 export type CompanyProfile = {
   id: string;
   name: string;

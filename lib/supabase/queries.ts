@@ -21,6 +21,7 @@ import type {
   ActivityEntry,
   BillingPlan,
   CommercialPack,
+  CompanyMember,
   CompanyProfile,
   Contact,
   EmailCampaign,
@@ -803,6 +804,56 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
     logoUrl: data.logo_url ?? "",
     description: data.description ?? "",
   };
+}
+
+export async function getCompanyMembers(): Promise<CompanyMember[]> {
+  if (!hasSupabaseEnv()) {
+    return [
+      { id: "demo-owner", fullName: "Vous (demo)", role: "owner", email: "demo@tadiff.fr", isSelf: true },
+    ];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("list_company_members");
+
+  if (error || !data) return [];
+
+  return data.map((member) => ({
+    id: member.id,
+    fullName: member.full_name ?? "Sans nom",
+    role: member.role,
+    email: member.email ?? "",
+    isSelf: member.is_self,
+  }));
+}
+
+export async function getCompanyInviteCode(): Promise<string | null> {
+  if (!hasSupabaseEnv()) {
+    return "DEMO1234";
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.company_id) return null;
+
+  const { data } = await supabase
+    .from("companies")
+    .select("invite_code")
+    .eq("id", profile.company_id)
+    .maybeSingle();
+
+  return data?.invite_code ?? null;
 }
 
 export async function getTreasurySnapshots(): Promise<TreasurySnapshot[]> {

@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
+import { TeamAccessPanel } from "@/components/settings/team-access-panel";
 import { DemoCompanyPanel } from "@/components/settings/demo-company-panel";
 import { WorkspaceExportPanel } from "@/components/settings/workspace-export-panel";
 import { hasSupabaseEnv } from "@/lib/env";
@@ -14,6 +15,8 @@ import {
   getCommercialPacks,
   getDashboardData,
   getEmailCampaigns,
+  getCompanyInviteCode,
+  getCompanyMembers,
   getCompanyProfile,
   getGrantOpportunities,
   getPatronageDeals,
@@ -33,6 +36,8 @@ export default async function SettingsPage() {
     activity,
     superAdmin,
     companyProfile,
+    members,
+    inviteCode,
   ] = await Promise.all([
     getDashboardData(),
     getCommercialPacks(),
@@ -45,6 +50,8 @@ export default async function SettingsPage() {
     getActivityLog(15),
     isSuperAdmin(),
     getCompanyProfile(),
+    getCompanyMembers(),
+    getCompanyInviteCode(),
   ]);
   const currentPlan = plans.find((plan) => plan.current) ?? plans[0];
   const backup = {
@@ -86,6 +93,22 @@ export default async function SettingsPage() {
             </p>
           </div>
           <CompanyProfileForm profile={companyProfile} canManage={access.canManage} />
+        </Card>
+      ) : null}
+
+      {members.length > 0 ? (
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">Equipe et acces</p>
+            <p className="mt-1 text-sm text-muted">
+              Membres de la compagnie, roles et code d&apos;invitation.
+            </p>
+          </div>
+          <TeamAccessPanel
+            members={members}
+            inviteCode={inviteCode}
+            canManage={access.canManage}
+          />
         </Card>
       ) : null}
 

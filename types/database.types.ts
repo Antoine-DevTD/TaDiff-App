@@ -26,6 +26,7 @@ export type Database = {
           license_number: string | null;
           logo_url: string | null;
           description: string | null;
+          invite_code: string | null;
           created_at: string;
         };
         Insert: {
@@ -769,6 +770,33 @@ export type Database = {
           target_company_id: string;
         };
         Returns: boolean;
+      };
+      list_company_members: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          full_name: string | null;
+          role: "owner" | "admin" | "member" | "readonly";
+          email: string | null;
+          is_self: boolean;
+        }[];
+      };
+      set_member_role: {
+        Args: {
+          target_user_id: string;
+          new_role: string;
+        };
+        Returns: undefined;
+      };
+      join_company_by_code: {
+        Args: {
+          code: string;
+        };
+        Returns: string;
+      };
+      regenerate_invite_code: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
       };
       current_company_role: {
         Args: Record<PropertyKey, never>;
