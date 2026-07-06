@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { TheatreThemeSwitcher } from "@/components/theme/theatre-theme-switcher";
+import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 import { CompanyDocumentsPanel } from "@/components/settings/company-documents-panel";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { TeamAccessPanel } from "@/components/settings/team-access-panel";
@@ -115,10 +116,17 @@ export default async function SettingsPage() {
         <div>
           <p className="text-base font-semibold">Apparence</p>
           <p className="mt-1 text-sm text-muted">
-            Direction artistique et agencement de l&apos;interface.
+            Mode clair, sombre ou systeme, puis direction artistique de l&apos;interface.
           </p>
         </div>
-        <TheatreThemeSwitcher embedded />
+        <div>
+          <p className="mb-2 text-sm font-medium">Mode</p>
+          <ThemeModeSwitcher />
+        </div>
+        <div className="border-t border-border pt-4">
+          <p className="mb-2 text-sm font-medium">Direction artistique</p>
+          <TheatreThemeSwitcher embedded />
+        </div>
       </Card>
 
       {members.length > 0 ? (

@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 import { GuidedTour } from "@/components/tour/guided-tour";
 import { WilliamAssistant } from "@/components/william/william-assistant";
+import { ThemeApplier } from "@/components/theme/theme-applier";
 import { Topbar } from "@/components/layout/topbar";
 import { hasSupabaseEnv } from "@/lib/env";
 import { isSuperAdmin } from "@/lib/supabase/admin";
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
+      <ThemeApplier />
       <Sidebar variant={superAdmin ? "admin" : "company"} />
       <div className="min-w-0 flex-1">
         <Topbar workspaceLabel={workspaceLabel} />

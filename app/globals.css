@@ -195,6 +195,111 @@ html[data-theatre-theme="regie"] {
   }
 }
 
+/* Loader "servante" : la petite lumiere de scene + orbes fantomatiques. */
+@keyframes servante-glow {
+  0%,
+  100% {
+    opacity: 0.85;
+    filter: blur(0.5px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes servante-halo {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes orb-a {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(38px, -46px) scale(1.15);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-24px, -90px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes orb-b {
+  0% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-42px, -38px) scale(1.1);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(20px, -84px) scale(0.85);
+    opacity: 0;
+  }
+}
+
+@keyframes orb-c {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate(26px, -34px) scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(48px, -78px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.servante-bulb {
+  animation: servante-glow 2.4s ease-in-out infinite;
+}
+
+.servante-halo {
+  animation: servante-halo 2.4s ease-in-out infinite;
+}
+
+.servante-orb {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.55), rgba(147, 197, 253, 0) 70%);
+  filter: blur(1px);
+}
+
+.servante-orb-a {
+  animation: orb-a 5.5s ease-in-out infinite;
+}
+.servante-orb-b {
+  animation: orb-b 6.5s ease-in-out infinite 0.8s;
+}
+.servante-orb-c {
+  animation: orb-c 7s ease-in-out infinite 1.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .servante-bulb,
+  .servante-halo,
+  .servante-orb-a,
+  .servante-orb-b,
+  .servante-orb-c {
+    animation: none;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }

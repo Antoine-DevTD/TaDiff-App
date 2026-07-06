@@ -3,33 +3,26 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { defaultTheatreTheme, theatreThemes, type TheatreThemeId } from "@/lib/theatre-themes";
-
-const storageKey = "tadiff-theatre-theme";
-
-function isTheatreThemeId(value: string | null): value is TheatreThemeId {
-  return theatreThemes.some((theme) => theme.id === value);
-}
+import {
+  applyTheatreTheme,
+  modeStorageKey,
+  resolveTheme,
+  themeStorageKey,
+} from "@/lib/theme-apply";
 
 function applyTheme(themeId: TheatreThemeId) {
-  const theme = theatreThemes.find((item) => item.id === themeId);
-
-  document.documentElement.dataset.theatreTheme = themeId;
-  document.documentElement.dataset.theatreLayout = theme?.layoutName ?? themeId;
-  window.localStorage.setItem(storageKey, themeId);
+  window.localStorage.setItem(themeStorageKey, themeId);
+  // Choix explicite d'un theme = mode "custom" (hors clair/sombre/systeme).
+  window.localStorage.setItem(modeStorageKey, "custom");
+  applyTheatreTheme(themeId);
 }
 
 export function TheatreThemeSwitcher({ embedded = false }: { embedded?: boolean }) {
   const [activeTheme, setActiveTheme] = useState<TheatreThemeId>(defaultTheatreTheme);
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem(storageKey);
-    const resolvedTheme = isTheatreThemeId(storedTheme) ? storedTheme : defaultTheatreTheme;
-    const frameId = window.requestAnimationFrame(() => {
-      applyTheme(resolvedTheme);
-      setActiveTheme(resolvedTheme);
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
+    const id = window.requestAnimationFrame(() => setActiveTheme(resolveTheme()));
+    return () => window.cancelAnimationFrame(id);
   }, []);
 
   const selectedTheme =
