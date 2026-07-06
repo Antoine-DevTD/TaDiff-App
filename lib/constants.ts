@@ -10,14 +10,14 @@ export const dashboardNavItems = [
   {
     group: "Piloter",
     href: "/reminders",
-    label: "A faire",
+    label: "À faire",
     summary: "Relances et urgences",
   },
   {
     group: "Piloter",
     href: "/calendar",
     label: "Agenda",
-    summary: "Dates, echeances et frais",
+    summary: "Dates, échéances et frais",
   },
   {
     group: "Vendre",
@@ -35,18 +35,18 @@ export const dashboardNavItems = [
     group: "Vendre",
     href: "/pipeline",
     label: "Diffusion",
-    summary: "Dates a negocier",
+    summary: "Dates à négocier",
   },
   {
     group: "Vendre",
     href: "/campaigns",
     label: "Campagnes",
-    summary: "Emails et relances groupees",
+    summary: "Emails et relances groupées",
   },
   {
     group: "Financer",
     href: "/finances",
-    label: "Tresorerie",
+    label: "Trésorerie",
     summary: "Cash, frais fixes et projections",
   },
   {
@@ -58,14 +58,14 @@ export const dashboardNavItems = [
   {
     group: "Financer",
     href: "/mecenat",
-    label: "Mecenat",
+    label: "Mécénat",
     summary: "Entreprises et contreparties",
   },
   {
     group: "Produire",
     href: "/documents",
     label: "Documents",
-    summary: "Pieces pretes et manquantes",
+    summary: "Pièces prêtes et manquantes",
   },
   {
     group: "Produire",
@@ -80,10 +80,10 @@ export const dashboardNavItems = [
     summary: "Devis, acomptes et soldes",
   },
   {
-    group: "Reglages",
+    group: "Réglages",
     href: "/settings",
-    label: "Parametres",
-    summary: "Compte et donnees",
+    label: "Paramètres",
+    summary: "Compte et données",
   },
 ];
 
@@ -91,7 +91,7 @@ export const publicNavItems = [
   { href: "/#fonctionnalites", label: "Produit" },
   { href: "/#calculateur", label: "Calculateur" },
   { href: "/#subventions", label: "Subventions" },
-  { href: "/beta", label: "Beta" },
+  { href: "/beta", label: "Bêta" },
   { href: "/pricing", label: "Tarifs" },
   { href: "/login", label: "Connexion" },
 ];

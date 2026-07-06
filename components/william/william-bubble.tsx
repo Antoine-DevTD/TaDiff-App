@@ -32,7 +32,7 @@ export function WilliamBubble({ tips }: { tips: WilliamTip[] }) {
           </div>
           <div className="max-h-96 space-y-3 overflow-y-auto p-4">
             <p className="text-sm text-muted">
-              Salut ! J&apos;ai regarde ta compagnie. Voici ce que je te conseille de faire
+              Salut ! J&apos;ai regardé ta compagnie. Voici ce que je te conseille de faire
               maintenant :
             </p>
             {tips.map((tip) => (

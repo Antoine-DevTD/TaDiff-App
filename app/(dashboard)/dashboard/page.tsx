@@ -73,7 +73,7 @@ function getReminderLabel(reminder: Reminder) {
   const days = getDaysUntil(reminder.dueDate);
 
   if (days < 0) return `En retard de ${Math.abs(days)} j`;
-  if (days === 0) return "Aujourd hui";
+  if (days === 0) return "Aujourd'hui";
   if (days === 1) return "Demain";
   if (days <= 7) return `Dans ${days} j`;
   return new Date(reminder.dueDate).toLocaleDateString("fr-FR");
@@ -91,16 +91,16 @@ function getShowTone(show: Show): Tone {
 
 function getToneLabel(tone: Tone) {
   if (tone === "success") return "OK";
-  if (tone === "warning") return "A surveiller";
+  if (tone === "warning") return "À surveiller";
   if (tone === "danger") return "Urgent";
-  return "A traiter";
+  return "À traiter";
 }
 
 function getDeadlineLabel(date: string) {
   const days = getDaysUntil(date);
 
-  if (days < 0) return `Depassee de ${Math.abs(days)} j`;
-  if (days === 0) return "Aujourd hui";
+  if (days < 0) return `Dépassée de ${Math.abs(days)} j`;
+  if (days === 0) return "Aujourd'hui";
   if (days === 1) return "Demain";
   return `Dans ${days} j`;
 }
@@ -188,7 +188,7 @@ function buildTheatreActions({
     actions.push({
       detail: `${urgentGrant.funder} - ${formatCurrency(urgentGrant.amount)}`,
       href: "/subventions",
-      label: days <= 7 ? "Dossier urgent" : "Dossier a preparer",
+      label: days <= 7 ? "Dossier urgent" : "Dossier à préparer",
       title: `${urgentGrant.title} - ${getDeadlineLabel(urgentGrant.deadline)}`,
       tone: days <= 7 ? "danger" : "warning",
     });
@@ -196,7 +196,7 @@ function buildTheatreActions({
 
   if (priorityDeal) {
     actions.push({
-      detail: `${priorityDeal.contactName} - ${formatCurrency(getWeightedValue(priorityDeal))} ponderes`,
+      detail: `${priorityDeal.contactName} - ${formatCurrency(getWeightedValue(priorityDeal))} pondérés`,
       href: "/pipeline",
       label: "Diffusion",
       title: priorityDeal.nextAction || priorityDeal.title,
@@ -206,19 +206,19 @@ function buildTheatreActions({
 
   if (documentMissingCount > 0) {
     actions.push({
-      detail: `${documentMissingCount} piece(s) manquante(s) dans les dossiers spectacle`,
+      detail: `${documentMissingCount} pièce(s) manquante(s) dans les dossiers spectacle`,
       href: "/documents",
       label: "Dossiers",
-      title: "Completer les pieces avant depot ou vente",
+      title: "Compléter les pièces avant dépôt ou vente",
       tone: "warning",
     });
   }
 
   if (cashToCollect > 0) {
     actions.push({
-      detail: `${formatCurrency(cashToCollect)} a encaisser sous 30 jours`,
+      detail: `${formatCurrency(cashToCollect)} à encaisser sous 30 jours`,
       href: "/billing",
-      label: "Tresorerie",
+      label: "Trésorerie",
       title: "Suivre les acomptes et soldes",
       tone: "neutral",
     });
@@ -290,14 +290,14 @@ export default async function DashboardPage() {
   const onboardingSteps: OnboardingStep[] = [
     {
       id: "show",
-      label: "Creer votre premier spectacle",
+      label: "Créer votre premier spectacle",
       detail: "Titre, discipline, budget : le dossier central de la compagnie.",
       href: "/shows/new",
       done: shows.length > 0,
     },
     {
       id: "documents",
-      label: "Ajouter les pieces du dossier",
+      label: "Ajouter les pièces du dossier",
       detail: "Affiche, dossier artistique, budget : tout part de la fiche spectacle.",
       href: firstShowId ? `/shows/${firstShowId}` : "/shows",
       done: documents.length > 0,
@@ -311,7 +311,7 @@ export default async function DashboardPage() {
     },
     {
       id: "treasury",
-      label: "Saisir votre solde de tresorerie",
+      label: "Saisir votre solde de trésorerie",
       detail: "Le cockpit calcule votre marge et votre date de risque.",
       href: "/finances",
       done: treasury !== null,
@@ -319,14 +319,14 @@ export default async function DashboardPage() {
     {
       id: "contacts",
       label: "Ajouter ou importer vos contacts",
-      detail: "A la main ou en CSV : votre carnet de diffusion.",
+      detail: "À la main ou en CSV : votre carnet de diffusion.",
       href: "/contacts/new",
       done: contacts.length > 0,
     },
     {
       id: "opportunity",
-      label: "Creer une premiere date possible",
-      detail: "Un contact + un spectacle = une date a faire avancer.",
+      label: "Créer une première date possible",
+      detail: "Un contact + un spectacle = une date à faire avancer.",
       href: "/pipeline",
       done: pipelineDeals.length > 0,
     },
@@ -369,7 +369,7 @@ export default async function DashboardPage() {
                   }
                 />
                 <p className="mt-3 max-w-2xl text-sm text-muted">
-                  Tresorerie, diffusion, dossiers et echeances reunis dans une seule lecture.
+                  Trésorerie, diffusion, dossiers et échéances réunis dans une seule lecture.
                 </p>
               </div>
               <Badge tone={cashPilot.status}>{getToneLabel(cashPilot.status)}</Badge>
@@ -390,7 +390,7 @@ export default async function DashboardPage() {
               value={formatCurrency(cashPilot.weightedPipeline)}
             />
             <PulseMetric
-              detail={`${documentMissingCount} piece(s) manquante(s)`}
+              detail={`${documentMissingCount} pièce(s) manquante(s)`}
               label="Qu'est-ce qui bloque ?"
               tone={productionTone}
               value={`${Math.max(0, activeShows.length - showReadiness.filter((item) => item.readiness.missingCount > 0).length)}/${activeShows.length}`}
@@ -408,15 +408,15 @@ export default async function DashboardPage() {
               <>
                 <PlannedFeatureBadge kind="demo-data" />
                 <span>
-                  Le solde de tresorerie est une valeur de demonstration. Connectez Supabase pour
-                  saisir le solde reel.
+                  Le solde de trésorerie est une valeur de démonstration. Connectez Supabase pour
+                  saisir le solde réel.
                 </span>
               </>
             ) : treasury ? (
               <span>
                 Solde bancaire saisi le {new Date(treasury.recordedOn).toLocaleDateString("fr-FR")}.{" "}
                 <Link className="font-medium text-accent hover:text-accent-strong" href="/finances">
-                  Mettre a jour dans Finances
+                  Mettre à jour dans Finances
                 </Link>
               </span>
             ) : (
@@ -446,7 +446,7 @@ export default async function DashboardPage() {
           </div>
           <p className="text-sm text-muted">
             {mainAction?.detail ??
-              "Le cockpit restera clair tant que les relances, dossiers et encaissements restent a jour."}
+              "Le cockpit restera clair tant que les relances, dossiers et encaissements restent à jour."}
           </p>
           <div className="flex flex-wrap gap-3">
             {mainAction ? (
@@ -466,7 +466,7 @@ export default async function DashboardPage() {
         <Card className="theme-cockpit-roadmap space-y-4 p-5" data-tour="cockpit-plan">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              A faire maintenant
+              À faire maintenant
             </p>
             <DashboardSectionTitle
               className="text-2xl"
@@ -475,7 +475,7 @@ export default async function DashboardPage() {
             />
           </div>
           {theatreActions.length === 0 ? (
-            <EmptyBlock text="Aucune action critique pour le moment. Tout est a jour." />
+            <EmptyBlock text="Aucune action critique pour le moment. Tout est à jour." />
           ) : (
             <div className="space-y-3">
               {theatreActions.map((action, index) => (
@@ -511,7 +511,7 @@ export default async function DashboardPage() {
               <DashboardSectionTitle
                 className="text-xl"
                 href="/shows"
-                title="Ce qui peut etre vendu ou depose"
+                title="Ce qui peut être vendu ou déposé"
               />
             </div>
             <ButtonLink href="/shows" variant="secondary">
@@ -541,7 +541,7 @@ export default async function DashboardPage() {
                           {show.discipline} -{" "}
                           {show.nextDate
                             ? new Date(show.nextDate).toLocaleDateString("fr-FR")
-                            : "Date a poser"}
+                            : "Date à poser"}
                         </p>
                       </div>
                       <Badge tone={getShowTone(show)}>{show.status}</Badge>
@@ -570,7 +570,7 @@ export default async function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Aujourd&apos;hui
               </p>
-              <DashboardSectionTitle className="text-xl" href="/reminders" title="Relances et echeances" />
+              <DashboardSectionTitle className="text-xl" href="/reminders" title="Relances et échéances" />
             </div>
             <ButtonLink href="/reminders" variant="secondary">
               A faire
@@ -603,8 +603,8 @@ export default async function DashboardPage() {
 
       {contacts.length === 0 && shows.length === 0 && pipelineDeals.length === 0 && reminders.length === 0 ? (
         <EmptyState
-          title="Le cockpit attend les premieres donnees"
-          description="Un spectacle, quelques contacts et une date possible suffisent pour faire remonter les priorites."
+          title="Le cockpit attend les premières données"
+          description="Un spectacle, quelques contacts et une date possible suffisent pour faire remonter les priorités."
         />
       ) : null}
     </div>

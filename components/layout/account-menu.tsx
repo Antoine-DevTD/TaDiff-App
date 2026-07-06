@@ -50,7 +50,7 @@ export function AccountMenu({ initials = "TD" }: { initials?: string }) {
             className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-panel-strong"
           >
             <Settings className="h-4 w-4 text-muted" aria-hidden />
-            Parametres compagnie
+            Paramètres compagnie
           </Link>
           <button
             type="button"
@@ -69,7 +69,7 @@ export function AccountMenu({ initials = "TD" }: { initials?: string }) {
             className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
           >
             <LogOut className="h-4 w-4" aria-hidden />
-            Se deconnecter
+            Se déconnecter
           </button>
         </div>
       ) : null}

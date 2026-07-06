@@ -25,15 +25,15 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
           </p>
           <h2 className="mt-2 text-xl font-semibold">
             {nextStep
-              ? `Prochaine etape : ${nextStep.label.toLowerCase()}`
+              ? `Prochaine étape : ${nextStep.label.toLowerCase()}`
               : "Votre compagnie est en place."}
           </h2>
           <p className="mt-1 text-sm text-muted">
-            {doneCount}/{steps.length} etapes faites. Du premier spectacle jusqu&apos;a la
-            premiere relance, chaque etape alimente le cockpit.
+            {doneCount}/{steps.length} étapes faites. Du premier spectacle jusqu&apos;à la
+            première relance, chaque étape alimente le cockpit.
           </p>
         </div>
-        <TourLauncher label="Visite guidee (3 min)" />
+        <TourLauncher label="Visite guidée (3 min)" />
       </div>
 
       <div className="h-2 overflow-hidden rounded-full bg-border">
@@ -57,7 +57,7 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
                 {step.done ? "✓" : index + 1}
               </span>
               <Badge tone={step.done ? "success" : "neutral"}>
-                {step.done ? "Fait" : "A faire"}
+                {step.done ? "Fait" : "À faire"}
               </Badge>
             </div>
             <p className="mt-3 font-medium">{step.label}</p>

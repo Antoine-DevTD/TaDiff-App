@@ -42,7 +42,7 @@ export function buildWilliamTips({
     tips.push({
       id: "reminders-overdue",
       title: `${overdue.length} relance(s) en retard`,
-      detail: "Traite-les en priorite pour ne pas perdre une date ou une reponse.",
+      detail: "Traite-les en priorité pour ne pas perdre une date ou une réponse.",
       href: "/reminders",
       tone: "danger",
     });
@@ -56,8 +56,8 @@ export function buildWilliamTips({
   if (soonGrants.length > 0) {
     tips.push({
       id: "grants-soon",
-      title: `${soonGrants.length} subvention(s) a deposer sous 14 jours`,
-      detail: "Verifie les pieces du dossier et prepare le depot depuis le radar.",
+      title: `${soonGrants.length} subvention(s) à déposer sous 14 jours`,
+      detail: "Vérifie les pièces du dossier et prépare le dépôt depuis le radar.",
       href: "/subventions",
       tone: "warning",
     });
@@ -66,7 +66,7 @@ export function buildWilliamTips({
   if (!treasury) {
     tips.push({
       id: "treasury-missing",
-      title: "Solde de tresorerie non renseigne",
+      title: "Solde de trésorerie non renseigné",
       detail: "Renseigne ton solde bancaire pour une projection fiable et une date de risque juste.",
       href: "/finances",
       tone: "warning",
@@ -77,8 +77,8 @@ export function buildWilliamTips({
   if (missingDocs > 0) {
     tips.push({
       id: "docs-missing",
-      title: `${missingDocs} piece(s) de dossier manquante(s)`,
-      detail: "Complete les dossiers spectacle pour etre pret a deposer ou a vendre.",
+      title: `${missingDocs} pièce(s) de dossier manquante(s)`,
+      detail: "Complète les dossiers spectacle pour être prêt à déposer ou à vendre.",
       href: "/shows",
       tone: "info",
     });
@@ -87,8 +87,8 @@ export function buildWilliamTips({
   if (tips.length === 0) {
     tips.push({
       id: "all-good",
-      title: "Tout est sous controle",
-      detail: "Aucune urgence detectee. Continue a alimenter tes dates et tes dossiers.",
+      title: "Tout est sous contrôle",
+      detail: "Aucune urgence détectée. Continue à alimenter tes dates et tes dossiers.",
       href: "/dashboard",
       tone: "success",
     });

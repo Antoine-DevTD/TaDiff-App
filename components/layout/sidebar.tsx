@@ -16,13 +16,13 @@ const adminNavItems = [
   {
     href: "/admin",
     label: "Supervision",
-    summary: "Compagnies, billing, beta, retours",
+    summary: "Compagnies, billing, bêta, retours",
     initials: "SU",
   },
 ];
 
 const adminPlannedItems = [
-  { label: "Catalogues subventions", summary: "Fonction prevue - Phase C", initials: "CA" },
+  { label: "Catalogues subventions", summary: "Fonction prévue - Phase C", initials: "CA" },
 ];
 
 export function Sidebar({ variant = "company" }: { variant?: "admin" | "company" }) {

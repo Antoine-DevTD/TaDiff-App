@@ -23,7 +23,7 @@ export function SignOutButton() {
       onClick={handleSignOut}
     >
       <LogOut className="h-4 w-4" aria-hidden />
-      Se deconnecter
+      Se déconnecter
     </button>
   );
 }
