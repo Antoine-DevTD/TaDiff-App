@@ -18,7 +18,7 @@ export function WilliamBubble({ tips }: { tips: WilliamTip[] }) {
   const urgentCount = tips.filter((tip) => tip.tone === "danger" || tip.tone === "warning").length;
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 print:hidden">
+    <div className="fixed bottom-5 right-5 z-40 hidden flex-col items-end gap-3 sm:flex print:hidden">
       {open ? (
         <div className="w-80 max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-xl border border-border bg-panel shadow-xl shadow-ink/20">
           <div className="flex items-center justify-between gap-3 border-b border-border bg-accent px-4 py-3 text-white">

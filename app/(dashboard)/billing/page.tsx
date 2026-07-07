@@ -2,10 +2,14 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { StripeCheckoutForm } from "@/components/billing/stripe-checkout-form";
 import { PageTitle } from "@/components/ui/page-title";
 import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
 import { formatCurrency, getFixedCostSharePerPerformance } from "@/lib/finance";
 import { getBillingPlans, getFixedCosts, getQuoteItems } from "@/lib/supabase/queries";
+import { hasSupabaseAdminEnv } from "@/lib/supabase/admin-client";
+import { hasStripePrice } from "@/lib/stripe/plans";
+import { hasStripeEnv, hasStripeWebhookEnv } from "@/lib/stripe/server";
 import type { QuoteItem } from "@/types";
 
 function getQuoteTone(status: QuoteItem["status"]) {
@@ -27,6 +31,8 @@ export default async function BillingPage() {
     costs: fixedCosts,
     targetPerformancesPerYear: 24,
   });
+  const stripeReady = hasStripeEnv() && hasStripeWebhookEnv() && hasSupabaseAdminEnv();
+  const betaPriceReady = hasStripePrice("beta");
 
   return (
     <div className="space-y-6">
@@ -91,10 +97,37 @@ export default async function BillingPage() {
               <div>
                 <p className="text-base font-semibold">Stripe</p>
                 <p className="mt-1 text-sm text-muted">
-                  Les plans sont modelises. L activation attend les cles Stripe et le webhook.
+                  Checkout est branche en mode test. Le webhook met a jour le statut compagnie
+                  quand Stripe confirme ou refuse le paiement.
                 </p>
               </div>
-              <PlannedFeatureBadge className="shrink-0" />
+              <Badge className="shrink-0" tone={stripeReady && betaPriceReady ? "success" : "warning"}>
+                {stripeReady && betaPriceReady ? "Mode test pret" : "Configuration incomplete"}
+              </Badge>
+            </div>
+            <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="font-medium">Beta pilote</p>
+                  <p className="mt-1 text-sm text-muted">
+                    Abonnement test a 19,99 EUR / mois pour les 10 compagnies de la beta.
+                  </p>
+                </div>
+                <p className="shrink-0 text-sm font-semibold">19,99 EUR</p>
+              </div>
+              <StripeCheckoutForm
+                className="mt-4 w-full sm:w-auto"
+                disabled={!stripeReady || !betaPriceReady}
+                planCode="beta"
+              >
+                Demarrer le paiement test
+              </StripeCheckoutForm>
+              {!stripeReady || !betaPriceReady ? (
+                <p className="mt-3 text-xs text-muted">
+                  Variables requises : STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+                  STRIPE_PRICE_BETA_MONTHLY, SUPABASE_SERVICE_ROLE_KEY.
+                </p>
+              ) : null}
             </div>
             <div className="space-y-3">
               {plans.map((plan) => (

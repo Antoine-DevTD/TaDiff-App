@@ -1,9 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { StripeCheckoutForm } from "@/components/billing/stripe-checkout-form";
 import { billingPlans } from "@/data/mock-data";
+import { hasStripeEnv } from "@/lib/stripe/server";
+import { hasStripePrice, isStripePlanCode } from "@/lib/stripe/plans";
 
 export default function PricingPage() {
+  const stripeReady = hasStripeEnv();
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="max-w-3xl">
@@ -12,8 +17,8 @@ export default function PricingPage() {
           Simple, transparent, sans mauvaise surprise.
         </h1>
         <p className="mt-4 text-muted">
-          Les plans reprennent la grille cible de TaDiff. Le paiement Stripe est prepare
-          dans le module facturation, sans activation tant que les cles ne sont pas configurees.
+          Les plans reprennent la grille cible de TaDiff. En mode test, Stripe peut deja
+          encaisser un abonnement et synchroniser le statut compagnie.
         </p>
       </div>
 
@@ -41,12 +46,18 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <ButtonLink
-              href="/signup"
-              className="mt-6 w-full"
-            >
-              {plan.id === "studio" ? "Contacter l'equipe" : "Commencer"}
-            </ButtonLink>
+            {isStripePlanCode(plan.id) && stripeReady && hasStripePrice(plan.id) ? (
+              <StripeCheckoutForm className="mt-6 w-full" planCode={plan.id}>
+                {plan.id === "studio" ? "Contacter l'equipe" : "Commencer"}
+              </StripeCheckoutForm>
+            ) : (
+              <ButtonLink
+                href={plan.id === "studio" ? "/beta" : "/signup"}
+                className="mt-6 w-full"
+              >
+                {plan.id === "studio" ? "Contacter l'equipe" : "Commencer"}
+              </ButtonLink>
+            )}
           </Card>
         ))}
       </div>
@@ -54,8 +65,9 @@ export default function PricingPage() {
       <Card className="mt-8 p-5">
         <p className="font-semibold">Paiement et donnees</p>
         <p className="mt-2 text-sm text-muted">
-          Paiement Stripe, abonnement resiliable, donnees hebergees en Europe et export
-          FEC prevu pour la passerelle comptable.
+          Paiement Stripe Checkout, abonnement resiliable, donnees hebergees en Europe et export
+          FEC prevu pour la passerelle comptable. Si Stripe n&apos;est pas configure, les boutons
+          renvoient vers l&apos;inscription classique.
         </p>
       </Card>
     </main>

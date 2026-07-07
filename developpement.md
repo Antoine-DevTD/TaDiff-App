@@ -1152,7 +1152,7 @@ Etat au 2026-07-05 :
 8. CRM : import contacts + relance personnalisee. -> import fait ; email personnalise a brancher (Resend).
 9. Devis : prix avec frais fixes lisses. -> devis editables ; lissage affiche, integration auto dans le montant a renforcer.
 10. Contrats : galerie de templates. -> en attente des templates fournis par Tony.
-11. Stripe test. -> placeholder assume, a brancher (priorite suivante).
+11. Stripe test. -> code checkout/webhook branche ; reste migration 020 + cles env + test paiement complet.
 12. Donnees demo realistes. -> fait : bouton "Installer la compagnie de demonstration" dans /settings (Compagnie de l'Estran, dates relatives au jour J, espace vierge requis).
 
 ## 12. Phrase produit de travail

@@ -48,12 +48,21 @@ type SpotlightRect = {
   bottom: number;
 };
 
+type ViewportSize = {
+  width: number;
+  height: number;
+};
+
+const tourEase = "cubic-bezier(0.22, 1, 0.36, 1)";
+
 export function GuidedTour() {
   const pathname = usePathname();
   const router = useRouter();
   const [state, setState] = useState<TourState>(inactiveState);
   const [rect, setRect] = useState<SpotlightRect | null>(null);
   const [targetMissing, setTargetMissing] = useState(false);
+  const [viewport, setViewport] = useState<ViewportSize>({ width: 1024, height: 768 });
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -80,6 +89,29 @@ export function GuidedTour() {
     return () => window.removeEventListener(tourStartEvent, onStart);
   }, [router]);
 
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function syncPreferences() {
+      setPrefersReducedMotion(media.matches);
+    }
+
+    function syncViewport() {
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+    }
+
+    syncPreferences();
+    syncViewport();
+
+    media.addEventListener("change", syncPreferences);
+    window.addEventListener("resize", syncViewport);
+
+    return () => {
+      media.removeEventListener("change", syncPreferences);
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
   const step = state.active ? overviewTourSteps[state.step] : undefined;
   const onStepPage = step ? pathname === step.path : false;
   const targetName = step?.target ?? null;
@@ -101,7 +133,6 @@ export function GuidedTour() {
 
       if (!element) {
         setTargetMissing(true);
-        setRect(null);
         return;
       }
 
@@ -116,18 +147,27 @@ export function GuidedTour() {
       });
     }
 
-    const element = document.querySelector(`[data-tour="${targetName}"]`);
-    element?.scrollIntoView({ block: "center" });
-
-    const timer = window.setTimeout(measure, 80);
-
-    function onViewportChange() {
+    function scheduleMeasure() {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(measure);
     }
 
+    const element = document.querySelector(`[data-tour="${targetName}"]`);
+    element?.scrollIntoView({
+      block: "center",
+      inline: "nearest",
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+
+    const timer = window.setTimeout(measure, prefersReducedMotion ? 40 : 180);
+
+    function onViewportChange() {
+      scheduleMeasure();
+    }
+
     window.addEventListener("resize", onViewportChange);
     window.addEventListener("scroll", onViewportChange, true);
+    scheduleMeasure();
 
     return () => {
       window.clearTimeout(timer);
@@ -135,7 +175,7 @@ export function GuidedTour() {
       window.removeEventListener("resize", onViewportChange);
       window.removeEventListener("scroll", onViewportChange, true);
     };
-  }, [step, onStepPage, targetName, state.step]);
+  }, [step, onStepPage, targetName, state.step, prefersReducedMotion]);
 
   if (!state.active || !step) {
     return null;
@@ -195,32 +235,42 @@ export function GuidedTour() {
   }
 
   const showSpotlight = Boolean(targetName && rect && !targetMissing);
-  const cardWidth = Math.min(380, window.innerWidth - 32);
-  const cardStyle = showSpotlight && rect
-    ? {
-        width: cardWidth,
-        left: Math.min(
-          Math.max(16, rect.left + rect.width / 2 - cardWidth / 2),
-          window.innerWidth - cardWidth - 16,
-        ),
-        ...(rect.bottom + 250 < window.innerHeight
-          ? { top: rect.bottom + 14 }
-          : { top: Math.max(16, rect.top - 250) }),
-      }
-    : undefined;
+  const cardWidth = Math.min(380, viewport.width - 32);
+  const motionStyle = prefersReducedMotion
+    ? undefined
+    : { transitionTimingFunction: tourEase };
+  const cardStyle = (() => {
+    if (!showSpotlight || !rect) return undefined;
+
+    const cardHeightEstimate = 252;
+    const top = rect.bottom + cardHeightEstimate + 20 < viewport.height
+      ? rect.bottom + 16
+      : Math.max(16, rect.top - cardHeightEstimate - 16);
+
+    return {
+      width: cardWidth,
+      left: Math.min(
+        Math.max(16, rect.left + rect.width / 2 - cardWidth / 2),
+        viewport.width - cardWidth - 16,
+      ),
+      top,
+      ...motionStyle,
+    };
+  })();
 
   const card = (
     <div
-      className="fixed z-50 rounded-lg border border-border bg-panel p-5 shadow-xl shadow-ink/25"
+      className="fixed z-50 rounded-lg border border-border bg-panel p-5 opacity-100 shadow-xl shadow-ink/25 transition-[top,left,transform,opacity] duration-500 motion-reduce:transition-none"
       style={cardStyle ?? {
         width: cardWidth,
         left: "50%",
         top: "50%",
         transform: "translate(-50%, -50%)",
+        ...motionStyle,
       }}
     >
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-        William - visite guidee · {state.step + 1}/{total}
+        William - visite guidee - {state.step + 1}/{total}
       </p>
       <p className="mt-2 text-lg font-semibold">{step.title}</p>
       <p className="mt-2 text-sm text-muted">{step.body}</p>
@@ -258,17 +308,18 @@ export function GuidedTour() {
     <>
       {showSpotlight && rect ? (
         <div
-          className="pointer-events-none fixed z-40 rounded-xl border-2 border-accent transition-all duration-200"
+          className="pointer-events-none fixed z-40 rounded-xl border-2 border-accent transition-[top,left,width,height,box-shadow,opacity] duration-500 motion-reduce:transition-none"
           style={{
             top: rect.top - 8,
             left: rect.left - 8,
             width: rect.width + 16,
             height: rect.height + 16,
             boxShadow: "0 0 0 9999px rgba(8, 8, 14, 0.62)",
+            ...motionStyle,
           }}
         />
       ) : (
-        <div className="fixed inset-0 z-40 bg-ink/60" />
+        <div className="fixed inset-0 z-40 bg-ink/60 transition-opacity duration-500 motion-reduce:transition-none" style={motionStyle} />
       )}
       {card}
     </>

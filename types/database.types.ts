@@ -17,6 +17,10 @@ export type Database = {
           plan_code: string;
           comped_until: string | null;
           billing_notes: string | null;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          stripe_price_id: string | null;
+          stripe_current_period_end: string | null;
           city: string | null;
           discipline: string | null;
           email: string | null;
@@ -36,6 +40,10 @@ export type Database = {
           plan_code?: string;
           comped_until?: string | null;
           billing_notes?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          stripe_price_id?: string | null;
+          stripe_current_period_end?: string | null;
           city?: string | null;
           discipline?: string | null;
           email?: string | null;
@@ -54,6 +62,10 @@ export type Database = {
           plan_code?: string;
           comped_until?: string | null;
           billing_notes?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          stripe_price_id?: string | null;
+          stripe_current_period_end?: string | null;
           city?: string | null;
           discipline?: string | null;
           email?: string | null;

@@ -143,7 +143,7 @@ Partiellement en place :
 - Supabase : CRUD complet sur spectacle (edit/suppression via /shows/[id]/edit), contact (/contacts/[id]/edit), opportunite, document, relance (fait + suppression), frais fixe (creation + suppression) ; reste : update devis/statut devis, update relance, update frais fixe ;
 - documents : upload reel Supabase Storage branche (migration 011) : fichiers 20 Mo max par compagnie, telechargement via URL signee, suppression ; reste : association a contact/devis/contrat, page documents globale avec upload direct ;
 - email : planning/templates existent, envoi Resend reel non branche (page campagnes marquee "non branchee") ;
-- Stripe : PLACEHOLDER ASSUME. UI et plans existent, badge "Fonction prevue - non branchee" sur la carte Stripe de /billing, detection de STRIPE_SECRET_KEY dans /settings. Reste a faire : produits/prix Stripe (beta 19,99 EUR), checkout, webhook qui alimente `companies.billing_status`, gestion echecs de paiement. Ne pas presenter le paiement comme actif tant que ce n'est pas fait ;
+- Stripe : code checkout + webhook branche en mode test (`/api/stripe/webhook`, `STRIPE_PRICE_BETA_MONTHLY`, migration 020). Reste activation operationnelle : appliquer la migration, ajouter `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, le price id beta Stripe, puis tester un paiement complet. Ne pas presenter le paiement comme actif tant que les cles ne sont pas posees ;
 - finances : projections + solde saisi OK, vraie compta/transactions/rapprochement bancaire non (import CSV bancaire a venir) ;
 - subventions importees : certaines deadlines des dispositifs de reference sont indicatives (precise dans leur champ eligibilite), a verifier avant depot ;
 - logs d'activite : non complet ;
@@ -451,11 +451,10 @@ radar subventions branche + import de 10 dispositifs de reference.
 
 Si aucune tache plus precise n'est donnee, travailler sur :
 
-1. Stripe mode test : produits/prix (beta 19,99 EUR), checkout, webhook -> `companies.billing_status` (attend les cles de Titouan) ;
+1. Stripe mode test : code checkout/webhook fait ; appliquer migration 020, creer le prix beta 19,99 EUR, poser les cles env, tester un paiement complet -> `companies.billing_status` ;
 2. emails Resend : envoi depuis fiche contact, templates, historique, brouillons si non branche (attend la cle Resend) ;
 3. page beta : verifier compteur 10 places + liste d'attente 30 en conditions reelles ;
 4. editeur de budget avance + contrats de corealisation (minimum garanti lieu/compagnie puis partage des recettes, simulation de remplissage jauge x prix x taux) : cadre dans developpement.md section Devis, backlog apres le 23 juillet ;
 5. console super admin : Phase A (supervision + billing) et Phase B (retours/bugs) FAITES ; reste Phase C catalogues globaux subventions/mecenat (voir developpement.md "Console super admin") ;
 6. association documents <-> contact/devis/contrat + upload direct depuis la page Documents ;
 7. vue mois/semaine du calendrier.
-
