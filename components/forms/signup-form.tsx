@@ -60,6 +60,15 @@ export function SignupForm() {
         return;
       }
 
+      await fetch("/api/audit/access", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          eventType: "signup",
+          path: "/dashboard",
+        }),
+      }).catch(() => null);
+
       router.push("/dashboard");
       router.refresh();
       return;

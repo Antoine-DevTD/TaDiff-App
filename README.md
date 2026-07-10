@@ -49,11 +49,44 @@ STRIPE_PRICE_SOLO_MONTHLY=
 STRIPE_PRICE_PRO_MONTHLY=
 STRIPE_PRICE_STUDIO_MONTHLY=
 RESEND_API_KEY=
+
+TADIFF_MAINTENANCE_MODE=false
+TADIFF_MAINTENANCE_ALLOWED_IPS=
+TADIFF_MAINTENANCE_BYPASS_TOKEN=
 ```
 
 Without Supabase variables, the app uses mock data and demo auth messages.
 Without Stripe or email variables, billing and campaigns stay in preview mode.
 Stripe webhooks require `SUPABASE_SERVICE_ROLE_KEY`; this key must stay server-side only.
+
+## Access Audit and Maintenance
+
+Apply `sql/021_access_audit_and_maintenance.sql` to enable authenticated access logs
+in `/admin`. The audit route records login, signup and dashboard page views with account,
+company, IP address, user agent and path.
+
+Apply `sql/022_maintenance_toggle.sql` to enable the maintenance switch. Maintenance mode
+is disabled by default and can be toggled instantly from `/admin` (no redeploy) — this
+is the normal way to turn it on or off.
+
+`TADIFF_MAINTENANCE_MODE` is an emergency override that stays available via env var
+(takes priority over the DB flag, requires a redeploy to change). To keep access for
+selected devices during maintenance, set:
+
+```txt
+TADIFF_MAINTENANCE_ALLOWED_IPS=1.2.3.4
+TADIFF_MAINTENANCE_BYPASS_TOKEN=<long-random-token>
+```
+
+An allowed device can then open:
+
+```txt
+https://your-domain.example/?maintenance_token=<long-random-token>
+```
+
+The token is stored in an HTTP-only cookie for 14 days. Visitors without matching IP
+or token see `/maintenance`, whether maintenance mode was turned on from `/admin` or
+via `TADIFF_MAINTENANCE_MODE`.
 
 ## Implemented
 

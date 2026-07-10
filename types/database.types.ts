@@ -627,6 +627,74 @@ export type Database = {
           },
         ];
       };
+      app_settings: {
+        Row: {
+          id: boolean;
+          maintenance_mode: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: boolean;
+          maintenance_mode?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          maintenance_mode?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      access_events: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          email: string | null;
+          company_id: string | null;
+          company_name: string | null;
+          actor_name: string;
+          event_type: "login" | "signup" | "page_view";
+          path: string | null;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          email?: string | null;
+          company_id?: string | null;
+          company_name?: string | null;
+          actor_name?: string;
+          event_type: "login" | "signup" | "page_view";
+          path?: string | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          email?: string | null;
+          company_id?: string | null;
+          company_name?: string | null;
+          actor_name?: string;
+          event_type?: "login" | "signup" | "page_view";
+          path?: string | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "access_events_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       feedback: {
         Row: {
           id: string;
@@ -1023,6 +1091,30 @@ export type Database = {
           message: string;
           status: "nouveau" | "en_cours" | "traite";
           admin_response: string | null;
+          created_at: string;
+        }[];
+      };
+      admin_set_maintenance_mode: {
+        Args: {
+          enabled: boolean;
+        };
+        Returns: undefined;
+      };
+      admin_list_access_events: {
+        Args: {
+          limit_count?: number;
+        };
+        Returns: {
+          id: string;
+          user_id: string | null;
+          email: string | null;
+          company_id: string | null;
+          company_name: string | null;
+          actor_name: string;
+          event_type: "login" | "signup" | "page_view";
+          path: string | null;
+          ip_address: string | null;
+          user_agent: string | null;
           created_at: string;
         }[];
       };

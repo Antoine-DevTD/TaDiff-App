@@ -52,6 +52,30 @@ export async function adminSetFeedbackStatus(
   return { ok: true, message: "Retour mis a jour." };
 }
 
+export async function adminSetMaintenanceMode(enabled: boolean): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: false, message: "La console admin demande une base Supabase connectee." };
+  }
+
+  if (!(await isSuperAdmin())) {
+    return { ok: false, message: "Acces reserve aux super admins." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_set_maintenance_mode", { enabled });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/admin");
+
+  return {
+    ok: true,
+    message: enabled ? "Mode maintenance active." : "Mode maintenance desactive.",
+  };
+}
+
 export async function adminUpdateCompanyBilling(
   companyId: string,
   values: AdminBillingFormInput,

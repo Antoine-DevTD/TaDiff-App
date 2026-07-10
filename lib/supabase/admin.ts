@@ -47,6 +47,20 @@ export type AdminFeedback = {
   createdAt: string;
 };
 
+export type AdminAccessEvent = {
+  id: string;
+  userId: string | null;
+  email: string;
+  companyId: string | null;
+  companyName: string;
+  actorName: string;
+  eventType: "login" | "signup" | "page_view";
+  path: string;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
+};
+
 /** Le flag is_super_admin ne se donne qu'en SQL (voir sql/013_super_admin.sql). */
 export async function isSuperAdmin(): Promise<boolean> {
   if (!hasSupabaseEnv()) {
@@ -140,6 +154,46 @@ export async function getAdminFeedback(): Promise<AdminFeedback[]> {
     message: entry.message,
     status: entry.status,
     adminResponse: entry.admin_response ?? "",
+    createdAt: entry.created_at,
+  }));
+}
+
+export async function getAdminMaintenanceMode(): Promise<boolean> {
+  if (!hasSupabaseEnv()) {
+    return false;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data } = await supabase.from("app_settings").select("maintenance_mode").maybeSingle();
+
+  return data?.maintenance_mode ?? false;
+}
+
+export async function getAdminAccessEvents(limit = 80): Promise<AdminAccessEvent[]> {
+  if (!hasSupabaseEnv()) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_access_events", {
+    limit_count: limit,
+  });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((entry) => ({
+    id: entry.id,
+    userId: entry.user_id,
+    email: entry.email ?? "",
+    companyId: entry.company_id,
+    companyName: entry.company_name ?? "",
+    actorName: entry.actor_name ?? "Utilisateur",
+    eventType: entry.event_type,
+    path: entry.path ?? "",
+    ipAddress: entry.ip_address ?? "",
+    userAgent: entry.user_agent ?? "",
     createdAt: entry.created_at,
   }));
 }

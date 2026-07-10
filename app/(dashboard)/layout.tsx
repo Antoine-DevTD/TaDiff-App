@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { AccessTracker } from "@/components/audit/access-tracker";
 import { Sidebar } from "@/components/layout/sidebar";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 import { GuidedTour } from "@/components/tour/guided-tour";
@@ -42,6 +43,7 @@ export default async function DashboardLayout({
       </div>
       {superAdmin ? null : <GuidedTour />}
       {superAdmin ? null : <WilliamAssistant />}
+      <AccessTracker />
       {superAdmin ? null : (
         <FeedbackWidget triggerClassName="fixed bottom-7 right-24 z-40 hidden items-center gap-2 rounded-full border border-border bg-panel px-4 py-2.5 text-sm font-medium shadow-lg shadow-ink/10 transition hover:bg-panel-strong sm:inline-flex print:hidden" />
       )}

@@ -1,7 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import {
+  getMaintenanceTokenResponse,
+  isMaintenanceBypassed,
+  isMaintenanceModeActive,
+} from "@/lib/maintenance";
 
 const protectedRoutes = [
+  "/admin",
   "/dashboard",
   "/shows",
   "/contacts",
@@ -24,7 +30,39 @@ function isProtectedPath(pathname: string) {
   );
 }
 
+function isAlwaysAllowedPath(pathname: string) {
+  return (
+    pathname === "/maintenance" ||
+    pathname === "/api/stripe/webhook" ||
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/manifest.json" ||
+    pathname === "/robots.txt" ||
+    pathname.includes(".")
+  );
+}
+
 export async function proxy(request: NextRequest) {
+  const tokenResponse = getMaintenanceTokenResponse(request);
+
+  if (tokenResponse) {
+    return tokenResponse;
+  }
+
+  if (
+    !isAlwaysAllowedPath(request.nextUrl.pathname) &&
+    !isMaintenanceBypassed(request) &&
+    (await isMaintenanceModeActive())
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/maintenance";
+    url.search = "";
+    const response = NextResponse.rewrite(url);
+    response.headers.set("x-robots-tag", "noindex");
+    response.headers.set("retry-after", "3600");
+    return response;
+  }
+
   if (!isProtectedPath(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
@@ -72,20 +110,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/shows/:path*",
-    "/contacts/:path*",
-    "/pipeline/:path*",
-    "/reminders/:path*",
-    "/calendar/:path*",
-    "/subventions/:path*",
-    "/mecenat/:path*",
-    "/campaigns/:path*",
-    "/contracts/:path*",
-    "/finances/:path*",
-    "/documents/:path*",
-    "/billing/:path*",
-    "/settings/:path*",
-  ],
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };

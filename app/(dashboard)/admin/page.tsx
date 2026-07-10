@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CompanyBillingForm } from "@/components/admin/company-billing-form";
 import { FeedbackRow } from "@/components/admin/feedback-row";
+import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
 import { RevenueForecastChart } from "@/components/admin/revenue-forecast-chart";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -8,9 +9,12 @@ import { buildRevenueForecast } from "@/lib/admin-forecast";
 import { formatCurrency } from "@/lib/finance";
 import {
   getAdminBetaSignups,
+  getAdminAccessEvents,
   getAdminCompanies,
   getAdminFeedback,
+  getAdminMaintenanceMode,
   isSuperAdmin,
+  type AdminAccessEvent,
   type AdminCompany,
 } from "@/lib/supabase/admin";
 import type { BillingStatus } from "@/lib/supabase/access";
@@ -28,10 +32,12 @@ export default async function AdminPage() {
     notFound();
   }
 
-  const [companies, betaSignups, feedback] = await Promise.all([
+  const [companies, betaSignups, feedback, accessEvents, maintenanceActive] = await Promise.all([
     getAdminCompanies(),
     getAdminBetaSignups(),
     getAdminFeedback(),
+    getAdminAccessEvents(60),
+    getAdminMaintenanceMode(),
   ]);
 
   const activeCount = companies.filter((company) => company.billingStatus === "active").length;
@@ -51,6 +57,17 @@ export default async function AdminPage() {
           Reservee aux super admins. Compagnies, billing et inscriptions beta.
         </p>
       </div>
+
+      <Card className="space-y-3 p-5">
+        <div>
+          <p className="text-base font-semibold">Mode maintenance</p>
+          <p className="mt-1 text-sm text-muted">
+            Coupe l&apos;acces au site pour tous les visiteurs (bascule immediate, pas de
+            redeploiement). A utiliser pendant une intervention technique.
+          </p>
+        </div>
+        <MaintenanceToggle active={maintenanceActive} />
+      </Card>
 
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} active(s), ${compedCount} offerte(s)`} />
@@ -86,6 +103,28 @@ export default async function AdminPage() {
           <div className="space-y-3">
             {companies.map((company) => (
               <CompanyRow key={company.id} company={company} />
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <div>
+          <p className="text-base font-semibold">Acces recents</p>
+          <p className="mt-1 text-sm text-muted">
+            Connexions et navigation authentifiee. A utiliser pour verifier quel compte accede a
+            l&apos;application, depuis quelle IP et quel navigateur.
+          </p>
+        </div>
+        {accessEvents.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+            Aucun acces journalise pour le moment. Appliquer la migration 021 et verifier
+            `SUPABASE_SERVICE_ROLE_KEY` si la liste reste vide.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {accessEvents.map((event) => (
+              <AccessEventRow key={event.id} event={event} />
             ))}
           </div>
         )}
@@ -157,6 +196,35 @@ export default async function AdminPage() {
           </div>
         )}
       </Card>
+    </div>
+  );
+}
+
+function AccessEventRow({ event }: { event: AdminAccessEvent }) {
+  const eventLabel: Record<AdminAccessEvent["eventType"], string> = {
+    login: "Connexion",
+    signup: "Creation",
+    page_view: "Page vue",
+  };
+
+  return (
+    <div className="grid gap-3 rounded-md border border-border bg-panel-strong/35 px-4 py-3 text-sm lg:grid-cols-[1fr_160px_220px] lg:items-center">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone={event.eventType === "login" ? "success" : "neutral"}>
+            {eventLabel[event.eventType]}
+          </Badge>
+          <p className="font-medium">{event.email || event.actorName}</p>
+          {event.companyName ? <span className="text-muted">- {event.companyName}</span> : null}
+        </div>
+        <p className="mt-1 truncate text-xs text-muted">
+          {event.path || "Page inconnue"} {event.userAgent ? `- ${event.userAgent}` : ""}
+        </p>
+      </div>
+      <p className="font-mono text-xs text-muted">{event.ipAddress || "IP inconnue"}</p>
+      <p className="text-xs text-muted lg:text-right">
+        {new Date(event.createdAt).toLocaleString("fr-FR")}
+      </p>
     </div>
   );
 }

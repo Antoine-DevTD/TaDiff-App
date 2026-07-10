@@ -47,6 +47,15 @@ export function LoginForm() {
       return;
     }
 
+    await fetch("/api/audit/access", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        eventType: "login",
+        path: searchParams.get("next") ?? "/dashboard",
+      }),
+    }).catch(() => null);
+
     router.push(searchParams.get("next") ?? "/dashboard");
     router.refresh();
   }
