@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DocumentSlot } from "@/components/documents/document-slot";
 import { ShowDocumentDeleteButton } from "@/components/documents/show-document-delete-button";
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildDealProfitability, formatCurrency, getShowCostProfile, getVerdictMeta } from "@/lib/finance";
-import {
-  getDocumentStatusTone,
-  getShowDocumentReadiness,
-  requiredShowDocumentTypes,
-} from "@/lib/show-documents";
+import { getShowDocumentReadiness, requiredShowDocumentTypes } from "@/lib/show-documents";
 import { getShowById } from "@/lib/supabase/queries";
 import type { Show } from "@/types";
 
@@ -84,7 +81,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
               <p className="mt-3 text-sm text-muted">
                 {documentReadiness.missingCount === 0
                   ? "Le dossier de base est prêt pour un dépôt."
-                  : `${documentReadiness.missingCount} pièce(s) restent à compléter. Cliquez sur Modifier pour déposer vos fichiers.`}
+                  : `${documentReadiness.missingCount} pièce(s) restent à compléter. Cliquez sur une pièce ci-contre pour l'ajouter directement.`}
               </p>
             </div>
           </div>
@@ -94,7 +91,8 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
               <CardHeader>
                 <CardTitle>Pièces du dossier</CardTitle>
                 <CardDescription>
-                  Déposez vos fichiers via Modifier : le type est reconnu automatiquement.
+                  Cliquez sur une pièce pour l&apos;ajouter directement, ou déposez plusieurs
+                  fichiers d&apos;un coup via Modifier.
                 </CardDescription>
               </CardHeader>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -103,18 +101,14 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                   const status = document?.status ?? "Manquant";
 
                   return (
-                    <div
+                    <DocumentSlot
                       key={type}
-                      className="flex items-start justify-between gap-2 rounded-md border border-border bg-panel-strong/45 p-3"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{type}</p>
-                        <p className="mt-0.5 text-xs text-muted">
-                          {document?.title || "À ajouter"}
-                        </p>
-                      </div>
-                      <Badge tone={getDocumentStatusTone(status)}>{status}</Badge>
-                    </div>
+                      showId={show.id}
+                      showTitle={show.title}
+                      type={type}
+                      title={document?.title ?? null}
+                      status={status}
+                    />
                   );
                 })}
               </div>

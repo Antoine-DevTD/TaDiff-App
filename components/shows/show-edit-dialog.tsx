@@ -39,9 +39,10 @@ export function ShowEditDialog({
           <section className="border-t border-border pt-6">
             <h4 className="text-base font-semibold">Documents du dossier</h4>
             <p className="mt-1 mb-4 text-sm text-muted">
-              Déposez les pièces du spectacle : le type est reconnu automatiquement.
+              Déposez les pièces du spectacle : le type est reconnu automatiquement et le nom est
+              normalisé ({show.title.toUpperCase()}_TYPE_DATE).
             </p>
-            <DocumentDropzone showId={show.id} />
+            <DocumentDropzone showId={show.id} showTitle={show.title} />
           </section>
 
           <section className="border-t border-danger/25 pt-6">

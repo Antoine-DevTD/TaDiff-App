@@ -50,3 +50,25 @@ export function sanitizeDocumentFilename(fileName: string) {
 
   return `${safeBase || "document"}${extension}`;
 }
+
+function toDocumentSlug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toUpperCase();
+}
+
+/** Nom lisible auto : NOM_DU_SPECTACLE_TYPEDEDOCS_DATE (aligne sur le dossier de stockage du spectacle). */
+export function buildDocumentTitle(showTitle: string, documentType: string, date: Date = new Date()) {
+  const datePart = date.toISOString().slice(0, 10);
+  return `${toDocumentSlug(showTitle) || "SPECTACLE"}_${toDocumentSlug(documentType) || "DOCUMENT"}_${datePart}`;
+}
+
+/** Nom de fichier propose au telechargement : le titre lisible + l'extension d'origine. */
+export function buildDownloadFileName(title: string, storagePath: string) {
+  const dotIndex = storagePath.lastIndexOf(".");
+  const extension = dotIndex > 0 ? storagePath.slice(dotIndex).toLowerCase() : "";
+  return `${title.trim() || "document"}${extension}`;
+}

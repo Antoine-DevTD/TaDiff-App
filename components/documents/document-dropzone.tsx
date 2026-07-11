@@ -6,12 +6,8 @@ import { createShowDocument, prepareDocumentUpload } from "@/app/(dashboard)/act
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import {
-  detectDocumentType,
-  extractPdfFirstPageText,
-  suggestDocumentTitle,
-} from "@/lib/documents-detect";
-import { documentAcceptAttribute, getDocumentFileError } from "@/lib/documents-upload";
+import { detectDocumentType, extractPdfFirstPageText } from "@/lib/documents-detect";
+import { buildDocumentTitle, documentAcceptAttribute, getDocumentFileError } from "@/lib/documents-upload";
 import { showDocumentStatuses, showDocumentTypes } from "@/lib/show-documents";
 import { cn } from "@/lib/utils";
 import type { ShowDocumentStatus, ShowDocumentType } from "@/types";
@@ -20,6 +16,7 @@ type PendingDoc = {
   id: string;
   file: File;
   title: string;
+  titleTouched: boolean;
   documentType: ShowDocumentType;
   status: ShowDocumentStatus;
   error: string | null;
@@ -27,9 +24,11 @@ type PendingDoc = {
 
 export function DocumentDropzone({
   showId,
+  showTitle,
   onUploaded,
 }: {
   showId: string;
+  showTitle: string;
   onUploaded?: () => void;
 }) {
   const router = useRouter();
@@ -45,6 +44,7 @@ export function DocumentDropzone({
     for (const file of list) {
       const error = getDocumentFileError(file);
       const id = `${file.name}-${file.size}-${crypto.randomUUID()}`;
+      const documentType = detectDocumentType(file.name);
 
       // Detection immediate sur le nom, puis affinage async avec le contenu PDF.
       setPending((current) => [
@@ -52,8 +52,9 @@ export function DocumentDropzone({
         {
           id,
           file,
-          title: suggestDocumentTitle(file.name),
-          documentType: detectDocumentType(file.name),
+          title: buildDocumentTitle(showTitle, documentType),
+          titleTouched: false,
+          documentType,
           status: "Pret",
           error,
         },
@@ -65,7 +66,13 @@ export function DocumentDropzone({
           const refined = detectDocumentType(file.name, text);
           setPending((current) =>
             current.map((item) =>
-              item.id === id ? { ...item, documentType: refined } : item,
+              item.id === id
+                ? {
+                    ...item,
+                    documentType: refined,
+                    title: item.titleTouched ? item.title : buildDocumentTitle(showTitle, refined),
+                  }
+                : item,
             ),
           );
         });
@@ -123,7 +130,7 @@ export function DocumentDropzone({
 
         const result = await createShowDocument({
           showId,
-          title: item.title || suggestDocumentTitle(item.file.name) || item.file.name,
+          title: item.title || buildDocumentTitle(showTitle, item.documentType),
           documentType: item.documentType,
           status: item.status,
           fileUrl: "",
@@ -214,11 +221,13 @@ export function DocumentDropzone({
               ) : (
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <label className="block text-xs font-medium text-muted sm:col-span-1">
-                    Titre
+                    Titre (auto)
                     <Input
                       className="mt-1"
                       value={item.title}
-                      onChange={(event) => updateDoc(item.id, { title: event.target.value })}
+                      onChange={(event) =>
+                        updateDoc(item.id, { title: event.target.value, titleTouched: true })
+                      }
                     />
                   </label>
                   <label className="block text-xs font-medium text-muted">
@@ -226,11 +235,13 @@ export function DocumentDropzone({
                     <Select
                       className="mt-1"
                       value={item.documentType}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const documentType = event.target.value as ShowDocumentType;
                         updateDoc(item.id, {
-                          documentType: event.target.value as ShowDocumentType,
-                        })
-                      }
+                          documentType,
+                          title: item.titleTouched ? item.title : buildDocumentTitle(showTitle, documentType),
+                        });
+                      }}
                     >
                       {showDocumentTypes.map((type) => (
                         <option key={type} value={type}>

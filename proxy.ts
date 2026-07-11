@@ -33,6 +33,7 @@ function isProtectedPath(pathname: string) {
 function isAlwaysAllowedPath(pathname: string) {
   return (
     pathname === "/maintenance" ||
+    pathname === "/login" ||
     pathname === "/api/stripe/webhook" ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
@@ -40,6 +41,62 @@ function isAlwaysAllowedPath(pathname: string) {
     pathname === "/robots.txt" ||
     pathname.includes(".")
   );
+}
+
+/**
+ * Un seul client par requete : cree paresseusement (env absentes possibles),
+ * et reexpose la reponse la plus a jour (cookies de session rafraichis).
+ */
+function buildSupabaseClient(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
+
+  return { supabase, getResponse: () => response };
+}
+
+/**
+ * Un super admin authentifie garde l'acces meme en maintenance, pour ne
+ * jamais se retrouver bloque hors de /admin (seul endroit qui permet de
+ * repasser le site en ligne).
+ */
+async function isSuperAdminVisitor(request: NextRequest) {
+  const client = buildSupabaseClient(request);
+
+  if (!client) {
+    return false;
+  }
+
+  const {
+    data: { user },
+  } = await client.supabase.auth.getUser();
+
+  if (!user) {
+    return false;
+  }
+
+  const { data } = await client.supabase.rpc("is_super_admin_user");
+  return data === true;
 }
 
 export async function proxy(request: NextRequest) {
@@ -52,7 +109,8 @@ export async function proxy(request: NextRequest) {
   if (
     !isAlwaysAllowedPath(request.nextUrl.pathname) &&
     !isMaintenanceBypassed(request) &&
-    (await isMaintenanceModeActive())
+    (await isMaintenanceModeActive()) &&
+    !(await isSuperAdminVisitor(request))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";
@@ -67,37 +125,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const client = buildSupabaseClient(request);
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!client) {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await client.supabase.auth.getUser();
 
   if (!user) {
     const url = request.nextUrl.clone();
@@ -106,7 +142,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return response;
+  return client.getResponse();
 }
 
 export const config = {

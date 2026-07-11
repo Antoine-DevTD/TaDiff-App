@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { DocumentExplorer, type ExplorerFolder } from "@/components/documents/document-explorer";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTitle } from "@/components/ui/page-title";
 import {
+  getCompanyDocuments,
   getPipelineDeals,
   getReminders,
   getShowDocuments,
@@ -114,14 +116,52 @@ function buildDocumentPacks({
 }
 
 export default async function DocumentsPage() {
-  const [shows, deals, reminders, documents] = await Promise.all([
+  const [shows, deals, reminders, documents, companyDocuments] = await Promise.all([
     getShows(),
     getPipelineDeals(),
     getReminders(),
     getShowDocuments(),
+    getCompanyDocuments(),
   ]);
 
   const packs = buildDocumentPacks({ deals, documents, reminders, shows });
+
+  const explorerFolders: ExplorerFolder[] = [
+    ...shows
+      .map((show) => ({
+        id: show.id,
+        label: show.title,
+        detail: show.discipline,
+        href: `/shows/${show.id}`,
+        documents: documents
+          .filter((document) => document.showId === show.id)
+          .map((document) => ({
+            id: document.id,
+            title: document.title,
+            type: document.documentType,
+            fileUrl: document.fileUrl,
+            date: document.updatedAt,
+          })),
+      }))
+      .filter((folder) => folder.documents.length > 0),
+    ...(companyDocuments.length > 0
+      ? [
+          {
+            id: "company-documents",
+            label: "Documents généraux",
+            detail: "RIB, statuts, licence...",
+            href: "/settings",
+            documents: companyDocuments.map((document) => ({
+              id: document.id,
+              title: document.title,
+              type: document.docType,
+              fileUrl: document.fileUrl,
+              date: document.createdAt,
+            })),
+          },
+        ]
+      : []),
+  ];
   const focusPack =
     packs.find((pack) => pack.packStatus === "to-update") ??
     packs.find((pack) => pack.packStatus === "to-build") ??
@@ -237,6 +277,17 @@ export default async function DocumentsPage() {
               items={packs.filter((pack) => pack.packStatus === "ready")}
             />
           </section>
+
+          <Card className="space-y-4 p-5">
+            <div>
+              <p className="text-base font-semibold">Explorateur de documents</p>
+              <p className="mt-1 text-sm text-muted">
+                Tous les fichiers importés, classés par spectacle (et par les documents généraux
+                de la compagnie). Chaque dossier reprend le rangement réel du stockage.
+              </p>
+            </div>
+            <DocumentExplorer folders={explorerFolders} />
+          </Card>
         </>
       )}
     </div>

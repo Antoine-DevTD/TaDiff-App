@@ -16,6 +16,7 @@ import {
   treasurySnapshot,
 } from "@/data/mock-data";
 import { hasSupabaseEnv } from "@/lib/env";
+import { buildDownloadFileName } from "@/lib/documents-upload";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ActivityEntry,
@@ -427,23 +428,31 @@ type ShowDocumentRow = {
 
 // Les fichiers stockes dans TaDiff (bucket prive "documents") sont exposes
 // via des URLs signees d'une heure ; file_url reste utilise pour les liens externes.
+// Chaque URL porte l'option "download" pour que le fichier telecharge reprenne
+// le titre lisible (NOM_DU_SPECTACLE_TYPE_DATE) plutot que le nom stocke (uuid-slug).
 async function mapShowDocumentRows(rows: ShowDocumentRow[]): Promise<ShowDocument[]> {
-  const storagePaths = rows
-    .map((row) => row.storage_path)
-    .filter((path): path is string => Boolean(path));
+  const rowsWithPath = rows.filter(
+    (row): row is ShowDocumentRow & { storage_path: string } => Boolean(row.storage_path),
+  );
   const urlByPath = new Map<string, string>();
 
-  if (storagePaths.length > 0) {
+  if (rowsWithPath.length > 0) {
     const supabase = await getSupabaseServerClient();
-    const { data } = await supabase.storage
-      .from("documents")
-      .createSignedUrls(storagePaths, 3600);
+    const signed = await Promise.all(
+      rowsWithPath.map((row) =>
+        supabase.storage
+          .from("documents")
+          .createSignedUrl(row.storage_path, 3600, {
+            download: buildDownloadFileName(row.title, row.storage_path),
+          }),
+      ),
+    );
 
-    for (const item of data ?? []) {
-      if (item.path && item.signedUrl) {
-        urlByPath.set(item.path, item.signedUrl);
+    signed.forEach(({ data }, index) => {
+      if (data?.signedUrl) {
+        urlByPath.set(rowsWithPath[index].storage_path, data.signedUrl);
       }
-    }
+    });
   }
 
   return rows.map((document) => ({
@@ -821,18 +830,27 @@ export async function getCompanyDocuments(): Promise<CompanyDocument[]> {
 
   if (error || !data) return [];
 
-  const storagePaths = data
-    .map((row) => row.storage_path)
-    .filter((path): path is string => Boolean(path));
+  const rowsWithPath = data.filter(
+    (row): row is typeof row & { storage_path: string } => Boolean(row.storage_path),
+  );
   const urlByPath = new Map<string, string>();
 
-  if (storagePaths.length > 0) {
-    const { data: signed } = await supabase.storage
-      .from("documents")
-      .createSignedUrls(storagePaths, 3600);
-    for (const item of signed ?? []) {
-      if (item.path && item.signedUrl) urlByPath.set(item.path, item.signedUrl);
-    }
+  if (rowsWithPath.length > 0) {
+    const signed = await Promise.all(
+      rowsWithPath.map((row) =>
+        supabase.storage
+          .from("documents")
+          .createSignedUrl(row.storage_path, 3600, {
+            download: buildDownloadFileName(row.title, row.storage_path),
+          }),
+      ),
+    );
+
+    signed.forEach(({ data: signedData }, index) => {
+      if (signedData?.signedUrl) {
+        urlByPath.set(rowsWithPath[index].storage_path, signedData.signedUrl);
+      }
+    });
   }
 
   return data.map((row) => ({
