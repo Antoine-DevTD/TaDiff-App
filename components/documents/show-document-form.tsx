@@ -10,7 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { documentAcceptAttribute, getDocumentFileError } from "@/lib/documents-upload";
-import { showDocumentStatuses, showDocumentTypes } from "@/lib/show-documents";
+import {
+  getShowDocumentTypeLabel,
+  showDocumentStatuses,
+  showDocumentTypes,
+} from "@/lib/show-documents";
 import {
   showDocumentSchema,
   type ShowDocumentFormInput,
@@ -130,7 +134,7 @@ export function ShowDocumentForm({ showId }: ShowDocumentFormProps) {
           <Select {...register("documentType")}>
             {showDocumentTypes.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {getShowDocumentTypeLabel(type)}
               </option>
             ))}
           </Select>

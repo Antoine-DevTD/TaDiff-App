@@ -11,6 +11,7 @@ export const contactSchema = z.object({
     .or(z.literal("")),
   city: z.string().optional(),
   status: z.enum(["Prospect", "En discussion", "Partenaire"]),
+  tags: z.array(z.string().min(1)).optional(),
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;

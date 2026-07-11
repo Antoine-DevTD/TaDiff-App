@@ -3,7 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { dashboardNavItems } from "@/lib/constants";
 import { SignOutButton } from "@/components/layout/sign-out-button";
@@ -36,15 +36,8 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
   const activeGroup = Object.entries(navGroups).find(([, items]) =>
     items.some((item) => isItemActive(pathname, item.href)),
   )?.[0];
-  const [openGroup, setOpenGroup] = useState<string | null>(
-    activeGroup ?? Object.keys(navGroups)[0] ?? null,
-  );
-
-  useEffect(() => {
-    if (activeGroup) {
-      setOpenGroup(activeGroup);
-    }
-  }, [activeGroup]);
+  const [manualOpenGroup, setManualOpenGroup] = useState<string | null>(null);
+  const openGroup = manualOpenGroup ?? activeGroup ?? Object.keys(navGroups)[0] ?? null;
 
   if (variant === "admin") {
     return (
@@ -133,12 +126,12 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
           <Link href="/dashboard" className="text-lg font-semibold">
             TaDiff
           </Link>
-          <p className="text-[11px] uppercase tracking-[0.16em] text-white/[0.35]">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-white/55">
             Cockpit compagnie
           </p>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-2 overflow-y-auto p-3">
         {Object.entries(navGroups).map(([group, items]) => {
           const isOpen = openGroup === group;
           const groupHasActiveItem = group === activeGroup;
@@ -147,10 +140,10 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
             <div key={group}>
               <button
                 type="button"
-                onClick={() => setOpenGroup(isOpen ? null : group)}
+                onClick={() => setManualOpenGroup(isOpen ? null : group)}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-md px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/[0.35] transition hover:text-white/60",
-                  groupHasActiveItem && "text-white/60",
+                  "flex w-full items-center justify-between rounded-md px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55 transition hover:bg-white/[0.07] hover:text-white",
+                  groupHasActiveItem && "bg-white/[0.08] text-white",
                 )}
                 aria-expanded={isOpen}
               >
@@ -169,21 +162,21 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
                         key={item.href}
                         href={item.href}
                         className={cn(
-                          "group flex items-start gap-3 rounded-md px-3 py-2.5 text-sm text-white/[0.72] transition hover:bg-white/10 hover:text-white",
-                          active && "bg-white/[0.16] text-white shadow-inner shadow-white/5",
+                          "group flex items-start gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm text-white/85 transition hover:border-white/10 hover:bg-white/[0.12] hover:text-white",
+                          active && "border-white/15 bg-white/[0.18] text-white shadow-inner shadow-white/5",
                         )}
                       >
                         <span
                           className={cn(
-                            "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-white/50 transition group-hover:border-accent/35 group-hover:text-white",
-                            active && "border-accent/45 bg-accent text-white shadow-[0_0_16px_rgba(29,78,216,0.35)]",
+                            "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/15 bg-white/[0.10] text-white/75 transition group-hover:border-white/25 group-hover:bg-white/[0.16] group-hover:text-white",
+                            active && "border-white/30 bg-white text-ink shadow-[0_0_18px_rgba(255,255,255,0.22)]",
                           )}
                         >
                           <DashboardNavIcon className="h-4 w-4" href={item.href} />
                         </span>
                         <span className="min-w-0">
-                          <span className="block font-medium leading-5">{item.label}</span>
-                          <span className="block truncate text-xs leading-4 text-white/[0.42]">
+                          <span className="block font-semibold leading-5">{item.label}</span>
+                          <span className="block truncate text-xs leading-4 text-white/55 group-hover:text-white/70">
                             {item.summary}
                           </span>
                         </span>

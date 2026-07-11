@@ -1,4 +1,4 @@
-import { ButtonLink } from "@/components/ui/button";
+import { ContactCreateDialog } from "@/components/contacts/contact-create-dialog";
 import { ContactImportPanel } from "@/components/contacts/contact-import-panel";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTitle } from "@/components/ui/page-title";
@@ -17,16 +17,19 @@ export default async function ContactsPage() {
             Programmateurs, lieux, partenaires et personnes a relancer.
           </p>
         </div>
-        <ButtonLink href="/contacts/new">Ajouter un contact</ButtonLink>
+        <ContactCreateDialog />
       </div>
       <ContactImportPanel />
       {contacts.length === 0 ? (
-        <EmptyState
-          title="Aucun contact"
-          description="Ajoutez vos premiers programmateurs, lieux et partenaires pour commencer le suivi de diffusion."
-          actionLabel="Ajouter un contact"
-          actionHref="/contacts/new"
-        />
+        <div className="space-y-4">
+          <EmptyState
+            title="Aucun contact"
+            description="Ajoutez vos premiers programmateurs, lieux et partenaires pour commencer le suivi de diffusion."
+          />
+          <div className="flex justify-center">
+            <ContactCreateDialog buttonLabel="Creer le premier contact" />
+          </div>
+        </div>
       ) : (
         <ContactsTable contacts={contacts} />
       )}

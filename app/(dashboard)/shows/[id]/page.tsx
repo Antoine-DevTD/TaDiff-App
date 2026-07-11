@@ -4,10 +4,15 @@ import { DocumentSlot } from "@/components/documents/document-slot";
 import { ShowDocumentDeleteButton } from "@/components/documents/show-document-delete-button";
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildDealProfitability, formatCurrency, getShowCostProfile, getVerdictMeta } from "@/lib/finance";
-import { getShowDocumentReadiness, requiredShowDocumentTypes } from "@/lib/show-documents";
+import {
+  essentialShowDocumentTypes,
+  getShowDocumentReadiness,
+  getShowDocumentTypeLabel,
+  isEssentialShowDocumentType,
+  optionalShowDocumentTypes,
+} from "@/lib/show-documents";
 import { getShowById } from "@/lib/supabase/queries";
 import type { Show } from "@/types";
 
@@ -33,6 +38,13 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
     result: buildDealProfitability({ deal, show }),
   }));
   const documentReadiness = getShowDocumentReadiness(documents);
+  const linkedOptionalDocuments = documents.filter(
+    (document) => !isEssentialShowDocumentType(document.documentType),
+  );
+  const nextPerformanceDate = opportunities
+    .map((deal) => deal.performanceDate)
+    .filter(Boolean)
+    .sort()[0];
 
   return (
     <div className="space-y-6">
@@ -54,10 +66,14 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
         <StatBlock label="Discipline" value={show.discipline} />
         <StatBlock
           label="Prochaine date"
-          value={show.nextDate ? new Date(show.nextDate).toLocaleDateString("fr-FR") : "À planifier"}
+          value={
+            nextPerformanceDate || show.nextDate
+              ? new Date(nextPerformanceDate || show.nextDate).toLocaleDateString("fr-FR")
+              : "A planifier"
+          }
         />
         <StatBlock label="Budget" value={`${show.budget.toLocaleString("fr-FR")} EUR`} />
-        <StatBlock label="CA pondéré" value={`${weightedRevenue.toLocaleString("fr-FR")} EUR`} />
+        <StatBlock label="CA pondere" value={`${weightedRevenue.toLocaleString("fr-FR")} EUR`} />
       </section>
 
       {/* Dossier & documents : affiche, avancement, checklist et pieces en un seul bloc. */}
@@ -67,7 +83,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
             <ShowPoster show={show} />
             <div className="rounded-md border border-border bg-panel-strong/45 p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-medium">Dossier de base</p>
+                <p className="font-medium">Dossier indispensable</p>
                 <Badge tone={documentReadiness.missingCount === 0 ? "success" : "warning"}>
                   {documentReadiness.percent}%
                 </Badge>
@@ -80,8 +96,8 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
               </div>
               <p className="mt-3 text-sm text-muted">
                 {documentReadiness.missingCount === 0
-                  ? "Le dossier de base est prêt pour un dépôt."
-                  : `${documentReadiness.missingCount} pièce(s) restent à compléter. Cliquez sur une pièce ci-contre pour l'ajouter directement.`}
+                  ? "Le dossier indispensable est pret pour un depot."
+                  : `${documentReadiness.missingCount} piece(s) indispensable(s) restent a completer. Les documents facultatifs peuvent etre ajoutes ensuite.`}
               </p>
             </div>
           </div>
@@ -89,14 +105,13 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
           <div className="space-y-5">
             <div>
               <CardHeader>
-                <CardTitle>Pièces du dossier</CardTitle>
+                <CardTitle>Pieces indispensables</CardTitle>
                 <CardDescription>
-                  Cliquez sur une pièce pour l&apos;ajouter directement, ou déposez plusieurs
-                  fichiers d&apos;un coup via Modifier.
+                  Les pieces qui comptent dans le dossier de base du spectacle.
                 </CardDescription>
               </CardHeader>
               <div className="grid gap-3 sm:grid-cols-2">
-                {requiredShowDocumentTypes.map((type) => {
+                {essentialShowDocumentTypes.map((type) => {
                   const document = documents.find((item) => item.documentType === type);
                   const status = document?.status ?? "Manquant";
 
@@ -107,11 +122,46 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                       showTitle={show.title}
                       type={type}
                       title={document?.title ?? null}
+                      requirementLabel="Obligatoire"
                       status={status}
                     />
                   );
                 })}
               </div>
+            </div>
+
+            <div>
+              <CardHeader>
+                <CardTitle>Documents facultatifs</CardTitle>
+                <CardDescription>
+                  Ajoutez ce qui aide la vente ou les dossiers : devis, budget, RIB, statuts ou
+                  autres pieces utiles.
+                </CardDescription>
+              </CardHeader>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {optionalShowDocumentTypes.map((type) => {
+                  const document = documents.find((item) => item.documentType === type);
+                  const status = document?.status ?? "Manquant";
+
+                  return (
+                    <DocumentSlot
+                      key={type}
+                      showId={show.id}
+                      showTitle={show.title}
+                      type={type}
+                      title={document?.title ?? null}
+                      requirementLabel="Facultatif"
+                      status={status}
+                    />
+                  );
+                })}
+              </div>
+              {linkedOptionalDocuments.length > 0 ? (
+                <p className="mt-3 text-xs text-muted">
+                  {linkedOptionalDocuments.length} document(s) facultatif(s) deja rattache(s) au
+                  spectacle.
+                </p>
+              ) : null}
             </div>
 
             {documents.length > 0 ? (
@@ -124,7 +174,9 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{document.title}</p>
-                      <p className="text-xs text-muted">{document.documentType}</p>
+                      <p className="text-xs text-muted">
+                        {getShowDocumentTypeLabel(document.documentType)}
+                      </p>
                     </div>
                     <div className="flex items-center gap-3">
                       {document.fileUrl ? (
@@ -202,19 +254,28 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
         </CardHeader>
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Dates liées</p>
+            <Link className="text-sm font-semibold hover:text-accent" href="/pipeline">
+              Dates liees
+            </Link>
             {opportunities.length === 0 ? (
-              <EmptyPanel text="Aucune date liée à ce spectacle." />
+              <ActionPanel href="/pipeline" text="Aucune date liee a ce spectacle. Ajouter ou associer une date dans la diffusion." />
             ) : (
               opportunities.map((deal) => (
-                <div
+                <Link
                   key={deal.id}
-                  className="flex flex-col gap-3 rounded-md border border-border bg-panel-strong/45 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-md border border-border bg-panel-strong/45 p-3 transition hover:border-accent/40 hover:bg-panel-strong sm:flex-row sm:items-center sm:justify-between"
+                  href="/pipeline"
                 >
                   <div>
                     <p className="text-sm font-medium">{deal.title}</p>
                     <p className="mt-0.5 text-xs text-muted">
                       {deal.contactName} - {deal.contactOrganization || deal.venue}
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Jeu :{" "}
+                      {deal.performanceDate
+                        ? new Date(deal.performanceDate).toLocaleDateString("fr-FR")
+                        : "date a caler"}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -224,40 +285,32 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                     </div>
                     <Badge tone="info">{deal.stage}</Badge>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Relances</p>
+            <Link className="text-sm font-semibold hover:text-accent" href="/reminders">
+              Relances
+            </Link>
             {reminders.length === 0 ? (
-              <EmptyPanel text="Aucune relance ouverte." />
+              <ActionPanel href="/reminders" text="Aucune relance ouverte. Voir ou creer les relances liees a ce spectacle." />
             ) : (
               reminders.map((reminder) => (
-                <div
+                <Link
                   key={reminder.id}
-                  className="rounded-md border border-border bg-panel-strong/45 p-3"
+                  className="block rounded-md border border-border bg-panel-strong/45 p-3 transition hover:border-accent/40 hover:bg-panel-strong"
+                  href="/reminders"
                 >
                   <p className="text-sm font-medium">{reminder.label}</p>
                   <p className="mt-0.5 text-xs text-muted">
                     {new Date(reminder.dueDate).toLocaleDateString("fr-FR")}
                   </p>
-                </div>
+                </Link>
               ))
             )}
           </div>
-        </div>
-        <div className="mt-5 flex flex-wrap gap-4 border-t border-border pt-4 text-sm">
-          <Link className="font-medium text-accent hover:text-accent-strong" href="/pipeline">
-            Ouvrir la diffusion
-          </Link>
-          <Link className="font-medium text-accent hover:text-accent-strong" href="/reminders">
-            Voir les relances
-          </Link>
-          <ButtonLink className="ml-auto" href="/shows/new" variant="secondary">
-            Nouveau spectacle
-          </ButtonLink>
         </div>
       </Card>
     </div>
@@ -297,6 +350,17 @@ function EmptyPanel({ text }: { text: string }) {
     <div className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
       {text}
     </div>
+  );
+}
+
+function ActionPanel({ href, text }: { href: string; text: string }) {
+  return (
+    <Link
+      className="block rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted transition hover:border-accent/45 hover:bg-panel-strong hover:text-foreground"
+      href={href}
+    >
+      {text}
+    </Link>
   );
 }
 

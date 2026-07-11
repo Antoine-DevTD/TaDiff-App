@@ -91,6 +91,7 @@ export type Contact = {
   email: string;
   city: string;
   status: "Prospect" | "En discussion" | "Partenaire";
+  tags: string[];
 };
 
 export type PipelineStage =
@@ -110,6 +111,7 @@ export type PipelineDeal = {
   stage: PipelineStage;
   value: number;
   probability: number;
+  performanceDate: string;
   nextAction: string;
   nextFollowUpAt: string;
   lostReason: string;

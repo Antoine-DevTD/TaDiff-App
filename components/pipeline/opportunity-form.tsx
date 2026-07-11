@@ -53,6 +53,7 @@ export function OpportunityForm({
       stage: "A qualifier",
       value: 0,
       probability: 15,
+      performanceDate: "",
       nextAction: "",
       nextFollowUpAt: "",
       lostReason: "",
@@ -181,7 +182,7 @@ export function OpportunityForm({
         </Field>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-4">
         <Field label="Etape" error={errors.stage?.message}>
           <Select
             {...register("stage")}
@@ -203,6 +204,9 @@ export function OpportunityForm({
         </Field>
         <Field label="Probabilite" error={errors.probability?.message}>
           <Input type="number" min="0" max="100" step="5" {...register("probability")} />
+        </Field>
+        <Field label="Date de jeu" error={errors.performanceDate?.message}>
+          <Input type="date" {...register("performanceDate")} />
         </Field>
       </div>
 

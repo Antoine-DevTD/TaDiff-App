@@ -146,6 +146,8 @@ Partiellement en place :
 - Stripe : code checkout + webhook branche en mode test (`/api/stripe/webhook`, `STRIPE_PRICE_BETA_MONTHLY`, migration 020). Reste activation operationnelle : appliquer la migration, ajouter `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, le price id beta Stripe, puis tester un paiement complet. Ne pas presenter le paiement comme actif tant que les cles ne sont pas posees ;
 - audit acces + maintenance : migration 021 ajoute `access_events`, une RPC super admin `admin_list_access_events`, le tracking login/signup/pages cockpit via `/api/audit/access`, affichage dans `/admin`. Les logs IP/user-agent sont des donnees personnelles : acces reserve aux super admins et retention courte a prevoir (purge automatique non implementee) ;
 - mode maintenance : migration 022 ajoute `app_settings.maintenance_mode`, bascule en un clic depuis `/admin` (RPC `admin_set_maintenance_mode`, effective en quelques secondes, sans redeploiement). `TADIFF_MAINTENANCE_MODE` reste une bascule d'urgence par env var (prioritaire sur le flag DB) ; `TADIFF_MAINTENANCE_ALLOWED_IPS` / `TADIFF_MAINTENANCE_BYPASS_TOKEN` permettent de garder un acces pendant la maintenance ;
+- date de jeu des dates possibles : migration 023 ajoute `opportunities.performance_date`, distincte de `next_follow_up_at` qui reste la date de relance commerciale ;
+- tags contacts : migration 024 ajoute `contacts.tags` pour filtrer le carnet de diffusion par statut, role et tags personnalisables ;
 - finances : projections + solde saisi OK, vraie compta/transactions/rapprochement bancaire non (import CSV bancaire a venir) ;
 - subventions importees : certaines deadlines des dispositifs de reference sont indicatives (precise dans leur champ eligibilite), a verifier avant depot ;
 - logs d'activite : non complet ;
@@ -270,6 +272,8 @@ Ordre connu :
 14. `014_show_posters.sql` (upload d'affiche de spectacle - lot session parallele)
 15. `015_company_profile.sql` (profil compagnie editable dans /settings - lot session parallele)
 16. `016_company_team.sql` (equipe et acces : membres, roles, invitation par code - lot session parallele)
+23. `023_opportunity_performance_date.sql` (date factuelle de representation sur les dates de diffusion)
+24. `024_contact_tags.sql` (tags personnalisables sur les contacts)
 17. `017_calendar_events.sql` (evenements d'agenda perso via clic droit sur un jour - lot session parallele)
 18. `018_feedback.sql` (retours/signalements = console admin Phase B : table feedback + RPC submit_feedback (security definer, cote compagnie) + admin_list_feedback / admin_set_feedback_status (super admin) ; bouton "Donner un retour" dans la topbar compagnie, section de tri dans /admin avec statut nouveau/en_cours/traite et reponse visible par la compagnie)
 

@@ -37,6 +37,7 @@ type DemoContact = {
   email: string;
   city: string;
   status: "Prospect" | "En discussion" | "Partenaire";
+  tags: string[];
 };
 
 type DemoOpportunity = {
@@ -46,6 +47,7 @@ type DemoOpportunity = {
   stage: PipelineStage;
   value: number;
   probability: number;
+  performanceInDays: number | null;
   nextAction: string;
   nextFollowUpInDays: number | null;
 };
@@ -145,6 +147,7 @@ export const demoContacts: DemoContact[] = [
     email: "c.besnard@legrandt-demo.fr",
     city: "Nantes",
     status: "En discussion",
+    tags: ["Theatre", "Grande salle"],
   },
   {
     key: "stnazaire",
@@ -154,6 +157,7 @@ export const demoContacts: DemoContact[] = [
     email: "m.lefloch@snsn-demo.fr",
     city: "Saint-Nazaire",
     status: "Prospect",
+    tags: ["Scene nationale", "Atlantique"],
   },
   {
     key: "reze",
@@ -163,6 +167,7 @@ export const demoContacts: DemoContact[] = [
     email: "s.aubert@reze-demo.fr",
     city: "Reze",
     status: "Partenaire",
+    tags: ["Municipal", "Partenaire"],
   },
   {
     key: "aurillac",
@@ -172,6 +177,7 @@ export const demoContacts: DemoContact[] = [
     email: "j.roche@festival-demo.fr",
     city: "Aurillac",
     status: "Prospect",
+    tags: ["Festival", "Rue"],
   },
   {
     key: "erdre",
@@ -181,6 +187,7 @@ export const demoContacts: DemoContact[] = [
     email: "a.guiho@cceg-demo.fr",
     city: "Nort-sur-Erdre",
     status: "En discussion",
+    tags: ["Collectivite", "Ete"],
   },
   {
     key: "guerande",
@@ -190,6 +197,7 @@ export const demoContacts: DemoContact[] = [
     email: "p.kervadec@guerande-demo.fr",
     city: "Guerande",
     status: "Prospect",
+    tags: ["Office culturel", "Territoire"],
   },
   {
     key: "paperie",
@@ -199,6 +207,7 @@ export const demoContacts: DemoContact[] = [
     email: "l.moreau@paperie-demo.fr",
     city: "Angers",
     status: "En discussion",
+    tags: ["CNAREP", "Residence"],
   },
   {
     key: "mecene",
@@ -208,6 +217,7 @@ export const demoContacts: DemoContact[] = [
     email: "t.vidal@fondation-demo.fr",
     city: "Nantes",
     status: "Prospect",
+    tags: ["Mecenat", "Fondation"],
   },
 ];
 
@@ -219,6 +229,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     stage: "Negociation",
     value: 9600,
     probability: 70,
+    performanceInDays: 96,
     nextAction: "Envoyer la proposition ajustee avec 2 representations",
     nextFollowUpInDays: 4,
   },
@@ -229,6 +240,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     stage: "Relance prevue",
     value: 3200,
     probability: 55,
+    performanceInDays: 42,
     nextAction: "Relancer apres le comite du budget",
     nextFollowUpInDays: -3,
   },
@@ -239,6 +251,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     stage: "Contacte",
     value: 7800,
     probability: 30,
+    performanceInDays: 118,
     nextAction: "Proposer une visite sur la date de Reze",
     nextFollowUpInDays: 10,
   },
@@ -249,6 +262,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     stage: "A qualifier",
     value: 2800,
     probability: 20,
+    performanceInDays: 390,
     nextAction: "Qualifier le budget et la jauge exterieure",
     nextFollowUpInDays: 14,
   },
@@ -259,6 +273,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     stage: "Negociation",
     value: 4500,
     probability: 60,
+    performanceInDays: 82,
     nextAction: "Caler les dates de residence d'automne",
     nextFollowUpInDays: 6,
   },
@@ -269,6 +284,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     stage: "Confirme",
     value: 8400,
     probability: 100,
+    performanceInDays: 21,
     nextAction: "Envoyer le contrat de cession pour signature",
     nextFollowUpInDays: null,
   },
@@ -279,6 +295,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     stage: "Perdu",
     value: 5200,
     probability: 0,
+    performanceInDays: null,
     nextAction: "",
     nextFollowUpInDays: null,
   },

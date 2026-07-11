@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createShowDocument, prepareDocumentUpload } from "@/app/(dashboard)/actions";
 import { Badge } from "@/components/ui/badge";
 import { buildDocumentTitle, documentAcceptAttribute, getDocumentFileError } from "@/lib/documents-upload";
-import { getDocumentStatusTone } from "@/lib/show-documents";
+import { getDocumentStatusTone, getShowDocumentTypeLabel } from "@/lib/show-documents";
 import { cn } from "@/lib/utils";
 import type { ShowDocumentStatus, ShowDocumentType } from "@/types";
 
@@ -14,12 +14,14 @@ export function DocumentSlot({
   showTitle,
   type,
   title,
+  requirementLabel,
   status,
 }: {
   showId: string;
   showTitle: string;
   type: ShowDocumentType;
   title: string | null;
+  requirementLabel?: string;
   status: ShowDocumentStatus;
 }) {
   const router = useRouter();
@@ -106,7 +108,14 @@ export function DocumentSlot({
         className="flex w-full items-start justify-between gap-2 text-left transition hover:opacity-80 disabled:opacity-60"
       >
         <div className="min-w-0">
-          <p className="text-sm font-medium">{type}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium">{getShowDocumentTypeLabel(type)}</p>
+            {requirementLabel ? (
+              <span className="rounded-full bg-panel px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+                {requirementLabel}
+              </span>
+            ) : null}
+          </div>
           <p className="mt-0.5 truncate text-xs text-muted">
             {isUploading ? "Envoi en cours..." : title || "Cliquer pour ajouter"}
           </p>

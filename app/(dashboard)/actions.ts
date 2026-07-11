@@ -71,6 +71,20 @@ type ActionResult = {
   message: string;
 };
 
+function isOpportunitySchemaCacheError(message: string | undefined) {
+  return Boolean(
+    message?.includes("schema cache") &&
+      (message.includes("lost_reason") || message.includes("performance_date")),
+  );
+}
+
+function withoutOptionalOpportunityColumns<T extends Record<string, unknown>>(payload: T) {
+  const fallbackPayload = { ...payload };
+  delete fallbackPayload.performance_date;
+  delete fallbackPayload.lost_reason;
+  return fallbackPayload;
+}
+
 export async function submitFeedback(values: FeedbackFormInput): Promise<ActionResult> {
   const parsed = feedbackSchema.safeParse(values);
 
@@ -334,17 +348,29 @@ export async function updateContact(
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase
-    .from("contacts")
-    .update({
-      name: parsed.data.name,
-      organization: parsed.data.organization,
-      role: parsed.data.role || null,
-      email: parsed.data.email || null,
-      city: parsed.data.city || null,
-      status: parsed.data.status,
-    })
-    .eq("id", contactId);
+  const payload = {
+    name: parsed.data.name,
+    organization: parsed.data.organization,
+    role: parsed.data.role || null,
+    email: parsed.data.email || null,
+    city: parsed.data.city || null,
+    status: parsed.data.status,
+    tags: normalizeContactTags(parsed.data.tags),
+  };
+  let { error } = await supabase.from("contacts").update(payload).eq("id", contactId);
+
+  if (isContactTagsSchemaCacheError(error)) {
+    const fallbackPayload = {
+      name: payload.name,
+      organization: payload.organization,
+      role: payload.role,
+      email: payload.email,
+      city: payload.city,
+      status: payload.status,
+    };
+    const retry = await supabase.from("contacts").update(fallbackPayload).eq("id", contactId);
+    error = retry.error;
+  }
 
   if (error) {
     return { ok: false, message: error.message };
@@ -358,6 +384,21 @@ export async function updateContact(
   await logActivity("a modifie le contact", "contact", parsed.data.name);
 
   return { ok: true, message: "Contact mis a jour." };
+}
+
+function normalizeContactTags(tags: string[] | undefined) {
+  return Array.from(
+    new Set(
+      (tags ?? [])
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .slice(0, 12),
+    ),
+  );
+}
+
+function isContactTagsSchemaCacheError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("tags"));
 }
 
 export async function deleteContact(contactId: string): Promise<ActionResult> {
@@ -1078,7 +1119,7 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase.from("contacts").insert({
+  const payload = {
     company_id: workspace.companyId,
     name: parsed.data.name,
     organization: parsed.data.organization,
@@ -1086,7 +1127,23 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
     email: parsed.data.email || null,
     city: parsed.data.city || null,
     status: parsed.data.status,
-  });
+    tags: normalizeContactTags(parsed.data.tags),
+  };
+  let { error } = await supabase.from("contacts").insert(payload);
+
+  if (isContactTagsSchemaCacheError(error)) {
+    const fallbackPayload = {
+      company_id: payload.company_id,
+      name: payload.name,
+      organization: payload.organization,
+      role: payload.role,
+      email: payload.email,
+      city: payload.city,
+      status: payload.status,
+    };
+    const retry = await supabase.from("contacts").insert(fallbackPayload);
+    error = retry.error;
+  }
 
   if (error) {
     return { ok: false, message: error.message };
@@ -1146,17 +1203,31 @@ export async function importContacts(
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase.from("contacts").insert(
-    parsedContacts.map((contact) => ({
-      company_id: workspace.companyId,
+  const payload = parsedContacts.map((contact) => ({
+    company_id: workspace.companyId,
+    name: contact.name,
+    organization: contact.organization,
+    role: contact.role || null,
+    email: contact.email || null,
+    city: contact.city || null,
+    status: contact.status,
+    tags: normalizeContactTags(contact.tags),
+  }));
+  let { error } = await supabase.from("contacts").insert(payload);
+
+  if (isContactTagsSchemaCacheError(error)) {
+    const fallbackPayload = payload.map((contact) => ({
+      company_id: contact.company_id,
       name: contact.name,
       organization: contact.organization,
-      role: contact.role || null,
-      email: contact.email || null,
-      city: contact.city || null,
+      role: contact.role,
+      email: contact.email,
+      city: contact.city,
       status: contact.status,
-    })),
-  );
+    }));
+    const retry = await supabase.from("contacts").insert(fallbackPayload);
+    error = retry.error;
+  }
 
   if (error) {
     return { ok: false, imported: 0, skipped: values.length, message: error.message };
@@ -1259,22 +1330,35 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   }
 
   const supabase = await getSupabaseServerClient();
-  const { data: opportunity, error } = await supabase
+  const basePayload = {
+    company_id: workspace.companyId,
+    title: parsed.data.title,
+    contact_id: parsed.data.contactId || null,
+    show_id: parsed.data.showId || null,
+    stage: parsed.data.stage,
+    value: parsed.data.value,
+    probability: parsed.data.probability,
+    performance_date: parsed.data.performanceDate || null,
+    next_action: parsed.data.nextAction || null,
+    next_follow_up_at: parsed.data.nextFollowUpAt || null,
+    lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
+  };
+  let { data: opportunity, error } = await supabase
     .from("opportunities")
-    .insert({
-      company_id: workspace.companyId,
-      title: parsed.data.title,
-      contact_id: parsed.data.contactId || null,
-      show_id: parsed.data.showId || null,
-      stage: parsed.data.stage,
-      value: parsed.data.value,
-      probability: parsed.data.probability,
-      next_action: parsed.data.nextAction || null,
-      next_follow_up_at: parsed.data.nextFollowUpAt || null,
-      lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
-    })
+    .insert(basePayload)
     .select("id")
     .single();
+
+  if (error && isOpportunitySchemaCacheError(error.message)) {
+    const retry = await supabase
+      .from("opportunities")
+      .insert(withoutOptionalOpportunityColumns(basePayload))
+      .select("id")
+      .single();
+
+    opportunity = retry.data;
+    error = retry.error;
+  }
 
   if (error || !opportunity) {
     return { ok: false, message: error?.message ?? "Date non creee." };
@@ -1295,6 +1379,9 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   revalidatePath("/pipeline");
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
+  if (parsed.data.showId) {
+    revalidatePath(`/shows/${parsed.data.showId}`);
+  }
 
   await logActivity("a cree la date possible", "diffusion", parsed.data.title);
 
@@ -1327,20 +1414,31 @@ export async function updateOpportunity(
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase
+  const basePayload = {
+    title: parsed.data.title,
+    contact_id: parsed.data.contactId || null,
+    show_id: parsed.data.showId || null,
+    stage: parsed.data.stage,
+    value: parsed.data.value,
+    probability: parsed.data.probability,
+    performance_date: parsed.data.performanceDate || null,
+    next_action: parsed.data.nextAction || null,
+    next_follow_up_at: parsed.data.nextFollowUpAt || null,
+    lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
+  };
+  let { error } = await supabase
     .from("opportunities")
-    .update({
-      title: parsed.data.title,
-      contact_id: parsed.data.contactId || null,
-      show_id: parsed.data.showId || null,
-      stage: parsed.data.stage,
-      value: parsed.data.value,
-      probability: parsed.data.probability,
-      next_action: parsed.data.nextAction || null,
-      next_follow_up_at: parsed.data.nextFollowUpAt || null,
-      lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
-    })
+    .update(basePayload)
     .eq("id", opportunityId);
+
+  if (error && isOpportunitySchemaCacheError(error.message)) {
+    const retry = await supabase
+      .from("opportunities")
+      .update(withoutOptionalOpportunityColumns(basePayload))
+      .eq("id", opportunityId);
+
+    error = retry.error;
+  }
 
   if (error) {
     return { ok: false, message: error.message };
@@ -1373,6 +1471,9 @@ export async function updateOpportunity(
   revalidatePath("/pipeline");
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
+  if (parsed.data.showId) {
+    revalidatePath(`/shows/${parsed.data.showId}`);
+  }
 
   await logActivity("a modifie la date possible", "diffusion", parsed.data.title);
 
@@ -1827,20 +1928,35 @@ export async function seedDemoCompany(): Promise<ActionResult> {
     ]),
   );
 
-  const { data: insertedContacts, error: contactsError } = await supabase
+  const contactPayload = demoContacts.map((contact) => ({
+    company_id: companyId,
+    name: contact.name,
+    organization: contact.organization,
+    role: contact.role,
+    email: contact.email,
+    city: contact.city,
+    status: contact.status,
+    tags: contact.tags,
+  }));
+  let { data: insertedContacts, error: contactsError } = await supabase
     .from("contacts")
-    .insert(
-      demoContacts.map((contact) => ({
-        company_id: companyId,
-        name: contact.name,
-        organization: contact.organization,
-        role: contact.role,
-        email: contact.email,
-        city: contact.city,
-        status: contact.status,
-      })),
-    )
+    .insert(contactPayload)
     .select("id,name");
+
+  if (isContactTagsSchemaCacheError(contactsError)) {
+    const fallbackPayload = contactPayload.map((contact) => ({
+      company_id: contact.company_id,
+      name: contact.name,
+      organization: contact.organization,
+      role: contact.role,
+      email: contact.email,
+      city: contact.city,
+      status: contact.status,
+    }));
+    const retry = await supabase.from("contacts").insert(fallbackPayload).select("id,name");
+    insertedContacts = retry.data;
+    contactsError = retry.error;
+  }
 
   if (contactsError || !insertedContacts) {
     return { ok: false, message: contactsError?.message ?? "Contacts demo non crees." };
@@ -1864,6 +1980,8 @@ export async function seedDemoCompany(): Promise<ActionResult> {
         stage: opportunity.stage,
         value: opportunity.value,
         probability: opportunity.probability,
+        performance_date:
+          opportunity.performanceInDays === null ? null : demoDate(opportunity.performanceInDays),
         next_action: opportunity.nextAction || null,
         next_follow_up_at:
           opportunity.nextFollowUpInDays === null

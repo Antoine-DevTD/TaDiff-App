@@ -19,16 +19,34 @@ export const showDocumentStatuses = [
   "Pret",
 ] as const;
 
-export const requiredShowDocumentTypes = [
+export const essentialShowDocumentTypes = [
   "Affiche",
   "Dossier artistique",
   "Note d'intention",
   "Synopsis",
-  "Budget",
+  "Texte",
   "Fiche technique",
+] as const;
+
+export const optionalShowDocumentTypes = [
+  "Budget",
+  "Devis",
   "RIB",
   "Statuts",
 ] as const;
+
+export const requiredShowDocumentTypes = essentialShowDocumentTypes;
+
+export function getShowDocumentTypeLabel(type: ShowDocument["documentType"]) {
+  if (type === "Texte") return "Texte de la piece";
+  return type;
+}
+
+export function isEssentialShowDocumentType(type: ShowDocument["documentType"]) {
+  return essentialShowDocumentTypes.includes(
+    type as (typeof essentialShowDocumentTypes)[number],
+  );
+}
 
 export function getDocumentStatusTone(status: ShowDocumentStatus) {
   if (status === "Pret") return "success" as const;

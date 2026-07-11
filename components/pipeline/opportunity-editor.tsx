@@ -32,6 +32,7 @@ export function OpportunityEditor({
     stage: deal.stage,
     value: String(deal.value),
     probability: String(deal.probability),
+    performanceDate: deal.performanceDate,
     nextAction: deal.nextAction === "Prochaine action a definir" ? "" : deal.nextAction,
     nextFollowUpAt: deal.nextFollowUpAt,
     lostReason: deal.lostReason,
@@ -68,6 +69,7 @@ export function OpportunityEditor({
         stage: draft.stage,
         value: Number(draft.value) || 0,
         probability: Number(draft.probability) || 0,
+        performanceDate: draft.performanceDate,
         nextAction: draft.nextAction || "Prochaine action a definir",
         nextFollowUpAt: draft.nextFollowUpAt,
         lostReason: draft.stage === "Perdu" ? draft.lostReason : "",
@@ -157,6 +159,15 @@ export function OpportunityEditor({
           }
         />
       </div>
+      <Input
+        aria-label="Date de jeu"
+        className="min-h-9 text-xs"
+        type="date"
+        value={draft.performanceDate}
+        onChange={(event) =>
+          setDraft((current) => ({ ...current, performanceDate: event.target.value }))
+        }
+      />
       <Input
         aria-label="Date de relance"
         className="min-h-9 text-xs"

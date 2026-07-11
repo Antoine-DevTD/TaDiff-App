@@ -153,6 +153,7 @@ export const contacts: Contact[] = [
     email: "mina@littoral.fr",
     city: "La Rochelle",
     status: "En discussion",
+    tags: ["Scene nationale", "Grand plateau"],
   },
   {
     id: "contact-2",
@@ -162,6 +163,7 @@ export const contacts: Contact[] = [
     email: "arthur@passages.fr",
     city: "Metz",
     status: "Prospect",
+    tags: ["Festival", "Creation"],
   },
   {
     id: "contact-3",
@@ -171,6 +173,7 @@ export const contacts: Contact[] = [
     email: "sofia@theatredunord.fr",
     city: "Lille",
     status: "Partenaire",
+    tags: ["Theatre", "Partenaire"],
   },
 ];
 
@@ -184,6 +187,7 @@ export const pipelineDeals: PipelineDeal[] = [
     stage: "Negociation",
     value: 7800,
     probability: 65,
+    performanceDate: "2026-10-18",
     nextAction: "Envoyer proposition technique",
     nextFollowUpAt: "2026-07-03",
     lostReason: "",
@@ -204,6 +208,7 @@ export const pipelineDeals: PipelineDeal[] = [
     stage: "Contacte",
     value: 5400,
     probability: 35,
+    performanceDate: "2026-11-07",
     nextAction: "Relancer apres lecture du dossier",
     nextFollowUpAt: "2026-06-28",
     lostReason: "",
@@ -224,6 +229,7 @@ export const pipelineDeals: PipelineDeal[] = [
     stage: "A qualifier",
     value: 15000,
     probability: 20,
+    performanceDate: "",
     nextAction: "Qualifier budget et calendrier",
     nextFollowUpAt: "2026-07-08",
     lostReason: "",

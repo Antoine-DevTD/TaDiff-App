@@ -14,6 +14,7 @@ export const opportunitySchema = z.object({
   ]),
   value: z.coerce.number().min(0, "Le montant doit etre positif"),
   probability: z.coerce.number().min(0).max(100),
+  performanceDate: z.string().optional(),
   nextAction: z.string().optional(),
   nextFollowUpAt: z.string().optional(),
   lostReason: z.string().optional(),

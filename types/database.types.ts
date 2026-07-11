@@ -237,6 +237,7 @@ export type Database = {
           email: string | null;
           city: string | null;
           status: "Prospect" | "En discussion" | "Partenaire";
+          tags: string[] | null;
           created_at: string;
         };
         Insert: {
@@ -248,6 +249,7 @@ export type Database = {
           email?: string | null;
           city?: string | null;
           status?: "Prospect" | "En discussion" | "Partenaire";
+          tags?: string[] | null;
           created_at?: string;
         };
         Update: {
@@ -257,6 +259,7 @@ export type Database = {
           email?: string | null;
           city?: string | null;
           status?: "Prospect" | "En discussion" | "Partenaire";
+          tags?: string[] | null;
           created_at?: string;
         };
         Relationships: [
@@ -279,6 +282,7 @@ export type Database = {
           stage: string;
           value: number | null;
           probability: number;
+          performance_date: string | null;
           next_action: string | null;
           next_follow_up_at: string | null;
           lost_reason: string | null;
@@ -293,6 +297,7 @@ export type Database = {
           stage?: string;
           value?: number | null;
           probability?: number;
+          performance_date?: string | null;
           next_action?: string | null;
           next_follow_up_at?: string | null;
           lost_reason?: string | null;
@@ -305,6 +310,7 @@ export type Database = {
           stage?: string;
           value?: number | null;
           probability?: number;
+          performance_date?: string | null;
           next_action?: string | null;
           next_follow_up_at?: string | null;
           lost_reason?: string | null;

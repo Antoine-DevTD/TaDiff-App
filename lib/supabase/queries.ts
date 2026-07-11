@@ -110,7 +110,7 @@ export async function getShowById(showId: string): Promise<{
       supabase
         .from("opportunities")
         .select(
-          "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
+          "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
         )
         .eq("show_id", showId)
         .order("created_at", { ascending: false }),
@@ -147,6 +147,7 @@ export async function getShowById(showId: string): Promise<{
           stage: deal.stage as PipelineDeal["stage"],
           value: deal.value ?? 0,
           probability: deal.probability ?? 0,
+          performanceDate: deal.performance_date ?? "",
           nextAction: deal.next_action ?? "Prochaine action a definir",
           nextFollowUpAt: deal.next_follow_up_at ?? "",
           lostReason: deal.lost_reason ?? "",
@@ -199,10 +200,21 @@ export async function getContacts(): Promise<Contact[]> {
   }
 
   const supabase = await getSupabaseServerClient();
-  const { data, error } = await supabase
+  const query = supabase
     .from("contacts")
-    .select("id,name,organization,role,email,city,status")
+    .select("id,name,organization,role,email,city,status,tags")
     .order("created_at", { ascending: false });
+
+  let { data, error } = await query;
+
+  if (error?.message.includes("tags")) {
+    const fallback = await supabase
+      .from("contacts")
+      .select("id,name,organization,role,email,city,status")
+      .order("created_at", { ascending: false });
+    data = fallback.data?.map((contact) => ({ ...contact, tags: [] })) ?? null;
+    error = fallback.error;
+  }
 
   if (error || !data) {
     return [];
@@ -216,6 +228,7 @@ export async function getContacts(): Promise<Contact[]> {
     email: contact.email ?? "",
     city: contact.city ?? "",
     status: contact.status,
+    tags: "tags" in contact && Array.isArray(contact.tags) ? contact.tags : [],
   }));
 }
 
@@ -247,21 +260,32 @@ export async function getContactById(contactId: string): Promise<{
   }
 
   const supabase = await getSupabaseServerClient();
-  const [{ data: contact, error: contactError }, { data: opportunities, error: opportunitiesError }] =
-    await Promise.all([
-      supabase
-        .from("contacts")
-        .select("id,name,organization,role,email,city,status")
-        .eq("id", contactId)
-        .maybeSingle(),
-      supabase
-        .from("opportunities")
-        .select(
-          "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title,discipline,status,next_date,budget,notes,poster_url,id)",
-        )
-        .eq("contact_id", contactId)
-        .order("created_at", { ascending: false }),
-    ]);
+  const [contactResult, opportunityResult] = await Promise.all([
+    supabase
+      .from("contacts")
+      .select("id,name,organization,role,email,city,status,tags")
+      .eq("id", contactId)
+      .maybeSingle(),
+    supabase
+      .from("opportunities")
+      .select(
+        "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title,discipline,status,next_date,budget,notes,poster_url,id)",
+      )
+      .eq("contact_id", contactId)
+      .order("created_at", { ascending: false }),
+  ]);
+  let { data: contact, error: contactError } = contactResult;
+  const { data: opportunities, error: opportunitiesError } = opportunityResult;
+
+  if (contactError?.message.includes("tags")) {
+    const fallback = await supabase
+      .from("contacts")
+      .select("id,name,organization,role,email,city,status")
+      .eq("id", contactId)
+      .maybeSingle();
+    contact = fallback.data ? { ...fallback.data, tags: [] } : null;
+    contactError = fallback.error;
+  }
 
   if (contactError || !contact || opportunitiesError || !opportunities) {
     return { contact: null, opportunities: [], reminders: [], shows: [] };
@@ -275,6 +299,7 @@ export async function getContactById(contactId: string): Promise<{
     email: contact.email ?? "",
     city: contact.city ?? "",
     status: contact.status,
+    tags: "tags" in contact && Array.isArray(contact.tags) ? contact.tags : [],
   };
 
   const resolvedOpportunities: PipelineDeal[] = opportunities.map((deal) => ({
@@ -286,6 +311,7 @@ export async function getContactById(contactId: string): Promise<{
     stage: deal.stage as PipelineDeal["stage"],
     value: deal.value ?? 0,
     probability: deal.probability ?? 0,
+    performanceDate: deal.performance_date ?? "",
     nextAction: deal.next_action ?? "Prochaine action a definir",
     nextFollowUpAt: deal.next_follow_up_at ?? "",
     lostReason: deal.lost_reason ?? "",
@@ -360,7 +386,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
   const { data, error } = await supabase
     .from("opportunities")
     .select(
-      "id,title,contact_id,show_id,stage,value,probability,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
+      "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
     )
     .order("created_at", { ascending: false });
 
@@ -377,6 +403,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     stage: deal.stage as PipelineDeal["stage"],
     value: deal.value ?? 0,
     probability: deal.probability ?? 0,
+    performanceDate: deal.performance_date ?? "",
     nextAction: deal.next_action ?? "Prochaine action a definir",
     nextFollowUpAt: deal.next_follow_up_at ?? "",
     lostReason: deal.lost_reason ?? "",

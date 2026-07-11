@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { detectDocumentType, extractPdfFirstPageText } from "@/lib/documents-detect";
 import { buildDocumentTitle, documentAcceptAttribute, getDocumentFileError } from "@/lib/documents-upload";
-import { showDocumentStatuses, showDocumentTypes } from "@/lib/show-documents";
+import {
+  getShowDocumentTypeLabel,
+  showDocumentStatuses,
+  showDocumentTypes,
+} from "@/lib/show-documents";
 import { cn } from "@/lib/utils";
 import type { ShowDocumentStatus, ShowDocumentType } from "@/types";
 
@@ -245,7 +249,7 @@ export function DocumentDropzone({
                     >
                       {showDocumentTypes.map((type) => (
                         <option key={type} value={type}>
-                          {type}
+                          {getShowDocumentTypeLabel(type)}
                         </option>
                       ))}
                     </Select>

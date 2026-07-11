@@ -372,6 +372,14 @@ function PriorityDealCard({ deal }: { deal: PipelineDeal }) {
           <p className="font-semibold">{weightedValue.toLocaleString("fr-FR")} EUR</p>
         </div>
         <div className="text-right">
+          <p className="text-xs text-muted">Jeu</p>
+          <p className="font-medium">
+            {deal.performanceDate
+              ? new Date(deal.performanceDate).toLocaleDateString("fr-FR")
+              : "A caler"}
+          </p>
+        </div>
+        <div className="text-right">
           <p className="text-xs text-muted">Relance</p>
           <p className="font-medium">
             {deal.nextFollowUpAt
@@ -398,11 +406,12 @@ function PipelineListView({
   return (
     <Card className="overflow-hidden p-0">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[960px] text-left text-sm">
+        <table className="w-full min-w-[1040px] text-left text-sm">
           <thead className="border-b border-border bg-panel-strong/60 text-xs uppercase tracking-[0.12em] text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Date possible</th>
               <th className="px-4 py-3 font-medium">Contact</th>
+              <th className="px-4 py-3 font-medium">Jeu</th>
               <th className="px-4 py-3 font-medium">Etape</th>
               <th className="px-4 py-3 font-medium">Relance</th>
               <th className="px-4 py-3 text-right font-medium">CA pondere</th>
@@ -426,6 +435,13 @@ function PipelineListView({
                     <p className="text-foreground">{deal.contactName}</p>
                     <p className="mt-1 text-xs text-muted">
                       {deal.contactOrganization || deal.venue}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="font-medium text-foreground">
+                      {deal.performanceDate
+                        ? new Date(deal.performanceDate).toLocaleDateString("fr-FR")
+                        : "A caler"}
                     </p>
                   </td>
                   <td className="px-4 py-4">
@@ -622,10 +638,18 @@ function PipelineCard({
         <Badge tone={signal.tone}>{signal.label}</Badge>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md border border-border bg-panel-strong/45 p-2 text-xs">
+      <div className="mt-3 grid grid-cols-2 gap-2 rounded-md border border-border bg-panel-strong/45 p-2 text-xs">
         <InfoCell label="Montant" value={`${deal.value.toLocaleString("fr-FR")} EUR`} />
         <InfoCell label="Probabilite" value={`${deal.probability}%`} />
         <InfoCell label="Pondere" value={`${weightedValue.toLocaleString("fr-FR")} EUR`} />
+        <InfoCell
+          label="Jeu"
+          value={
+            deal.performanceDate
+              ? new Date(deal.performanceDate).toLocaleDateString("fr-FR")
+              : "A caler"
+          }
+        />
       </div>
 
       <div className="mt-3 space-y-2 text-xs text-muted">
