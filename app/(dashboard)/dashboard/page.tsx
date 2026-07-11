@@ -290,43 +290,29 @@ export default async function DashboardPage() {
   const onboardingSteps: OnboardingStep[] = [
     {
       id: "show",
-      label: "Créer votre premier spectacle",
-      detail: "Titre, discipline, budget : le dossier central de la compagnie.",
+      label: "Creer le premier spectacle",
+      detail: "Titre, discipline, budget, affiche : le dossier central de la compagnie.",
       href: "/shows/new",
       done: shows.length > 0,
     },
     {
       id: "documents",
-      label: "Ajouter les pièces du dossier",
-      detail: "Affiche, dossier artistique, budget : tout part de la fiche spectacle.",
+      label: "Completer le dossier indispensable",
+      detail: "Dossier artistique, note, synopsis, texte et fiche technique pour vendre et deposer.",
       href: firstShowId ? `/shows/${firstShowId}` : "/shows",
       done: documents.length > 0,
     },
     {
-      id: "fixed-costs",
-      label: "Renseigner vos frais fixes",
-      detail: "Assurance, comptable, local : la base de la projection.",
-      href: "/finances",
-      done: fixedCosts.length > 0,
-    },
-    {
-      id: "treasury",
-      label: "Saisir votre solde de trésorerie",
-      detail: "Le cockpit calcule votre marge et votre date de risque.",
-      href: "/finances",
-      done: treasury !== null,
-    },
-    {
       id: "contacts",
-      label: "Ajouter ou importer vos contacts",
-      detail: "À la main ou en CSV : votre carnet de diffusion.",
-      href: "/contacts/new",
+      label: "Remplir le carnet de diffusion",
+      detail: "Programmateurs, lieux, partenaires et tags pour retrouver vite les bons contacts.",
+      href: "/contacts",
       done: contacts.length > 0,
     },
     {
       id: "opportunity",
-      label: "Créer une première date possible",
-      detail: "Un contact + un spectacle = une date à faire avancer.",
+      label: "Ajouter une premiere date possible",
+      detail: "Un contact, un spectacle, une date de jeu et une prochaine action.",
       href: "/pipeline",
       done: pipelineDeals.length > 0,
     },
@@ -336,6 +322,20 @@ export default async function DashboardPage() {
       detail: "TaDiff vous rappelle qui relancer et quand.",
       href: "/reminders",
       done: reminders.length > 0,
+    },
+    {
+      id: "fixed-costs",
+      label: "Renseigner les frais fixes",
+      detail: "Assurance, banque, comptable, stockage : la base de la projection.",
+      href: "/finances",
+      done: fixedCosts.length > 0,
+    },
+    {
+      id: "treasury",
+      label: "Saisir la tresorerie",
+      detail: "Le cockpit calcule la marge de securite et la date de risque.",
+      href: "/finances",
+      done: treasury !== null,
     },
   ];
   const onboardingComplete = onboardingSteps.every((step) => step.done);
@@ -457,7 +457,7 @@ export default async function DashboardPage() {
             <ButtonLink href="/calendar" variant="secondary">
               Voir l&apos;agenda
             </ButtonLink>
-            {onboardingComplete ? <TourLauncher label="Visite guidee" /> : null}
+            <TourLauncher label="Visite guidee" />
           </div>
         </Card>
       </section>

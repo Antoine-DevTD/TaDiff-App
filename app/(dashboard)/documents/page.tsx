@@ -198,7 +198,7 @@ export default async function DocumentsPage() {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <Card className="space-y-4 p-5">
+            <Card className="space-y-4 p-5" data-tour="documents-priorite">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-muted">Dossier prioritaire</p>
@@ -278,7 +278,7 @@ export default async function DocumentsPage() {
             />
           </section>
 
-          <Card className="space-y-4 p-5">
+          <Card className="space-y-4 p-5" data-tour="documents-explorateur">
             <div>
               <p className="text-base font-semibold">Explorateur de documents</p>
               <p className="mt-1 text-sm text-muted">

@@ -11,11 +11,11 @@ Objectif : montrer en 8 a 12 minutes que TaDiff est un cockpit simple pour une c
 
 ## Preparation avant appel
 
-1. Verifier que les migrations Supabase sont appliquees jusqu'a `020_stripe_billing.sql`.
+1. Verifier que les migrations Supabase sont appliquees jusqu'a `024_contact_tags.sql`.
 2. Sur un compte vierge, aller dans `Parametres` puis lancer "Installer la compagnie de demonstration".
 3. Recharger le cockpit.
 4. Verifier que le solde, les dates, les devis, les subventions et les documents sont remplis.
-5. Garder Stripe visible comme "mode test branche, activation par cles".
+5. Garder Stripe de cote : le test paiement peut attendre, ne pas en faire le coeur de la demo.
 
 ## Parcours recommande
 
@@ -67,11 +67,35 @@ Message : "Un spectacle n'est pas juste une fiche : c'est le dossier central pou
 
 Montrer :
 - affiche ;
-- documents ;
+- documents indispensables et documents facultatifs ;
 - statut de dossier ;
 - lien vers fiche spectacle.
 
-### 5. Diffusion
+### 5. Documents
+
+Route : `/documents`
+
+Message : "Les dossiers remontent automatiquement par spectacle. On sait ce qui manque sans fouiller dans Drive."
+
+Montrer :
+- dossier prioritaire ;
+- pourcentage de pieces indispensables ;
+- explorateur par spectacle ;
+- documents facultatifs possibles : devis, budget, RIB, statuts.
+
+### 6. Carnet de diffusion
+
+Route : `/contacts`
+
+Message : "On ne parle pas de CRM : c'est le carnet des programmateurs, lieux, partenaires et mecenes."
+
+Montrer :
+- ajout d'un contact en pop-up ;
+- tags personnalisables ;
+- filtres par statut, role ou tag ;
+- recherche rapide.
+
+### 7. Diffusion
 
 Route : `/pipeline`
 
@@ -79,11 +103,12 @@ Message : "Ici, on suit les dates possibles sans parler de CRM. Chaque date a un
 
 Montrer :
 - opportunites par etape ;
+- date de jeu separee de la date de relance ;
 - valeur ponderee ;
 - prochaine relance ;
 - creation de devis depuis une date si pertinent.
 
-### 6. Subventions
+### 8. Subventions
 
 Route : `/subventions`
 
@@ -97,7 +122,7 @@ Montrer :
 
 Note : certaines dates de reference doivent etre verifiees avant production.
 
-### 7. Tresorerie
+### 9. Tresorerie
 
 Route : `/finances`
 
@@ -109,7 +134,7 @@ Montrer :
 - projection ;
 - prix recommande avec frais fixes lisses.
 
-### 8. Calendrier
+### 10. Calendrier
 
 Route : `/calendar`
 
@@ -120,7 +145,7 @@ Montrer :
 - filtres ;
 - creation evenement simple.
 
-### 9. Facturation
+### 11. Facturation
 
 Route : `/billing`
 
@@ -135,7 +160,7 @@ Montrer :
 Ne pas dire :
 - "le paiement marche en prod" tant que le test complet Stripe n'a pas ete fait.
 
-### 10. Parametres
+### 12. Parametres
 
 Route : `/settings`
 
@@ -154,10 +179,14 @@ Montrer seulement si besoin :
 - Feedback et William masques sur mobile pour privilegier la lecture.
 - Parcours public -> app coherent en mode demo.
 - Stripe visible comme test/configuration, pas comme promesse active.
+- Parcours guide William : cockpit -> spectacles -> documents -> contacts -> diffusion -> subventions -> finances -> calendrier.
+- Contacts : creation en pop-up, tags et filtres.
+- Spectacles : separation pieces indispensables / documents facultatifs.
 
 ## Points a surveiller
 
 - La direction artistique par defaut reste bleue et assez SaaS ; pour une demo theatre plus marquee, utiliser le theme "Plateau noir", "Papier affiche" ou "Regie" dans Parametres.
 - La page calendrier est encore une vue liste, pas une vraie vue mois/semaine.
 - Les emails Resend ne sont pas branches.
+- Stripe test complet volontairement reporte.
 - William est scripte/regles simples, pas encore IA.

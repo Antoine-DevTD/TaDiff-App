@@ -17,7 +17,9 @@ export default async function ContactsPage() {
             Programmateurs, lieux, partenaires et personnes a relancer.
           </p>
         </div>
-        <ContactCreateDialog />
+        <div data-tour="contacts-creation">
+          <ContactCreateDialog />
+        </div>
       </div>
       <ContactImportPanel />
       {contacts.length === 0 ? (
@@ -31,7 +33,9 @@ export default async function ContactsPage() {
           </div>
         </div>
       ) : (
-        <ContactsTable contacts={contacts} />
+        <div data-tour="contacts-carnet">
+          <ContactsTable contacts={contacts} />
+        </div>
       )}
     </div>
   );

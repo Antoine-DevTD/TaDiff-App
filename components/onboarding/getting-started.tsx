@@ -21,19 +21,17 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Commencer
+            Mise en route compagnie
           </p>
           <h2 className="mt-2 text-xl font-semibold">
-            {nextStep
-              ? `Prochaine étape : ${nextStep.label.toLowerCase()}`
-              : "Votre compagnie est en place."}
+            {nextStep ? `Prochaine etape : ${nextStep.label.toLowerCase()}` : "Votre cockpit est pret."}
           </h2>
           <p className="mt-1 text-sm text-muted">
-            {doneCount}/{steps.length} étapes faites. Du premier spectacle jusqu&apos;à la
-            première relance, chaque étape alimente le cockpit.
+            {doneCount}/{steps.length} etapes faites. On avance comme une administration de
+            production : spectacle, dossier, contacts, dates, relances, argent.
           </p>
         </div>
-        <TourLauncher label="Visite guidée (3 min)" />
+        <TourLauncher label="Visite guidee (3 min)" />
       </div>
 
       <div className="h-2 overflow-hidden rounded-full bg-border">
@@ -53,11 +51,11 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
             href={step.href}
           >
             <div className="flex items-start justify-between gap-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-panel text-xs font-semibold">
-                {step.done ? "✓" : index + 1}
+              <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full border border-border bg-panel px-2 text-xs font-semibold">
+                {step.done ? "OK" : index + 1}
               </span>
               <Badge tone={step.done ? "success" : "neutral"}>
-                {step.done ? "Fait" : "À faire"}
+                {step.done ? "Fait" : "A faire"}
               </Badge>
             </div>
             <p className="mt-3 font-medium">{step.label}</p>
