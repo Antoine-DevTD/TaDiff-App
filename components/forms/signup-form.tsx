@@ -39,7 +39,7 @@ export function SignupForm() {
       email: values.email,
       password: values.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/welcome`,
         data: {
           company_name: values.companyName,
           profile: values.profile,
@@ -65,11 +65,11 @@ export function SignupForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           eventType: "signup",
-          path: "/dashboard",
+          path: "/welcome",
         }),
       }).catch(() => null);
 
-      router.push("/dashboard");
+      router.push("/welcome");
       router.refresh();
       return;
     }

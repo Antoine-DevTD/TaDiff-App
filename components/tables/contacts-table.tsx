@@ -28,6 +28,7 @@ import {
 } from "@tanstack/react-table";
 import { createReminder } from "@/app/(dashboard)/actions";
 import { Badge } from "@/components/ui/badge";
+import { ContactEmailAssistant } from "@/components/contacts/contact-email-assistant";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ContactForm } from "@/components/forms/contact-form";
@@ -56,6 +57,7 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
   const [railHovered, setRailHovered] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [emailContact, setEmailContact] = useState<Contact | null>(null);
   const [contextMenu, setContextMenu] = useState<ContactContextMenu>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -127,12 +129,7 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
     }
 
     if (action === "email") {
-      const to = contact.email ? encodeURIComponent(contact.email) : "";
-      const subject = encodeURIComponent(`Suite a notre echange - ${contact.organization}`);
-      const body = encodeURIComponent(
-        `Bonjour ${contact.name},\n\nJe me permets de revenir vers vous concernant notre diffusion.\n\nBien a vous,`,
-      );
-      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+      setEmailContact(contact);
       return;
     }
 
@@ -297,6 +294,12 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
           <ContactForm contact={editingContact} onSuccess={() => setEditingContact(null)} />
         ) : null}
       </Dialog>
+
+      <ContactEmailAssistant
+        contact={emailContact}
+        open={Boolean(emailContact)}
+        onClose={() => setEmailContact(null)}
+      />
     </div>
   );
 }
