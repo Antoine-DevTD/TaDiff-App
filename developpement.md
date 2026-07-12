@@ -833,6 +833,8 @@ Phase D - Confort :
 
 Le produit doit prendre l'utilisateur par la main au debut.
 
+Point a clarifier apres la demo : le parcours `/welcome` existe avec William et une mise en place guidee, mais son intention n'est pas encore assez claire. Il faudra le retravailler pour que l'utilisateur comprenne immediatement pourquoi on lui demande ces informations, ce qui est cree en coulisse, et quelle premiere action il doit faire ensuite, sans donner une impression de tunnel technique ou de gadget visuel.
+
 Parcours initial :
 
 1. Creer la compagnie.

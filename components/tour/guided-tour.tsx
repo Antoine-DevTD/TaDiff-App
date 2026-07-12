@@ -4,8 +4,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { overviewTourSteps } from "@/data/tour-steps";
 
-const storageKey = "tadiff-visite-guidee";
+export const tourStorageKey = "tadiff-visite-guidee";
 export const tourStartEvent = "tadiff:start-tour";
+export const tourStateChangeEvent = "tadiff:tour-state-changed";
 
 type TourState = {
   active: boolean;
@@ -16,7 +17,7 @@ const inactiveState: TourState = { active: false, step: 0 };
 
 function readStoredState(): TourState {
   try {
-    const raw = window.localStorage.getItem(storageKey);
+    const raw = window.localStorage.getItem(tourStorageKey);
 
     if (!raw) return inactiveState;
 
@@ -34,10 +35,12 @@ function readStoredState(): TourState {
 
 function storeState(state: TourState) {
   try {
-    window.localStorage.setItem(storageKey, JSON.stringify(state));
+    window.localStorage.setItem(tourStorageKey, JSON.stringify(state));
   } catch {
     // stockage indisponible : la visite fonctionne quand meme pour la session.
   }
+
+  window.dispatchEvent(new Event(tourStateChangeEvent));
 }
 
 type SpotlightRect = {

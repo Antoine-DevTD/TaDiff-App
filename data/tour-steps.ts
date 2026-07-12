@@ -1,4 +1,4 @@
-// Parcours de la visite guidee "overview" presentee par William (version scriptee).
+// Parcours de la visite guidee "overview" presentee par William.
 // Chaque etape cible un element porteur d'un attribut data-tour sur la page indiquee ;
 // target null = message centre sans spotlight.
 
@@ -16,7 +16,7 @@ export const overviewTourSteps: TourStep[] = [
     path: "/dashboard",
     target: null,
     title: "Bienvenue, je suis William",
-    body: "Je vous fais visiter TaDiff comme en rendez-vous demo : partir du cockpit, ouvrir un spectacle, verifier le dossier, suivre les dates et voir quoi faire ensuite. Cette visite est guidee et scriptee ; William IA arrivera plus tard.",
+    body: "Je vous accompagne dans TaDiff : partir du cockpit, ouvrir un spectacle, verifier le dossier, suivre les dates et voir quoi faire ensuite. L'objectif est simple : comprendre en quelques minutes comment piloter la compagnie.",
   },
   {
     id: "pulse",
@@ -93,6 +93,6 @@ export const overviewTourSteps: TourStep[] = [
     path: "/dashboard",
     target: null,
     title: "A vous de jouer",
-    body: "Pour une demo live, installez la compagnie de demonstration dans Parametres, puis lancez cette visite. Stripe peut attendre : la valeur a montrer maintenant, c'est le cockpit, les spectacles, les contacts, les dates et les dossiers.",
+    body: "Vous avez maintenant le fil principal : cockpit, spectacles, contacts, dates, dossiers et tresorerie. La prochaine etape consiste a ajouter vos propres donnees et a laisser TaDiff faire remonter les priorites.",
   },
 ];

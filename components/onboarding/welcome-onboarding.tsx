@@ -10,12 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WilliamStage } from "@/components/onboarding/william-stage";
+import { tourStorageKey } from "@/components/tour/guided-tour";
 import { cn } from "@/lib/utils";
 
 type WelcomeStep = "hello" | "person" | "company" | "logo" | "show";
 
 const steps: WelcomeStep[] = ["hello", "person", "company", "logo", "show"];
-const tourStorageKey = "tadiff-visite-guidee";
 
 export function WelcomeOnboarding({
   initialCompanyName,
@@ -218,7 +218,7 @@ function StepContent({
       <WelcomePane
         icon={ImageIcon}
         title="Avez-vous deja un logo ?"
-        body="Optionnel pour la demo. Vous pourrez aussi l'ajouter plus tard dans les reglages."
+        body="Optionnel pour commencer. Vous pourrez aussi l'ajouter plus tard dans les reglages."
       >
         <Input
           disabled={pending}

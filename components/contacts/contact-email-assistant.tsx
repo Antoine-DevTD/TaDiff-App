@@ -63,9 +63,9 @@ export function ContactEmailAssistant({
     <Dialog
       open={open}
       onClose={onClose}
-      eyebrow="William - simulation"
+      eyebrow="William"
       title={`Preparer un email pour ${contact.name}`}
-      description="Brouillon aide par William pour le webinaire. Aucun envoi reel n'est declenche ici."
+      description="William prepare une base personnalisable avant envoi."
       className="max-w-3xl"
     >
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
@@ -75,7 +75,7 @@ export function ContactEmailAssistant({
           </div>
           <p className="mt-4 text-sm font-semibold">William prepare une base</p>
           <p className="mt-2 text-sm text-muted">
-            Le texte reste modifiable avant copie ou ouverture dans la messagerie.
+            Ajustez le ton, puis envoyez depuis votre messagerie.
           </p>
           <label className="mt-5 block text-sm font-medium">
             Type de mail
@@ -122,7 +122,7 @@ export function ContactEmailAssistant({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted">
-              Envoi reel a brancher plus tard via Gmail, Outlook, SMTP ou Resend.
+              William vous laisse valider chaque mot avant depart.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="secondary" onClick={copyDraft}>

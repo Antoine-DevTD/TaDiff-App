@@ -1,11 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { submitFeedback } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { tourStateChangeEvent, tourStorageKey } from "@/components/tour/guided-tour";
 import { feedbackKinds, type FeedbackFormValues } from "@/lib/validation/feedback";
 
 const kindLabels: Record<(typeof feedbackKinds)[number], { label: string; hint: string }> = {
@@ -16,6 +17,7 @@ const kindLabels: Record<(typeof feedbackKinds)[number], { label: string; hint: 
 
 export function FeedbackWidget({ triggerClassName }: { triggerClassName?: string }) {
   const pathname = usePathname();
+  const tourActive = useSyncExternalStore(subscribeToTourState, readTourActive, () => false);
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<FeedbackFormValues["kind"]>("bug");
   const [message, setMessage] = useState("");
@@ -44,6 +46,10 @@ export function FeedbackWidget({ triggerClassName }: { triggerClassName?: string
         setMessage("");
       }
     });
+  }
+
+  if (tourActive) {
+    return null;
   }
 
   return (
@@ -137,4 +143,26 @@ export function FeedbackWidget({ triggerClassName }: { triggerClassName?: string
       </Dialog>
     </>
   );
+}
+
+function subscribeToTourState(onStoreChange: () => void) {
+  window.addEventListener(tourStateChangeEvent, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(tourStateChangeEvent, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function readTourActive() {
+  try {
+    const raw = window.localStorage.getItem(tourStorageKey);
+    if (!raw) return false;
+
+    const parsed = JSON.parse(raw) as { active?: unknown };
+    return parsed.active === true;
+  } catch {
+    return false;
+  }
 }
