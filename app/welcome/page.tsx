@@ -3,12 +3,18 @@ import { WelcomeOnboarding } from "@/components/onboarding/welcome-onboarding";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-export default async function WelcomePage() {
+export default async function WelcomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ preview?: string }>;
+}) {
   let initialFullName = "";
   let initialCompanyName = "";
   let initialLogoUrl = "";
+  const params = await searchParams;
+  const devPreview = process.env.NODE_ENV !== "production" && params?.preview === "1";
 
-  if (hasSupabaseEnv()) {
+  if (hasSupabaseEnv() && !devPreview) {
     const supabase = await getSupabaseServerClient();
     const {
       data: { user },
