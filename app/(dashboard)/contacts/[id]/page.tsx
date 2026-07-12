@@ -43,10 +43,11 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         </div>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatBlock label="Structure" value={contact.organization} />
         <StatBlock label="Role" value={contact.role || "A renseigner"} />
         <StatBlock label="Email" value={contact.email || "A renseigner"} />
+        <StatBlock label="Telephone" value={contact.phone || "A renseigner"} />
         <StatBlock label="CA pondere" value={`${weightedRevenue.toLocaleString("fr-FR")} EUR`} />
       </section>
 

@@ -89,6 +89,7 @@ export type Contact = {
   organization: string;
   role: string;
   email: string;
+  phone: string;
   city: string;
   status: "Prospect" | "En discussion" | "Partenaire";
   tags: string[];

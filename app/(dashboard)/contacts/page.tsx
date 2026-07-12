@@ -17,11 +17,11 @@ export default async function ContactsPage() {
             Programmateurs, lieux, partenaires et personnes a relancer.
           </p>
         </div>
-        <div data-tour="contacts-creation">
+        <div className="flex flex-wrap gap-2" data-tour="contacts-creation">
+          <ContactImportPanel />
           <ContactCreateDialog />
         </div>
       </div>
-      <ContactImportPanel />
       {contacts.length === 0 ? (
         <div className="space-y-4">
           <EmptyState

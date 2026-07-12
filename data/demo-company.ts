@@ -35,6 +35,7 @@ type DemoContact = {
   organization: string;
   role: string;
   email: string;
+  phone: string;
   city: string;
   status: "Prospect" | "En discussion" | "Partenaire";
   tags: string[];
@@ -145,6 +146,7 @@ export const demoContacts: DemoContact[] = [
     organization: "Le Grand T",
     role: "Programmatrice",
     email: "c.besnard@legrandt-demo.fr",
+    phone: "06 21 45 10 01",
     city: "Nantes",
     status: "En discussion",
     tags: ["Theatre", "Grande salle"],
@@ -155,6 +157,7 @@ export const demoContacts: DemoContact[] = [
     organization: "Scene nationale de Saint-Nazaire",
     role: "Directeur",
     email: "m.lefloch@snsn-demo.fr",
+    phone: "06 21 45 10 02",
     city: "Saint-Nazaire",
     status: "Prospect",
     tags: ["Scene nationale", "Atlantique"],
@@ -165,6 +168,7 @@ export const demoContacts: DemoContact[] = [
     organization: "Theatre municipal de Reze",
     role: "Chargee de programmation",
     email: "s.aubert@reze-demo.fr",
+    phone: "06 21 45 10 03",
     city: "Reze",
     status: "Partenaire",
     tags: ["Municipal", "Partenaire"],
@@ -175,6 +179,7 @@ export const demoContacts: DemoContact[] = [
     organization: "Festival international de theatre de rue",
     role: "Programmateur",
     email: "j.roche@festival-demo.fr",
+    phone: "06 21 45 10 04",
     city: "Aurillac",
     status: "Prospect",
     tags: ["Festival", "Rue"],
@@ -185,6 +190,7 @@ export const demoContacts: DemoContact[] = [
     organization: "Communaute de communes Erdre et Gesvres",
     role: "Responsable culture",
     email: "a.guiho@cceg-demo.fr",
+    phone: "06 21 45 10 05",
     city: "Nort-sur-Erdre",
     status: "En discussion",
     tags: ["Collectivite", "Ete"],
@@ -195,6 +201,7 @@ export const demoContacts: DemoContact[] = [
     organization: "Office culturel de Guerande",
     role: "Coordinateur",
     email: "p.kervadec@guerande-demo.fr",
+    phone: "06 21 45 10 06",
     city: "Guerande",
     status: "Prospect",
     tags: ["Office culturel", "Territoire"],
@@ -205,6 +212,7 @@ export const demoContacts: DemoContact[] = [
     organization: "La Paperie - CNAREP",
     role: "Chargee de production",
     email: "l.moreau@paperie-demo.fr",
+    phone: "06 21 45 10 07",
     city: "Angers",
     status: "En discussion",
     tags: ["CNAREP", "Residence"],
@@ -215,6 +223,7 @@ export const demoContacts: DemoContact[] = [
     organization: "Fondation Ouest Mecenat",
     role: "Delegue general",
     email: "t.vidal@fondation-demo.fr",
+    phone: "06 21 45 10 08",
     city: "Nantes",
     status: "Prospect",
     tags: ["Mecenat", "Fondation"],

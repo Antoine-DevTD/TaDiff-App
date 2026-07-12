@@ -74,12 +74,17 @@ type ActionResult = {
 function isOpportunitySchemaCacheError(message: string | undefined) {
   return Boolean(
     message?.includes("schema cache") &&
-      (message.includes("lost_reason") || message.includes("performance_date")),
+      (message.includes("lost_reason") ||
+        message.includes("next_action") ||
+        message.includes("next_follow_up_at") ||
+        message.includes("performance_date")),
   );
 }
 
 function withoutOptionalOpportunityColumns<T extends Record<string, unknown>>(payload: T) {
   const fallbackPayload = { ...payload };
+  delete fallbackPayload.next_action;
+  delete fallbackPayload.next_follow_up_at;
   delete fallbackPayload.performance_date;
   delete fallbackPayload.lost_reason;
   return fallbackPayload;
@@ -353,6 +358,7 @@ export async function updateContact(
     organization: parsed.data.organization,
     role: parsed.data.role || null,
     email: parsed.data.email || null,
+    phone: parsed.data.phone || null,
     city: parsed.data.city || null,
     status: parsed.data.status,
     tags: normalizeContactTags(parsed.data.tags),
@@ -398,7 +404,7 @@ function normalizeContactTags(tags: string[] | undefined) {
 }
 
 function isContactTagsSchemaCacheError(error: { message?: string } | null) {
-  return Boolean(error?.message?.includes("tags"));
+  return Boolean(error?.message?.includes("tags") || error?.message?.includes("phone"));
 }
 
 export async function deleteContact(contactId: string): Promise<ActionResult> {
@@ -1125,6 +1131,7 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
     organization: parsed.data.organization,
     role: parsed.data.role || null,
     email: parsed.data.email || null,
+    phone: parsed.data.phone || null,
     city: parsed.data.city || null,
     status: parsed.data.status,
     tags: normalizeContactTags(parsed.data.tags),
@@ -1209,6 +1216,7 @@ export async function importContacts(
     organization: contact.organization,
     role: contact.role || null,
     email: contact.email || null,
+    phone: contact.phone || null,
     city: contact.city || null,
     status: contact.status,
     tags: normalizeContactTags(contact.tags),
@@ -1282,19 +1290,39 @@ export async function createOpportunityWithNewContact(
   }
 
   const supabase = await getSupabaseServerClient();
-  const { data: contact, error } = await supabase
+  const contactPayload = {
+    company_id: workspace.companyId,
+    name: parsedContact.data.name,
+    organization: parsedContact.data.organization,
+    role: parsedContact.data.role || null,
+    email: parsedContact.data.email || null,
+    phone: parsedContact.data.phone || null,
+    city: parsedContact.data.city || null,
+    status: parsedContact.data.status,
+  };
+  let { data: contact, error } = await supabase
     .from("contacts")
-    .insert({
-      company_id: workspace.companyId,
-      name: parsedContact.data.name,
-      organization: parsedContact.data.organization,
-      role: parsedContact.data.role || null,
-      email: parsedContact.data.email || null,
-      city: parsedContact.data.city || null,
-      status: parsedContact.data.status,
-    })
+    .insert(contactPayload)
     .select("id")
     .single();
+
+  if (isContactTagsSchemaCacheError(error)) {
+    const retry = await supabase
+      .from("contacts")
+      .insert({
+        company_id: contactPayload.company_id,
+        name: contactPayload.name,
+        organization: contactPayload.organization,
+        role: contactPayload.role,
+        email: contactPayload.email,
+        city: contactPayload.city,
+        status: contactPayload.status,
+      })
+      .select("id")
+      .single();
+    contact = retry.data;
+    error = retry.error;
+  }
 
   if (error || !contact) {
     return { ok: false, message: error?.message ?? "Contact non cree." };
@@ -1934,6 +1962,7 @@ export async function seedDemoCompany(): Promise<ActionResult> {
     organization: contact.organization,
     role: contact.role,
     email: contact.email,
+    phone: contact.phone,
     city: contact.city,
     status: contact.status,
     tags: contact.tags,

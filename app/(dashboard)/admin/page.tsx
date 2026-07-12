@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { CompanyBillingForm } from "@/components/admin/company-billing-form";
 import { FeedbackRow } from "@/components/admin/feedback-row";
 import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
@@ -27,11 +28,17 @@ const statusMeta: Record<BillingStatus, { label: string; tone: "neutral" | "succ
   cancelled: { label: "Resilie", tone: "danger" },
 };
 
-export default async function AdminPage() {
+type AdminPageProps = {
+  searchParams?: Promise<{ tab?: string }>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (!(await isSuperAdmin())) {
     notFound();
   }
 
+  const resolvedSearchParams = await searchParams;
+  const activeTab = resolvedSearchParams?.tab === "retours" ? "retours" : "supervision";
   const [companies, betaSignups, feedback, accessEvents, maintenanceActive] = await Promise.all([
     getAdminCompanies(),
     getAdminBetaSignups(),
@@ -52,12 +59,29 @@ export default async function AdminPage() {
     <div className="space-y-6">
       <div>
         <p className="text-xs uppercase tracking-[0.18em] text-muted">Console interne</p>
-        <h2 className="mt-2 text-3xl font-semibold">Supervision TaDiff</h2>
+        <h2 className="mt-2 text-3xl font-semibold">
+          {activeTab === "retours" ? "Retours compagnies" : "Supervision TaDiff"}
+        </h2>
         <p className="mt-1 text-sm text-muted">
-          Reservee aux super admins. Compagnies, billing et inscriptions beta.
+          {activeTab === "retours"
+            ? "Bugs, idees et avis envoyes depuis le cockpit."
+            : "Reservee aux super admins. Compagnies, billing et inscriptions beta."}
         </p>
       </div>
 
+      <div className="flex flex-wrap gap-2 border-b border-border">
+        <AdminTab active={activeTab === "supervision"} href="/admin" label="Supervision" />
+        <AdminTab
+          active={activeTab === "retours"}
+          href="/admin?tab=retours"
+          label={`Retours${openFeedback > 0 ? ` (${openFeedback})` : ""}`}
+        />
+      </div>
+
+      {activeTab === "retours" ? (
+        <AdminFeedbackPanel feedback={feedback} openFeedback={openFeedback} />
+      ) : (
+        <>
       <Card className="space-y-3 p-5">
         <div>
           <p className="text-base font-semibold">Mode maintenance</p>
@@ -168,35 +192,63 @@ export default async function AdminPage() {
           </div>
         )}
       </Card>
-
-      <Card className="space-y-4 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-base font-semibold">Retours et signalements</p>
-            <p className="mt-1 text-sm text-muted">
-              Bugs, idees et avis envoyes par les compagnies. Les nouveaux remontent en premier.
-            </p>
-          </div>
-          {openFeedback > 0 ? (
-            <Badge tone="warning">{openFeedback} a traiter</Badge>
-          ) : (
-            <Badge tone="success">A jour</Badge>
-          )}
-        </div>
-        {feedback.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-            Aucun retour pour le moment. Le bouton &laquo;&nbsp;Donner un retour&nbsp;&raquo; apparait
-            dans l&apos;application des compagnies.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {feedback.map((entry) => (
-              <FeedbackRow key={entry.id} feedback={entry} />
-            ))}
-          </div>
-        )}
-      </Card>
+        </>
+      )}
     </div>
+  );
+}
+
+function AdminTab({ active, href, label }: { active: boolean; href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className={
+        active
+          ? "border-b-2 border-accent px-3 py-2 text-sm font-semibold text-accent"
+          : "border-b-2 border-transparent px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground"
+      }
+    >
+      {label}
+    </Link>
+  );
+}
+
+function AdminFeedbackPanel({
+  feedback,
+  openFeedback,
+}: {
+  feedback: Awaited<ReturnType<typeof getAdminFeedback>>;
+  openFeedback: number;
+}) {
+  return (
+    <Card className="space-y-4 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-base font-semibold">Retours et signalements</p>
+          <p className="mt-1 text-sm text-muted">
+            Les nouveaux retours remontent en premier. Traitez-les sans les melanger a la
+            supervision technique.
+          </p>
+        </div>
+        {openFeedback > 0 ? (
+          <Badge tone="warning">{openFeedback} a traiter</Badge>
+        ) : (
+          <Badge tone="success">A jour</Badge>
+        )}
+      </div>
+      {feedback.length === 0 ? (
+        <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+          Aucun retour pour le moment. Le bouton &laquo;&nbsp;Donner un retour&nbsp;&raquo; apparait
+          dans l&apos;application des compagnies.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {feedback.map((entry) => (
+            <FeedbackRow key={entry.id} feedback={entry} />
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -231,13 +283,18 @@ function AccessEventRow({ event }: { event: AdminAccessEvent }) {
 
 function CompanyRow({ company }: { company: AdminCompany }) {
   const meta = statusMeta[company.billingStatus];
+  const shortId = company.id.slice(0, 8);
 
   return (
     <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-semibold text-white">
+              {getCompanyInitials(company.name)}
+            </span>
             <p className="font-medium">{company.name}</p>
+            <span className="font-mono text-xs text-muted">#{shortId}</span>
             <Badge tone={meta.tone}>{meta.label}</Badge>
             <Badge>{company.planCode}</Badge>
             {company.billingStatus === "comped" && company.compedUntil ? (
@@ -255,6 +312,11 @@ function CompanyRow({ company }: { company: AdminCompany }) {
           {company.billingNotes ? (
             <p className="mt-2 text-sm text-muted">{company.billingNotes}</p>
           ) : null}
+          {company.ownerEmail || company.ownerName ? (
+            <p className="mt-1 text-xs text-muted">
+              Referent : {[company.ownerName, company.ownerEmail].filter(Boolean).join(" - ")}
+            </p>
+          ) : null}
         </div>
         <div className="grid shrink-0 grid-cols-4 gap-3 text-center text-sm">
           <VolumeCell label="Membres" value={company.memberCount} />
@@ -268,6 +330,15 @@ function CompanyRow({ company }: { company: AdminCompany }) {
       </div>
     </div>
   );
+}
+
+function getCompanyInitials(name: string) {
+  const words = name
+    .replace(/^compagnie\s+/i, "")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  return (words[0]?.[0] ?? "T").concat(words[1]?.[0] ?? "").toUpperCase();
 }
 
 function VolumeCell({ label, value }: { label: string; value: number }) {

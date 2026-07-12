@@ -10,6 +10,8 @@ export type AdminCompany = {
   compedUntil: string | null;
   billingNotes: string;
   createdAt: string;
+  ownerName: string;
+  ownerEmail: string;
   memberCount: number;
   showCount: number;
   contactCount: number;
@@ -97,6 +99,8 @@ export async function getAdminCompanies(): Promise<AdminCompany[]> {
     compedUntil: company.comped_until,
     billingNotes: company.billing_notes ?? "",
     createdAt: company.created_at,
+    ownerName: "owner_name" in company ? company.owner_name ?? "" : "",
+    ownerEmail: "owner_email" in company ? company.owner_email ?? "" : "",
     memberCount: company.member_count,
     showCount: company.show_count,
     contactCount: company.contact_count,

@@ -369,6 +369,58 @@ npm run lint
 npm run build
 ```
 
+## 10 bis. Tests de securite et anti data leak
+
+Priorite securite : TaDiff est un produit multi-compagnie. Aucune compagnie ne
+doit pouvoir lire ou modifier les donnees d'une autre compagnie.
+
+Des qu'une nouvelle feature, une nouvelle Server Action, une nouvelle route API,
+une nouvelle RPC SQL, ou un nouvel endpoint manipule un identifiant (`contactId`,
+`showId`, `opportunityId`, `reminderId`, `documentId`, `companyId`, `quoteId`,
+etc.), ajouter ou mettre a jour les tests d'autorisation correspondants.
+
+Pour chaque action sensible avec ID, tester au minimum :
+
+1. utilisateur non connecte -> refus ;
+2. utilisateur connecte dans la mauvaise compagnie -> refus ;
+3. utilisateur connecte dans la bonne compagnie -> autorise ;
+4. role insuffisant (`readonly`, puis `member` si l'action demande `owner/admin`) -> refus ;
+5. super admin uniquement si la route/action est explicitement prevue pour lui.
+
+Ces tests sont des tests d'autorisation / integration, pas seulement des tests
+unitaires metier. Ils doivent verifier les fuites inter-compagnies et les erreurs
+de permission, en complement de la RLS Supabase.
+
+Regles a respecter :
+
+- garder les IDs en UUID, jamais d'IDs incrementaux exposes pour les donnees metier ;
+- ne jamais contourner la RLS avec une cle service role dans du code client ;
+- ne jamais mettre `SUPABASE_SERVICE_ROLE_KEY`, secret Stripe, secret Resend ou secret IA dans un composant `"use client"` ;
+- eviter `dangerouslySetInnerHTML`. Si un jour il est necessaire, sanitizer explicitement le HTML utilisateur avant affichage ;
+- toute nouvelle migration doit garder RLS, policies, indexes utiles, et tests d'acces si elle expose des donnees par compagnie.
+
+Routine recommandee tous les 3 ou 4 jours, et avant une demo importante :
+
+```bash
+npm run lint
+npm run build
+npm audit --omit=dev
+git status -sb
+```
+
+Quand une suite de tests sera ajoutee au projet, ajouter un script dedie dans
+`package.json` (par exemple `npm run test:auth` ou `npm run test:security`) et
+l'executer dans cette routine. Cette suite devra couvrir en priorite :
+
+- contacts ;
+- spectacles ;
+- opportunites / dates possibles ;
+- relances ;
+- documents et storage ;
+- devis / billing ;
+- admin / super admin ;
+- feedback et logs d'acces.
+
 Si l'UX est modifiee :
 
 - lancer un serveur local ;

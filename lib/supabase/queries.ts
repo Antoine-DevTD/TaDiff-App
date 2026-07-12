@@ -194,6 +194,10 @@ export async function getShowById(showId: string): Promise<{
   };
 }
 
+function isContactOptionalColumnError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("tags") || error?.message?.includes("phone"));
+}
+
 export async function getContacts(): Promise<Contact[]> {
   if (!hasSupabaseEnv()) {
     return contacts;
@@ -202,17 +206,17 @@ export async function getContacts(): Promise<Contact[]> {
   const supabase = await getSupabaseServerClient();
   const query = supabase
     .from("contacts")
-    .select("id,name,organization,role,email,city,status,tags")
+    .select("id,name,organization,role,email,phone,city,status,tags")
     .order("created_at", { ascending: false });
 
   let { data, error } = await query;
 
-  if (error?.message.includes("tags")) {
+  if (isContactOptionalColumnError(error)) {
     const fallback = await supabase
       .from("contacts")
       .select("id,name,organization,role,email,city,status")
       .order("created_at", { ascending: false });
-    data = fallback.data?.map((contact) => ({ ...contact, tags: [] })) ?? null;
+    data = fallback.data?.map((contact) => ({ ...contact, phone: "", tags: [] })) ?? null;
     error = fallback.error;
   }
 
@@ -226,6 +230,7 @@ export async function getContacts(): Promise<Contact[]> {
     organization: contact.organization,
     role: contact.role ?? "",
     email: contact.email ?? "",
+    phone: "phone" in contact ? contact.phone ?? "" : "",
     city: contact.city ?? "",
     status: contact.status,
     tags: "tags" in contact && Array.isArray(contact.tags) ? contact.tags : [],
@@ -263,7 +268,7 @@ export async function getContactById(contactId: string): Promise<{
   const [contactResult, opportunityResult] = await Promise.all([
     supabase
       .from("contacts")
-      .select("id,name,organization,role,email,city,status,tags")
+      .select("id,name,organization,role,email,phone,city,status,tags")
       .eq("id", contactId)
       .maybeSingle(),
     supabase
@@ -277,13 +282,13 @@ export async function getContactById(contactId: string): Promise<{
   let { data: contact, error: contactError } = contactResult;
   const { data: opportunities, error: opportunitiesError } = opportunityResult;
 
-  if (contactError?.message.includes("tags")) {
+  if (isContactOptionalColumnError(contactError)) {
     const fallback = await supabase
       .from("contacts")
       .select("id,name,organization,role,email,city,status")
       .eq("id", contactId)
       .maybeSingle();
-    contact = fallback.data ? { ...fallback.data, tags: [] } : null;
+    contact = fallback.data ? { ...fallback.data, phone: "", tags: [] } : null;
     contactError = fallback.error;
   }
 
@@ -297,6 +302,7 @@ export async function getContactById(contactId: string): Promise<{
     organization: contact.organization,
     role: contact.role ?? "",
     email: contact.email ?? "",
+    phone: "phone" in contact ? contact.phone ?? "" : "",
     city: contact.city ?? "",
     status: contact.status,
     tags: "tags" in contact && Array.isArray(contact.tags) ? contact.tags : [],

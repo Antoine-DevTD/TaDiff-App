@@ -9,6 +9,7 @@ export const contactSchema = z.object({
     .email("Email invalide")
     .optional()
     .or(z.literal("")),
+  phone: z.string().max(40, "Telephone trop long").optional().or(z.literal("")),
   city: z.string().optional(),
   status: z.enum(["Prospect", "En discussion", "Partenaire"]),
   tags: z.array(z.string().min(1)).optional(),

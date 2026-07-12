@@ -17,6 +17,7 @@ const defaultValues: ContactFormValues = {
   organization: "",
   role: "",
   email: "",
+  phone: "",
   city: "",
   status: "Prospect",
   tags: [],
@@ -48,6 +49,7 @@ export function ContactForm({
           organization: contact.organization,
           role: contact.role || "",
           email: contact.email || "",
+          phone: contact.phone || "",
           city: contact.city || "",
           status: contact.status,
           tags: contact.tags ?? [],
@@ -106,9 +108,15 @@ export function ContactForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Telephone" error={errors.phone?.message}>
+          <Input type="tel" placeholder="06 12 34 56 78" {...register("phone")} />
+        </Field>
         <Field label="Ville" error={errors.city?.message}>
           <Input placeholder="La Rochelle" {...register("city")} />
         </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Statut" error={errors.status?.message}>
           <Select {...register("status")}>
             <option value="Prospect">Prospect</option>

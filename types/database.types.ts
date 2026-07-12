@@ -235,6 +235,7 @@ export type Database = {
           organization: string;
           role: string | null;
           email: string | null;
+          phone: string | null;
           city: string | null;
           status: "Prospect" | "En discussion" | "Partenaire";
           tags: string[] | null;
@@ -247,6 +248,7 @@ export type Database = {
           organization: string;
           role?: string | null;
           email?: string | null;
+          phone?: string | null;
           city?: string | null;
           status?: "Prospect" | "En discussion" | "Partenaire";
           tags?: string[] | null;
@@ -257,6 +259,7 @@ export type Database = {
           organization?: string;
           role?: string | null;
           email?: string | null;
+          phone?: string | null;
           city?: string | null;
           status?: "Prospect" | "En discussion" | "Partenaire";
           tags?: string[] | null;
@@ -1029,6 +1032,8 @@ export type Database = {
           comped_until: string | null;
           billing_notes: string | null;
           created_at: string;
+          owner_name: string | null;
+          owner_email: string | null;
           member_count: number;
           show_count: number;
           contact_count: number;
