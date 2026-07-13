@@ -55,7 +55,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         <Card>
           <CardHeader>
             <CardTitle>Dates liees</CardTitle>
-            <CardDescription>Diffusion associee a ce contact.</CardDescription>
+            <CardDescription>Dates possibles associees a ce contact.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
             {opportunities.length === 0 ? (
@@ -89,12 +89,12 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Relances associees</CardTitle>
+              <CardTitle>Actions associees</CardTitle>
               <CardDescription>Actions ouvertes pour cette relation.</CardDescription>
             </CardHeader>
             <div className="space-y-3">
               {reminders.length === 0 ? (
-                <EmptyPanel text="Aucune relance ouverte pour ce contact." />
+                <EmptyPanel text="Aucune action ouverte pour ce contact." />
               ) : (
                 reminders.map((reminder) => (
                   <div key={reminder.id} className="rounded-md border border-border bg-panel-strong/45 p-4">
@@ -135,10 +135,10 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
             </CardHeader>
             <div className="flex flex-wrap gap-3">
               <ButtonLink href="/pipeline" variant="secondary">
-                Ouvrir la diffusion
+                Voir les dates a vendre
               </ButtonLink>
               <ButtonLink href="/reminders" variant="secondary">
-                Voir les relances
+                Voir les actions
               </ButtonLink>
               <Link
                 className="inline-flex min-h-10 items-center text-sm font-medium text-accent hover:text-accent-strong"

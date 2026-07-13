@@ -8,7 +8,7 @@ export const pipelineStages: Array<{
 }> = [
   { id: "A qualifier", label: "A qualifier", probability: 15, accent: "bg-muted" },
   { id: "Contacte", label: "Contacte", probability: 30, accent: "bg-blue-400" },
-  { id: "Relance prevue", label: "Relance prevue", probability: 45, accent: "bg-warning" },
+  { id: "Relance prevue", label: "Action prevue", probability: 45, accent: "bg-warning" },
   { id: "Negociation", label: "Negociation", probability: 65, accent: "bg-accent" },
   { id: "Confirme", label: "Confirme", probability: 100, accent: "bg-success" },
   { id: "Perdu", label: "Perdu", probability: 0, accent: "bg-danger" },
@@ -28,11 +28,11 @@ export function getPipelineSignal(input: {
   const due = input.nextFollowUpAt ? new Date(input.nextFollowUpAt) : null;
 
   if (due && due < today) {
-    return { label: "Relance en retard", tone: "danger" as const };
+    return { label: "Action en retard", tone: "danger" as const };
   }
 
   if (due && due.getTime() - today.getTime() <= 3 * 24 * 60 * 60 * 1000) {
-    return { label: "Relance proche", tone: "warning" as const };
+    return { label: "Action proche", tone: "warning" as const };
   }
 
   if (input.value >= 10000 && input.probability >= 50) {
@@ -81,8 +81,8 @@ export function getPipelineRecommendation(deal: PipelineDeal) {
 
   if (signal.tone === "danger") {
     return {
-      title: "Relancer maintenant",
-      detail: "Cette opportunite est en retard : appelez ou envoyez un mail court aujourd'hui.",
+      title: "Agir maintenant",
+      detail: "Cette date est en retard : appelez ou envoyez un mail court aujourd'hui.",
       tone: "danger" as const,
     };
   }
@@ -98,7 +98,7 @@ export function getPipelineRecommendation(deal: PipelineDeal) {
   if (!deal.nextFollowUpAt) {
     return {
       title: "Planifier",
-      detail: "Ajoutez une date de relance pour eviter que le dossier sorte du radar.",
+      detail: "Ajoutez une date de prochaine action pour eviter que le dossier sorte du radar.",
       tone: "warning" as const,
     };
   }
@@ -174,12 +174,12 @@ export function getPipelineInsights(deals: PipelineDeal[]) {
   return [
     {
       id: "overdue",
-      title: "Relances en retard",
+      title: "Actions en retard",
       value: overdue.length,
       detail:
         overdue.length > 0
           ? `${overdue[0].title} doit etre traite en premier`
-          : "Aucun retard de relance",
+          : "Aucun retard d'action",
       tone: overdue.length > 0 ? ("danger" as const) : ("success" as const),
     },
     {
@@ -188,17 +188,17 @@ export function getPipelineInsights(deals: PipelineDeal[]) {
       value: missingNextAction.length,
       detail:
         missingNextAction.length > 0
-          ? "Ajoutez une action concrete pour eviter les opportunites dormantes"
-          : "Toutes les opportunites ont une prochaine action",
+          ? "Ajoutez une action concrete pour eviter les dates dormantes"
+          : "Toutes les dates ont une prochaine action",
       tone: missingNextAction.length > 0 ? ("warning" as const) : ("success" as const),
     },
     {
       id: "high-potential",
-      title: "Deals prioritaires",
+      title: "Dates prioritaires",
       value: highPotential.length,
       detail:
         highPotential[0]?.title ??
-        "Aucun deal fort potentiel pour le moment",
+        "Aucune date a fort potentiel pour le moment",
       tone: highPotential.length > 0 ? ("success" as const) : ("neutral" as const),
     },
     {
@@ -208,7 +208,7 @@ export function getPipelineInsights(deals: PipelineDeal[]) {
       detail:
         concentration >= 60
           ? `Risque concentre sur ${topWeightedDeal?.deal.title}`
-          : "Pipeline correctement reparti",
+          : "Dates correctement reparties",
       tone: concentration >= 60 ? ("warning" as const) : ("neutral" as const),
     },
   ];
@@ -257,7 +257,7 @@ export function buildPipelineEmailDraft(deal: PipelineDeal) {
       "",
       `Suite a nos echanges autour de ${showTitle}, je vous propose que nous avancions sur les points pratiques : calendrier, conditions d'accueil et budget.`,
       "",
-      `A ce stade, l'enveloppe suivie dans notre pipeline est de ${deal.value.toLocaleString("fr-FR")} EUR.`,
+      `A ce stade, l'enveloppe suivie est de ${deal.value.toLocaleString("fr-FR")} EUR.`,
       "Dites-moi ce qui vous conviendrait pour finaliser les prochaines etapes.",
       "",
       "Bien cordialement,",

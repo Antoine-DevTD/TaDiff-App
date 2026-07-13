@@ -33,7 +33,7 @@ const questions: Question[] = [
     id: "pain",
     label: "Qu'est-ce qui vous prend le plus de temps ?",
     options: [
-      { value: "sales", label: "Relances et contacts" },
+      { value: "sales", label: "Actions et contacts" },
       { value: "grants", label: "Subventions et dossiers" },
       { value: "money", label: "Devis et tresorerie" },
       { value: "all", label: "Un peu tout a la fois" },
@@ -43,7 +43,7 @@ const questions: Question[] = [
 
 const painRecommendations: Record<string, { title: string; detail: string }[]> = {
   sales: [
-    { title: "Carnet de diffusion", detail: "Contacts, dates possibles et relances au bon moment." },
+    { title: "Carnet de contacts", detail: "Contacts, dates possibles et actions au bon moment." },
     { title: "Cockpit du jour", detail: "Ce qu'il faut faire aujourd'hui, sans rien oublier." },
   ],
   grants: [
@@ -55,7 +55,7 @@ const painRecommendations: Record<string, { title: string; detail: string }[]> =
     { title: "Tresorerie", detail: "Solde, projection et date de risque en un coup d'oeil." },
   ],
   all: [
-    { title: "Cockpit complet", detail: "Diffusion, dossiers, tresorerie et echeances au meme endroit." },
+    { title: "Cockpit complet", detail: "Dates, dossiers, tresorerie et echeances au meme endroit." },
     { title: "William, ton copilote", detail: "Il te dit quoi faire en priorite, sans IA opaque." },
   ],
 };

@@ -181,7 +181,7 @@ function PatronageColumn({
                 {deal.nextAction || "Prochaine action a definir"}
               </p>
               <p className="mt-3 text-xs text-muted">
-                {packMap.get(deal.packId)?.name ?? "Pack a definir"} - relance{" "}
+                {packMap.get(deal.packId)?.name ?? "Pack a definir"} - action{" "}
                 {deal.nextFollowUpAt
                   ? new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")
                   : "a planifier"}

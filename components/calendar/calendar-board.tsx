@@ -22,7 +22,7 @@ export type CalendarBoardItem = {
 
 const kindStyles: Record<CalendarBoardItem["kind"], { dot: string; chip: string; label: string }> = {
   show: { dot: "bg-accent", chip: "bg-accent/10 text-accent", label: "Spectacle" },
-  reminder: { dot: "bg-warning", chip: "bg-warning/10 text-warning", label: "Relance" },
+  reminder: { dot: "bg-warning", chip: "bg-warning/10 text-warning", label: "Action" },
   grant: { dot: "bg-danger", chip: "bg-danger/10 text-danger", label: "Subvention" },
   "fixed-cost": { dot: "bg-muted", chip: "bg-panel-strong text-muted", label: "Frais fixe" },
   event: { dot: "bg-success", chip: "bg-success/10 text-success", label: "Evenement" },

@@ -77,7 +77,7 @@ function buildCalendarItems({
     href: "/reminders",
     kind: "reminder",
     label: reminder.label,
-    meta: reminder.relatedTo || "Relance",
+    meta: reminder.relatedTo || "Action",
     tone: getReminderTone(reminder.dueDate),
   }));
 
@@ -134,24 +134,24 @@ export default async function CalendarPage() {
       <div>
         <PageTitle href="/calendar">Calendrier</PageTitle>
         <p className="mt-1 text-sm text-muted">
-          Une seule vue pour les relances a sortir et les prochaines dates spectacle.
+          Une seule vue pour les actions a faire et les prochaines dates spectacle.
         </p>
       </div>
 
       {items.length === 0 ? (
         <EmptyState
           title="Aucune echeance"
-          description="Ajoutez une relance ou une prochaine date spectacle pour alimenter le planning."
+          description="Ajoutez une action ou une prochaine date spectacle pour alimenter le planning."
         />
       ) : (
         <>
           <section className="grid gap-4 md:grid-cols-4">
             <MetricCard
-              label="Relances ouvertes"
+              label="Actions ouvertes"
               value={reminders.length.toString()}
               detail={
                 reminders.length === 0
-                  ? "Aucune relance ouverte"
+                  ? "Aucune action ouverte"
                   : `${reminders.filter((reminder) => getReminderTone(reminder.dueDate) === "danger").length} en retard`
               }
             />
@@ -204,18 +204,18 @@ export default async function CalendarPage() {
               <div className="grid gap-3">
                 <QuickLink
                   href="/reminders"
-                  title="Executer les relances"
+                  title="Voir les actions"
                   detail="Traiter le retard, aujourd hui, puis la semaine."
                 />
                 <QuickLink
                   href="/pipeline"
-                  title="Revenir a la diffusion"
+                  title="Voir les dates a vendre"
                   detail="Planifier les prochaines actions et alimenter le calendrier."
                 />
                 <QuickLink
                   href="/shows"
                   title="Mettre a jour les spectacles"
-                  detail="Corriger les prochaines dates et suivre la diffusion."
+                  detail="Corriger les prochaines dates et suivre les ventes."
                 />
               </div>
             </Card>
@@ -245,7 +245,7 @@ function MetricCard({
 }
 
 function getKindLabel(kind: CalendarItem["kind"]) {
-  if (kind === "reminder") return "Relance";
+  if (kind === "reminder") return "Action";
   if (kind === "grant") return "Subvention";
   if (kind === "fixed-cost") return "Frais fixe";
   if (kind === "deadline") return "Deadline";

@@ -174,11 +174,11 @@ export function PipelineBoard({
             <div>
               <p className="text-sm font-semibold">Priorites du jour</p>
               <p className="mt-1 text-xs text-muted">
-                Traitez en priorite les dossiers avec relance proche, en retard ou fort potentiel.
+                Traitez en priorite les dates avec action proche, en retard ou fort potentiel.
               </p>
             </div>
             <ButtonLink href="/reminders" variant="secondary">
-              Ouvrir les relances
+              Voir les actions a faire
             </ButtonLink>
           </div>
           <div className="grid gap-3 lg:grid-cols-3">
@@ -192,7 +192,7 @@ export function PipelineBoard({
       <Card className="space-y-3 p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <Input
-            aria-label="Rechercher dans la diffusion"
+            aria-label="Rechercher dans les dates a vendre"
             className="min-h-10 lg:max-w-xl"
             placeholder="Rechercher un contact, un lieu, un spectacle..."
             value={search}
@@ -223,7 +223,7 @@ export function PipelineBoard({
           {[
             { id: "all", label: "Tout" },
             { id: "open", label: "Actifs" },
-            { id: "follow-up", label: "A relancer" },
+            { id: "follow-up", label: "Action prevue" },
             { id: "high-value", label: "Fort potentiel" },
           ].map((item) => (
             <button
@@ -261,7 +261,7 @@ export function PipelineBoard({
 
       <details className="rounded-lg border border-border bg-panel p-4 text-sm">
         <summary className="cursor-pointer list-none font-semibold">
-          Chiffres de diffusion
+          Chiffres des dates a vendre
           <span className="ml-2 text-xs font-normal text-muted">
             {totals.raw.toLocaleString("fr-FR")} EUR total
           </span>
@@ -289,7 +289,7 @@ export function PipelineBoard({
           <Card className="p-6 text-center">
             <p className="font-medium">Aucune date ne correspond.</p>
             <p className="mt-2 text-sm text-muted">
-              Ajustez la recherche ou revenez a la vue complete de diffusion.
+              Ajustez la recherche ou revenez a la vue complete des dates a vendre.
             </p>
             <button
               className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
@@ -299,7 +299,7 @@ export function PipelineBoard({
                 setFilter("all");
               }}
             >
-              Voir toute la diffusion
+              Voir toutes les dates
             </button>
           </Card>
         ) : view === "list" ? (
@@ -380,7 +380,7 @@ function PriorityDealCard({ deal }: { deal: PipelineDeal }) {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted">Relance</p>
+          <p className="text-xs text-muted">Action</p>
           <p className="font-medium">
             {deal.nextFollowUpAt
               ? new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")
@@ -413,7 +413,7 @@ function PipelineListView({
               <th className="px-4 py-3 font-medium">Contact</th>
               <th className="px-4 py-3 font-medium">Jeu</th>
               <th className="px-4 py-3 font-medium">Etape</th>
-              <th className="px-4 py-3 font-medium">Relance</th>
+              <th className="px-4 py-3 font-medium">Action</th>
               <th className="px-4 py-3 text-right font-medium">CA pondere</th>
               <th className="px-4 py-3 text-right font-medium">Score</th>
               <th className="px-4 py-3 font-medium">Action conseillee</th>
@@ -560,7 +560,7 @@ function PipelineCard({
 
     startReminderTransition(async () => {
       const result = await createReminder({
-        title: deal.nextAction || `Relancer ${deal.contactName}`,
+        title: deal.nextAction || `Contacter ${deal.contactName}`,
         dueDate,
         relatedTo: deal.title,
         priority: signal.tone === "danger" ? "high" : "normal",
@@ -578,7 +578,7 @@ function PipelineCard({
   }
 
   function openEmailDraft() {
-    const subject = `Relance - ${deal.showTitle || deal.title}`;
+    const subject = `Suivi - ${deal.showTitle || deal.title}`;
     const body = buildPipelineEmailDraft(deal);
     const to = deal.contactEmail ? encodeURIComponent(deal.contactEmail) : "";
 
@@ -662,7 +662,7 @@ function PipelineCard({
         </div>
         {deal.nextFollowUpAt ? (
           <p className="font-medium text-foreground">
-            Relance {new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")}
+            Action le {new Date(deal.nextFollowUpAt).toLocaleDateString("fr-FR")}
           </p>
         ) : null}
         {deal.lostReason ? (
@@ -711,7 +711,7 @@ function PipelineCard({
             type="button"
             onClick={createQuickReminder}
           >
-            {isReminderPending ? "Creation..." : "Relancer"}
+            {isReminderPending ? "Creation..." : "Creer une action"}
           </button>
           <button
             className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"

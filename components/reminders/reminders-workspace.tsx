@@ -177,13 +177,13 @@ export function RemindersWorkspace({ reminders }: { reminders: Reminder[] }) {
               <div>
                 <p className="text-sm font-semibold">Vue execution</p>
                 <p className="mt-1 text-sm text-muted">
-                  Traitez en premier le retard, puis les relances du jour.
+                  Traitez d&apos;abord le retard, puis les actions du jour.
                 </p>
               </div>
               <Input
-                aria-label="Rechercher une relance"
+                aria-label="Rechercher une action"
                 className="lg:max-w-sm"
-                placeholder="Rechercher une relance..."
+                placeholder="Rechercher une action..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -218,13 +218,13 @@ export function RemindersWorkspace({ reminders }: { reminders: Reminder[] }) {
             title="En retard"
             description="A traiter en premier."
             reminders={sections.late}
-            emptyLabel="Aucune relance en retard."
+            emptyLabel="Aucune action en retard."
             isPending={isPending}
             onDone={markDone}
           />
           <ReminderSection
             title="Aujourd'hui"
-            description="Les relances a sortir aujourd'hui."
+            description="Les actions a faire aujourd'hui."
             reminders={sections.today}
             emptyLabel="Rien a faire aujourd'hui."
             isPending={isPending}
@@ -234,7 +234,7 @@ export function RemindersWorkspace({ reminders }: { reminders: Reminder[] }) {
             title="Cette semaine"
             description="Les prochaines actions deja planifiees."
             reminders={sections.week}
-            emptyLabel="Aucune relance cette semaine."
+            emptyLabel="Aucune action cette semaine."
             isPending={isPending}
             onDone={markDone}
           />
@@ -242,7 +242,7 @@ export function RemindersWorkspace({ reminders }: { reminders: Reminder[] }) {
             title="Plus tard"
             description="Le reste, deja sous controle."
             reminders={sections.later}
-            emptyLabel="Aucune relance plus lointaine."
+            emptyLabel="Aucune action plus lointaine."
             isPending={isPending}
             onDone={markDone}
           />
@@ -260,7 +260,7 @@ export function RemindersWorkspace({ reminders }: { reminders: Reminder[] }) {
               {focusReminder ? <Badge tone={getReminderTone(focusReminder)}>{getDueLabel(focusReminder)}</Badge> : null}
             </div>
             <p className="text-sm text-muted">
-              {focusReminder?.relatedTo || "Aucune relance prioritaire a traiter pour le moment."}
+              {focusReminder?.relatedTo || "Aucune action prioritaire a traiter pour le moment."}
             </p>
             <div className="grid grid-cols-2 gap-2 rounded-md border border-border bg-panel-strong/55 p-3 text-sm">
               <div>
@@ -279,7 +279,7 @@ export function RemindersWorkspace({ reminders }: { reminders: Reminder[] }) {
               </div>
             </div>
             <ButtonLink className="w-full" href="/pipeline" variant="secondary">
-              Ouvrir la diffusion
+              Voir les dates a vendre
             </ButtonLink>
           </Card>
         </div>

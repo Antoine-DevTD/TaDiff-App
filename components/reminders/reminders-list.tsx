@@ -197,7 +197,7 @@ export function RemindersList({ reminders }: { reminders: Reminder[] }) {
               </div>
               {editError ? <p className="text-xs text-danger">{editError}</p> : null}
               <Button type="button" disabled={isPending} onClick={() => saveEdit(reminder)}>
-                Enregistrer la relance
+                Enregistrer l&apos;action
               </Button>
             </div>
           ) : null}

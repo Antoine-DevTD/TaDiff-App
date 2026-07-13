@@ -79,7 +79,7 @@ export function AccountMenu({ initials = "TD" }: { initials?: string }) {
         onClose={() => setCreateOpen(false)}
         eyebrow="Catalogue"
         title="Nouveau spectacle"
-        description="Ajoutez une creation au catalogue de diffusion."
+        description="Ajoutez une creation au catalogue des spectacles."
       >
         <ShowForm onSuccess={() => setCreateOpen(false)} />
       </Dialog>

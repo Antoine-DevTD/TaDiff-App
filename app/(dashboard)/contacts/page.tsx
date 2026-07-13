@@ -12,9 +12,9 @@ export default async function ContactsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <PageTitle href="/contacts">Carnet de diffusion</PageTitle>
+          <PageTitle href="/contacts">Carnet de contacts</PageTitle>
           <p className="mt-1 text-sm text-muted">
-            Programmateurs, lieux, partenaires et personnes a relancer.
+            Programmateurs, lieux, partenaires et personnes a contacter.
           </p>
         </div>
         <div className="flex flex-wrap gap-2" data-tour="contacts-creation">
@@ -26,7 +26,7 @@ export default async function ContactsPage() {
         <div className="space-y-4">
           <EmptyState
             title="Aucun contact"
-            description="Ajoutez vos premiers programmateurs, lieux et partenaires pour commencer le suivi de diffusion."
+            description="Ajoutez vos premiers programmateurs, lieux et partenaires pour commencer le suivi."
           />
           <div className="flex justify-center">
             <ContactCreateDialog buttonLabel="Creer le premier contact" />

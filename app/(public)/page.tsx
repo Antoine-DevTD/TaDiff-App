@@ -11,7 +11,7 @@ import { formatCurrency } from "@/lib/finance";
 
 const problems = [
   "Dates signées à perte sans le savoir",
-  "Relances oubliées et dates perdues",
+  "Actions oubliees et dates perdues",
   "Subventions manquées faute de deadline claire",
   "Administration éparpillée entre Excel, Drive et emails",
 ];
@@ -30,7 +30,7 @@ const steps = [
   {
     n: "03",
     title: "On dit quoi faire",
-    detail: "Le cockpit sort chaque jour les relances, dossiers et encaissements prioritaires.",
+    detail: "Le cockpit sort chaque jour les actions, dossiers et encaissements prioritaires.",
   },
   {
     n: "04",
@@ -41,7 +41,7 @@ const steps = [
 
 const modules = [
   { title: "Calculateur de rentabilité", detail: "Point mort, marge, verdict et actions avant signature.", tags: ["Point mort", "SACD", "Coûts tournée"] },
-  { title: "Carnet de diffusion", detail: "Programmateurs, lieux, relances et dates possibles dans une vue commune.", tags: ["Contacts", "Dates", "Relances"] },
+  { title: "Carnet de contacts", detail: "Programmateurs, lieux, actions et dates possibles dans une vue commune.", tags: ["Contacts", "Dates", "Actions"] },
   { title: "Radar subventions", detail: "DRAC, Régions, fondations et SACD avec montants, statuts et échéances.", tags: ["Deadlines", "Montants", "Alertes"] },
   { title: "Finances et devis", detail: "CA signé, prévisionnel, acomptes, soldes et export comptable préparé.", tags: ["Acomptes", "FEC", "Trésorerie"] },
   { title: "Mécénat", detail: "Entreprises à approcher, déduction loi Aillagon et packs prêts à envoyer.", tags: ["60%", "Packs", "Argumentaire"] },
@@ -78,7 +78,7 @@ export default function LandingPage() {
               <span className="block text-accent">sans rien laisser filer.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-muted">
-              Diffusion, subventions, devis et trésorerie réunis dans un cockpit clair.
+              Dates a vendre, subventions, devis et tresorerie reunis dans un cockpit clair.
               TaDiff vous dit quoi faire, quand, et combien ça rapporte vraiment.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -98,7 +98,7 @@ export default function LandingPage() {
             <Card className="rotate-1 p-4 shadow-lg shadow-ink/10">
               <div className="grid grid-cols-2 gap-3">
                 <PreviewMetric label="Rentabilité" value="Avant signature" />
-                <PreviewMetric label="Relances" value="Priorisées" />
+                <PreviewMetric label="Actions" value="Priorisees" />
                 <PreviewMetric label="Subventions" value="Deadlines" />
                 <PreviewMetric label="Trésorerie" value="Sous contrôle" />
               </div>
@@ -176,7 +176,7 @@ export default function LandingPage() {
               Les compagnies méritent mieux qu&apos;Excel et les oublis.
             </h2>
             <p className="mt-4 text-muted">
-              La diffusion demande une lecture claire du risque, des prochaines actions et des
+              La vente des dates demande une lecture claire du risque, des prochaines actions et des
               dossiers administratifs. Éparpillé, on perd des dates et de l&apos;argent.
             </p>
           </Reveal>

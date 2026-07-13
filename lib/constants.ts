@@ -10,14 +10,14 @@ export const dashboardNavItems = [
   {
     group: "Piloter",
     href: "/reminders",
-    label: "À faire",
-    summary: "Relances et urgences",
+    label: "A faire",
+    summary: "Actions du jour",
   },
   {
     group: "Piloter",
     href: "/calendar",
     label: "Agenda",
-    summary: "Dates, échéances et frais",
+    summary: "Dates, echeances et frais",
   },
   {
     group: "Vendre",
@@ -34,19 +34,19 @@ export const dashboardNavItems = [
   {
     group: "Vendre",
     href: "/pipeline",
-    label: "Diffusion",
-    summary: "Dates à négocier",
+    label: "Dates a vendre",
+    summary: "Dates possibles et ventes",
   },
   {
     group: "Vendre",
     href: "/campaigns",
     label: "Campagnes",
-    summary: "Emails et relances groupées",
+    summary: "Emails et actions groupees",
   },
   {
     group: "Financer",
     href: "/finances",
-    label: "Trésorerie",
+    label: "Tresorerie",
     summary: "Cash, frais fixes et projections",
   },
   {
@@ -58,14 +58,14 @@ export const dashboardNavItems = [
   {
     group: "Financer",
     href: "/mecenat",
-    label: "Mécénat",
+    label: "Mecenat",
     summary: "Entreprises et contreparties",
   },
   {
     group: "Produire",
     href: "/documents",
     label: "Documents",
-    summary: "Pièces prêtes et manquantes",
+    summary: "Pieces pretes et manquantes",
   },
   {
     group: "Produire",
@@ -80,10 +80,10 @@ export const dashboardNavItems = [
     summary: "Devis, acomptes et soldes",
   },
   {
-    group: "Réglages",
+    group: "Reglages",
     href: "/settings",
-    label: "Paramètres",
-    summary: "Compte et données",
+    label: "Parametres",
+    summary: "Compte et donnees",
   },
 ];
 
@@ -91,7 +91,7 @@ export const publicNavItems = [
   { href: "/#fonctionnalites", label: "Produit" },
   { href: "/#calculateur", label: "Calculateur" },
   { href: "/#subventions", label: "Subventions" },
-  { href: "/beta", label: "Bêta" },
+  { href: "/beta", label: "Beta" },
   { href: "/pricing", label: "Tarifs" },
   { href: "/login", label: "Connexion" },
 ];

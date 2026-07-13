@@ -7,7 +7,7 @@ const betaBenefits = [
   "Cockpit tresorerie et prochaines actions",
   "Spectacles, affiches et dossiers de depot",
   "Radar subventions et pieces manquantes",
-  "Carnet de diffusion avec relances recommandees",
+  "Carnet de contacts avec actions recommandees",
 ];
 
 const betaSteps = [

@@ -39,8 +39,8 @@ export function ReminderForm() {
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Relance" error={errors.title?.message}>
-        <Input placeholder="Relancer apres envoi du dossier" {...register("title")} />
+      <Field label="Action a faire" error={errors.title?.message}>
+        <Input placeholder="Appeler, envoyer le dossier, verifier une date..." {...register("title")} />
       </Field>
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Date" error={errors.dueDate?.message}>
@@ -69,7 +69,7 @@ export function ReminderForm() {
         </p>
       ) : null}
       <Button type="submit" disabled={isSubmitting || isPending}>
-        Ajouter relance
+        Ajouter l&apos;action
       </Button>
     </form>
   );

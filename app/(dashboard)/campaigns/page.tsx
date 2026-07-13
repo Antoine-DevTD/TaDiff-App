@@ -28,7 +28,7 @@ export default async function CampaignsPage() {
         <div>
           <PageTitle href="/campaigns">Campagnes email</PageTitle>
           <p className="mt-1 text-sm text-muted">
-            Templates, audiences, prochaines relances et suivi de performance.
+            Templates, audiences, prochains envois et suivi de performance.
           </p>
         </div>
         <ButtonLink href="/contacts" variant="secondary">
@@ -83,13 +83,13 @@ export default async function CampaignsPage() {
             <div>
               <p className="text-base font-semibold">Templates disponibles</p>
               <p className="mt-1 text-sm text-muted">
-                Les variables se branchent sur spectacles, contacts, packs et relances.
+                Les variables se branchent sur spectacles, contacts, packs et actions.
               </p>
             </div>
             <Badge>4 modeles</Badge>
           </div>
           <TemplateBlock
-            title="Diffusion spectacle"
+            title="Spectacle a vendre"
             variables="{contact_name}, {show_title}, {next_date}, {pack_name}"
           />
           <TemplateBlock
@@ -101,7 +101,7 @@ export default async function CampaignsPage() {
             variables="{company_name}, {tax_deduction}, {patronage_amount}"
           />
           <TemplateBlock
-            title="Relance devis"
+            title="Suivi devis"
             variables="{quote_number}, {deposit_due}, {balance_due}"
           />
         </Card>

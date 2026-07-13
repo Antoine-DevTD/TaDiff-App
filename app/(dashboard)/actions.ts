@@ -77,7 +77,8 @@ function isOpportunitySchemaCacheError(message: string | undefined) {
       (message.includes("lost_reason") ||
         message.includes("next_action") ||
         message.includes("next_follow_up_at") ||
-        message.includes("performance_date")),
+        message.includes("performance_date") ||
+        message.includes("probability")),
   );
 }
 
@@ -86,6 +87,7 @@ function withoutOptionalOpportunityColumns<T extends Record<string, unknown>>(pa
   delete fallbackPayload.next_action;
   delete fallbackPayload.next_follow_up_at;
   delete fallbackPayload.performance_date;
+  delete fallbackPayload.probability;
   delete fallbackPayload.lost_reason;
   return fallbackPayload;
 }
@@ -164,7 +166,7 @@ async function ensureOpportunityReminder({
       return { ok: false, message: error.message };
     }
 
-    return { ok: true, message: "Relance existante replanifiee." };
+    return { ok: true, message: "Action existante replanifiee." };
   }
 
   const { error } = await supabase.from("reminders").insert({
@@ -181,7 +183,7 @@ async function ensureOpportunityReminder({
     return { ok: false, message: error.message };
   }
 
-  return { ok: true, message: "Relance creee." };
+  return { ok: true, message: "Action creee." };
 }
 
 export async function createShow(values: ShowFormInput): Promise<ActionResult> {
@@ -432,7 +434,7 @@ export async function deleteContact(contactId: string): Promise<ActionResult> {
 
   await logActivity("a supprime un contact", "contact");
 
-  return { ok: true, message: "Contact supprime, dates et relances detachees." };
+  return { ok: true, message: "Contact supprime, dates et actions detachees." };
 }
 
 export async function updateFixedCost(
@@ -512,7 +514,7 @@ export async function deleteFixedCost(fixedCostId: string): Promise<ActionResult
 
 export async function deleteReminder(reminderId: string): Promise<ActionResult> {
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : relance supprimee." };
+    return { ok: true, message: "Mode demo : action supprimee." };
   }
 
   const accessError = await requireWriteAccess();
@@ -533,9 +535,9 @@ export async function deleteReminder(reminderId: string): Promise<ActionResult> 
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
 
-  await logActivity("a supprime une relance", "relance");
+  await logActivity("a supprime une action", "action");
 
-  return { ok: true, message: "Relance supprimee." };
+  return { ok: true, message: "Action supprimee." };
 }
 
 export async function createShowDocument(values: ShowDocumentFormInput): Promise<ActionResult> {
@@ -1395,7 +1397,7 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   if (parsed.data.nextFollowUpAt) {
     await ensureOpportunityReminder({
       companyId: workspace.companyId,
-      title: parsed.data.nextAction || `Relancer ${parsed.data.title}`,
+      title: parsed.data.nextAction || `Contacter ${parsed.data.title}`,
       dueDate: parsed.data.nextFollowUpAt,
       relatedTo: parsed.data.title,
       priority: parsed.data.probability >= 60 ? "high" : "normal",
@@ -1416,7 +1418,7 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   return {
     ok: true,
     message: parsed.data.nextFollowUpAt
-      ? "Date creee avec relance."
+      ? "Date creee avec action."
       : "Date creee.",
   };
 }
@@ -1478,7 +1480,7 @@ export async function updateOpportunity(
     if (workspace.companyId) {
       await ensureOpportunityReminder({
         companyId: workspace.companyId,
-        title: parsed.data.nextAction || `Relancer ${parsed.data.title}`,
+        title: parsed.data.nextAction || `Contacter ${parsed.data.title}`,
         dueDate: parsed.data.nextFollowUpAt,
         relatedTo: parsed.data.title,
         priority: parsed.data.probability >= 60 ? "high" : "normal",
@@ -1776,7 +1778,7 @@ export async function updateOpportunityStage(
     if (opportunity && workspace.companyId) {
       await ensureOpportunityReminder({
         companyId: workspace.companyId,
-        title: opportunity.next_action || `Relancer ${opportunity.title}`,
+        title: opportunity.next_action || `Contacter ${opportunity.title}`,
         dueDate: followUpDate,
         relatedTo: opportunity.title,
         priority: "normal",
@@ -1800,7 +1802,7 @@ export async function updateOpportunityStage(
 
   await logActivity("a change le statut d'une date", "diffusion", stage);
 
-  return { ok: true, message: "Diffusion mise a jour." };
+  return { ok: true, message: "Date mise a jour." };
 }
 
 export async function scheduleOpportunityFollowUp(
@@ -1810,7 +1812,7 @@ export async function scheduleOpportunityFollowUp(
   if (!hasSupabaseEnv()) {
     return {
       ok: true,
-      message: `Mode demo : relance planifiee a J+${days}.`,
+      message: `Mode demo : action planifiee a J+${days}.`,
       dueDate: getDateAfterDays(days),
     };
   }
@@ -1857,7 +1859,7 @@ export async function scheduleOpportunityFollowUp(
 
   const reminderResult = await ensureOpportunityReminder({
     companyId: workspace.companyId,
-    title: opportunity.next_action || `Relancer ${opportunity.title}`,
+    title: opportunity.next_action || `Contacter ${opportunity.title}`,
     dueDate,
     relatedTo: opportunity.title,
     priority: days === 3 ? "high" : "normal",
@@ -1873,11 +1875,11 @@ export async function scheduleOpportunityFollowUp(
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
-  await logActivity("a planifie une relance", "diffusion", opportunity.title);
+  await logActivity("a planifie une action", "action", opportunity.title);
 
   return {
     ok: true,
-    message: days === 3 ? "Relance prioritaire planifiee a J+3." : "Relance planifiee a J+7.",
+    message: days === 3 ? "Action prioritaire planifiee a J+3." : "Action planifiee a J+7.",
     dueDate,
   };
 }
@@ -2486,11 +2488,11 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
   const parsed = reminderSchema.safeParse(values);
 
   if (!parsed.success) {
-    return { ok: false, message: "Le formulaire relance contient des erreurs." };
+    return { ok: false, message: "Le formulaire action contient des erreurs." };
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : relance valide, non enregistree." };
+    return { ok: true, message: "Mode demo : action valide, non enregistree." };
   }
 
   const accessError = await requireWriteAccess();
@@ -2520,7 +2522,7 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
     }
 
     if (existingReminder) {
-      return { ok: true, message: "Relance deja ouverte pour cette date." };
+      return { ok: true, message: "Action deja ouverte pour cette date." };
     }
   }
 
@@ -2542,9 +2544,9 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
   revalidatePath("/pipeline");
   revalidatePath("/dashboard");
 
-  await logActivity("a cree la relance", "relance", parsed.data.title);
+  await logActivity("a cree l'action", "action", parsed.data.title);
 
-  return { ok: true, message: "Relance creee." };
+  return { ok: true, message: "Action creee." };
 }
 
 export async function updateReminder(
@@ -2554,11 +2556,11 @@ export async function updateReminder(
   const parsed = reminderSchema.safeParse(values);
 
   if (!parsed.success) {
-    return { ok: false, message: "Le formulaire relance contient des erreurs." };
+    return { ok: false, message: "Le formulaire action contient des erreurs." };
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : relance mise a jour, non enregistree." };
+    return { ok: true, message: "Mode demo : action mise a jour, non enregistree." };
   }
 
   const accessError = await requireWriteAccess();
@@ -2587,14 +2589,14 @@ export async function updateReminder(
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
 
-  await logActivity("a modifie la relance", "relance", parsed.data.title);
+  await logActivity("a modifie l'action", "action", parsed.data.title);
 
-  return { ok: true, message: "Relance mise a jour." };
+  return { ok: true, message: "Action mise a jour." };
 }
 
 export async function completeReminder(reminderId: string): Promise<ActionResult> {
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : relance terminee." };
+    return { ok: true, message: "Mode demo : action terminee." };
   }
 
   const accessError = await requireWriteAccess();
@@ -2616,7 +2618,7 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
-  await logActivity("a termine une relance", "relance");
+  await logActivity("a termine une action", "action");
 
-  return { ok: true, message: "Relance terminee." };
+  return { ok: true, message: "Action terminee." };
 }

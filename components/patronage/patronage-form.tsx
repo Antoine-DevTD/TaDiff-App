@@ -80,7 +80,7 @@ export function PatronageForm() {
         <Field label="Prochaine action" error={errors.nextAction?.message}>
           <Input placeholder="Envoyer l'argumentaire fiscal..." {...register("nextAction")} />
         </Field>
-        <Field label="Relance prevue" error={errors.nextFollowUpAt?.message}>
+        <Field label="Date de prochaine action" error={errors.nextFollowUpAt?.message}>
           <Input type="date" {...register("nextFollowUpAt")} />
         </Field>
       </div>

@@ -17,7 +17,7 @@ export default async function ShowsPage() {
         <div>
           <PageTitle href="/shows">Spectacles</PageTitle>
           <p className="mt-1 text-sm text-muted">
-            Catalogue des créations, statuts de diffusion et prochaines dates.
+            Catalogue des creations, dossiers et prochaines dates.
           </p>
         </div>
         <ShowCreateDialog />
@@ -26,7 +26,7 @@ export default async function ShowsPage() {
       {shows.length === 0 ? (
         <EmptyState
           title="Aucun spectacle"
-          description="Créez votre premier spectacle pour suivre sa diffusion, son budget et ses prochaines dates."
+          description="Creez votre premier spectacle pour suivre son dossier, son budget et ses prochaines dates."
           actionLabel="Nouveau spectacle"
           actionHref="/shows/new"
         />

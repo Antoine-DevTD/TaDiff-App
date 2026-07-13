@@ -128,7 +128,7 @@ export function ContactImportPanel() {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        eyebrow="Carnet de diffusion"
+        eyebrow="Carnet de contacts"
         title="Importer des contacts"
         description="Chargez un export Excel, CSV ou TSV, puis associez les colonnes a TaDiff avant import."
         className="max-w-4xl"

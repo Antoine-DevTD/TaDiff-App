@@ -36,7 +36,7 @@ export default async function EditContactPage({ params }: EditContactPageProps) 
         <CardHeader>
           <CardTitle>Supprimer le contact</CardTitle>
           <CardDescription>
-            Les dates de diffusion et relances liees seront detachees mais conservees.
+            Les dates possibles et actions liees seront detachees mais conservees.
           </CardDescription>
         </CardHeader>
         <div className="flex flex-wrap items-center gap-3">

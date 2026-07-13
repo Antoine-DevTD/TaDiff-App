@@ -22,7 +22,7 @@ export function ContactCreateDialog({
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        eyebrow="Carnet de diffusion"
+        eyebrow="Carnet de contacts"
         title="Nouveau contact"
         description="Ajoutez une structure, son role et ses tags sans quitter le carnet."
         className="max-w-2xl"

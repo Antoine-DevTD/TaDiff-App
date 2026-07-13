@@ -11,23 +11,23 @@ export default async function RemindersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <PageTitle href="/reminders">Relances</PageTitle>
+        <PageTitle href="/reminders">A faire</PageTitle>
         <p className="mt-1 text-sm text-muted">
-          La vue d execution pour traiter les suivis du jour sans se perdre.
+          Les actions du jour : appeler, envoyer un dossier, contacter un lieu ou verifier une echeance.
         </p>
       </div>
 
       {reminders.length === 0 ? (
         <div className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
           <EmptyState
-            title="Aucune relance"
-            description="Ajoutez une relance manuelle ou creez-la depuis une date possible."
+            title="Rien a faire pour l&apos;instant"
+            description="Ajoutez une action manuelle ou creez-la depuis une date possible."
           />
           <Card>
             <CardHeader>
-              <CardTitle>Ajouter une relance</CardTitle>
+              <CardTitle>Ajouter une action</CardTitle>
               <CardDescription>
-                Notez une action, une date et une priorite. Les relances de diffusion arrivent ici.
+                Notez ce qu&apos;il faut faire, pour quand, et avec quelle priorite.
               </CardDescription>
             </CardHeader>
             <ReminderForm />
@@ -38,9 +38,9 @@ export default async function RemindersPage() {
           <RemindersWorkspace reminders={reminders} />
           <Card>
             <CardHeader>
-              <CardTitle>Ajouter une relance</CardTitle>
+              <CardTitle>Ajouter une action</CardTitle>
               <CardDescription>
-                Ajoutez un suivi manuel quand il ne vient pas encore d une date possible.
+                Ajoutez un suivi manuel quand il ne vient pas encore d&apos;une date possible.
               </CardDescription>
             </CardHeader>
             <ReminderForm />

@@ -49,7 +49,7 @@ export function ShowEditDialog({
             <h4 className="text-base font-semibold">Supprimer le spectacle</h4>
             <p className="mt-1 mb-4 text-sm text-muted">
               Les documents liés et leurs fichiers stockés seront supprimés. Les dates de
-              diffusion et devis existants seront détachés mais conservés.
+              dates possibles et devis existants seront detaches mais conserves.
             </p>
             <ConfirmDeleteButton
               action={deleteShow.bind(null, show.id)}

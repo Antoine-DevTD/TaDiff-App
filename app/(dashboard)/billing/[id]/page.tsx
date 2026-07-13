@@ -40,7 +40,7 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
           </ButtonLink>
           {quote.dealId ? (
             <ButtonLink href="/pipeline" variant="secondary">
-              Ouvrir la diffusion
+              Voir les dates a vendre
             </ButtonLink>
           ) : null}
           <PrintButton />
@@ -52,7 +52,7 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
           <div>
             <p className="text-2xl font-semibold">TaDiff</p>
             <p className="mt-2 max-w-sm text-sm text-muted">
-              Pilotage, diffusion et facturation pour compagnies de spectacle vivant.
+              Pilotage des dates, dossiers et facturation pour compagnies de spectacle vivant.
             </p>
           </div>
           <div className="text-left sm:text-right">

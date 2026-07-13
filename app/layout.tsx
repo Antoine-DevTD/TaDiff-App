@@ -10,11 +10,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "TaDiff - Pilotage de diffusion pour le spectacle vivant",
+    default: "TaDiff - Cockpit pour compagnies de spectacle vivant",
     template: "%s | TaDiff",
   },
   description:
-    "Une web app SaaS pour piloter diffusion, rentabilite, subventions, mecenat, devis et finances des compagnies.",
+    "Une web app SaaS pour piloter dates, rentabilite, subventions, mecenat, devis et finances des compagnies.",
   applicationName: "TaDiff",
   manifest: "/manifest.json",
   appleWebApp: {

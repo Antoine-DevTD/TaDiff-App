@@ -15,9 +15,9 @@ export default async function PipelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <PageTitle href="/pipeline">Diffusion en cours</PageTitle>
+        <PageTitle href="/pipeline">Dates a vendre</PageTitle>
         <p className="mt-1 text-sm text-muted">
-          Suivez les dates possibles, priorisez les relances et estimez le CA probable.
+          Ajoutez les dates possibles, voyez ou ca en est et ce qu&apos;il faut faire pour les transformer en dates confirmees.
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export default async function PipelinePage() {
       {deals.length === 0 ? (
         <EmptyState
           title="Aucune date possible"
-          description="Creez un premier dossier de diffusion pour commencer le suivi."
+          description="Creez une premiere date possible pour commencer le suivi."
         />
       ) : (
         <>

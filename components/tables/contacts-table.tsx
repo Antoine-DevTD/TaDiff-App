@@ -136,7 +136,7 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
     startTransition(async () => {
       const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const result = await createReminder({
-        title: `Relancer ${contact.name}`,
+        title: `Contacter ${contact.name}`,
         dueDate,
         relatedTo: contact.organization || contact.name,
         priority: "normal",
@@ -285,7 +285,7 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
       <Dialog
         open={Boolean(editingContact)}
         onClose={() => setEditingContact(null)}
-        eyebrow="Carnet de diffusion"
+        eyebrow="Carnet de contacts"
         title="Modifier le contact"
         description="Mettez a jour les coordonnees, le role et les categories."
         className="max-w-2xl"
@@ -421,7 +421,7 @@ function ContactContextMenu({
       <ContextAction
         disabled={disabled}
         icon={BellPlus}
-        label="Creer une relance"
+        label="Creer une action"
         onClick={() => onAction("reminder", contact)}
       />
       <ContextAction icon={Mail} label="Preparer un email" onClick={() => onAction("email", contact)} />

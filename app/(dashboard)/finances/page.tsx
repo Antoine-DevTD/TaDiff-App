@@ -258,7 +258,7 @@ export default async function FinancesPage() {
             />
             <AdviceBlock
               title={`${formatCurrency(weightedRevenue)} de dates ponderees`}
-              detail="Pas encore du cash. Les relances transforment cette probabilite en encaissement."
+              detail="Pas encore du cash. Les actions transforment cette probabilite en encaissement."
             />
             <AdviceBlock
               title={`${formatCurrency(quoteBalance)} reste a encaisser`}
@@ -269,7 +269,7 @@ export default async function FinancesPage() {
           <section className="grid gap-4 md:grid-cols-4">
             <MetricCard label="CA signe" value={formatCurrency(signedRevenue)} detail="Dates confirmees" />
             <MetricCard label="CA previsionnel" value={formatCurrency(weightedRevenue)} detail="Dates ponderees" />
-            <MetricCard label="Diffusion brute" value={formatCurrency(diffusionRaw)} detail="Valeur ouverte totale" />
+            <MetricCard label="Dates ouvertes" value={formatCurrency(diffusionRaw)} detail="Valeur ouverte totale" />
             <MetricCard label="Frais fixes annuels" value={formatCurrency(monthlyFixedCosts * 12)} detail="Equivalent annuel" />
           </section>
 
@@ -409,7 +409,7 @@ export default async function FinancesPage() {
                   <InfoCard label="Pondere" value={formatCurrency(getWeightedValue(focusDeal))} />
                   <InfoCard label="Probabilite" value={`${focusDeal.probability}%`} />
                   <InfoCard
-                    label="Relance"
+                    label="Action"
                     value={
                       focusDeal.nextFollowUpAt
                         ? new Date(focusDeal.nextFollowUpAt).toLocaleDateString("fr-FR")
@@ -452,7 +452,7 @@ export default async function FinancesPage() {
                         <FinanceCell label="Brut" value={formatCurrency(deal.value)} />
                         <FinanceCell label="Pondere" value={formatCurrency(weighted)} />
                         <FinanceCell
-                          label="Relance"
+                          label="Action"
                           value={dueDate ? new Date(dueDate).toLocaleDateString("fr-FR") : "A planifier"}
                         />
                       </div>

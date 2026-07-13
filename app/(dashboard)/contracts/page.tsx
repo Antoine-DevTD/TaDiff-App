@@ -101,9 +101,9 @@ export default async function ContractsPage() {
       {contracts.length === 0 ? (
         <EmptyState
           title="Aucun contrat a suivre"
-          description="Des qu un spectacle entre en relance avancee, negociation ou confirmation, il remonte ici."
+          description="Des qu une date possible entre en action avancee, negociation ou confirmation, elle remonte ici."
           actionHref="/pipeline"
-          actionLabel="Ouvrir la diffusion"
+          actionLabel="Voir les dates a vendre"
         />
       ) : (
         <>
@@ -178,13 +178,13 @@ export default async function ContractsPage() {
               <div className="grid gap-3">
                 <QuickLink
                   href="/pipeline"
-                  title="Revenir a la diffusion"
+                  title="Voir les dates a vendre"
                   detail="Faire avancer la negociation et ajuster la probabilite."
                 />
                 <QuickLink
                   href="/shows"
                   title="Verifier les spectacles"
-                  detail="Controler date, budget et contexte de diffusion."
+                  detail="Controler date, budget et contexte de vente."
                 />
                 <QuickLink
                   href="/documents"

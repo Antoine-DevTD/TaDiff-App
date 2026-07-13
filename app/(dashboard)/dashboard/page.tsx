@@ -175,9 +175,9 @@ function buildTheatreActions({
 
   if (lateReminder) {
     actions.push({
-      detail: lateReminder.relatedTo || "Relance sans contexte",
+      detail: lateReminder.relatedTo || "Action sans contexte",
       href: "/reminders",
-      label: "Relance",
+      label: "Action a faire",
       title: lateReminder.label,
       tone: "danger",
     });
@@ -198,7 +198,7 @@ function buildTheatreActions({
     actions.push({
       detail: `${priorityDeal.contactName} - ${formatCurrency(getWeightedValue(priorityDeal))} pondérés`,
       href: "/pipeline",
-      label: "Diffusion",
+      label: "Date a vendre",
       title: priorityDeal.nextAction || priorityDeal.title,
       tone: "neutral",
     });
@@ -305,7 +305,7 @@ export default async function DashboardPage() {
     },
     {
       id: "contacts",
-      label: "Remplir le carnet de diffusion",
+      label: "Remplir le carnet de contacts",
       detail: "Programmateurs, lieux, partenaires et tags pour retrouver vite les bons contacts.",
       href: "/contacts",
       done: contacts.length > 0,
@@ -319,8 +319,8 @@ export default async function DashboardPage() {
     },
     {
       id: "reminder",
-      label: "Planifier une relance",
-      detail: "TaDiff vous rappelle qui relancer et quand.",
+      label: "Planifier une action",
+      detail: "TaDiff vous rappelle quoi faire et quand.",
       href: "/reminders",
       done: reminders.length > 0,
     },
@@ -370,7 +370,7 @@ export default async function DashboardPage() {
                   }
                 />
                 <p className="mt-3 max-w-2xl text-sm text-muted">
-                  Trésorerie, diffusion, dossiers et échéances réunis dans une seule lecture.
+                  Tresorerie, dates a vendre, dossiers et echeances reunis dans une seule lecture.
                 </p>
               </div>
               <Badge tone={cashPilot.status}>{getToneLabel(cashPilot.status)}</Badge>
@@ -447,7 +447,7 @@ export default async function DashboardPage() {
           </div>
           <p className="text-sm text-muted">
             {mainAction?.detail ??
-              "Le cockpit restera clair tant que les relances, dossiers et encaissements restent à jour."}
+              "Le cockpit restera clair tant que les actions, dossiers et encaissements restent a jour."}
           </p>
           <div className="flex flex-wrap gap-3">
             {mainAction ? (
@@ -572,7 +572,7 @@ export default async function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Aujourd&apos;hui
               </p>
-              <DashboardSectionTitle className="text-xl" href="/reminders" title="Relances et échéances" />
+              <DashboardSectionTitle className="text-xl" href="/reminders" title="Actions et echeances" />
             </div>
             <ButtonLink href="/reminders" variant="secondary">
               A faire
@@ -580,7 +580,7 @@ export default async function DashboardPage() {
           </div>
 
           {priorityReminders.length === 0 ? (
-            <EmptyBlock text="Aucune relance ouverte." />
+            <EmptyBlock text="Aucune action ouverte." />
           ) : (
             <div className="space-y-3">
               {priorityReminders.map((reminder) => (

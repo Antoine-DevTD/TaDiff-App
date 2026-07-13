@@ -28,7 +28,7 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
           </h2>
           <p className="mt-1 text-sm text-muted">
             {doneCount}/{steps.length} etapes faites. On avance comme une administration de
-            production : spectacle, dossier, contacts, dates, relances, argent.
+            production : spectacle, dossier, contacts, dates, actions, argent.
           </p>
         </div>
         <TourLauncher label="Visite guidee (3 min)" />

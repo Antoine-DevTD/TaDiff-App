@@ -14,7 +14,7 @@ export default function AuthLayout({
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-white/50">Demo privee</p>
           <h1 className="mt-4 max-w-xl text-4xl font-semibold">
-            Un espace unique pour piloter la diffusion et la production.
+            Un espace unique pour piloter les dates et la production.
           </h1>
         </div>
       </section>

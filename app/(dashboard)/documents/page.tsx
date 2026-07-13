@@ -179,7 +179,7 @@ export default async function DocumentsPage() {
       <div>
         <PageTitle href="/documents">Documents</PageTitle>
         <p className="mt-1 text-sm text-muted">
-          Hub documentaire des spectacles, derive de la diffusion, des relances et des contrats.
+          Hub documentaire des spectacles, derive des dates possibles, des actions a faire et des contrats.
         </p>
       </div>
 
@@ -229,7 +229,7 @@ export default async function DocumentsPage() {
                         : "A planifier"
                     }
                   />
-                  <InfoCard label="Relances" value={focusPack.remindersCount.toString()} />
+                  <InfoCard label="Actions" value={focusPack.remindersCount.toString()} />
                   <InfoCard label="Pieces" value={`${focusPack.readinessPercent}% pret`} />
                 </div>
               ) : null}
@@ -246,7 +246,7 @@ export default async function DocumentsPage() {
                 <QuickLink
                   href="/shows"
                   title="Ouvrir les spectacles"
-                  detail="Mettre a jour le contexte de diffusion et les notes de production."
+                  detail="Mettre a jour le contexte des dates possibles et les notes de production."
                 />
                 <QuickLink
                   href="/contracts"
@@ -255,7 +255,7 @@ export default async function DocumentsPage() {
                 />
                 <QuickLink
                   href="/reminders"
-                  title="Ouvrir les relances"
+                  title="Ouvrir les actions"
                   detail="Voir les rappels qui impliquent une mise a jour documentaire."
                 />
               </div>

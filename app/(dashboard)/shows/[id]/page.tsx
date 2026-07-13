@@ -249,11 +249,11 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
         </div>
       </Card>
 
-      {/* Diffusion & relances : dates liees + relances, navigation en pied. */}
+      {/* Dates a vendre et actions : dates liees + actions a suivre, navigation en pied. */}
       <Card>
         <CardHeader>
-          <CardTitle>Diffusion et relances</CardTitle>
-          <CardDescription>Dates, négociations et actions à suivre sur ce spectacle.</CardDescription>
+          <CardTitle>Dates a vendre et actions</CardTitle>
+          <CardDescription>Dates possibles, negociations et actions a suivre sur ce spectacle.</CardDescription>
         </CardHeader>
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-3">
@@ -261,7 +261,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
               Dates liees
             </Link>
             {opportunities.length === 0 ? (
-              <ActionPanel href="/pipeline" text="Aucune date liee a ce spectacle. Ajouter ou associer une date dans la diffusion." />
+              <ActionPanel href="/pipeline" text="Aucune date liee a ce spectacle. Ajouter ou associer une date possible." />
             ) : (
               opportunities.map((deal) => (
                 <Link
@@ -295,10 +295,10 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
 
           <div className="space-y-3">
             <Link className="text-sm font-semibold hover:text-accent" href="/reminders">
-              Relances
+              Actions a faire
             </Link>
             {reminders.length === 0 ? (
-              <ActionPanel href="/reminders" text="Aucune relance ouverte. Voir ou creer les relances liees a ce spectacle." />
+              <ActionPanel href="/reminders" text="Aucune action ouverte. Voir ou creer les actions liees a ce spectacle." />
             ) : (
               reminders.map((reminder) => (
                 <Link

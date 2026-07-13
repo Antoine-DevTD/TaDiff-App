@@ -169,7 +169,7 @@ export function OpportunityEditor({
         }
       />
       <Input
-        aria-label="Date de relance"
+        aria-label="Date de prochaine action"
         className="min-h-9 text-xs"
         type="date"
         value={draft.nextFollowUpAt}

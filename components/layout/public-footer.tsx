@@ -39,7 +39,7 @@ export function PublicFooter() {
               <span className="text-lg font-semibold">TaDiff</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-muted">
-              Le cockpit de pilotage des compagnies de spectacle vivant : diffusion,
+              Le cockpit de pilotage des compagnies de spectacle vivant : dates,
               subventions, tresorerie et dossiers au meme endroit.
             </p>
             <Link

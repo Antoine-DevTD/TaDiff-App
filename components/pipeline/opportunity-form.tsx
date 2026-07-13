@@ -148,7 +148,7 @@ export function OpportunityForm({
             </Field>
             <Field label="Role">
               <Input
-                placeholder="Programmation, diffusion..."
+                placeholder="Programmation, production..."
                 value={newContact.role}
                 onChange={(event) =>
                   setNewContact((current) => ({ ...current, role: event.target.value }))
@@ -214,11 +214,11 @@ export function OpportunityForm({
         <Field label="Prochaine action" error={errors.nextAction?.message}>
           <Textarea
             className="min-h-20"
-            placeholder="Appeler, envoyer le dossier, relancer..."
+            placeholder="Appeler, envoyer le dossier, verifier une date..."
             {...register("nextAction")}
           />
         </Field>
-        <Field label="Relance" error={errors.nextFollowUpAt?.message}>
+        <Field label="Date de prochaine action" error={errors.nextFollowUpAt?.message}>
           <Input type="date" {...register("nextFollowUpAt")} />
         </Field>
       </div>
