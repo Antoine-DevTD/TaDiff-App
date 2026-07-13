@@ -107,7 +107,7 @@ function WilliamRig({ activeStep, busy }: { activeStep: number; busy: boolean })
         <sphereGeometry args={[0.075, 20, 20]} />
         <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.8} />
       </mesh>
-      <mesh position={[0, -0.1, 0.77]} rotation={[0, 0, Math.PI / 2]}>
+      <mesh position={[0, -0.16, 0.77]} rotation={[0, 0, Math.PI]}>
         <torusGeometry args={[0.18, 0.012, 8, 32, Math.PI]} />
         <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
       </mesh>
