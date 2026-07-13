@@ -1,4 +1,4 @@
-import type { ShowDocument, ShowDocumentStatus } from "@/types";
+import type { Show, ShowDocument, ShowDocumentStatus } from "@/types";
 
 export const showDocumentTypes = [
   "Affiche",
@@ -54,9 +54,26 @@ export function getDocumentStatusTone(status: ShowDocumentStatus) {
   return "danger" as const;
 }
 
-export function getShowDocumentReadiness(documents: ShowDocument[]) {
+export function resolveShowPosterUrl(show: Show, documents: ShowDocument[] = []) {
+  const uploadedPoster = documents.find(
+    (document) =>
+      document.showId === show.id &&
+      document.documentType === "Affiche" &&
+      document.status === "Pret" &&
+      document.fileUrl,
+  );
+
+  return uploadedPoster?.fileUrl || show.posterUrl || "";
+}
+
+export function getShowDocumentReadiness(
+  documents: ShowDocument[],
+  options: { hasPoster?: boolean } = {},
+) {
   const readyRequiredCount = requiredShowDocumentTypes.filter((type) =>
-    documents.some((document) => document.documentType === type && document.status === "Pret"),
+    type === "Affiche" && options.hasPoster
+      ? true
+      : documents.some((document) => document.documentType === type && document.status === "Pret"),
   ).length;
   const totalRequiredCount = requiredShowDocumentTypes.length;
   const missingCount = Math.max(0, totalRequiredCount - readyRequiredCount);

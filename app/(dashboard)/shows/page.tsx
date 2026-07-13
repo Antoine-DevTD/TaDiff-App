@@ -5,7 +5,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTitle } from "@/components/ui/page-title";
 import { getShows, getShowDocuments } from "@/lib/supabase/queries";
-import { getShowDocumentReadiness } from "@/lib/show-documents";
+import { getShowDocumentReadiness, resolveShowPosterUrl } from "@/lib/show-documents";
 import type { Show } from "@/types";
 
 export default async function ShowsPage() {
@@ -32,10 +32,17 @@ export default async function ShowsPage() {
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-3" data-tour="shows-catalogue">
-          {shows.map((show) => (
+          {shows.map((show) => {
+            const showDocuments = documents.filter((document) => document.showId === show.id);
+            const posterUrl = resolveShowPosterUrl(show, showDocuments);
+            const readiness = getShowDocumentReadiness(showDocuments, {
+              hasPoster: Boolean(posterUrl),
+            });
+
+            return (
             <Link key={show.id} href={`/shows/${show.id}`}>
               <Card className="overflow-hidden p-0 transition hover:-translate-y-0.5 hover:border-accent/[0.45] hover:bg-panel-strong/70">
-                <PosterBlock show={show} />
+                <PosterBlock posterUrl={posterUrl} show={show} />
                 <div className="p-5">
                   <CardHeader>
                     <div className="flex min-h-16 items-start justify-between gap-3">
@@ -65,30 +72,23 @@ export default async function ShowsPage() {
                     </div>
                   </div>
                   <DocumentState
-                    readyPercent={
-                      getShowDocumentReadiness(
-                        documents.filter((document) => document.showId === show.id),
-                      ).percent
-                    }
-                    missingCount={
-                      getShowDocumentReadiness(
-                        documents.filter((document) => document.showId === show.id),
-                      ).missingCount
-                    }
+                    readyPercent={readiness.percent}
+                    missingCount={readiness.missingCount}
                   />
                 </div>
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function PosterBlock({ show }: { show: Show }) {
-  const style = show.posterUrl
-    ? { backgroundImage: `url(${show.posterUrl})` }
+function PosterBlock({ posterUrl, show }: { posterUrl: string; show: Show }) {
+  const style = posterUrl
+    ? { backgroundImage: `url(${posterUrl})` }
     : undefined;
 
   return (

@@ -12,6 +12,7 @@ import {
   getShowDocumentTypeLabel,
   isEssentialShowDocumentType,
   optionalShowDocumentTypes,
+  resolveShowPosterUrl,
 } from "@/lib/show-documents";
 import { getShowById } from "@/lib/supabase/queries";
 import type { Show } from "@/types";
@@ -37,7 +38,8 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
     deal,
     result: buildDealProfitability({ deal, show }),
   }));
-  const documentReadiness = getShowDocumentReadiness(documents);
+  const posterUrl = resolveShowPosterUrl(show, documents);
+  const documentReadiness = getShowDocumentReadiness(documents, { hasPoster: Boolean(posterUrl) });
   const linkedOptionalDocuments = documents.filter(
     (document) => !isEssentialShowDocumentType(document.documentType),
   );
@@ -80,7 +82,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
       <Card>
         <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
           <div className="space-y-4">
-            <ShowPoster show={show} />
+            <ShowPoster posterUrl={posterUrl} show={show} />
             <div className="rounded-md border border-border bg-panel-strong/45 p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-medium">Dossier indispensable</p>
@@ -113,7 +115,8 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
               <div className="grid gap-3 sm:grid-cols-2">
                 {essentialShowDocumentTypes.map((type) => {
                   const document = documents.find((item) => item.documentType === type);
-                  const status = document?.status ?? "Manquant";
+                  const usesExistingPoster = type === "Affiche" && Boolean(posterUrl);
+                  const status = document?.status ?? (usesExistingPoster ? "Pret" : "Manquant");
 
                   return (
                     <DocumentSlot
@@ -121,7 +124,7 @@ export default async function ShowDetailPage({ params }: ShowDetailPageProps) {
                       showId={show.id}
                       showTitle={show.title}
                       type={type}
-                      title={document?.title ?? null}
+                      title={document?.title ?? (usesExistingPoster ? "Affiche spectacle" : null)}
                       requirementLabel="Obligatoire"
                       status={status}
                     />
@@ -326,9 +329,9 @@ function StatBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ShowPoster({ show }: { show: Show }) {
-  const style = show.posterUrl
-    ? { backgroundImage: `url(${show.posterUrl})` }
+function ShowPoster({ posterUrl, show }: { posterUrl: string; show: Show }) {
+  const style = posterUrl
+    ? { backgroundImage: `url(${posterUrl})` }
     : undefined;
 
   return (

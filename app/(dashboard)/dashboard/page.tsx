@@ -16,7 +16,7 @@ import {
 } from "@/lib/supabase/queries";
 import { formatCurrency, getMonthlyFixedCostsTotal } from "@/lib/finance";
 import { getPipelinePriorityScore } from "@/lib/pipeline";
-import { getShowDocumentReadiness } from "@/lib/show-documents";
+import { getShowDocumentReadiness, resolveShowPosterUrl } from "@/lib/show-documents";
 import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
 import { GettingStarted, type OnboardingStep } from "@/components/onboarding/getting-started";
 import { TourLauncher } from "@/components/tour/tour-launcher";
@@ -230,9 +230,10 @@ function buildTheatreActions({
 function buildShowReadiness(shows: Show[], documents: ShowDocument[]) {
   return shows
     .map((show) => {
-      const readiness = getShowDocumentReadiness(
-        documents.filter((document) => document.showId === show.id),
-      );
+      const showDocuments = documents.filter((document) => document.showId === show.id);
+      const readiness = getShowDocumentReadiness(showDocuments, {
+        hasPoster: Boolean(resolveShowPosterUrl(show, showDocuments)),
+      });
 
       return { readiness, show };
     })
@@ -524,9 +525,10 @@ export default async function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {nextShows.map((show) => {
-                const readiness = getShowDocumentReadiness(
-                  documents.filter((document) => document.showId === show.id),
-                );
+                const showDocuments = documents.filter((document) => document.showId === show.id);
+                const readiness = getShowDocumentReadiness(showDocuments, {
+                  hasPoster: Boolean(resolveShowPosterUrl(show, showDocuments)),
+                });
 
                 return (
                   <Link

@@ -1,4 +1,5 @@
 import {
+  resolveShowPosterUrl,
   requiredShowDocumentTypes,
   showDocumentTypes,
 } from "@/lib/show-documents";
@@ -56,6 +57,14 @@ export function buildGrantDossierState({
   show: Show | null;
 }): GrantDossierState {
   const requirements = getGrantRequirements(grant).map((type) => {
+    if (type === "Affiche" && show && resolveShowPosterUrl(show, documents)) {
+      return {
+        document: documents.find((item) => item.documentType === "Affiche"),
+        status: "ready" as const,
+        type,
+      };
+    }
+
     const document = documents.find((item) => item.documentType === type);
 
     if (!document) {

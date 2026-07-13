@@ -11,7 +11,7 @@ import {
   getShowDocuments,
   getShows,
 } from "@/lib/supabase/queries";
-import { getShowDocumentReadiness } from "@/lib/show-documents";
+import { getShowDocumentReadiness, resolveShowPosterUrl } from "@/lib/show-documents";
 import type { PipelineDeal, Reminder, Show, ShowDocument } from "@/types";
 
 type DocumentPackStatus = "to-build" | "to-update" | "ready";
@@ -77,7 +77,9 @@ function buildDocumentPacks({
     .map((show) => {
       const relatedDeals = deals.filter((deal) => deal.showId === show.id);
       const relatedDocuments = documents.filter((document) => document.showId === show.id);
-      const readiness = getShowDocumentReadiness(relatedDocuments);
+      const readiness = getShowDocumentReadiness(relatedDocuments, {
+        hasPoster: Boolean(resolveShowPosterUrl(show, relatedDocuments)),
+      });
       const relatedLabels = new Set([show.title, ...relatedDeals.map((deal) => deal.title)]);
       const relatedReminders = reminders.filter((reminder) => relatedLabels.has(reminder.relatedTo));
       const contractState = resolveContractState(show.id, deals);
