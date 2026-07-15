@@ -27,14 +27,14 @@ export default async function BetaPage() {
           <div className="flex flex-col justify-center">
             <Badge className="w-fit bg-white/10 text-white">Beta compagnies</Badge>
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-              10 compagnies pour tester le cockpit avant le lancement.
+              30 compagnies pour tester le cockpit avant le lancement.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">
-              La beta TaDiff demarre le 6 aout 2026 a 19,99 EUR. Les 10 premieres
+              La beta TaDiff demarre le 6 aout 2026 a 19,99 EUR. Les 30 premieres
               compagnies gardent un accompagnement prioritaire pendant la periode de test.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <HeroMetric label="Places beta" value="10" />
+              <HeroMetric label="Places beta" value="30" />
               <HeroMetric
                 label="Deja reservees"
                 value={stats.reservedCount.toString()}
@@ -50,7 +50,7 @@ export default async function BetaPage() {
             <div className="mb-5">
               <p className="text-lg font-semibold">Reserver une place beta</p>
               <p className="mt-2 text-sm text-muted">
-                Les 10 premieres places sont reservees, les 30 suivantes passent sur
+                Les 30 premieres places sont reservees. Au-dela, les compagnies passent sur
                 liste d&apos;attente prioritaire.
               </p>
             </div>

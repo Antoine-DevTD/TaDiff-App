@@ -96,7 +96,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} active(s), ${compedCount} offerte(s)`} />
         <MetricCard label="MRR beta" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) a 19,99 EUR`} />
-        <MetricCard label="Beta reservee" value={`${reserved.length}/10`} detail="Places confirmees" />
+        <MetricCard label="Beta reservee" value={`${reserved.length}/30`} detail="Places confirmees" />
         <MetricCard label="Liste d'attente" value={waitlist.length.toString()} detail="Compagnies en attente" />
       </section>
 
@@ -158,7 +158,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div>
           <p className="text-base font-semibold">Inscriptions beta</p>
           <p className="mt-1 text-sm text-muted">
-            10 places reservees puis liste d&apos;attente, dans l&apos;ordre d&apos;arrivee.
+            30 places reservees puis liste d&apos;attente, dans l&apos;ordre d&apos;arrivee.
           </p>
         </div>
         {betaSignups.length === 0 ? (

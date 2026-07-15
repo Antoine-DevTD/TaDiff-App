@@ -11,7 +11,7 @@ export function PublicHeader() {
           <Link href="/beta" className="flex min-w-0 items-center gap-3 font-semibold">
             <span className="beta-dot h-3 w-3 shrink-0 rounded-full bg-white" />
             <span className="min-w-0 truncate">
-              Beta de lancement : 10 places a 19,99 EUR / mois
+              Beta de lancement : 30 places a 19,99 EUR / mois
               <span className="hidden font-medium text-white/80 md:inline"> - demarrage le 6 aout</span>
             </span>
           </Link>

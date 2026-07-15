@@ -103,7 +103,7 @@ export default async function BillingPage() {
                 <div>
                   <p className="font-medium">Beta pilote</p>
                   <p className="mt-1 text-sm text-muted">
-                    Abonnement test a 19,99 EUR / mois pour les 10 compagnies de la beta.
+                    Abonnement test a 19,99 EUR / mois pour les 30 compagnies de la beta.
                   </p>
                 </div>
                 <p className="shrink-0 text-sm font-semibold">19,99 EUR</p>

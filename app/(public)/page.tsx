@@ -135,11 +135,11 @@ export default function LandingPage() {
               Inscriptions bêta ouvertes
             </p>
             <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-              10 places seulement. 19,99 EUR / mois pendant la beta.
+              30 places seulement. 19,99 EUR / mois pendant la beta.
             </h2>
             <p className="mt-2 max-w-2xl text-white/85">
-              Les 10 premières compagnies rejoignent la bêta le 6 août, puis liste d&apos;attente
-              prioritaire pour les 30 suivantes.
+              Les 30 premières compagnies rejoignent la bêta le 6 août avec un accompagnement
+              prioritaire pendant la période de test.
             </p>
           </div>
           <Link

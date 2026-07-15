@@ -39,6 +39,8 @@ import type {
   TreasurySnapshot,
 } from "@/types";
 
+const betaReservedSeatLimit = 30;
+
 type DashboardStat = {
   detail: string;
   label: string;
@@ -540,7 +542,7 @@ export async function getBetaSignupStats(): Promise<{
     const waitlistCount = betaSignups.filter((signup) => signup.status === "waitlist").length;
 
     return {
-      remainingReservedSeats: Math.max(0, 10 - reservedCount),
+      remainingReservedSeats: Math.max(0, betaReservedSeatLimit - reservedCount),
       reservedCount,
       waitlistCount,
     };
@@ -552,14 +554,14 @@ export async function getBetaSignupStats(): Promise<{
 
   if (error || !stats) {
     return {
-      remainingReservedSeats: 10,
+      remainingReservedSeats: betaReservedSeatLimit,
       reservedCount: 0,
       waitlistCount: 0,
     };
   }
 
   return {
-    remainingReservedSeats: Math.max(0, 10 - Number(stats.reserved_count ?? 0)),
+    remainingReservedSeats: Math.max(0, betaReservedSeatLimit - Number(stats.reserved_count ?? 0)),
     reservedCount: Number(stats.reserved_count ?? 0),
     waitlistCount: Number(stats.waitlist_count ?? 0),
   };
