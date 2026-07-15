@@ -23,6 +23,9 @@ const columns = [
     title: "Contact",
     links: [
       { label: "Nous ecrire", href: "mailto:contact@tadiff.com" },
+      { label: "Confidentialite", href: "/confidentialite" },
+      { label: "Cookies", href: "/cookies" },
+      { label: "Mentions legales", href: "/mentions-legales" },
     ],
   },
 ];

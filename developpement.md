@@ -80,7 +80,8 @@ Avoir au minimum :
 - CRM utilisable ;
 - export documents ;
 - templates principaux ;
-- politique de confidentialite, CGU/CGV, mentions legales.
+- politique de confidentialite, cookies et mentions legales integrees ; voir `RGPD.md` ;
+- CGU/CGV et validation juridique finale restent a faire.
 
 ### 20 septembre 2026 - William IA
 

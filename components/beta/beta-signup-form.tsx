@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { registerBetaSignup } from "@/app/(public)/beta/actions";
@@ -120,6 +121,14 @@ export function BetaSignupForm() {
       <Button className="w-full" type="submit" disabled={isSubmitting || isPending}>
         Reserver ma place beta
       </Button>
+      <p className="text-xs leading-5 text-muted">
+        TaDiff utilise ces informations pour gerer votre demande et vous contacter au sujet
+        de la beta. Vous pouvez exercer vos droits a tout moment. Consultez notre{" "}
+        <Link className="text-accent underline" href="/confidentialite">
+          politique de confidentialite
+        </Link>
+        .
+      </p>
     </form>
   );
 }
