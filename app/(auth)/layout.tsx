@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TadiffMark } from "@/components/brand/tadiff-mark";
 
 export default function AuthLayout({
   children,
@@ -8,7 +9,8 @@ export default function AuthLayout({
   return (
     <main className="grid min-h-screen lg:grid-cols-[0.9fr_1.1fr]">
       <section className="hidden bg-ink p-10 text-white lg:flex lg:flex-col lg:justify-between">
-        <Link href="/" className="text-lg font-semibold">
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
+          <TadiffMark className="h-8 w-8" />
           TaDiff
         </Link>
         <div>

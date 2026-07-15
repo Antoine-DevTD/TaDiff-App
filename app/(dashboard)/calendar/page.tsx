@@ -3,7 +3,6 @@ import { CalendarBoard } from "@/components/calendar/calendar-board";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageTitle } from "@/components/ui/page-title";
 import {
   getCalendarEvents,
   getFixedCosts,
@@ -131,13 +130,6 @@ export default async function CalendarPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <PageTitle href="/calendar">Calendrier</PageTitle>
-        <p className="mt-1 text-sm text-muted">
-          Une seule vue pour les actions a faire et les prochaines dates spectacle.
-        </p>
-      </div>
-
       {items.length === 0 ? (
         <EmptyState
           title="Aucune echeance"

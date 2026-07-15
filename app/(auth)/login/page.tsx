@@ -12,8 +12,8 @@ export default function LoginPage() {
       <LoginForm />
       <p className="mt-6 text-center text-sm text-muted">
         Pas encore de compte ?{" "}
-        <Link href="/signup" className="font-medium text-accent">
-          Creer un espace
+        <Link href="/beta" className="font-medium text-accent">
+          Rejoindre la beta
         </Link>
       </p>
       <p className="mt-2 text-center text-sm text-muted">

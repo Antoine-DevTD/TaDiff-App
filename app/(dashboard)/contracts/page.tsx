@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageTitle } from "@/components/ui/page-title";
 import { getPipelineDeals, getShows } from "@/lib/supabase/queries";
 import type { PipelineDeal, Show } from "@/types";
 
@@ -91,13 +90,6 @@ export default async function ContractsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <PageTitle href="/contracts">Contrats</PageTitle>
-        <p className="mt-1 text-sm text-muted">
-          Une vue de suivi contractuel derivee des spectacles et des dates en discussion.
-        </p>
-      </div>
-
       {contracts.length === 0 ? (
         <EmptyState
           title="Aucun contrat a suivre"

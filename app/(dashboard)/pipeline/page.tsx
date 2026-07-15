@@ -2,7 +2,6 @@ import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 import { PipelineCreatePanel } from "@/components/pipeline/pipeline-create-panel";
 import { PipelineInsights } from "@/components/pipeline/pipeline-insights";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageTitle } from "@/components/ui/page-title";
 import { getContacts, getPipelineDeals, getShows } from "@/lib/supabase/queries";
 
 export default async function PipelinePage() {
@@ -14,13 +13,6 @@ export default async function PipelinePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <PageTitle href="/pipeline">Dates a vendre</PageTitle>
-        <p className="mt-1 text-sm text-muted">
-          Ajoutez les dates possibles, voyez ou ca en est et ce qu&apos;il faut faire pour les transformer en dates confirmees.
-        </p>
-      </div>
-
       <div data-tour="diffusion-creation">
         <PipelineCreatePanel contacts={contacts} shows={shows} />
       </div>

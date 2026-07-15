@@ -8,7 +8,6 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InlineDeleteButton } from "@/components/ui/inline-delete-button";
-import { PageTitle } from "@/components/ui/page-title";
 import { PlannedFeatureNotice } from "@/components/ui/planned-feature";
 import { hasSupabaseEnv } from "@/lib/env";
 import { formatCurrency } from "@/lib/finance";
@@ -86,20 +85,12 @@ export default async function SubventionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <PageTitle href="/subventions">Radar subventions</PageTitle>
-          <p className="mt-1 text-sm text-muted">
-            Suivez les aides, montants attendus, territoires et deadlines avant qu elles ne sortent du radar.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
           <GrantCreateDialog shows={shows} />
           <GrantImportButton />
           <ButtonLink href="/calendar" variant="secondary">
             Voir les echeances
           </ButtonLink>
-        </div>
       </div>
 
       {hasSupabaseEnv() ? null : (

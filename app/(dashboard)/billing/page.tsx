@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StripeCheckoutForm } from "@/components/billing/stripe-checkout-form";
-import { PageTitle } from "@/components/ui/page-title";
 import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
 import { formatCurrency, getFixedCostSharePerPerformance } from "@/lib/finance";
 import { getBillingPlans, getFixedCosts, getQuoteItems } from "@/lib/supabase/queries";
@@ -36,13 +35,7 @@ export default async function BillingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <PageTitle href="/billing">Facturation</PageTitle>
-          <p className="mt-1 text-sm text-muted">
-            Devis, acomptes, soldes, abonnement cible et export FEC pret a brancher.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <ButtonLink href="/pricing" variant="secondary">
           Voir les plans publics
         </ButtonLink>

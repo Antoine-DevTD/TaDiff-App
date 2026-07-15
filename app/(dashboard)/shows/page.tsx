@@ -3,7 +3,6 @@ import { ShowCreateDialog } from "@/components/shows/show-create-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageTitle } from "@/components/ui/page-title";
 import { getShows, getShowDocuments } from "@/lib/supabase/queries";
 import { getShowDocumentReadiness, resolveShowPosterUrl } from "@/lib/show-documents";
 import type { Show } from "@/types";
@@ -13,13 +12,7 @@ export default async function ShowsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <PageTitle href="/shows">Spectacles</PageTitle>
-          <p className="mt-1 text-sm text-muted">
-            Catalogue des creations, dossiers et prochaines dates.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <ShowCreateDialog />
       </div>
 

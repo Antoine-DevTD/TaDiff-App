@@ -6,7 +6,6 @@ import { TreasuryChart } from "@/components/finance/treasury-chart";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageTitle } from "@/components/ui/page-title";
 import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
 import {
   buildDealProfitability,
@@ -141,13 +140,6 @@ export default async function FinancesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <PageTitle href="/finances">Finances</PageTitle>
-        <p className="mt-1 text-sm text-muted">
-          Tresorerie, frais fixes, projection et prix minimum lisible pour une compagnie.
-        </p>
-      </div>
-
       {deals.length === 0 && shows.length === 0 ? (
         <EmptyState
           title="Aucune base financiere"

@@ -17,6 +17,10 @@ export const metadata: Metadata = {
     "Une web app SaaS pour piloter dates, rentabilite, subventions, mecenat, devis et finances des compagnies.",
   applicationName: "TaDiff",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/tadiff-mark.svg",
+    apple: "/icons/tadiff-mark.svg",
+  },
   appleWebApp: {
     capable: true,
     title: "TaDiff",
@@ -25,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1d4ed8",
+  themeColor: "#0071e3",
   width: "device-width",
   initialScale: 1,
 };

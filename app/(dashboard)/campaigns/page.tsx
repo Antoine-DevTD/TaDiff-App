@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageTitle } from "@/components/ui/page-title";
 import { PlannedFeatureNotice } from "@/components/ui/planned-feature";
 import { getEmailCampaigns } from "@/lib/supabase/queries";
 import type { EmailCampaign } from "@/types";
@@ -24,13 +23,7 @@ export default async function CampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <PageTitle href="/campaigns">Campagnes email</PageTitle>
-          <p className="mt-1 text-sm text-muted">
-            Templates, audiences, prochains envois et suivi de performance.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <ButtonLink href="/contacts" variant="secondary">
           Voir les contacts
         </ButtonLink>

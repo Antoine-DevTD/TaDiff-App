@@ -1,11 +1,11 @@
 {
   "name": "TaDiff",
   "short_name": "TaDiff",
-  "description": "Pilotage de diffusion pour le spectacle vivant.",
+  "description": "Cockpit pour compagnies de spectacle vivant.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#f7f3ed",
-  "theme_color": "#8f3f2b",
+  "background_color": "#1d1d1f",
+  "theme_color": "#0071e3",
   "icons": [
     {
       "src": "/icons/icon.svg",

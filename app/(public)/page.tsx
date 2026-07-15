@@ -135,7 +135,7 @@ export default function LandingPage() {
               Inscriptions bêta ouvertes
             </p>
             <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-              10 places seulement. Sécurisez la vôtre.
+              10 places seulement. 19,99 EUR / mois pendant la beta.
             </h2>
             <p className="mt-2 max-w-2xl text-white/85">
               Les 10 premières compagnies rejoignent la bêta le 6 août, puis liste d&apos;attente
@@ -146,7 +146,7 @@ export default function LandingPage() {
             href="/beta"
             className="inline-flex min-h-12 shrink-0 items-center rounded-md bg-white px-6 text-sm font-semibold !text-accent shadow-lg shadow-ink/20 transition hover:-translate-y-0.5"
           >
-            Réserver ma place
+            Réserver ma place beta
           </Link>
         </div>
       </section>

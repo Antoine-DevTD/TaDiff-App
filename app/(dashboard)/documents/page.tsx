@@ -3,7 +3,6 @@ import { DocumentExplorer, type ExplorerFolder } from "@/components/documents/do
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageTitle } from "@/components/ui/page-title";
 import {
   getCompanyDocuments,
   getPipelineDeals,
@@ -176,13 +175,6 @@ export default async function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <PageTitle href="/documents">Documents</PageTitle>
-        <p className="mt-1 text-sm text-muted">
-          Hub documentaire des spectacles, derive des dates possibles, des actions a faire et des contrats.
-        </p>
-      </div>
-
       {packs.length === 0 ? (
         <EmptyState
           title="Aucun dossier documentaire"

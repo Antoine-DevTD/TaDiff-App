@@ -52,10 +52,10 @@ export default function PricingPage() {
               </StripeCheckoutForm>
             ) : (
               <ButtonLink
-                href={plan.id === "studio" ? "/beta" : "/signup"}
+                href="/beta"
                 className="mt-6 w-full"
               >
-                {plan.id === "studio" ? "Contacter l'equipe" : "Commencer"}
+                {plan.id === "studio" ? "Contacter l'equipe" : "Rejoindre la beta"}
               </ButtonLink>
             )}
           </Card>
@@ -67,7 +67,7 @@ export default function PricingPage() {
         <p className="mt-2 text-sm text-muted">
           Paiement Stripe Checkout, abonnement resiliable, donnees hebergees en Europe et export
           FEC prevu pour la passerelle comptable. Si Stripe n&apos;est pas configure, les boutons
-          renvoient vers l&apos;inscription classique.
+          renvoient vers la liste beta.
         </p>
       </Card>
     </main>

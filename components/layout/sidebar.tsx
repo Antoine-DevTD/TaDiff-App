@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { dashboardNavItems } from "@/lib/constants";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
+import { TadiffMark } from "@/components/brand/tadiff-mark";
 
 const navGroups = dashboardNavItems.reduce<Record<string, typeof dashboardNavItems>>((groups, item) => {
   groups[item.group] = [...(groups[item.group] ?? []), item];
@@ -43,9 +44,7 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
     return (
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-bold shadow-sm shadow-accent/30">
-            TD
-          </span>
+          <TadiffMark className="h-8 w-8 shadow-sm shadow-accent/30" />
           <div>
             <Link href="/admin" className="text-lg font-semibold">
               TaDiff
@@ -119,9 +118,7 @@ export function Sidebar({ variant = "company" }: { variant?: "admin" | "company"
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-bold shadow-sm shadow-accent/30">
-          TD
-        </span>
+        <TadiffMark className="h-8 w-8 shadow-sm shadow-accent/30" />
         <div>
           <Link href="/dashboard" className="text-lg font-semibold">
             TaDiff

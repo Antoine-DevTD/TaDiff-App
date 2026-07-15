@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { InlineDeleteButton } from "@/components/ui/inline-delete-button";
-import { PageTitle } from "@/components/ui/page-title";
 import { PlannedFeatureNotice } from "@/components/ui/planned-feature";
 import { hasSupabaseEnv } from "@/lib/env";
 import { formatCurrency } from "@/lib/finance";
@@ -27,13 +26,7 @@ export default async function MecenatPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <PageTitle href="/mecenat">Mecenat</PageTitle>
-          <p className="mt-1 text-sm text-muted">
-            Entreprises a approcher, deduction fiscale loi Aillagon et packs de contreparties.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <ButtonLink href="/campaigns" variant="secondary">
           Preparer une campagne
         </ButtonLink>

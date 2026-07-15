@@ -7,8 +7,9 @@ import { LogOut, Plus, Settings } from "lucide-react";
 import { ShowForm } from "@/components/forms/show-form";
 import { Dialog } from "@/components/ui/dialog";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { TadiffMark } from "@/components/brand/tadiff-mark";
 
-export function AccountMenu({ initials = "TD" }: { initials?: string }) {
+export function AccountMenu() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -34,9 +35,9 @@ export function AccountMenu({ initials = "TD" }: { initials?: string }) {
         type="button"
         aria-label="Menu du compte"
         onClick={() => setMenuOpen((value) => !value)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white transition hover:bg-accent-strong"
+        className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-border bg-[#1d1d1f] shadow-sm shadow-ink/10 transition hover:scale-[1.03]"
       >
-        {initials}
+        <TadiffMark className="h-full w-full rounded-full" />
       </button>
 
       {menuOpen ? (

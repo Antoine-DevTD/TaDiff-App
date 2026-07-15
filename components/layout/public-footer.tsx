@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TadiffMark } from "@/components/brand/tadiff-mark";
 
 const columns = [
   {
@@ -15,7 +16,7 @@ const columns = [
     links: [
       { label: "Reserver la beta", href: "/beta" },
       { label: "Se connecter", href: "/login" },
-      { label: "Creer un compte", href: "/signup" },
+      { label: "Beta 19,99 EUR / mois", href: "/beta" },
     ],
   },
   {
@@ -33,9 +34,7 @@ export function PublicFooter() {
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-accent text-sm font-bold text-white">
-                TD
-              </span>
+              <TadiffMark className="h-9 w-9" />
               <span className="text-lg font-semibold">TaDiff</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-muted">

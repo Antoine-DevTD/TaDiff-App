@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { PageTitle } from "@/components/ui/page-title";
 import { TheatreThemeSwitcher } from "@/components/theme/theatre-theme-switcher";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 import { CompanyDocumentsPanel } from "@/components/settings/company-documents-panel";
@@ -74,13 +73,6 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <PageTitle href="/settings">Paramètres</PageTitle>
-        <p className="mt-1 text-sm text-muted">
-          État technique, intégrateurs et sauvegarde des données opérationnelles.
-        </p>
-      </div>
-
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Spectacles" value={dashboard.shows.length.toString()} detail="Catalogue" />
         <MetricCard label="Contacts" value={dashboard.contacts.length.toString()} detail="Carnet de contacts" />
