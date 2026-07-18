@@ -1,5 +1,14 @@
 # TaDiff - Developpement produit
 
+## Diffusion et invitations aux representations
+
+- Une relance peut proposer une representation deja confirmee du meme spectacle.
+- TaDiff genere un lien personnel public permettant au programmateur de repondre oui ou non.
+- Le cockpit suit trois faits verifiables : brouillon prepare, lien consulte, reponse recue.
+- Tant que les emails sont ouverts via `mailto:`, TaDiff ne peut pas confirmer l'envoi ni l'ouverture du mail.
+- Une future integration Resend devra enregistrer les webhooks de livraison, ouverture estimee et clic. Ne jamais afficher "lu" : le pixel d'ouverture reste approximatif.
+- Migrations associees : `031_beta_demo_signups.sql` puis `032_performance_invitations.sql`.
+
 Derniere mise a jour : 2026-07-05  
 Contexte : retour de reunion avec le directeur + notes produit Tony dans `ressources/Application TADIFF Informations VF .pdf`. Contrat en cours de redaction, objectif de proteger le role technique/produit.
 
@@ -81,7 +90,9 @@ Avoir au minimum :
 - export documents ;
 - templates principaux ;
 - politique de confidentialite, cookies et mentions legales integrees ; voir `RGPD.md` ;
-- CGU/CGV et validation juridique finale restent a faire.
+- CGU, CGV et annexe RGPD integrees ; champs a completer dans `infos.md` ;
+- validation juridique finale et acceptation versionnee dans le parcours de paiement restent a faire.
+- analytics landing interne : pages, CTA, sources UTM et conversions beta visibles dans l'onglet Audience du super-admin (migration 030, sans IP/email, retention 90 jours).
 
 ### 20 septembre 2026 - William IA
 

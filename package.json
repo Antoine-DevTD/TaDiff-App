@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "admin:create": "node scripts/create-superadmin.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

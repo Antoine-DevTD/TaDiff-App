@@ -1,4 +1,5 @@
 import { LegalList, LegalPage, LegalSection } from "@/components/legal/legal-page";
+import { AnalyticsPreference } from "@/components/analytics/analytics-preference";
 
 export const metadata = { title: "Cookies | TaDiff", description: "Les cookies et traceurs utilises par TaDiff." };
 
@@ -14,7 +15,10 @@ export default function CookiesPage() {
         <p>Ces traceurs sont strictement necessaires au service demande et ne peuvent pas etre desactives sans empecher certaines fonctions.</p>
       </LegalSection>
       <LegalSection title="Mesure d'audience">
-        <p>TaDiff ne depose actuellement aucun traceur de mesure d&apos;audience publicitaire ou intersite. Les pages consultees dans le cockpit connecte peuvent etre journalisees pendant 90 jours pour la securite et le support ; ce journal est associe au compte et n&apos;est pas utilise a des fins publicitaires.</p>
+        <p>TaDiff mesure les pages publiques consultees, les clics sur certains boutons, la provenance de la visite et les inscriptions beta. Cette mesure utilise un identifiant aleatoire limite a l&apos;onglet du navigateur. Elle ne collecte ni adresse IP, ni email, ni empreinte de l&apos;appareil et ne permet aucun suivi entre plusieurs sites.</p>
+        <p>Les evenements sont conserves 90 jours. Le signal &laquo; Do Not Track &raquo; du navigateur est respecte et vous pouvez vous opposer a cette mesure ci-dessous.</p>
+        <AnalyticsPreference />
+        <p>Les pages consultees dans le cockpit connecte peuvent par ailleurs etre journalisees pendant 90 jours pour la securite et le support. Ce journal est associe au compte et n&apos;est pas utilise a des fins publicitaires.</p>
       </LegalSection>
       <LegalSection title="Evolution">
         <p>Si TaDiff ajoute un outil non strictement necessaire, il sera bloque avant consentement. Le choix d&apos;accepter ou de refuser sera propose avec la meme facilite et pourra etre modifie a tout moment.</p>

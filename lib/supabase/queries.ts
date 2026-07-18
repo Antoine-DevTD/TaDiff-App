@@ -391,16 +391,26 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
   }
 
   const supabase = await getSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("opportunities")
-    .select(
-      "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
-    )
-    .order("created_at", { ascending: false });
+  const [{ data, error }, invitationResult] = await Promise.all([
+    supabase
+      .from("opportunities")
+      .select(
+        "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
+      )
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("performance_invitations")
+      .select(
+        "id,opportunity_id,performance_opportunity_id,recipient_name,recipient_email,subject,performance_date,venue,sent_at,delivered_at,email_opened_at,email_clicked_at,bounced_at,link_opened_at,responded_at,response,created_at",
+      )
+      .order("created_at", { ascending: false }),
+  ]);
 
   if (error || !data) {
     return [];
   }
+
+  const invitations = invitationResult.error ? [] : invitationResult.data ?? [];
 
   return data.map((deal) => ({
     id: deal.id,
@@ -420,6 +430,26 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     contactEmail: deal.contacts?.email ?? "",
     showTitle: deal.shows?.title ?? "Spectacle a associer",
     createdAt: deal.created_at,
+    invitations: invitations
+      .filter((invitation) => invitation.opportunity_id === deal.id)
+      .map((invitation) => ({
+        id: invitation.id,
+        performanceOpportunityId: invitation.performance_opportunity_id,
+        recipientName: invitation.recipient_name,
+        recipientEmail: invitation.recipient_email,
+        subject: invitation.subject,
+        performanceDate: invitation.performance_date,
+        venue: invitation.venue ?? "",
+        sentAt: invitation.sent_at ?? "",
+        deliveredAt: invitation.delivered_at ?? "",
+        emailOpenedAt: invitation.email_opened_at ?? "",
+        emailClickedAt: invitation.email_clicked_at ?? "",
+        bouncedAt: invitation.bounced_at ?? "",
+        linkOpenedAt: invitation.link_opened_at ?? "",
+        respondedAt: invitation.responded_at ?? "",
+        response: invitation.response,
+        createdAt: invitation.created_at,
+      })),
   }));
 }
 

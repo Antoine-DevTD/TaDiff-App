@@ -30,6 +30,7 @@ export type AdminBetaSignup = {
   mainNeed: string;
   status: "reserved" | "waitlist";
   position: number;
+  isDemo: boolean;
   createdAt: string;
 };
 
@@ -60,6 +61,22 @@ export type AdminAccessEvent = {
   path: string;
   ipAddress: string;
   userAgent: string;
+  createdAt: string;
+};
+
+export type AdminPublicAnalyticsEvent = {
+  id: string;
+  sessionId: string;
+  eventType: "page_view" | "cta_click" | "beta_signup";
+  path: string;
+  eventName: string;
+  target: string;
+  referrerHost: string;
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
+  utmContent: string;
+  deviceType: "mobile" | "tablet" | "desktop";
   createdAt: string;
 };
 
@@ -132,6 +149,7 @@ export async function getAdminBetaSignups(): Promise<AdminBetaSignup[]> {
     mainNeed: signup.main_need,
     status: signup.status,
     position: signup.position,
+    isDemo: signup.is_demo,
     createdAt: signup.created_at,
   }));
 }
@@ -198,6 +216,37 @@ export async function getAdminAccessEvents(limit = 80): Promise<AdminAccessEvent
     path: entry.path ?? "",
     ipAddress: entry.ip_address ?? "",
     userAgent: entry.user_agent ?? "",
+    createdAt: entry.created_at,
+  }));
+}
+
+export async function getAdminPublicAnalyticsEvents(
+  days = 30,
+  limit = 2000,
+): Promise<AdminPublicAnalyticsEvent[]> {
+  if (!hasSupabaseEnv()) return [];
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_public_analytics_events", {
+    since_days: days,
+    limit_count: limit,
+  });
+
+  if (error || !data) return [];
+
+  return data.map((entry) => ({
+    id: entry.id,
+    sessionId: entry.session_id,
+    eventType: entry.event_type,
+    path: entry.path,
+    eventName: entry.event_name ?? "",
+    target: entry.target ?? "",
+    referrerHost: entry.referrer_host ?? "",
+    utmSource: entry.utm_source ?? "",
+    utmMedium: entry.utm_medium ?? "",
+    utmCampaign: entry.utm_campaign ?? "",
+    utmContent: entry.utm_content ?? "",
+    deviceType: entry.device_type,
     createdAt: entry.created_at,
   }));
 }

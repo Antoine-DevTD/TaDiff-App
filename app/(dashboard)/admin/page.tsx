@@ -4,6 +4,7 @@ import { CompanyBillingForm } from "@/components/admin/company-billing-form";
 import { FeedbackRow } from "@/components/admin/feedback-row";
 import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
 import { RevenueForecastChart } from "@/components/admin/revenue-forecast-chart";
+import { PublicAnalyticsPanel } from "@/components/admin/public-analytics-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { buildRevenueForecast } from "@/lib/admin-forecast";
@@ -14,6 +15,7 @@ import {
   getAdminCompanies,
   getAdminFeedback,
   getAdminMaintenanceMode,
+  getAdminPublicAnalyticsEvents,
   isSuperAdmin,
   type AdminAccessEvent,
   type AdminCompany,
@@ -38,19 +40,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   const resolvedSearchParams = await searchParams;
-  const activeTab = resolvedSearchParams?.tab === "retours" ? "retours" : "supervision";
-  const [companies, betaSignups, feedback, accessEvents, maintenanceActive] = await Promise.all([
+  const activeTab =
+    resolvedSearchParams?.tab === "retours"
+      ? "retours"
+      : resolvedSearchParams?.tab === "audience"
+        ? "audience"
+        : "supervision";
+  const [companies, betaSignups, feedback, accessEvents, maintenanceActive, analyticsEvents] = await Promise.all([
     getAdminCompanies(),
     getAdminBetaSignups(),
     getAdminFeedback(),
     getAdminAccessEvents(60),
     getAdminMaintenanceMode(),
+    getAdminPublicAnalyticsEvents(30, 2000),
   ]);
 
   const activeCount = companies.filter((company) => company.billingStatus === "active").length;
   const compedCount = companies.filter((company) => company.billingStatus === "comped").length;
-  const reserved = betaSignups.filter((signup) => signup.status === "reserved");
-  const waitlist = betaSignups.filter((signup) => signup.status === "waitlist");
+  const reserved = betaSignups.filter((signup) => signup.status === "reserved" && !signup.isDemo);
+  const waitlist = betaSignups.filter((signup) => signup.status === "waitlist" && !signup.isDemo);
   const monthlyRevenue = activeCount * 19.99;
   const forecast = buildRevenueForecast(companies);
   const openFeedback = feedback.filter((entry) => entry.status !== "traite").length;
@@ -60,12 +68,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <div>
         <p className="text-xs uppercase tracking-[0.18em] text-muted">Console interne</p>
         <h2 className="mt-2 text-3xl font-semibold">
-          {activeTab === "retours" ? "Retours compagnies" : "Supervision TaDiff"}
+          {activeTab === "retours"
+            ? "Retours compagnies"
+            : activeTab === "audience"
+              ? "Audience publique"
+              : "Supervision TaDiff"}
         </h2>
         <p className="mt-1 text-sm text-muted">
           {activeTab === "retours"
             ? "Bugs, idees et avis envoyes depuis le cockpit."
-            : "Reservee aux super admins. Compagnies, billing et inscriptions beta."}
+            : activeTab === "audience"
+              ? "Visites, clics et inscriptions sur les pages publiques, sans adresse IP."
+              : "Reservee aux super admins. Compagnies, billing et inscriptions beta."}
         </p>
       </div>
 
@@ -76,9 +90,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           href="/admin?tab=retours"
           label={`Retours${openFeedback > 0 ? ` (${openFeedback})` : ""}`}
         />
+        <AdminTab active={activeTab === "audience"} href="/admin?tab=audience" label="Audience" />
       </div>
 
-      {activeTab === "retours" ? (
+      {activeTab === "audience" ? (
+        <PublicAnalyticsPanel events={analyticsEvents} generatedAt={new Date().toISOString()} />
+      ) : activeTab === "retours" ? (
         <AdminFeedbackPanel feedback={feedback} openFeedback={openFeedback} />
       ) : (
         <>
@@ -184,9 +201,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     {signup.discipline} — {signup.mainNeed}
                   </p>
                 </div>
-                <Badge tone={signup.status === "reserved" ? "success" : "neutral"}>
-                  {signup.status === "reserved" ? "Place reservee" : "Liste d'attente"}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {signup.isDemo ? <Badge tone="warning">Donnee demo</Badge> : null}
+                  <Badge tone={signup.status === "reserved" ? "success" : "neutral"}>
+                    {signup.status === "reserved" ? "Place reservee" : "Liste d'attente"}
+                  </Badge>
+                </div>
               </div>
             ))}
           </div>

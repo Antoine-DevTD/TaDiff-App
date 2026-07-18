@@ -27,3 +27,4 @@ grant execute on function public.purge_expired_access_events() to authenticated,
 
 -- A planifier une fois par jour dans Supabase Cron (contexte postgres sans session utilisateur) :
 -- delete from public.access_events where created_at < now() - interval '90 days';
+-- delete from public.public_analytics_events where created_at < now() - interval '90 days';

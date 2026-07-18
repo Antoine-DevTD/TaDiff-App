@@ -123,6 +123,26 @@ export type PipelineDeal = {
   createdAt: string;
   commercialPackId?: string;
   quoteId?: string;
+  invitations?: PerformanceInvitation[];
+};
+
+export type PerformanceInvitation = {
+  id: string;
+  performanceOpportunityId: string;
+  recipientName: string;
+  recipientEmail: string;
+  subject: string;
+  performanceDate: string;
+  venue: string;
+  sentAt: string;
+  deliveredAt: string;
+  emailOpenedAt: string;
+  emailClickedAt: string;
+  bouncedAt: string;
+  linkOpenedAt: string;
+  respondedAt: string;
+  response: "yes" | "no" | null;
+  createdAt: string;
 };
 
 export type Reminder = {

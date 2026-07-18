@@ -33,3 +33,11 @@ export function LegalSection({ title, children }: { title: string; children: Rea
 export function LegalList({ children }: { children: ReactNode }) {
   return <ul className="list-disc space-y-2 pl-5">{children}</ul>;
 }
+
+export function LegalNotice({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-md border border-accent/25 bg-accent/5 px-5 py-4 text-sm leading-6 text-foreground">
+      {children}
+    </div>
+  );
+}

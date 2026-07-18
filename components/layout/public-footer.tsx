@@ -20,10 +20,12 @@ const columns = [
     ],
   },
   {
-    title: "Contact",
+    title: "Legal",
     links: [
-      { label: "Nous ecrire", href: "mailto:contact@tadiff.com" },
+      { label: "CGU", href: "/cgu" },
+      { label: "CGV", href: "/cgv" },
       { label: "Confidentialite", href: "/confidentialite" },
+      { label: "Annexe RGPD", href: "/annexe-rgpd" },
       { label: "Cookies", href: "/cookies" },
       { label: "Mentions legales", href: "/mentions-legales" },
     ],
@@ -46,6 +48,7 @@ export function PublicFooter() {
             </p>
             <Link
               href="/beta"
+              data-analytics="beta_footer"
               className="mt-5 inline-flex min-h-10 items-center rounded-md bg-accent px-4 text-sm font-semibold !text-white transition hover:bg-accent-strong"
             >
               Reserver la beta

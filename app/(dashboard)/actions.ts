@@ -71,6 +71,28 @@ type ActionResult = {
   message: string;
 };
 
+type PerformanceInvitationResult = ActionResult & {
+  invitation?: {
+    id: string;
+    performanceOpportunityId: string;
+    recipientName: string;
+    recipientEmail: string;
+    subject: string;
+    performanceDate: string;
+    venue: string;
+    sentAt: string;
+    deliveredAt: string;
+    emailOpenedAt: string;
+    emailClickedAt: string;
+    bouncedAt: string;
+    linkOpenedAt: string;
+    respondedAt: string;
+    response: "yes" | "no" | null;
+    createdAt: string;
+    url: string;
+  };
+};
+
 function isOpportunitySchemaCacheError(message: string | undefined) {
   return Boolean(
     message?.includes("schema cache") &&
@@ -1169,7 +1191,7 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
 export async function importContacts(
   values: ContactFormValues[],
 ): Promise<ActionResult & { imported: number; skipped: number }> {
-  const limitedValues = values.slice(0, 500);
+  const limitedValues = values.slice(0, 300);
   const parsedContacts = limitedValues
     .map((value) => contactSchema.safeParse(value))
     .filter((result): result is { success: true; data: ContactFormValues } => result.success)
@@ -1881,6 +1903,149 @@ export async function scheduleOpportunityFollowUp(
     ok: true,
     message: days === 3 ? "Action prioritaire planifiee a J+3." : "Action planifiee a J+7.",
     dueDate,
+  };
+}
+
+export async function createPerformanceInvitation(
+  opportunityId: string,
+  performanceOpportunityId: string,
+): Promise<PerformanceInvitationResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: false, message: "Les invitations publiques necessitent Supabase." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const [{ data: target, error: targetError }, { data: performance, error: performanceError }] =
+    await Promise.all([
+      supabase
+        .from("opportunities")
+        .select("id,company_id,contact_id,show_id,title,contacts(name,email),shows(title)")
+        .eq("id", opportunityId)
+        .single(),
+      supabase
+        .from("opportunities")
+        .select("id,company_id,show_id,stage,performance_date,contacts(organization),shows(title)")
+        .eq("id", performanceOpportunityId)
+        .single(),
+    ]);
+
+  if (targetError || !target) {
+    return { ok: false, message: targetError?.message ?? "Date a relancer introuvable." };
+  }
+
+  if (performanceError || !performance) {
+    return { ok: false, message: performanceError?.message ?? "Representation introuvable." };
+  }
+
+  if (
+    target.company_id !== workspace.companyId ||
+    performance.company_id !== workspace.companyId ||
+    !target.show_id ||
+    target.show_id !== performance.show_id
+  ) {
+    return { ok: false, message: "La representation doit concerner le meme spectacle." };
+  }
+
+  if (performance.stage !== "Confirme" || !performance.performance_date) {
+    return { ok: false, message: "Choisissez une representation confirmee avec une date de jeu." };
+  }
+
+  const recipientEmail = target.contacts?.email?.trim() ?? "";
+  const recipientName = target.contacts?.name?.trim() ?? "";
+
+  if (!target.contact_id || !recipientEmail || !recipientName) {
+    return { ok: false, message: "Le contact doit avoir un nom et une adresse email." };
+  }
+
+  const subject = `Invitation - ${target.shows?.title ?? performance.shows?.title ?? target.title}`;
+  const { data: userData } = await supabase.auth.getUser();
+  const existing = await supabase
+    .from("performance_invitations")
+    .select(
+      "id,token,performance_opportunity_id,recipient_name,recipient_email,subject,performance_date,venue,sent_at,delivered_at,email_opened_at,email_clicked_at,bounced_at,link_opened_at,responded_at,response,created_at",
+    )
+    .eq("opportunity_id", opportunityId)
+    .eq("performance_opportunity_id", performanceOpportunityId)
+    .eq("recipient_email", recipientEmail)
+    .is("response", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let invitation = existing.data;
+
+  if (!invitation) {
+    const created = await supabase
+      .from("performance_invitations")
+      .insert({
+        company_id: workspace.companyId,
+        opportunity_id: opportunityId,
+        performance_opportunity_id: performanceOpportunityId,
+        contact_id: target.contact_id,
+        show_id: target.show_id,
+        recipient_name: recipientName,
+        recipient_email: recipientEmail,
+        subject,
+        performance_date: performance.performance_date,
+        venue: performance.contacts?.organization ?? null,
+        created_by: userData.user?.id ?? null,
+      })
+      .select(
+        "id,token,performance_opportunity_id,recipient_name,recipient_email,subject,performance_date,venue,sent_at,delivered_at,email_opened_at,email_clicked_at,bounced_at,link_opened_at,responded_at,response,created_at",
+      )
+      .single();
+
+    if (created.error || !created.data) {
+      return {
+        ok: false,
+        message:
+          created.error?.message ??
+          "Invitation non creee. Verifiez que la migration 032 est appliquee.",
+      };
+    }
+
+    invitation = created.data;
+  }
+
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+
+  revalidatePath("/pipeline");
+  await logActivity("a prepare une invitation", "diffusion", recipientName);
+
+  return {
+    ok: true,
+    message: "Invitation personnalisee preparee.",
+    invitation: {
+      id: invitation.id,
+      performanceOpportunityId: invitation.performance_opportunity_id,
+      recipientName: invitation.recipient_name,
+      recipientEmail: invitation.recipient_email,
+      subject: invitation.subject,
+      performanceDate: invitation.performance_date,
+      venue: invitation.venue ?? "",
+      sentAt: invitation.sent_at ?? "",
+      deliveredAt: invitation.delivered_at ?? "",
+      emailOpenedAt: invitation.email_opened_at ?? "",
+      emailClickedAt: invitation.email_clicked_at ?? "",
+      bouncedAt: invitation.bounced_at ?? "",
+      linkOpenedAt: invitation.link_opened_at ?? "",
+      respondedAt: invitation.responded_at ?? "",
+      response: invitation.response,
+      createdAt: invitation.created_at,
+      url: `${appUrl}/invitation/${invitation.token}`,
+    },
   };
 }
 

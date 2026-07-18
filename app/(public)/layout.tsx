@@ -10,9 +10,14 @@ export default function PublicLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <ThemeApplier />
+      <Suspense fallback={null}>
+        <PublicAnalyticsTracker />
+      </Suspense>
       <PublicHeader />
       <div className="flex-1">{children}</div>
       <PublicFooter />
     </div>
   );
 }
+import { Suspense } from "react";
+import { PublicAnalyticsTracker } from "@/components/analytics/public-analytics-tracker";

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import Link from "next/link";
 import { LegalList, LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { legalInformation } from "@/lib/legal";
@@ -12,6 +13,7 @@ export default function PrivacyPage() {
     <LegalPage eyebrow="Vos donnees" title="Politique de confidentialite" introduction="Cette politique explique quelles donnees TaDiff utilise, pourquoi elles sont necessaires et comment exercer vos droits. Elle couvre le site public, les inscriptions a la beta et le cockpit TaDiff.">
       <LegalSection title="Responsable du traitement">
         <p>{legalInformation.operatorName} determine les finalites et les moyens des traitements decrits ici.</p>
+        <p>Lors de la reprise du service par la societe TaDiff, les personnes concernees seront informees de l'identite du nouveau responsable et de la date du transfert.</p>
         <p>Contact RGPD : <a className="text-accent underline" href={`mailto:${legalInformation.privacyEmail}`}>{legalInformation.privacyEmail}</a>.</p>
       </LegalSection>
       <LegalSection title="Donnees traitees">
@@ -54,6 +56,12 @@ export default function PrivacyPage() {
       </LegalSection>
       <LegalSection title="Cookies">
         <p>La gestion des traceurs est detaillee dans notre <Link className="text-accent underline" href="/cookies">politique relative aux cookies</Link>. TaDiff n&apos;utilise actuellement aucun cookie publicitaire.</p>
+      </LegalSection>
+      <LegalSection title="Audience publique">
+        <p>TaDiff mesure les pages publiques consultees, les clics sur certains appels a l&apos;action, la provenance et la conversion en inscription beta. Cette mesure repose sur un identifiant aleatoire limite a la session de l&apos;onglet. Aucune adresse IP, adresse email ou empreinte de l&apos;appareil n&apos;est enregistree dans ce traitement. Les evenements sont supprimes apres 90 jours et l&apos;opposition est disponible sur la page Cookies.</p>
+      </LegalSection>
+      <LegalSection title="Donnees des clients">
+        <p>Lorsque TaDiff heberge les contacts et documents saisis par une compagnie pour son propre compte, les obligations de sous-traitance sont detaillees dans l'<Link className="text-accent underline" href="/annexe-rgpd">annexe RGPD</Link>.</p>
       </LegalSection>
     </LegalPage>
   );

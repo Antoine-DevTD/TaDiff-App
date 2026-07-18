@@ -8,6 +8,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { grantOpportunities, pipelineDeals, quoteItems } from "@/data/mock-data";
 import { formatCurrency } from "@/lib/finance";
+import { getBetaSignupStats } from "@/lib/supabase/queries";
 
 const problems = [
   "Dates signées à perte sans le savoir",
@@ -48,7 +49,8 @@ const modules = [
   { title: "Agenda et documents", detail: "Dates, deadlines perso et pièces de la compagnie réutilisables partout.", tags: ["iCal", "RIB", "Statuts"] },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const betaStats = await getBetaSignupStats();
   const signedOrWeighted = pipelineDeals.reduce(
     (total, deal) => total + Math.round((deal.value * deal.probability) / 100),
     0,
@@ -82,7 +84,7 @@ export default function LandingPage() {
               TaDiff vous dit quoi faire, quand, et combien ça rapporte vraiment.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/beta">Réserver la bêta</ButtonLink>
+              <ButtonLink href="/beta" data-analytics="beta_hero">Réserver la bêta</ButtonLink>
               <ButtonLink href="/#usages" variant="secondary">
                 À quoi pourrait vous servir TaDiff ?
               </ButtonLink>
@@ -135,7 +137,11 @@ export default function LandingPage() {
               Inscriptions bêta ouvertes
             </p>
             <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-              30 places seulement. 19,99 EUR / mois pendant la beta.
+              {betaStats.remainingReservedSeats === 0
+                ? "Les 30 places sont attribuees. Rejoignez la liste d'attente."
+                : betaStats.remainingReservedSeats === 1
+                  ? "Derniere place disponible a 19,99 EUR / mois."
+                  : "30 places seulement. 19,99 EUR / mois pendant la beta."}
             </h2>
             <p className="mt-2 max-w-2xl text-white/85">
               Les 30 premières compagnies rejoignent la bêta le 6 août avec un accompagnement
@@ -144,6 +150,7 @@ export default function LandingPage() {
           </div>
           <Link
             href="/beta"
+            data-analytics="beta_midpage"
             className="inline-flex min-h-12 shrink-0 items-center rounded-md bg-white px-6 text-sm font-semibold !text-accent shadow-lg shadow-ink/20 transition hover:-translate-y-0.5"
           >
             Réserver ma place beta
@@ -261,8 +268,8 @@ export default function LandingPage() {
               ce qui presse.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <ButtonLink href="/beta">Réserver la bêta</ButtonLink>
-              <ButtonLink href="/login" variant="secondary">
+              <ButtonLink href="/beta" data-analytics="beta_final">Réserver la bêta</ButtonLink>
+              <ButtonLink href="/login" variant="secondary" data-analytics="login_final">
                 J&apos;ai déjà un compte
               </ButtonLink>
             </div>

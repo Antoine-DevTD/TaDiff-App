@@ -504,6 +504,7 @@ export type Database = {
           status: "reserved" | "waitlist";
           position: number;
           created_at: string;
+          is_demo: boolean;
         };
         Insert: {
           id?: string;
@@ -517,6 +518,7 @@ export type Database = {
           status: "reserved" | "waitlist";
           position: number;
           created_at?: string;
+          is_demo?: boolean;
         };
         Update: {
           company_name?: string;
@@ -529,6 +531,74 @@ export type Database = {
           status?: "reserved" | "waitlist";
           position?: number;
           created_at?: string;
+          is_demo?: boolean;
+        };
+        Relationships: [];
+      };
+      performance_invitations: {
+        Row: {
+          id: string;
+          company_id: string;
+          opportunity_id: string;
+          performance_opportunity_id: string;
+          contact_id: string | null;
+          show_id: string | null;
+          token: string;
+          recipient_name: string;
+          recipient_email: string;
+          subject: string;
+          performance_date: string;
+          venue: string | null;
+          provider_message_id: string | null;
+          sent_at: string | null;
+          delivered_at: string | null;
+          email_opened_at: string | null;
+          email_clicked_at: string | null;
+          bounced_at: string | null;
+          link_opened_at: string | null;
+          responded_at: string | null;
+          response: "yes" | "no" | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          opportunity_id: string;
+          performance_opportunity_id: string;
+          contact_id?: string | null;
+          show_id?: string | null;
+          token?: string;
+          recipient_name: string;
+          recipient_email: string;
+          subject: string;
+          performance_date: string;
+          venue?: string | null;
+          provider_message_id?: string | null;
+          sent_at?: string | null;
+          delivered_at?: string | null;
+          email_opened_at?: string | null;
+          email_clicked_at?: string | null;
+          bounced_at?: string | null;
+          link_opened_at?: string | null;
+          responded_at?: string | null;
+          response?: "yes" | "no" | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          provider_message_id?: string | null;
+          sent_at?: string | null;
+          delivered_at?: string | null;
+          email_opened_at?: string | null;
+          email_clicked_at?: string | null;
+          bounced_at?: string | null;
+          link_opened_at?: string | null;
+          responded_at?: string | null;
+          response?: "yes" | "no" | null;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -703,6 +773,53 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      public_analytics_events: {
+        Row: {
+          id: string;
+          session_id: string;
+          event_type: "page_view" | "cta_click" | "beta_signup";
+          path: string;
+          event_name: string | null;
+          target: string | null;
+          referrer_host: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          utm_content: string | null;
+          device_type: "mobile" | "tablet" | "desktop";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          event_type: "page_view" | "cta_click" | "beta_signup";
+          path: string;
+          event_name?: string | null;
+          target?: string | null;
+          referrer_host?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          utm_content?: string | null;
+          device_type?: "mobile" | "tablet" | "desktop";
+          created_at?: string;
+        };
+        Update: {
+          session_id?: string;
+          event_type?: "page_view" | "cta_click" | "beta_signup";
+          path?: string;
+          event_name?: string | null;
+          target?: string | null;
+          referrer_host?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          utm_content?: string | null;
+          device_type?: "mobile" | "tablet" | "desktop";
+          created_at?: string;
+        };
+        Relationships: [];
       };
       feedback: {
         Row: {
@@ -961,6 +1078,22 @@ export type Database = {
           waitlist_count: number;
         }[];
       };
+      get_public_performance_invitation: {
+        Args: { invitation_token: string };
+        Returns: {
+          company_name: string;
+          show_title: string | null;
+          performance_date: string;
+          venue: string | null;
+          recipient_name: string;
+          response: "yes" | "no" | null;
+          responded_at: string | null;
+        }[];
+      };
+      respond_to_performance_invitation: {
+        Args: { invitation_token: string; invitation_response: string };
+        Returns: boolean;
+      };
       ensure_workspace: {
         Args: {
           company_name?: string;
@@ -1064,6 +1197,7 @@ export type Database = {
           main_need: string;
           status: "reserved" | "waitlist";
           position: number;
+          is_demo: boolean;
           created_at: string;
         }[];
       };
@@ -1126,6 +1260,27 @@ export type Database = {
           path: string | null;
           ip_address: string | null;
           user_agent: string | null;
+          created_at: string;
+        }[];
+      };
+      admin_list_public_analytics_events: {
+        Args: {
+          since_days?: number;
+          limit_count?: number;
+        };
+        Returns: {
+          id: string;
+          session_id: string;
+          event_type: "page_view" | "cta_click" | "beta_signup";
+          path: string;
+          event_name: string | null;
+          target: string | null;
+          referrer_host: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          utm_content: string | null;
+          device_type: "mobile" | "tablet" | "desktop";
           created_at: string;
         }[];
       };

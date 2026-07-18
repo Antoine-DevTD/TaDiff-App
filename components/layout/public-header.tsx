@@ -2,24 +2,37 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { publicNavItems } from "@/lib/constants";
 import { TadiffMark } from "@/components/brand/tadiff-mark";
+import { getBetaSignupStats } from "@/lib/supabase/queries";
 
-export function PublicHeader() {
+export async function PublicHeader() {
+  const stats = await getBetaSignupStats();
+  const betaMessage =
+    stats.remainingReservedSeats === 0
+      ? "Beta complete : liste d'attente ouverte"
+      : stats.remainingReservedSeats === 1
+        ? "Derniere place beta disponible a 19,99 EUR / mois"
+        : "Beta de lancement : 30 places a 19,99 EUR / mois";
   return (
     <>
       <div className="beta-band sticky top-0 z-30 border-b border-white/15 text-white shadow-lg shadow-ink/10">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 text-sm sm:h-16 sm:px-6 lg:px-8">
-          <Link href="/beta" className="flex min-w-0 items-center gap-3 font-semibold">
+          <Link
+            href="/beta"
+            data-analytics="beta_banner"
+            className="flex min-w-0 items-center gap-3 font-semibold"
+          >
             <span className="beta-dot h-3 w-3 shrink-0 rounded-full bg-white" />
             <span className="min-w-0 truncate">
-              Beta de lancement : 30 places a 19,99 EUR / mois
+              {betaMessage}
               <span className="hidden font-medium text-white/80 md:inline"> - demarrage le 6 aout</span>
             </span>
           </Link>
           <Link
             href="/beta"
+            data-analytics="beta_banner_button"
             className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-semibold !text-accent shadow-sm transition hover:-translate-y-0.5 sm:px-5 sm:text-sm"
           >
-            Reserver
+            {stats.remainingReservedSeats === 0 ? "Liste d'attente" : "Reserver"}
           </Link>
         </div>
       </div>
@@ -37,7 +50,7 @@ export function PublicHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <ButtonLink href="/login" variant="secondary">
+            <ButtonLink href="/login" variant="secondary" data-analytics="login_header">
               Connexion
             </ButtonLink>
           </div>

@@ -57,6 +57,7 @@ export function ContactImportPanel() {
   const [rows, setRows] = useState<SheetRow[]>([]);
   const [mapping, setMapping] = useState<ColumnMapping>(emptyMapping);
   const [message, setMessage] = useState<ImportMessage | null>(null);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
 
   const headers = rows[0] ?? [];
   const bodyRows = rows.slice(1);
@@ -74,6 +75,16 @@ export function ContactImportPanel() {
         setRows([]);
         setMapping(emptyMapping);
         setMessage({ ok: false, text: "Le fichier doit contenir une ligne d'en-tete et au moins un contact." });
+        return;
+      }
+
+      if (parsedRows.length > 10001) {
+        setRows([]);
+        setMapping(emptyMapping);
+        setMessage({
+          ok: false,
+          text: "Ce fichier depasse 10 000 contacts. Decoupez-le en plusieurs imports pour garder un controle fiable.",
+        });
         return;
       }
 
@@ -99,10 +110,42 @@ export function ContactImportPanel() {
     }
 
     startTransition(async () => {
-      const result = await importContacts(contacts);
-      setMessage({ ok: result.ok, text: result.message });
+      const batchSize = 300;
+      const batches = Array.from(
+        { length: Math.ceil(contacts.length / batchSize) },
+        (_, index) => contacts.slice(index * batchSize, (index + 1) * batchSize),
+      );
+      let imported = 0;
+      let skipped = bodyRows.length - contacts.length;
 
-      if (result.ok) {
+      setImportProgress({ current: 0, total: batches.length });
+
+      for (let index = 0; index < batches.length; index += 1) {
+        const result = await importContacts(batches[index]);
+
+        if (!result.ok) {
+          setMessage({
+            ok: false,
+            text: `${imported} contact(s) importe(s) avant l'erreur du lot ${index + 1}/${batches.length} : ${result.message}`,
+          });
+          setImportProgress({ current: index, total: batches.length });
+          return;
+        }
+
+        imported += result.imported;
+        skipped += result.skipped;
+        setImportProgress({ current: index + 1, total: batches.length });
+      }
+
+      setMessage({
+        ok: true,
+        text:
+          skipped > 0
+            ? `${imported} contact(s) importe(s), ${skipped} ligne(s) ignoree(s).`
+            : `${imported} contact(s) importe(s).`,
+      });
+
+      if (imported > 0) {
         setRows([]);
         setMapping(emptyMapping);
         setFileName("");
@@ -233,6 +276,21 @@ export function ContactImportPanel() {
                 <Upload className="h-4 w-4" aria-hidden />
                 {isPending ? "Import en cours..." : `Importer ${contacts.length} contact(s)`}
               </Button>
+              {isPending && importProgress.total > 0 ? (
+                <div aria-live="polite" className="space-y-2">
+                  <div className="h-2 overflow-hidden rounded-full bg-border/70">
+                    <div
+                      className="h-full bg-accent transition-[width] duration-300"
+                      style={{
+                        width: `${Math.round((importProgress.current / importProgress.total) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted">
+                    Lot {Math.min(importProgress.current + 1, importProgress.total)} sur {importProgress.total}
+                  </p>
+                </div>
+              ) : null}
             </div>
           ) : null}
 

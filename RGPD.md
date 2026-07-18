@@ -7,23 +7,27 @@ Ce document est le registre de travail technique et organisationnel. Il ne rempl
 - Politique de confidentialite publique : `/confidentialite`.
 - Politique cookies publique : `/cookies`.
 - Mentions legales publiques : `/mentions-legales`.
+- CGU publiques : `/cgu`.
+- CGV publiques : `/cgv`.
+- Annexe de sous-traitance : `/annexe-rgpd`.
 - Information sous le formulaire d'inscription beta.
 - Liens permanents dans le pied de page.
 - Acces aux donnees cloisonne par compagnie avec RLS Supabase et roles applicatifs.
 - Journal d'acces reserve aux super administrateurs.
 - Migration `029_rgpd_access_event_retention.sql` pour supprimer les journaux de plus de 90 jours.
 - Aucun cookie publicitaire ou outil de profilage declare dans le code actuel.
+- Mesure d'audience interne sans IP ni email, limitee a la session de l'onglet, avec opposition et conservation de 90 jours (migration 030).
 
 ## A faire avant l'ouverture de la beta
 
 1. Renseigner dans Vercel les variables `NEXT_PUBLIC_LEGAL_NAME`, `NEXT_PUBLIC_LEGAL_ADDRESS`, `NEXT_PUBLIC_LEGAL_DIRECTOR` et `NEXT_PUBLIC_PRIVACY_EMAIL`.
 2. Remplacer la mention "societe en cours de constitution" des que la structure existe, puis ajouter forme juridique, capital, SIREN/RCS et numero de TVA si applicable.
 3. Appliquer la migration `sql/029_rgpd_access_event_retention.sql`.
-4. Dans Supabase Cron, planifier chaque jour : `delete from public.access_events where created_at < now() - interval '90 days';`.
+4. Dans Supabase Cron, planifier chaque jour : `delete from public.access_events where created_at < now() - interval '90 days'; delete from public.public_analytics_events where created_at < now() - interval '90 days';`.
 5. Signer ou accepter les DPA/accords de sous-traitance de Supabase, Vercel, Stripe et de tout futur outil email ou IA.
 6. Verifier la region du projet Supabase et documenter les transferts hors EEE ainsi que les garanties utilisees.
 7. Definir qui recoit les demandes envoyees a l'adresse RGPD et une procedure de reponse sous un mois.
-8. Finaliser les CGU et CGV de la beta, notamment abonnement, support, disponibilite, responsabilite, resiliation et restitution des donnees.
+8. Completer `infos.md`, faire relire les CGU/CGV et implementer la preuve d'acceptation versionnee.
 
 ## Registre simplifie des traitements
 
@@ -35,6 +39,7 @@ Ce document est le registre de travail technique et organisationnel. Il ne rempl
 | Securite | Utilisateurs | IP, navigateur, pages, horodatage | Securite, support, preuve d'acces | Interet legitime | 90 jours |
 | Facturation | Clients | Societe, offre, paiement, factures | Paiement et comptabilite | Contrat et obligation legale | Jusqu'a 10 ans pour les pieces comptables |
 | Support et retours | Utilisateurs beta | Message, contexte, compte | Corriger et ameliorer le produit | Contrat ou interet legitime | 2 ans apres cloture proposee |
+| Audience publique | Visiteurs | Session aleatoire, page, CTA, source UTM, appareil simplifie | Comprendre le parcours et les conversions | Interet legitime avec opposition | 90 jours |
 
 ## Processus a formaliser
 

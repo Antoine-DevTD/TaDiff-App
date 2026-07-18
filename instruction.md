@@ -1,5 +1,13 @@
 # Instructions agent - TaDiff
 
+## Ajouts diffusion du 18 juillet 2026
+
+- L'import de contacts est traite par lots de 300, avec une limite de 10 000 lignes par fichier et une progression visible.
+- `sql/031_beta_demo_signups.sql` ajoute cinq inscriptions de demonstration, marquees `is_demo`. Elles sont visibles par le superadmin mais exclues des compteurs et des 30 places publiques.
+- `sql/032_performance_invitations.sql` ajoute les liens personnels d'invitation, la page `/invitation/[token]` et les reponses oui/non.
+- Le suivi actuel est exact pour le lien et la reponse, mais pas pour l'envoi ou l'ouverture du mail car le brouillon passe encore par `mailto:`.
+- Pour creer un superadmin reel : `npm run admin:create -- adresse@email.fr`. La commande exige la service role dans `.env.local`, genere un mot de passe temporaire fort et ne doit jamais etre appelee depuis le navigateur.
+
 Ce document est le point d'entree pour toute nouvelle conversation Claude/Codex
 sur le projet TaDiff.
 
@@ -145,6 +153,7 @@ Partiellement en place :
 - email : planning/templates existent, envoi Resend reel non branche (page campagnes marquee "non branchee") ;
 - Stripe : code checkout + webhook branche en mode test (`/api/stripe/webhook`, `STRIPE_PRICE_BETA_MONTHLY`, migration 020). Reste activation operationnelle : appliquer la migration, ajouter `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, le price id beta Stripe, puis tester un paiement complet. Ne pas presenter le paiement comme actif tant que les cles ne sont pas posees ;
 - audit acces + maintenance : migration 021 ajoute `access_events`, une RPC super admin `admin_list_access_events`, le tracking login/signup/pages cockpit via `/api/audit/access`, affichage dans `/admin`. Les logs IP/user-agent sont des donnees personnelles : acces reserve aux super admins et retention courte a prevoir (purge automatique non implementee) ;
+- analytics public : migration 030 ajoute `public_analytics_events`, le suivi anonyme des pages publiques, CTA, UTM et conversions beta ; aucune IP/email, opposition dans `/cookies`, retention 90 jours, vue `/admin?tab=audience` ;
 - mode maintenance : migration 022 ajoute `app_settings.maintenance_mode`, bascule en un clic depuis `/admin` (RPC `admin_set_maintenance_mode`, effective en quelques secondes, sans redeploiement). `TADIFF_MAINTENANCE_MODE` reste une bascule d'urgence par env var (prioritaire sur le flag DB) ; `TADIFF_MAINTENANCE_ALLOWED_IPS` / `TADIFF_MAINTENANCE_BYPASS_TOKEN` permettent de garder un acces pendant la maintenance ;
 - date de jeu des dates possibles : migration 023 ajoute `opportunities.performance_date`, distincte de `next_follow_up_at` qui reste la date de relance commerciale ;
 - tags contacts : migration 024 ajoute `contacts.tags` pour filtrer le carnet de diffusion par statut, role et tags personnalisables ;
@@ -276,6 +285,16 @@ Ordre connu :
 24. `024_contact_tags.sql` (tags personnalisables sur les contacts)
 17. `017_calendar_events.sql` (evenements d'agenda perso via clic droit sur un jour - lot session parallele)
 18. `018_feedback.sql` (retours/signalements = console admin Phase B : table feedback + RPC submit_feedback (security definer, cote compagnie) + admin_list_feedback / admin_set_feedback_status (super admin) ; bouton "Donner un retour" dans la topbar compagnie, section de tri dans /admin avec statut nouveau/en_cours/traite et reponse visible par la compagnie)
+19. `019_company_documents.sql`
+20. `020_stripe_billing.sql`
+21. `021_access_audit_and_maintenance.sql`
+22. `022_maintenance_toggle.sql`
+25. `025_repair_opportunity_relance_columns.sql`
+26. `026_contacts_phone_admin_company_identity.sql`
+27. `027_repair_opportunity_probability.sql`
+28. `028_beta_reserved_seats_30.sql`
+29. `029_rgpd_access_event_retention.sql`
+30. `030_public_analytics.sql`
 
 En cas de doute sur l'etat du schema en production (erreur "Could not find column ... in the schema cache"),
 executer `sql/diagnostic_schema.sql` dans le SQL editor : il liste les colonnes/fonctions/bucket

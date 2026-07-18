@@ -14,6 +14,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useDraggable } from "@dnd-kit/core";
 import { useMemo, useState, useTransition } from "react";
 import {
+  createPerformanceInvitation,
   createQuoteFromOpportunity,
   createReminder,
   scheduleOpportunityFollowUp,
@@ -319,6 +320,9 @@ export function PipelineBoard({
                     <PipelineCard
                       key={deal.id}
                       contacts={contacts}
+                      confirmedPerformances={optimisticDeals.filter(
+                        (item) => item.stage === "Confirme" && Boolean(item.performanceDate),
+                      )}
                       deal={deal}
                       disabled={isPending}
                       shows={shows}
@@ -526,6 +530,7 @@ function PipelineColumn({
 
 function PipelineCard({
   contacts,
+  confirmedPerformances,
   deal,
   disabled,
   shows,
@@ -534,6 +539,7 @@ function PipelineCard({
   onUpdate,
 }: {
   contacts: Contact[];
+  confirmedPerformances: PipelineDeal[];
   deal: PipelineDeal;
   disabled: boolean;
   shows: Show[];
@@ -548,10 +554,18 @@ function PipelineCard({
   const [copied, setCopied] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const availablePerformances = confirmedPerformances.filter(
+    (performance) => performance.showId === deal.showId && performance.id !== deal.id,
+  );
+  const [inviteToPerformance, setInviteToPerformance] = useState(false);
+  const [selectedPerformanceId, setSelectedPerformanceId] = useState(
+    availablePerformances[0]?.id ?? "",
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [isReminderPending, startReminderTransition] = useTransition();
   const [isQuotePending, startQuoteTransition] = useTransition();
   const [isSchedulePending, startScheduleTransition] = useTransition();
+  const [isInvitePending, startInviteTransition] = useTransition();
   const router = useRouter();
 
   async function createQuickReminder() {
@@ -571,18 +585,53 @@ function PipelineCard({
     });
   }
 
-  async function copyEmailDraft() {
-    await navigator.clipboard.writeText(buildPipelineEmailDraft(deal));
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
+  function prepareEmailDraft(mode: "copy" | "open") {
+    startInviteTransition(async () => {
+      let subject = `Suivi - ${deal.showTitle || deal.title}`;
+      let body = buildPipelineEmailDraft(deal);
 
-  function openEmailDraft() {
-    const subject = `Suivi - ${deal.showTitle || deal.title}`;
-    const body = buildPipelineEmailDraft(deal);
-    const to = deal.contactEmail ? encodeURIComponent(deal.contactEmail) : "";
+      if (inviteToPerformance) {
+        if (!selectedPerformanceId) {
+          setMessage("Choisissez une representation confirmee.");
+          return;
+        }
 
-    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        const result = await createPerformanceInvitation(deal.id, selectedPerformanceId);
+
+        if (!result.ok || !result.invitation) {
+          setMessage(result.message);
+          return;
+        }
+
+        const invitation = result.invitation;
+        subject = invitation.subject;
+        body = [
+          body,
+          "",
+          `Nous jouons le ${new Date(invitation.performanceDate).toLocaleDateString("fr-FR")}${invitation.venue ? ` a ${invitation.venue}` : ""}.`,
+          "Vous pouvez confirmer votre presence ici :",
+          invitation.url,
+        ].join("\n");
+        onUpdate({
+          ...deal,
+          invitations: [
+            invitation,
+            ...(deal.invitations ?? []).filter((item) => item.id !== invitation.id),
+          ],
+        });
+        setMessage(result.message);
+      }
+
+      if (mode === "copy") {
+        await navigator.clipboard.writeText(body);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1800);
+        return;
+      }
+
+      const to = deal.contactEmail ? encodeURIComponent(deal.contactEmail) : "";
+      window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
   }
 
   function createQuote() {
@@ -731,6 +780,37 @@ function PipelineCard({
         </button>
         {showActions ? (
           <>
+            <div className="rounded-md border border-border bg-panel-strong/55 p-3">
+              <label className="flex cursor-pointer items-start gap-2 text-xs font-medium text-foreground">
+                <input
+                  className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
+                  type="checkbox"
+                  checked={inviteToPerformance}
+                  onChange={(event) => setInviteToPerformance(event.target.checked)}
+                />
+                Inviter a une prochaine representation
+              </label>
+              {inviteToPerformance ? (
+                availablePerformances.length > 0 ? (
+                  <Select
+                    aria-label="Representation proposee"
+                    className="mt-3 min-h-9 text-xs"
+                    value={selectedPerformanceId}
+                    onChange={(event) => setSelectedPerformanceId(event.target.value)}
+                  >
+                    {availablePerformances.map((performance) => (
+                      <option key={performance.id} value={performance.id}>
+                        {new Date(performance.performanceDate).toLocaleDateString("fr-FR")} - {performance.venue}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <p className="mt-2 text-xs text-warning">
+                    Confirmez d&apos;abord une date de jeu pour ce spectacle.
+                  </p>
+                )
+              ) : null}
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"
@@ -759,16 +839,18 @@ function PipelineCard({
             <button
               className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground"
               type="button"
-              onClick={copyEmailDraft}
+              disabled={isInvitePending}
+              onClick={() => prepareEmailDraft("copy")}
             >
-              {copied ? "Email copie" : "Copier email"}
+              {isInvitePending ? "Preparation..." : copied ? "Email copie" : "Copier email"}
             </button>
             <button
               className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground"
               type="button"
-              onClick={openEmailDraft}
+              disabled={isInvitePending}
+              onClick={() => prepareEmailDraft("open")}
             >
-              Ouvrir email
+              {isInvitePending ? "Preparation..." : "Ouvrir email"}
             </button>
             <button
               className="rounded-md bg-panel-strong px-2 py-2 text-xs text-muted hover:bg-border/60 hover:text-foreground disabled:opacity-50"
@@ -780,10 +862,41 @@ function PipelineCard({
             </button>
           </>
         ) : null}
+        {(deal.invitations?.length ?? 0) > 0 ? (
+          <details className="rounded-md border border-border bg-panel-strong/45 p-3 text-xs">
+            <summary className="cursor-pointer font-medium text-foreground">
+              Invitations ({deal.invitations?.length})
+            </summary>
+            <div className="mt-3 space-y-3">
+              {deal.invitations?.map((invitation) => (
+                <div key={invitation.id} className="border-l-2 border-accent/40 pl-3">
+                  <p className="font-medium text-foreground">{invitation.recipientName}</p>
+                  <p className="mt-1 truncate text-muted">{invitation.recipientEmail}</p>
+                  <p className="mt-1 text-muted">
+                    Representation du {new Date(invitation.performanceDate).toLocaleDateString("fr-FR")}
+                  </p>
+                  <p className="mt-1 text-muted">{getInvitationStatus(invitation)}</p>
+                </div>
+              ))}
+            </div>
+          </details>
+        ) : null}
         {message ? <p className="text-xs text-muted">{message}</p> : null}
       </div>
     </article>
   );
+}
+
+function getInvitationStatus(invitation: NonNullable<PipelineDeal["invitations"]>[number]) {
+  if (invitation.response === "yes") return "Reponse : oui, la personne viendra";
+  if (invitation.response === "no") return "Reponse : non, la personne ne viendra pas";
+  if (invitation.bouncedAt) return "Email non delivre";
+  if (invitation.linkOpenedAt) return "Lien consulte, reponse en attente";
+  if (invitation.emailClickedAt) return "Lien email clique, reponse en attente";
+  if (invitation.emailOpenedAt) return "Ouverture email estimee, sans reponse";
+  if (invitation.deliveredAt) return "Email livre, ouverture inconnue";
+  if (invitation.sentAt) return "Email envoye, livraison en attente";
+  return "Brouillon prepare, envoi non verifie";
 }
 
 function InfoCell({ label, value }: { label: string; value: string }) {

@@ -19,6 +19,8 @@ const betaSteps = [
 
 export default async function BetaPage() {
   const stats = await getBetaSignupStats();
+  const isLastSeat = stats.remainingReservedSeats === 1;
+  const isFull = stats.remainingReservedSeats === 0;
 
   return (
     <main>
@@ -26,6 +28,12 @@ export default async function BetaPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[0.92fr_0.78fr] lg:px-8 lg:py-16">
           <div className="flex flex-col justify-center">
             <Badge className="w-fit bg-white/10 text-white">Beta compagnies</Badge>
+            {isLastSeat ? (
+              <Badge className="mt-3 w-fit bg-warning text-ink">Derniere place disponible</Badge>
+            ) : null}
+            {isFull ? (
+              <Badge className="mt-3 w-fit bg-white/10 text-white">Liste d&apos;attente ouverte</Badge>
+            ) : null}
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
               30 compagnies pour tester le cockpit avant le lancement.
             </h1>
@@ -40,15 +48,21 @@ export default async function BetaPage() {
                 value={stats.reservedCount.toString()}
               />
               <HeroMetric
-                label="Restantes"
-                value={stats.remainingReservedSeats.toString()}
+                label={isLastSeat ? "Derniere place" : isFull ? "Disponibilite" : "Restantes"}
+                value={isLastSeat ? "Disponible" : isFull ? "Attente" : stats.remainingReservedSeats.toString()}
               />
             </div>
           </div>
 
           <Card className="bg-white p-5 text-ink">
             <div className="mb-5">
-              <p className="text-lg font-semibold">Reserver une place beta</p>
+              <p className="text-lg font-semibold">
+                {isLastSeat
+                  ? "Reserver la derniere place beta"
+                  : isFull
+                    ? "Rejoindre la liste d'attente"
+                    : "Reserver une place beta"}
+              </p>
               <p className="mt-2 text-sm text-muted">
                 Les 30 premieres places sont reservees. Au-dela, les compagnies passent sur
                 liste d&apos;attente prioritaire.

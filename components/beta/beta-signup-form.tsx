@@ -15,6 +15,7 @@ import {
   type BetaSignupFormValues,
 } from "@/lib/validation/beta";
 import type { BetaSignupStatus } from "@/types";
+import { trackPublicEvent } from "@/lib/public-analytics";
 
 const defaultValues: BetaSignupFormInput = {
   companyName: "",
@@ -52,6 +53,7 @@ export function BetaSignupForm() {
       setState(result);
 
       if (result.ok) {
+        trackPublicEvent({ eventType: "beta_signup", eventName: result.status });
         reset(defaultValues);
       }
     });
