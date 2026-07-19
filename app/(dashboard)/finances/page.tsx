@@ -258,14 +258,24 @@ export default async function FinancesPage() {
             />
           </section>
 
-          <section className="grid gap-4 md:grid-cols-4">
-            <MetricCard label="CA signe" value={formatCurrency(signedRevenue)} detail="Dates confirmees" />
-            <MetricCard label="CA previsionnel" value={formatCurrency(weightedRevenue)} detail="Dates ponderees" />
-            <MetricCard label="Dates ouvertes" value={formatCurrency(diffusionRaw)} detail="Valeur ouverte totale" />
-            <MetricCard label="Frais fixes annuels" value={formatCurrency(monthlyFixedCosts * 12)} detail="Equivalent annuel" />
-          </section>
+          <details className="group border border-border bg-panel">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+              <span>
+                <span className="block font-semibold">Frais fixes et reperes annuels</span>
+                <span className="mt-1 block text-sm font-normal text-muted">Assurance, banque, outils et montant a integrer dans chaque date.</span>
+              </span>
+              <span className="text-sm font-medium text-accent group-open:hidden">Afficher</span>
+              <span className="hidden text-sm font-medium text-accent group-open:inline">Masquer</span>
+            </summary>
+            <div className="space-y-6 border-t border-border p-5">
+              <section className="grid gap-4 md:grid-cols-4">
+                <MetricCard label="CA signe" value={formatCurrency(signedRevenue)} detail="Dates confirmees" />
+                <MetricCard label="CA previsionnel" value={formatCurrency(weightedRevenue)} detail="Dates ponderees" />
+                <MetricCard label="Dates ouvertes" value={formatCurrency(diffusionRaw)} detail="Valeur ouverte totale" />
+                <MetricCard label="Frais fixes annuels" value={formatCurrency(monthlyFixedCosts * 12)} detail="Equivalent annuel" />
+              </section>
 
-          <Card className="space-y-4 p-5">
+          <Card className="space-y-4 p-5 shadow-none">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-base font-semibold">Frais fixes</p>
@@ -308,8 +318,19 @@ export default async function FinancesPage() {
               </div>
             )}
           </Card>
+            </div>
+          </details>
 
-          <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <details className="group border border-border bg-panel">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+              <span>
+                <span className="block font-semibold">Prix, devis et encaissements</span>
+                <span className="mt-1 block text-sm font-normal text-muted">Verifier le prix minimum d&apos;une date et les montants restant a encaisser.</span>
+              </span>
+              <span className="text-sm font-medium text-accent group-open:hidden">Afficher</span>
+              <span className="hidden text-sm font-medium text-accent group-open:inline">Masquer</span>
+            </summary>
+          <section className="grid gap-6 border-t border-border p-5 xl:grid-cols-[1fr_1fr]">
             <Card className="space-y-4 p-5">
               <div>
                 <p className="text-base font-semibold">Prix minimum par date</p>
@@ -378,8 +399,18 @@ export default async function FinancesPage() {
               </div>
             </Card>
           </section>
+          </details>
 
-          <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <details className="group border border-border bg-panel">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+              <span>
+                <span className="block font-semibold">Priorites d&apos;encaissement</span>
+                <span className="mt-1 block text-sm font-normal text-muted">Les dates et dossiers qui demandent une action financiere.</span>
+              </span>
+              <span className="text-sm font-medium text-accent group-open:hidden">Afficher</span>
+              <span className="hidden text-sm font-medium text-accent group-open:inline">Masquer</span>
+            </summary>
+          <section className="grid gap-6 border-t border-border p-5 xl:grid-cols-[1.05fr_0.95fr]">
             <Card className="space-y-4 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -454,6 +485,7 @@ export default async function FinancesPage() {
               )}
             </Card>
           </section>
+          </details>
         </>
       )}
     </div>
