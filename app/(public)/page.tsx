@@ -191,19 +191,24 @@ export default async function LandingPage() {
         </Reveal>
       </section>
 
-      <section className="border-y border-border bg-panel">
+      <section className="beta-band border-y border-white/15 text-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Beta accompagnee</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">Beta accompagnee</p>
             <h2 className="mt-3 text-3xl font-semibold text-balance">
               30 compagnies pour construire la bonne version.
             </h2>
-            <p className="mt-3 max-w-2xl text-muted">
+            <p className="mt-3 max-w-2xl text-white/80">
               Acces a 19,99 EUR / mois pendant la beta, retours reguliers et accompagnement
               prioritaire. {betaLabel}
             </p>
           </div>
-          <ButtonLink href="/beta" data-analytics="beta_midpage" className="gap-2">
+          <ButtonLink
+            href="/beta"
+            variant="secondary"
+            data-analytics="beta_midpage"
+            className="gap-2 border-white bg-white shadow-lg shadow-ink/15 hover:bg-white/90"
+          >
             {betaFull ? "Liste d'attente" : "Reserver ma place"}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </ButtonLink>
@@ -241,7 +246,12 @@ export default async function LandingPage() {
             <p className="text-sm text-white/65">Pret a voir le cockpit avec vos propres spectacles ?</p>
             <p className="mt-3 text-2xl font-semibold">19,99 EUR / mois pendant la beta.</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <ButtonLink href="/beta" data-analytics="beta_final" className="gap-2 bg-white !text-ink hover:bg-white/90">
+              <ButtonLink
+                href="/beta"
+                variant="secondary"
+                data-analytics="beta_final"
+                className="gap-2 border-white bg-white shadow-lg shadow-black/15 hover:bg-white/90"
+              >
                 {betaFull ? "Rejoindre la liste d'attente" : "Reserver ma place beta"}
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </ButtonLink>
