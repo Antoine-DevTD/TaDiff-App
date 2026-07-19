@@ -68,6 +68,25 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("heading", { name: "Pieces indispensables" })).toBeVisible();
   });
 
+  test("propose les actions spectacle au clic droit", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/shows");
+
+    const showCard = page.getByRole("link", { name: "Ouvrir Les lignes de fuite" });
+    await showCard.click({ button: "right" });
+
+    const menu = page.getByRole("menu", { name: "Actions pour Les lignes de fuite" });
+    await expect(menu.getByRole("menuitem", { name: "Ouvrir la fiche" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Modifier" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Supprimer" })).toBeVisible();
+    await menu.getByRole("menuitem", { name: "Modifier" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Modifier Les lignes de fuite" });
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  });
+
   test("ouvre la creation de date et rend le focus au declencheur avec Echap", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/pipeline");

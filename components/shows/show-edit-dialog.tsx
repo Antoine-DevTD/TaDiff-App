@@ -12,17 +12,27 @@ import type { Show } from "@/types";
 export function ShowEditDialog({
   show,
   label = "Modifier",
+  open: controlledOpen,
+  onOpenChange,
+  showTrigger = true,
 }: {
   show: Show;
   label?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>
-        {label}
-      </Button>
+      {showTrigger ? (
+        <Button type="button" onClick={() => setOpen(true)}>
+          {label}
+        </Button>
+      ) : null}
 
       <Dialog
         open={open}
