@@ -14,55 +14,98 @@ export type OnboardingStep = {
 export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
   const doneCount = steps.filter((step) => step.done).length;
   const nextStep = steps.find((step) => !step.done);
-  const percent = Math.round((doneCount / steps.length) * 100);
+  const percent = steps.length === 0 ? 100 : Math.round((doneCount / steps.length) * 100);
 
   return (
-    <Card className="space-y-4 p-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Mise en route compagnie
-          </p>
-          <h2 className="mt-2 text-xl font-semibold">
-            {nextStep ? `Prochaine etape : ${nextStep.label.toLowerCase()}` : "Votre cockpit est pret."}
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {doneCount}/{steps.length} etapes faites. On avance comme une administration de
-            production : spectacle, dossier, contacts, dates, actions, argent.
-          </p>
+    <Card className="overflow-hidden p-0">
+      <div className="space-y-4 p-5">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+              Mise en route compagnie
+            </p>
+            <h2 className="mt-2 text-xl font-semibold">
+              {nextStep
+                ? `Prochaine etape : ${nextStep.label.toLowerCase()}`
+                : "Votre cockpit est pret."}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {doneCount}/{steps.length} etapes terminees. Une seule action suffit pour continuer.
+            </p>
+          </div>
+          <TourLauncher label="Visite guidee (3 min)" />
         </div>
-        <TourLauncher label="Visite guidee (3 min)" />
-      </div>
 
-      <div className="h-2 overflow-hidden rounded-full bg-border">
-        <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
-      </div>
+        <div className="h-2 overflow-hidden rounded-full bg-border">
+          <div
+            aria-label={`Mise en route terminee a ${percent} %`}
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={percent}
+            className="h-full rounded-full bg-accent transition-[width]"
+            role="progressbar"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {steps.map((step, index) => (
+        {nextStep ? (
           <Link
-            key={step.id}
-            className={[
-              "rounded-lg border p-4 transition",
-              step.done
-                ? "border-border bg-panel-strong/30 opacity-70"
-                : "border-border bg-panel-strong/45 hover:border-accent/40 hover:bg-panel-strong/70",
-            ].join(" ")}
-            href={step.href}
+            className="group flex flex-col justify-between gap-4 rounded-lg border border-accent/30 bg-accent-soft/40 p-4 transition hover:border-accent/60 hover:bg-accent-soft/70 sm:flex-row sm:items-center"
+            href={nextStep.href}
           >
-            <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="info">A faire maintenant</Badge>
+                <p className="font-semibold">{nextStep.label}</p>
+              </div>
+              <p className="mt-2 text-sm text-muted">{nextStep.detail}</p>
+            </div>
+            <span className="shrink-0 text-sm font-semibold text-accent transition group-hover:translate-x-1">
+              Commencer <span aria-hidden="true">→</span>
+            </span>
+          </Link>
+        ) : (
+          <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+            <Badge tone="success">Cockpit pret</Badge>
+            <p className="mt-2 text-sm text-muted">
+              Les bases de votre espace sont renseignees. Vous pouvez les modifier a tout moment.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <details className="group border-t border-border">
+        <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium transition hover:bg-panel-strong/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">
+          <span className="flex items-center justify-between gap-3">
+            Voir toutes les etapes
+            <span aria-hidden="true" className="text-muted transition group-open:rotate-180">
+              ↓
+            </span>
+          </span>
+        </summary>
+        <div className="divide-y divide-border border-t border-border">
+          {steps.map((step, index) => (
+            <Link
+              key={step.id}
+              className="flex items-start gap-3 px-5 py-3 transition hover:bg-panel-strong/50"
+              href={step.href}
+            >
               <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full border border-border bg-panel px-2 text-xs font-semibold">
                 {step.done ? "OK" : index + 1}
               </span>
-              <Badge tone={step.done ? "success" : "neutral"}>
-                {step.done ? "Fait" : "A faire"}
-              </Badge>
-            </div>
-            <p className="mt-3 font-medium">{step.label}</p>
-            <p className="mt-1 text-sm text-muted">{step.detail}</p>
-          </Link>
-        ))}
-      </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium">{step.label}</p>
+                  <Badge tone={step.done ? "success" : "neutral"}>
+                    {step.done ? "Fait" : "A faire"}
+                  </Badge>
+                </div>
+                <p className="mt-0.5 text-sm text-muted">{step.detail}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </details>
     </Card>
   );
 }
