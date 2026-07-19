@@ -13,9 +13,7 @@ export default async function PipelinePage() {
 
   return (
     <div className="space-y-6">
-      <div data-tour="diffusion-creation">
-        <PipelineCreatePanel contacts={contacts} shows={shows} />
-      </div>
+      <PipelineCreatePanel contacts={contacts} shows={shows} />
 
       {deals.length === 0 ? (
         <EmptyState

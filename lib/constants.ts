@@ -1,4 +1,5 @@
 export const appName = "TaDiff";
+export const pipelineCreateEvent = "tadiff:create-opportunity";
 
 export type DashboardSectionId =
   | "today"

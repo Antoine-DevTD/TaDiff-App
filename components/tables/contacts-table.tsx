@@ -373,24 +373,62 @@ function buildContactColumns({
       header: "",
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted opacity-0 transition hover:bg-accent/10 hover:text-accent group-hover:opacity-100 focus:opacity-100"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onAction("edit", row.original);
-            }}
-            aria-label={`Modifier ${row.original.name}`}
-            title="Modifier"
-          >
-            <Pencil className="h-4 w-4" aria-hidden />
-          </button>
+        <div className="flex justify-end gap-0.5 opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
+          <ContactRowAction
+            action="email"
+            contact={row.original}
+            icon={Mail}
+            label="Preparer un email"
+            onAction={onAction}
+          />
+          <ContactRowAction
+            action="reminder"
+            contact={row.original}
+            icon={BellPlus}
+            label="Creer une action"
+            onAction={onAction}
+          />
+          <ContactRowAction
+            action="edit"
+            contact={row.original}
+            icon={Pencil}
+            label="Modifier"
+            onAction={onAction}
+          />
         </div>
       ),
     },
   ];
+}
+
+function ContactRowAction({
+  action,
+  contact,
+  icon: Icon,
+  label,
+  onAction,
+}: {
+  action: ContactAction;
+  contact: Contact;
+  icon: typeof Pencil;
+  label: string;
+  onAction: (action: ContactAction, contact: Contact) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted transition-colors hover:bg-accent/10 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onAction(action, contact);
+      }}
+      aria-label={`${label} pour ${contact.name}`}
+      title={label}
+    >
+      <Icon className="h-4 w-4" aria-hidden />
+    </button>
+  );
 }
 
 function ContactContextMenu({

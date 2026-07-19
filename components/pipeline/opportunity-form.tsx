@@ -78,8 +78,8 @@ export function OpportunityForm({
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Date possible" error={errors.title?.message}>
-        <Input placeholder="Serie scolaire automne" {...register("title")} />
+      <Field label="Objet de la proposition" error={errors.title?.message}>
+        <Input placeholder="Ex. Serie scolaire automne…" autoComplete="off" {...register("title")} />
       </Field>
 
       <div className="rounded-md border border-border bg-panel-strong/60 p-3">
@@ -93,7 +93,7 @@ export function OpportunityForm({
             type="button"
             onClick={() => setContactMode("existing")}
           >
-            Contact existant
+            Choisir un programmateur
           </button>
           <button
             className={
@@ -107,15 +107,15 @@ export function OpportunityForm({
               setValue("contactId", "");
             }}
           >
-            Nouveau contact
+            Creer un contact
           </button>
         </div>
 
         {contactMode === "existing" ? (
           <div className="mt-3">
-            <Field label="Contact" error={errors.contactId?.message}>
+            <Field label="Programmateur ou lieu" error={errors.contactId?.message}>
               <Select {...register("contactId")}>
-                <option value="">Aucun contact</option>
+                <option value="">Choisir un contact</option>
                 {contacts.map((contact) => (
                   <option key={contact.id} value={contact.id}>
                     {contact.name} - {contact.organization}
@@ -139,7 +139,7 @@ export function OpportunityForm({
             <Field label="Structure">
               <Input
                 required
-                placeholder="Scene nationale, mairie..."
+                placeholder="Scene nationale, mairie…"
                 value={newContact.organization}
                 onChange={(event) =>
                   setNewContact((current) => ({ ...current, organization: event.target.value }))
@@ -148,7 +148,7 @@ export function OpportunityForm({
             </Field>
             <Field label="Role">
               <Input
-                placeholder="Programmation, production..."
+                placeholder="Programmation, production…"
                 value={newContact.role}
                 onChange={(event) =>
                   setNewContact((current) => ({ ...current, role: event.target.value }))
@@ -159,6 +159,8 @@ export function OpportunityForm({
               <Input
                 type="email"
                 placeholder="contact@structure.fr"
+                autoComplete="email"
+                spellCheck={false}
                 value={newContact.email}
                 onChange={(event) =>
                   setNewContact((current) => ({ ...current, email: event.target.value }))
@@ -172,7 +174,7 @@ export function OpportunityForm({
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Spectacle" error={errors.showId?.message}>
           <Select {...register("showId")}>
-            <option value="">Aucun spectacle</option>
+            <option value="">Choisir un spectacle</option>
             {shows.map((show) => (
               <option key={show.id} value={show.id}>
                 {show.title}
@@ -183,7 +185,7 @@ export function OpportunityForm({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
-        <Field label="Etape" error={errors.stage?.message}>
+        <Field label="Ou en est la discussion ?" error={errors.stage?.message}>
           <Select
             {...register("stage")}
             onChange={(event) => {
@@ -199,11 +201,11 @@ export function OpportunityForm({
             ))}
           </Select>
         </Field>
-        <Field label="Montant" error={errors.value?.message}>
-          <Input type="number" min="0" step="100" {...register("value")} />
+        <Field label="Montant envisage" error={errors.value?.message}>
+          <Input type="number" min="0" step="100" inputMode="numeric" {...register("value")} />
         </Field>
-        <Field label="Probabilite" error={errors.probability?.message}>
-          <Input type="number" min="0" max="100" step="5" {...register("probability")} />
+        <Field label="Chance d'aboutir" error={errors.probability?.message}>
+          <Input type="number" min="0" max="100" step="5" inputMode="numeric" {...register("probability")} />
         </Field>
         <Field label="Date de jeu" error={errors.performanceDate?.message}>
           <Input type="date" {...register("performanceDate")} />
@@ -214,7 +216,7 @@ export function OpportunityForm({
         <Field label="Prochaine action" error={errors.nextAction?.message}>
           <Textarea
             className="min-h-20"
-            placeholder="Appeler, envoyer le dossier, verifier une date..."
+            placeholder="Ex. Envoyer le dossier artistique…"
             {...register("nextAction")}
           />
         </Field>
@@ -236,7 +238,7 @@ export function OpportunityForm({
       ) : null}
 
       <Button type="submit" disabled={isSubmitting || isPending}>
-        Creer la date
+        Ajouter cette date
       </Button>
     </form>
   );

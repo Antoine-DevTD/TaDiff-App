@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ContactCreateDialog } from "@/components/contacts/contact-create-dialog";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { ShowCreateDialog } from "@/components/shows/show-create-dialog";
 import { DashboardNavIcon } from "@/components/ui/dashboard-nav-icon";
+import { Button } from "@/components/ui/button";
 import {
   getDashboardItem,
   getDashboardSection,
   getDashboardSectionItems,
+  pipelineCreateEvent,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +46,18 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {pathname === "/shows" ? <ShowCreateDialog label="Ajouter" /> : null}
           {pathname === "/contacts" ? <ContactCreateDialog buttonLabel="Ajouter" /> : null}
+          {pathname === "/pipeline" ? (
+            <Button
+              type="button"
+              className="gap-2"
+              data-tour="diffusion-creation"
+              onClick={() => window.dispatchEvent(new Event(pipelineCreateEvent))}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">Ajouter une date</span>
+              <span className="sm:hidden">Ajouter</span>
+            </Button>
+          ) : null}
           <AccountMenu />
         </div>
       </div>
