@@ -287,6 +287,7 @@ export default async function DashboardPage() {
     reminders,
   });
   const mainAction = theatreActions[0] ?? null;
+  const nextActions = mainAction ? theatreActions.slice(1, 4) : theatreActions.slice(0, 3);
   const firstShowId = shows[0]?.id ?? null;
   const onboardingSteps: OnboardingStep[] = [
     {
@@ -351,12 +352,12 @@ export default async function DashboardPage() {
       {onboardingComplete ? null : <GettingStarted steps={onboardingSteps} />}
 
       <section className="theme-cockpit-section theme-cockpit-hero-section grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="theme-cockpit-status overflow-hidden p-0" data-tour="cockpit-pulse">
+        <Card className="theme-cockpit-status overflow-hidden p-0 xl:col-span-2" data-tour="cockpit-pulse">
           <div className="border-b border-border bg-panel-strong/55 p-5">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                  Cockpit du jour
+                  Vue d&apos;ensemble
                 </p>
                 <DashboardSectionTitle
                   className="text-3xl tracking-normal"
@@ -370,7 +371,7 @@ export default async function DashboardPage() {
                   }
                 />
                 <p className="mt-3 max-w-2xl text-sm text-muted">
-                  Tresorerie, dates a vendre, dossiers et echeances reunis dans une seule lecture.
+                  Tresorerie, dates, dossiers et echeances reunis dans une seule lecture.
                 </p>
               </div>
               <Badge tone={cashPilot.status}>{getToneLabel(cashPilot.status)}</Badge>
@@ -380,25 +381,25 @@ export default async function DashboardPage() {
           <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-4">
             <PulseMetric
               detail={`${cashPilot.runwayDays} jours de marge`}
-              label="Est-ce qu'on tient ?"
+              label="Tresorerie"
               tone={cashPilot.status}
               value={formatCurrency(cashPilot.currentCash)}
             />
             <PulseMetric
               detail={`${activeDeals.length} date(s) active(s)`}
-              label="Qu'est-ce qui vend ?"
+              label="Dates en cours"
               tone={salesTone}
               value={formatCurrency(cashPilot.weightedPipeline)}
             />
             <PulseMetric
               detail={`${documentMissingCount} pièce(s) manquante(s)`}
-              label="Qu'est-ce qui bloque ?"
+              label="Dossiers prets"
               tone={productionTone}
               value={`${Math.max(0, activeShows.length - showReadiness.filter((item) => item.readiness.missingCount > 0).length)}/${activeShows.length}`}
             />
             <PulseMetric
               detail={`${overdueReminderCount} retard - ${urgentGrantCount} deadline(s)`}
-              label="Qu'est-ce qui presse ?"
+              label="Urgences"
               tone={agendaTone}
               value={agendaTone === "success" ? "Calme" : getToneLabel(agendaTone)}
             />
@@ -431,19 +432,19 @@ export default async function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="theme-cockpit-priority space-y-4 p-5" data-tour="cockpit-priorite">
+        <Card className="theme-cockpit-priority order-first space-y-4 border-accent/35 p-5 xl:col-span-2" data-tour="cockpit-priorite">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Priorite
+                A faire maintenant
               </p>
               <DashboardSectionTitle
                 className="text-2xl"
-                href={mainAction?.href ?? "/reminders"}
+                href={mainAction?.href ?? "/dashboard"}
                 title={mainAction?.title ?? "Rien ne bloque aujourd'hui."}
               />
             </div>
-            {mainAction ? <Badge tone={mainAction.tone}>{mainAction.label}</Badge> : null}
+            {mainAction ? <Badge tone={mainAction.tone}>{mainAction.label}</Badge> : <Badge tone="success">A jour</Badge>}
           </div>
           <p className="text-sm text-muted">
             {mainAction?.detail ??
@@ -451,9 +452,9 @@ export default async function DashboardPage() {
           </p>
           <div className="flex flex-wrap gap-3">
             {mainAction ? (
-              <ButtonLink href={mainAction.href}>Ouvrir</ButtonLink>
+              <ButtonLink href={mainAction.href}>Traiter maintenant</ButtonLink>
             ) : (
-              <ButtonLink href="/pipeline">Ajouter une date possible</ButtonLink>
+              <ButtonLink href="/pipeline">Ajouter une date</ButtonLink>
             )}
             <ButtonLink href="/calendar" variant="secondary">
               Voir l&apos;agenda
@@ -467,26 +468,26 @@ export default async function DashboardPage() {
         <Card className="theme-cockpit-roadmap space-y-4 p-5" data-tour="cockpit-plan">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              À faire maintenant
+              Ensuite
             </p>
             <DashboardSectionTitle
               className="text-2xl"
               href="/reminders"
-              title="Tes prochaines actions, dans l'ordre"
+              title="Les prochaines actions, dans l'ordre"
             />
           </div>
-          {theatreActions.length === 0 ? (
+          {nextActions.length === 0 ? (
             <EmptyBlock text="Aucune action critique pour le moment. Tout est à jour." />
           ) : (
             <div className="space-y-3">
-              {theatreActions.map((action, index) => (
+              {nextActions.map((action, index) => (
                 <Link
                   key={`${action.href}-${action.title}`}
                   className="grid gap-3 rounded-lg border border-border bg-panel-strong/35 p-4 transition hover:border-accent/35 hover:bg-panel-strong/60 sm:grid-cols-[2.25rem_1fr_auto]"
                   href={action.href}
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-md bg-accent text-sm font-semibold text-white">
-                    {index + 1}
+                    {index + 2}
                   </span>
                   <span className="min-w-0">
                     <span className="block font-medium">{action.title}</span>
