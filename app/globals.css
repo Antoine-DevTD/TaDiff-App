@@ -370,10 +370,12 @@ html[data-theatre-theme="regie"] {
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     radial-gradient(56rem 34rem at 12% -8%, var(--body-glow), transparent 64%),
     radial-gradient(46rem 28rem at 88% 4%, var(--body-glow-soft), transparent 62%),

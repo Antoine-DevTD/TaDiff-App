@@ -16,23 +16,26 @@ export async function PublicHeader() {
     <>
       <div className="beta-band sticky top-0 z-30 border-b border-white/15 text-white shadow-lg shadow-ink/10">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 text-sm sm:h-16 sm:px-6 lg:px-8">
-          <Link
-            href="/beta"
-            data-analytics="beta_banner"
-            className="flex min-w-0 items-center gap-3 font-semibold"
-          >
+          <div className="flex min-w-0 items-center gap-3 font-semibold">
             <span className="beta-dot h-3 w-3 shrink-0 rounded-full bg-white" />
             <span className="min-w-0 truncate">
               {betaMessage}
               <span className="hidden font-medium text-white/80 md:inline"> - demarrage le 6 aout</span>
             </span>
-          </Link>
+          </div>
           <Link
             href="/beta"
             data-analytics="beta_banner_button"
             className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-semibold !text-accent shadow-sm transition hover:-translate-y-0.5 sm:px-5 sm:text-sm"
           >
-            {stats.remainingReservedSeats === 0 ? "Liste d'attente" : "Reserver"}
+            {stats.remainingReservedSeats === 0 ? (
+              "Liste d'attente"
+            ) : (
+              <>
+                <span className="sm:hidden">Reserver</span>
+                <span className="hidden sm:inline">Reserver ma place</span>
+              </>
+            )}
           </Link>
         </div>
       </div>
