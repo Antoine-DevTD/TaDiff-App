@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { isLocalE2eMode } from "@/lib/env";
 import { getClientIpFromHeaders } from "@/lib/request-ip";
 
 const bypassCookie = "tadiff_maintenance_bypass";
@@ -46,6 +47,10 @@ async function fetchMaintenanceModeFromDb(): Promise<boolean> {
  * Cache court cote edge pour eviter une requete DB a chaque requete.
  */
 export async function isMaintenanceModeActive() {
+  if (isLocalE2eMode()) {
+    return false;
+  }
+
   if (isMaintenanceModeEnabled()) {
     return true;
   }

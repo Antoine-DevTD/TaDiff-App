@@ -1,4 +1,10 @@
+export function isLocalE2eMode() {
+  return process.env.TADIFF_E2E_MODE === "playwright-local" && !process.env.VERCEL;
+}
+
 export function hasSupabaseEnv() {
+  if (isLocalE2eMode()) return false;
+
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

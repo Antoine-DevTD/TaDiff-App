@@ -64,11 +64,18 @@ export function Dialog({
 
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
 
-      if (event.shiftKey && document.activeElement === firstElement) {
+      if (activeElement === dialogRef.current || !dialogRef.current.contains(activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? lastElement : firstElement).focus();
+        return;
+      }
+
+      if (event.shiftKey && activeElement === firstElement) {
         event.preventDefault();
         lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
+      } else if (!event.shiftKey && activeElement === lastElement) {
         event.preventDefault();
         firstElement.focus();
       }
@@ -94,6 +101,7 @@ export function Dialog({
       <button
         aria-label="Fermer la fenetre"
         className="absolute inset-0 cursor-default"
+        tabIndex={-1}
         type="button"
         onClick={onClose}
       />

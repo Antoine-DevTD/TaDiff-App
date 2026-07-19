@@ -26,3 +26,7 @@ pnpm-debug.log*
 
 # vercel
 .vercel
+
+# playwright
+/playwright-report/
+/test-results/

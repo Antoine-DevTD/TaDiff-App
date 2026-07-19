@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { isLocalE2eMode } from "@/lib/env";
 import {
   getMaintenanceTokenResponse,
   isMaintenanceBypassed,
@@ -48,6 +49,10 @@ function isAlwaysAllowedPath(pathname: string) {
  * et reexpose la reponse la plus a jour (cookies de session rafraichis).
  */
 function buildSupabaseClient(request: NextRequest) {
+  if (isLocalE2eMode()) {
+    return null;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
