@@ -1,91 +1,177 @@
 export const appName = "TaDiff";
 
-export const dashboardNavItems = [
+export type DashboardSectionId =
+  | "today"
+  | "shows"
+  | "distribution"
+  | "calendar"
+  | "finances"
+  | "files";
+
+export type DashboardNavItem = {
+  href: string;
+  label: string;
+  section: DashboardSectionId;
+  summary: string;
+};
+
+export type DashboardSection = {
+  href: string;
+  id: DashboardSectionId;
+  label: string;
+  summary: string;
+};
+
+export const dashboardSections: DashboardSection[] = [
   {
-    group: "Piloter",
+    id: "today",
     href: "/dashboard",
-    label: "Cockpit",
-    summary: "Vue claire de la compagnie",
+    label: "Aujourd'hui",
+    summary: "Priorites et actions",
   },
   {
-    group: "Piloter",
-    href: "/reminders",
-    label: "A faire",
-    summary: "Actions du jour",
-  },
-  {
-    group: "Piloter",
-    href: "/calendar",
-    label: "Agenda",
-    summary: "Dates, echeances et frais",
-  },
-  {
-    group: "Vendre",
+    id: "shows",
     href: "/shows",
     label: "Spectacles",
     summary: "Catalogue et dossiers",
   },
   {
-    group: "Vendre",
-    href: "/contacts",
-    label: "Contacts",
-    summary: "Programmateurs et partenaires",
+    id: "distribution",
+    href: "/pipeline",
+    label: "Diffuser",
+    summary: "Dates et programmateurs",
   },
   {
-    group: "Vendre",
+    id: "calendar",
+    href: "/calendar",
+    label: "Agenda",
+    summary: "Dates et echeances",
+  },
+  {
+    id: "finances",
+    href: "/finances",
+    label: "Finances",
+    summary: "Tresorerie et factures",
+  },
+  {
+    id: "files",
+    href: "/subventions",
+    label: "Dossiers",
+    summary: "Aides, contrats et pieces",
+  },
+];
+
+export const dashboardNavItems: DashboardNavItem[] = [
+  {
+    section: "today",
+    href: "/dashboard",
+    label: "Vue d'ensemble",
+    summary: "Etat de la compagnie",
+  },
+  {
+    section: "today",
+    href: "/reminders",
+    label: "A faire",
+    summary: "Actions du jour",
+  },
+  {
+    section: "shows",
+    href: "/shows",
+    label: "Spectacles",
+    summary: "Catalogue et dossiers",
+  },
+  {
+    section: "distribution",
     href: "/pipeline",
-    label: "Dates a vendre",
+    label: "Dates",
     summary: "Dates possibles et ventes",
   },
   {
-    group: "Vendre",
-    href: "/campaigns",
-    label: "Campagnes",
-    summary: "Emails et actions groupees",
+    section: "distribution",
+    href: "/contacts",
+    label: "Programmateurs",
+    summary: "Contacts et partenaires",
   },
   {
-    group: "Financer",
+    section: "distribution",
+    href: "/campaigns",
+    label: "Emails",
+    summary: "Envois et suivis",
+  },
+  {
+    section: "calendar",
+    href: "/calendar",
+    label: "Agenda",
+    summary: "Dates, echeances et frais",
+  },
+  {
+    section: "finances",
     href: "/finances",
     label: "Tresorerie",
     summary: "Cash, frais fixes et projections",
   },
   {
-    group: "Financer",
-    href: "/subventions",
-    label: "Subventions",
-    summary: "Dossiers et deadlines",
+    section: "finances",
+    href: "/billing",
+    label: "Devis et factures",
+    summary: "Acomptes et soldes",
   },
   {
-    group: "Financer",
+    section: "files",
+    href: "/subventions",
+    label: "Subventions",
+    summary: "Dossiers et echeances",
+  },
+  {
+    section: "files",
     href: "/mecenat",
     label: "Mecenat",
     summary: "Entreprises et contreparties",
   },
   {
-    group: "Produire",
+    section: "files",
     href: "/documents",
     label: "Documents",
     summary: "Pieces pretes et manquantes",
   },
   {
-    group: "Produire",
+    section: "files",
     href: "/contracts",
     label: "Contrats",
     summary: "Cessions et prestations",
   },
   {
-    group: "Produire",
-    href: "/billing",
-    label: "Facturation",
-    summary: "Devis, acomptes et soldes",
-  },
-  {
-    group: "Reglages",
+    section: "files",
     href: "/settings",
     label: "Parametres",
     summary: "Compte et donnees",
   },
 ];
+
+export function getDashboardItem(pathname: string) {
+  return (
+    dashboardNavItems.find(
+      (item) =>
+        pathname === item.href ||
+        (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`)),
+    ) ?? null
+  );
+}
+
+export function getDashboardSection(pathname: string) {
+  const currentItem = getDashboardItem(pathname);
+
+  return (
+    dashboardSections.find((section) => section.id === currentItem?.section) ??
+    dashboardSections[0]
+  );
+}
+
+export function getDashboardSectionItems(sectionId: DashboardSectionId) {
+  return dashboardNavItems.filter(
+    (item) => item.section === sectionId && item.href !== "/settings",
+  );
+}
 
 export const publicNavItems = [
   { href: "/#fonctionnalites", label: "Produit" },

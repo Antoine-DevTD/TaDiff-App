@@ -1,5 +1,5 @@
-import { ContactCreateDialog } from "@/components/contacts/contact-create-dialog";
 import { ContactImportPanel } from "@/components/contacts/contact-import-panel";
+import { ContactCreateDialog } from "@/components/contacts/contact-create-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ContactsTable } from "@/components/tables/contacts-table";
 import { getContacts } from "@/lib/supabase/queries";
@@ -9,10 +9,9 @@ export default async function ContactsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <div className="flex flex-wrap justify-end gap-2" data-tour="contacts-creation">
+      <div className="flex justify-end" data-tour="contacts-creation">
+        <div className="flex flex-wrap justify-end gap-2">
           <ContactImportPanel />
-          <ContactCreateDialog />
         </div>
       </div>
       {contacts.length === 0 ? (

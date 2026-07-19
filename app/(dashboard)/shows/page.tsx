@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ShowCreateDialog } from "@/components/shows/show-create-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,10 +11,6 @@ export default async function ShowsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <ShowCreateDialog />
-      </div>
-
       {shows.length === 0 ? (
         <EmptyState
           title="Aucun spectacle"

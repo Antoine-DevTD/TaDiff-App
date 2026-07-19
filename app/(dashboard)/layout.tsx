@@ -36,10 +36,22 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-background">
       <ThemeApplier />
+      <a
+        href="#main-content"
+        className="fixed left-4 top-4 z-[120] -translate-y-24 rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition-transform focus:translate-y-0"
+      >
+        Aller au contenu
+      </a>
       <Sidebar variant={superAdmin ? "admin" : "company"} />
       <div className="min-w-0 flex-1">
         <Topbar workspaceLabel={workspaceLabel} />
-        <main className="px-4 pb-32 pt-8 sm:px-6 lg:px-8 lg:pb-14 lg:pt-10">{children}</main>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="px-4 pb-32 pt-6 sm:px-6 lg:px-8 lg:pb-14 lg:pt-8"
+        >
+          {children}
+        </main>
       </div>
       {superAdmin ? null : <GuidedTour />}
       {superAdmin ? null : <WilliamAssistant />}
