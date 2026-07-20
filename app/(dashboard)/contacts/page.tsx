@@ -18,7 +18,7 @@ export default async function ContactsPage() {
         <div className="space-y-4">
           <EmptyState
             title="Aucun contact"
-            description="Ajoutez vos premiers programmateurs, lieux et partenaires pour commencer le suivi."
+            description="Ajoutez les personnes utiles a la compagnie : artistes, techniciens, lieux, partenaires ou programmation."
           />
           <div className="flex justify-center">
             <ContactCreateDialog buttonLabel="Creer le premier contact" />

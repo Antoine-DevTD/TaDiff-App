@@ -30,7 +30,7 @@ export function PipelineCreatePanel({
       onClose={() => setIsOpen(false)}
       eyebrow="Diffusion"
       title="Ajouter une date a vendre"
-      description="Reliez un spectacle a un programmateur, puis indiquez la prochaine etape utile."
+      description="Reliez un spectacle a un contact, puis indiquez la prochaine etape utile."
       className="max-w-4xl"
     >
       <OpportunityForm

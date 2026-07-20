@@ -6,7 +6,7 @@ export default function NewContactPage() {
     <Card className="max-w-2xl">
       <CardHeader>
         <CardTitle>Nouveau contact</CardTitle>
-        <CardDescription>Ajoutez un programmateur, lieu, partenaire ou prospect.</CardDescription>
+        <CardDescription>Ajoutez une personne, un lieu, un partenaire ou un autre contact utile.</CardDescription>
       </CardHeader>
       <ContactForm />
     </Card>

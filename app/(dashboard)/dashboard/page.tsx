@@ -307,7 +307,7 @@ export default async function DashboardPage() {
     {
       id: "contacts",
       label: "Remplir le carnet de contacts",
-      detail: "Programmateurs, lieux, partenaires et tags pour retrouver vite les bons contacts.",
+      detail: "Equipe, lieux, partenaires et tags pour retrouver vite les bons contacts.",
       href: "/contacts",
       done: contacts.length > 0,
     },

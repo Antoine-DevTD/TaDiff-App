@@ -1,4 +1,4 @@
-import type { Contact } from "@/types";
+import type { Contact, Show } from "@/types";
 
 export type ContactEmailTemplate = "first-touch" | "follow-up" | "date-option";
 
@@ -8,9 +8,9 @@ export type ContactEmailDraft = {
 };
 
 const templateLabels: Record<ContactEmailTemplate, string> = {
-  "first-touch": "Premier contact",
-  "follow-up": "Relance dossier",
-  "date-option": "Date possible",
+  "first-touch": "Prise de contact",
+  "follow-up": "Relance",
+  "date-option": "Proposition de spectacle",
 };
 
 export const contactEmailTemplateOptions = Object.entries(templateLabels).map(([value, label]) => ({
@@ -21,19 +21,23 @@ export const contactEmailTemplateOptions = Object.entries(templateLabels).map(([
 export function buildContactEmailDraft(
   contact: Contact,
   template: ContactEmailTemplate,
+  show?: Show,
 ): ContactEmailDraft {
   const firstName = contact.name.split(" ")[0] || contact.name;
   const organization = contact.organization || "votre structure";
-  const roleLine = contact.role ? ` en tant que ${contact.role.toLowerCase()}` : "";
+  const showTitle = show?.title || "notre spectacle";
+  const nextDate = show?.nextDate
+    ? new Date(show.nextDate).toLocaleDateString("fr-FR")
+    : "";
 
   if (template === "follow-up") {
     return {
-      subject: `Relance dossier - ${organization}`,
+      subject: show ? `Relance - ${show.title}` : `Relance - ${organization}`,
       body: [
         `Bonjour ${firstName},`,
         "",
-        "Je me permets de revenir vers vous concernant le dossier de diffusion transmis.",
-        `Si le projet peut trouver sa place dans la programmation de ${organization}, je peux vous renvoyer les elements utiles ou caler un court echange.`,
+        `Je me permets de revenir vers vous concernant ${showTitle}.`,
+        `Je peux vous renvoyer les elements utiles ou convenir d'un court echange avec ${organization}.`,
         "",
         "Je reste disponible pour avancer simplement.",
         "",
@@ -44,14 +48,14 @@ export function buildContactEmailDraft(
 
   if (template === "date-option") {
     return {
-      subject: `Proposition de date - ${organization}`,
+      subject: `Proposition - ${showTitle}`,
       body: [
         `Bonjour ${firstName},`,
         "",
-        "Nous regardons actuellement les prochaines dates de diffusion possibles.",
-        `Comme vous suivez la programmation${roleLine}, je voulais voir avec vous si une fenetre pouvait s'ouvrir pour votre lieu ou votre reseau.`,
+        `Je souhaitais vous presenter ${showTitle} et voir si une collaboration pouvait etre pertinente avec ${organization}.`,
+        nextDate ? `Notre prochaine representation est prevue le ${nextDate}.` : "",
         "",
-        "Je peux vous envoyer le dossier artistique, la fiche technique et une proposition chiffree si cela vous semble pertinent.",
+        "Je peux vous transmettre le dossier, les informations pratiques et les prochaines disponibilites si cela vous semble utile.",
         "",
         "Bien a vous,",
       ].join("\n"),
@@ -59,16 +63,16 @@ export function buildContactEmailDraft(
   }
 
   return {
-    subject: `Presentation spectacle - ${organization}`,
-    body: [
-      `Bonjour ${firstName},`,
-      "",
-      `Je me permets de vous contacter pour vous presenter notre spectacle et voir s'il pourrait correspondre a la ligne de ${organization}.`,
-      "L'idee est de vous transmettre un dossier clair, avec les elements artistiques, techniques et financiers utiles pour decider rapidement si cela vaut un echange.",
-      "",
-      "Si vous le souhaitez, je peux vous envoyer le dossier complet et quelques pistes de dates.",
-      "",
-      "Bien a vous,",
-    ].join("\n"),
+      subject: show ? `Prise de contact - ${show.title}` : `Prise de contact - ${organization}`,
+      body: [
+        `Bonjour ${firstName},`,
+        "",
+        `Je me permets de vous contacter au sujet de ${showTitle}.`,
+        `Votre activite au sein de ${organization} nous semble pertinente pour echanger autour de ce projet.`,
+        "",
+        "Si vous le souhaitez, je peux vous envoyer les elements utiles et proposer un court echange.",
+        "",
+        "Bien a vous,",
+      ].join("\n"),
   };
 }

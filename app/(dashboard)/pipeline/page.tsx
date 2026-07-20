@@ -1,7 +1,7 @@
 import { PipelineBoard } from "@/components/pipeline/pipeline-board";
+import { PipelineAddCard } from "@/components/pipeline/pipeline-add-card";
 import { PipelineCreatePanel } from "@/components/pipeline/pipeline-create-panel";
 import { PipelineInsights } from "@/components/pipeline/pipeline-insights";
-import { EmptyState } from "@/components/ui/empty-state";
 import { getContacts, getPipelineDeals, getShows } from "@/lib/supabase/queries";
 
 export default async function PipelinePage() {
@@ -16,10 +16,7 @@ export default async function PipelinePage() {
       <PipelineCreatePanel contacts={contacts} shows={shows} />
 
       {deals.length === 0 ? (
-        <EmptyState
-          title="Aucune date possible"
-          description="Creez une premiere date possible pour commencer le suivi."
-        />
+        <PipelineAddCard variant="empty" />
       ) : (
         <>
           <PipelineBoard contacts={contacts} deals={deals} shows={shows} />

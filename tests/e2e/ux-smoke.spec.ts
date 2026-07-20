@@ -35,12 +35,12 @@ test.describe("landing beta", () => {
 });
 
 test.describe("cockpit en mode demonstration", () => {
-  test("affiche les six rubriques et la priorite du jour sur desktop", async ({ page }) => {
+  test("affiche les rubriques principales et la priorite du jour sur desktop", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/dashboard");
 
     const navigation = page.getByRole("navigation", { name: "Navigation principale" });
-    for (const label of ["Aujourd'hui", "Spectacles", "Diffuser", "Agenda", "Finances", "Dossiers"]) {
+    for (const label of ["Aujourd'hui", "Spectacles", "Contacts", "Diffuser", "Agenda", "Finances", "Dossiers"]) {
       await expect(navigation.getByRole("link", { name: new RegExp(`^${label}`) })).toBeVisible();
     }
     await expect(page.getByText("A faire maintenant", { exact: true })).toBeVisible();
@@ -91,11 +91,13 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/pipeline");
 
-    const trigger = page.getByRole("button", { name: "Ajouter une date" });
+    const trigger = page.getByRole("banner").getByRole("button", { name: "Ajouter une date" });
     await trigger.click();
 
     const dialog = page.getByRole("dialog", { name: "Ajouter une date a vendre" });
     await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Choisir un contact" })).toBeVisible();
+    await expect(dialog.getByText("Choisir un programmateur", { exact: true })).toHaveCount(0);
     await expect(dialog).toBeFocused();
     await page.keyboard.press("Shift+Tab");
     await expect
@@ -104,5 +106,26 @@ test.describe("cockpit en mode demonstration", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(trigger).toBeFocused();
+  });
+
+  test("permet d'ajouter une date depuis la carte pointillee", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/pipeline");
+
+    await page.getByRole("main").getByRole("button", { name: "Ajouter une date" }).click();
+    await expect(page.getByRole("dialog", { name: "Ajouter une date a vendre" })).toBeVisible();
+  });
+
+  test("prepare un brouillon email pour n'importe quel contact", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/campaigns");
+
+    await expect(page.getByRole("heading", { name: "Preparer un email maintenant" })).toBeVisible();
+    await expect(page.getByLabel("Contact", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Spectacle facultatif", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Objet", { exact: true })).toHaveValue(/Prise de contact/);
+    await expect(page.getByRole("button", { name: "Ouvrir ma messagerie" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Gmail" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Outlook" })).toBeEnabled();
   });
 });

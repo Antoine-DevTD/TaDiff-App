@@ -1,140 +1,44 @@
+import { EmailWorkspace } from "@/components/campaigns/email-workspace";
 import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PlannedFeatureNotice } from "@/components/ui/planned-feature";
-import { getEmailCampaigns } from "@/lib/supabase/queries";
-import type { EmailCampaign } from "@/types";
-
-function getCampaignTone(status: EmailCampaign["status"]) {
-  if (status === "Envoyee") return "success" as const;
-  if (status === "Prete") return "warning" as const;
-  return "neutral" as const;
-}
+import { getContacts, getEmailCampaigns, getShows } from "@/lib/supabase/queries";
 
 export default async function CampaignsPage() {
-  const campaigns = await getEmailCampaigns();
-  const sent = campaigns.reduce((total, campaign) => total + campaign.sentCount, 0);
-  const sentCampaigns = campaigns.filter((campaign) => campaign.status === "Envoyee");
-  const averageOpenRate =
-    sentCampaigns.length > 0
-      ? Math.round(sentCampaigns.reduce((total, campaign) => total + campaign.openRate, 0) / sentCampaigns.length)
-      : 0;
-  const ready = campaigns.filter((campaign) => campaign.status === "Prete");
+  const [contacts, shows, campaigns] = await Promise.all([
+    getContacts(),
+    getShows(),
+    getEmailCampaigns(),
+  ]);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <ButtonLink href="/contacts" variant="secondary">
-          Voir les contacts
-        </ButtonLink>
-      </div>
+      <EmailWorkspace contacts={contacts} shows={shows} />
 
-      <PlannedFeatureNotice detail="Les campagnes affichees sont un jeu de demonstration et l'envoi reel d'emails n'est pas encore branche. Les templates serviront de base a l'envoi via Resend." />
-
-      <section className="grid gap-4 md:grid-cols-4">
-        <MetricCard label="Campagnes" value={campaigns.length.toString()} detail="Sequences suivies" />
-        <MetricCard label="Pretes" value={ready.length.toString()} detail="En attente d'envoi" />
-        <MetricCard label="Emails envoyes" value={sent.toLocaleString("fr-FR")} detail="Historique demo" />
-        <MetricCard label="Ouverture moy." value={`${averageOpenRate}%`} detail="Campagnes envoyees" />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="space-y-4 p-5">
-          <div>
-            <p className="text-base font-semibold">File de campagnes</p>
-            <p className="mt-1 text-sm text-muted">
-              Les envois sont prepares. Le provider email reste a brancher avant tout depart reel.
-            </p>
-          </div>
-          <div className="space-y-3">
+      {campaigns.length > 0 ? (
+        <details className="group rounded-lg border border-border bg-panel">
+          <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+            <span className="flex items-center justify-between gap-3">
+              Historique et campagnes
+              <span className="text-xs font-normal text-muted">{campaigns.length} element(s)</span>
+            </span>
+          </summary>
+          <div className="grid gap-3 border-t border-border p-5 lg:grid-cols-3">
             {campaigns.map((campaign) => (
-              <div key={campaign.id} className="rounded-lg border border-border bg-panel-strong/35 p-4">
+              <div key={campaign.id} className="rounded-md border border-border bg-panel-strong/45 p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">{campaign.name}</p>
-                    <p className="mt-1 text-sm text-muted">{campaign.audience}</p>
-                  </div>
-                  <Badge tone={getCampaignTone(campaign.status)}>{campaign.status}</Badge>
+                  <p className="font-medium">{campaign.name}</p>
+                  <Badge tone={campaign.status === "Envoyee" ? "success" : campaign.status === "Prete" ? "warning" : "neutral"}>
+                    {campaign.status}
+                  </Badge>
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                  <InfoCell label="Template" value={campaign.template} />
-                  <InfoCell label="Envoyes" value={campaign.sentCount.toLocaleString("fr-FR")} />
-                  <InfoCell label="Ouverture" value={`${campaign.openRate}%`} />
-                </div>
+                <p className="mt-2 text-sm text-muted">{campaign.audience}</p>
                 <p className="mt-3 text-xs text-muted">
-                  {campaign.nextSendAt
-                    ? `Prochain envoi ${new Date(campaign.nextSendAt).toLocaleDateString("fr-FR")}`
-                    : "Pas de prochain envoi planifie"}
+                  {campaign.sentCount.toLocaleString("fr-FR")} envoi(s) - {campaign.openRate}% d&apos;ouverture
                 </p>
               </div>
             ))}
           </div>
-        </Card>
-
-        <Card className="space-y-4 p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-base font-semibold">Templates disponibles</p>
-              <p className="mt-1 text-sm text-muted">
-                Les variables se branchent sur spectacles, contacts, packs et actions.
-              </p>
-            </div>
-            <Badge>4 modeles</Badge>
-          </div>
-          <TemplateBlock
-            title="Spectacle a vendre"
-            variables="{contact_name}, {show_title}, {next_date}, {pack_name}"
-          />
-          <TemplateBlock
-            title="Offre mediation"
-            variables="{city}, {school_pack}, {workshop_price}, {deadline}"
-          />
-          <TemplateBlock
-            title="Mecenat entreprise"
-            variables="{company_name}, {tax_deduction}, {patronage_amount}"
-          />
-          <TemplateBlock
-            title="Suivi devis"
-            variables="{quote_number}, {deposit_due}, {balance_due}"
-          />
-        </Card>
-      </section>
-    </div>
-  );
-}
-
-function TemplateBlock({ title, variables }: { title: string; variables: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
-      <p className="font-medium">{title}</p>
-      <p className="mt-2 break-words text-sm text-muted">{variables}</p>
-    </div>
-  );
-}
-
-function MetricCard({
-  detail,
-  label,
-  value,
-}: {
-  detail: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <Card className="p-4">
-      <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-3 text-2xl font-semibold">{value}</p>
-      <p className="mt-2 text-xs text-muted">{detail}</p>
-    </Card>
-  );
-}
-
-function InfoCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="mt-1 truncate font-medium">{value}</p>
+        </details>
+      ) : null}
     </div>
   );
 }

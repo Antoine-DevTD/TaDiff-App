@@ -4,6 +4,7 @@ export const pipelineCreateEvent = "tadiff:create-opportunity";
 export type DashboardSectionId =
   | "today"
   | "shows"
+  | "contacts"
   | "distribution"
   | "calendar"
   | "finances"
@@ -37,10 +38,16 @@ export const dashboardSections: DashboardSection[] = [
     summary: "Catalogue et dossiers",
   },
   {
+    id: "contacts",
+    href: "/contacts",
+    label: "Contacts",
+    summary: "Equipe, lieux et partenaires",
+  },
+  {
     id: "distribution",
     href: "/pipeline",
     label: "Diffuser",
-    summary: "Dates et programmateurs",
+    summary: "Dates et emails",
   },
   {
     id: "calendar",
@@ -88,10 +95,10 @@ export const dashboardNavItems: DashboardNavItem[] = [
     summary: "Dates possibles et ventes",
   },
   {
-    section: "distribution",
+    section: "contacts",
     href: "/contacts",
-    label: "Programmateurs",
-    summary: "Contacts et partenaires",
+    label: "Contacts",
+    summary: "Toutes les relations de la compagnie",
   },
   {
     section: "distribution",

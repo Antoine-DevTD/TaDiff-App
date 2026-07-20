@@ -20,6 +20,7 @@ import {
   scheduleOpportunityFollowUp,
   updateOpportunityStage,
 } from "@/app/(dashboard)/actions";
+import { PipelineAddCard } from "@/components/pipeline/pipeline-add-card";
 import { OpportunityEditor } from "@/components/pipeline/opportunity-editor";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
@@ -337,6 +338,7 @@ export function PipelineBoard({
                       }
                     />
                   ))}
+                  {stage.id === "A qualifier" ? <PipelineAddCard /> : null}
                 </PipelineColumn>
               );
             })}

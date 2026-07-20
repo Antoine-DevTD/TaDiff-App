@@ -140,7 +140,8 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
           onClick={() => setMoreOpen(true)}
           className={cn(
             "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-medium text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
-            (activeSection.id === "finances" || activeSection.id === "files" || pathname.startsWith("/settings")) &&
+            (!mobileSections.some((section) => section.id === activeSection.id) ||
+              pathname.startsWith("/settings")) &&
               "bg-accent/10 text-accent",
           )}
         >

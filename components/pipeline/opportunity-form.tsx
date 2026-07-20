@@ -93,7 +93,7 @@ export function OpportunityForm({
             type="button"
             onClick={() => setContactMode("existing")}
           >
-            Choisir un programmateur
+            Choisir un contact
           </button>
           <button
             className={
@@ -113,7 +113,7 @@ export function OpportunityForm({
 
         {contactMode === "existing" ? (
           <div className="mt-3">
-            <Field label="Programmateur ou lieu" error={errors.contactId?.message}>
+            <Field label="Contact" error={errors.contactId?.message}>
               <Select {...register("contactId")}>
                 <option value="">Choisir un contact</option>
                 {contacts.map((contact) => (
