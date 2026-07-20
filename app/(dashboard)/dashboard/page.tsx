@@ -294,7 +294,7 @@ export default async function DashboardPage() {
       id: "show",
       label: "Creer le premier spectacle",
       detail: "Titre, discipline, budget, affiche : le dossier central de la compagnie.",
-      href: "/shows/new",
+      href: "/shows?create=1",
       done: shows.length > 0,
     },
     {

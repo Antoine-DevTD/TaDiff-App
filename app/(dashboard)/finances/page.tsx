@@ -144,7 +144,7 @@ export default async function FinancesPage() {
         <EmptyState
           title="Aucune base financiere"
           description="Ajoutez un spectacle et des dates possibles pour commencer a suivre budgets et revenus."
-          actionHref="/shows/new"
+          actionHref="/shows?create=1"
           actionLabel="Ajouter un spectacle"
         />
       ) : (

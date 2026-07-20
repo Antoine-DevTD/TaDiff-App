@@ -179,7 +179,7 @@ export default async function DocumentsPage() {
         <EmptyState
           title="Aucun dossier documentaire"
           description="Ajoutez d abord un spectacle. Les besoins documentaires remonteront ensuite ici."
-          actionHref="/shows/new"
+          actionHref="/shows?create=1"
           actionLabel="Ajouter un spectacle"
         />
       ) : (

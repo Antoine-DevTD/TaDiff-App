@@ -75,6 +75,21 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("link", { name: "Ouvrir Les lignes de fuite" })).toBeVisible();
   });
 
+  test("cree un spectacle dans une fenetre sans page dediee", async ({ page }) => {
+    await page.goto("/shows");
+
+    await page.getByRole("banner").getByRole("button", { name: "Ajouter" }).click();
+    await expect(page.getByRole("dialog", { name: "Nouveau spectacle" })).toBeVisible();
+    await expect(page).toHaveURL(/\/shows$/);
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Nouveau spectacle" })).toBeHidden();
+
+    await page.goto("/shows/new");
+    await expect(page).toHaveURL(/\/shows\?create=1$/);
+    await expect(page.getByRole("dialog", { name: "Nouveau spectacle" })).toBeVisible();
+  });
+
   test("propose les actions spectacle au clic droit", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/shows");
