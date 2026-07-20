@@ -8,9 +8,21 @@ export const showDocumentTypes = [
   "Texte",
   "Budget",
   "Fiche technique",
+  "Devis",
+] as const;
+
+export type ShowOwnedDocumentType = (typeof showDocumentTypes)[number];
+
+export function isShowOwnedDocumentType(
+  type: ShowDocument["documentType"],
+): type is ShowOwnedDocumentType {
+  return showDocumentTypes.includes(type as ShowOwnedDocumentType);
+}
+
+export const dossierDocumentTypes = [
+  ...showDocumentTypes,
   "RIB",
   "Statuts",
-  "Devis",
 ] as const;
 
 export const showDocumentStatuses = [
@@ -31,8 +43,6 @@ export const essentialShowDocumentTypes = [
 export const optionalShowDocumentTypes = [
   "Budget",
   "Devis",
-  "RIB",
-  "Statuts",
 ] as const;
 
 export const requiredShowDocumentTypes = essentialShowDocumentTypes;

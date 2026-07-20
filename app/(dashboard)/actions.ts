@@ -761,6 +761,7 @@ export async function createCompanyDocument(
   }
 
   revalidatePath("/settings");
+  revalidatePath("/subventions");
   await logActivity("a ajoute un document compagnie", "company_document", parsed.data.title);
 
   return { ok: true, message: "Document de la compagnie enregistre." };
@@ -795,6 +796,7 @@ export async function deleteCompanyDocument(documentId: string): Promise<ActionR
   }
 
   revalidatePath("/settings");
+  revalidatePath("/subventions");
   return { ok: true, message: "Document supprime." };
 }
 

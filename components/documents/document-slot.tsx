@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import { createShowDocument, prepareDocumentUpload } from "@/app/(dashboard)/actions";
 import { Badge } from "@/components/ui/badge";
 import { buildDocumentTitle, documentAcceptAttribute, getDocumentFileError } from "@/lib/documents-upload";
-import { getDocumentStatusTone, getShowDocumentTypeLabel } from "@/lib/show-documents";
+import {
+  getDocumentStatusTone,
+  getShowDocumentTypeLabel,
+  type ShowOwnedDocumentType,
+} from "@/lib/show-documents";
 import { cn } from "@/lib/utils";
-import type { ShowDocumentStatus, ShowDocumentType } from "@/types";
+import type { ShowDocumentStatus } from "@/types";
 
 export function DocumentSlot({
   showId,
@@ -19,7 +23,7 @@ export function DocumentSlot({
 }: {
   showId: string;
   showTitle: string;
-  type: ShowDocumentType;
+  type: ShowOwnedDocumentType;
   title: string | null;
   requirementLabel?: string;
   status: ShowDocumentStatus;

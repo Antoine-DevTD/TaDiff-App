@@ -1,9 +1,10 @@
 import {
   resolveShowPosterUrl,
   requiredShowDocumentTypes,
-  showDocumentTypes,
+  dossierDocumentTypes,
 } from "@/lib/show-documents";
 import type {
+  CompanyDocument,
   GrantOpportunity,
   Show,
   ShowDocument,
@@ -11,7 +12,11 @@ import type {
 } from "@/types";
 
 export type GrantRequirementState = {
-  document?: ShowDocument;
+  document?: {
+    fileUrl: string;
+    notes: string;
+    title: string;
+  };
   status: "missing" | "outdated" | "ready";
   type: ShowDocumentType;
 };
@@ -36,6 +41,16 @@ export const defaultGrantRequirements: ShowDocumentType[] = [
   "Statuts",
 ];
 
+export const companyGrantDocumentTypes = ["RIB", "Statuts"] as const;
+
+export function isCompanyGrantDocumentType(
+  type: ShowDocumentType,
+): type is (typeof companyGrantDocumentTypes)[number] {
+  return companyGrantDocumentTypes.includes(
+    type as (typeof companyGrantDocumentTypes)[number],
+  );
+}
+
 export function getGrantRequirements(grant: GrantOpportunity): ShowDocumentType[] {
   const requirements =
     grant.requirements && grant.requirements.length > 0
@@ -43,20 +58,38 @@ export function getGrantRequirements(grant: GrantOpportunity): ShowDocumentType[
       : defaultGrantRequirements;
 
   return requirements.filter((requirement) =>
-    showDocumentTypes.includes(requirement),
+    dossierDocumentTypes.includes(requirement),
   );
 }
 
 export function buildGrantDossierState({
+  companyDocuments = [],
   documents,
   grant,
   show,
 }: {
+  companyDocuments?: CompanyDocument[];
   documents: ShowDocument[];
   grant: GrantOpportunity;
   show: Show | null;
 }): GrantDossierState {
   const requirements = getGrantRequirements(grant).map((type) => {
+    if (isCompanyGrantDocumentType(type)) {
+      const companyDocument = companyDocuments.find((item) => item.docType === type);
+
+      return companyDocument
+        ? {
+            document: {
+              fileUrl: companyDocument.fileUrl,
+              notes: companyDocument.note,
+              title: companyDocument.title,
+            },
+            status: "ready" as const,
+            type,
+          }
+        : { status: "missing" as const, type };
+    }
+
     if (type === "Affiche" && show && resolveShowPosterUrl(show, documents)) {
       return {
         document: documents.find((item) => item.documentType === "Affiche"),

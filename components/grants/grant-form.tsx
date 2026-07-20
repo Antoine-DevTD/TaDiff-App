@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { showDocumentTypes } from "@/lib/show-documents";
+import { dossierDocumentTypes } from "@/lib/show-documents";
 import {
   grantSchema,
   grantStatuses,
@@ -112,7 +112,7 @@ export function GrantForm({ shows, onSuccess }: { shows: Show[]; onSuccess?: () 
 
       <Field label="Pieces demandees" error={errors.requirements?.message}>
         <div className="grid grid-cols-2 gap-2 rounded-md border border-border bg-panel-strong/35 p-3 sm:grid-cols-3">
-          {showDocumentTypes.map((type) => (
+          {dossierDocumentTypes.map((type) => (
             <label key={type} className="flex items-center gap-2 text-sm font-normal">
               <input type="checkbox" value={type} {...register("requirements")} />
               {type}

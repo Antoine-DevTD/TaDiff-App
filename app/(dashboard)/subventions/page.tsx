@@ -1,6 +1,7 @@
 import { deleteGrantOpportunity } from "@/app/(dashboard)/actions";
 import { GrantCreateDialog } from "@/components/grants/grant-create-dialog";
 import { GrantDossierZipButton } from "@/components/grants/grant-dossier-zip-button";
+import { GrantRequirementSlot } from "@/components/grants/grant-requirement-slot";
 import { GrantImportButton } from "@/components/grants/grant-import-button";
 import { GrantStatusSelect } from "@/components/grants/grant-status-select";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +16,10 @@ import {
   buildGrantDossierState,
   getDossierReadinessPercent,
   getDossierTone,
-  getRequirementTone,
   type GrantDossierState,
 } from "@/lib/grants";
 import {
+  getCompanyDocuments,
   getGrantOpportunities,
   getShowDocuments,
   getShows,
@@ -56,10 +57,11 @@ function getDeadlineLabel(deadline: string) {
 }
 
 export default async function SubventionsPage() {
-  const [grants, shows, documents] = await Promise.all([
+  const [grants, shows, documents, companyDocuments] = await Promise.all([
     getGrantOpportunities(),
     getShows(),
     getShowDocuments(),
+    getCompanyDocuments(),
   ]);
   const showMap = new Map(shows.map((show) => [show.id, show]));
   const dossierStates = grants.map((grant) => {
@@ -68,7 +70,7 @@ export default async function SubventionsPage() {
       ? documents.filter((document) => document.showId === show.id)
       : [];
 
-    return buildGrantDossierState({ documents: showDocuments, grant, show });
+    return buildGrantDossierState({ companyDocuments, documents: showDocuments, grant, show });
   });
   const totalExpected = grants.reduce((total, grant) => total + grant.amount, 0);
   const urgent = dossierStates.filter(
@@ -223,13 +225,21 @@ function GrantRow({ state }: { state: GrantDossierState }) {
             : `${state.missingCount} piece(s) manquante(s), ${state.updateCount} a revoir.`}
         </p>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {state.requirements.slice(0, 5).map((requirement) => (
-          <Badge key={requirement.type} tone={getRequirementTone(requirement.status)}>
-            {requirement.type}
-          </Badge>
-        ))}
-      </div>
+      <details className="mt-3 rounded-md border border-border bg-panel/55">
+        <summary className="cursor-pointer px-3 py-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+          Voir les {state.totalCount} pieces demandees
+        </summary>
+        <div className="grid gap-2 border-t border-border p-3">
+          {state.requirements.map((requirement) => (
+            <GrantRequirementSlot
+              key={requirement.type}
+              requirement={requirement}
+              showId={state.show?.id}
+              showTitle={state.show?.title}
+            />
+          ))}
+        </div>
+      </details>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <GrantStatusSelect grantId={grant.id} status={grant.status} />
         {state.show ? (

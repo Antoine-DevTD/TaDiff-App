@@ -1,8 +1,9 @@
 // Detection sans IA du type de document a partir du nom de fichier et,
 // pour les PDF, du texte de la premiere page. Table de mots-cles -> type.
-// Alignee avec showDocumentTypes (lib/show-documents.ts) et ShowDocumentType.
+// Alignee avec les documents propres a un spectacle. Les pieces administratives
+// (RIB, statuts...) sont classees et stockees au niveau de la compagnie.
 
-import type { ShowDocumentType } from "@/types";
+import type { ShowOwnedDocumentType } from "@/lib/show-documents";
 
 function normalize(input: string) {
   return input
@@ -12,15 +13,13 @@ function normalize(input: string) {
 }
 
 // Ordre = priorite : le premier motif trouve gagne.
-const detectionRules: { type: ShowDocumentType; keywords: string[] }[] = [
+const detectionRules: { type: ShowOwnedDocumentType; keywords: string[] }[] = [
   { type: "Note d'intention", keywords: ["note d intention", "note dintention", "intention"] },
   { type: "Fiche technique", keywords: ["fiche technique", "fiche-technique", "rider", "technique"] },
   { type: "Affiche", keywords: ["affiche", "visuel", "poster", "flyer"] },
   { type: "Synopsis", keywords: ["synopsis", "resume", "pitch"] },
   { type: "Budget", keywords: ["budget", "previsionnel", "previsionnel", "cout", "depenses"] },
   { type: "Devis", keywords: ["devis", "facture", "cession"] },
-  { type: "RIB", keywords: ["rib", "iban", "coordonnees bancaires", "bancaire"] },
-  { type: "Statuts", keywords: ["statuts", "kbis", "association", "siret"] },
   { type: "Texte", keywords: ["texte", "script", "manuscrit"] },
   { type: "Dossier artistique", keywords: ["dossier artistique", "dossier", "artistique", "presentation"] },
 ];
@@ -29,7 +28,7 @@ const detectionRules: { type: ShowDocumentType; keywords: string[] }[] = [
  * Deduit le type de document. `filename` est toujours utilise ;
  * `text` (texte extrait d'un PDF) affine la detection s'il est fourni.
  */
-export function detectDocumentType(filename: string, text?: string): ShowDocumentType {
+export function detectDocumentType(filename: string, text?: string): ShowOwnedDocumentType {
   const haystack = `${normalize(filename)} ${text ? normalize(text) : ""}`;
 
   for (const rule of detectionRules) {

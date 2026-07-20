@@ -12,16 +12,17 @@ import {
   getShowDocumentTypeLabel,
   showDocumentStatuses,
   showDocumentTypes,
+  type ShowOwnedDocumentType,
 } from "@/lib/show-documents";
 import { cn } from "@/lib/utils";
-import type { ShowDocumentStatus, ShowDocumentType } from "@/types";
+import type { ShowDocumentStatus } from "@/types";
 
 type PendingDoc = {
   id: string;
   file: File;
   title: string;
   titleTouched: boolean;
-  documentType: ShowDocumentType;
+  documentType: ShowOwnedDocumentType;
   status: ShowDocumentStatus;
   error: string | null;
 };
@@ -240,7 +241,7 @@ export function DocumentDropzone({
                       className="mt-1"
                       value={item.documentType}
                       onChange={(event) => {
-                        const documentType = event.target.value as ShowDocumentType;
+                        const documentType = event.target.value as ShowOwnedDocumentType;
                         updateDoc(item.id, {
                           documentType,
                           title: item.titleTouched ? item.title : buildDocumentTitle(showTitle, documentType),

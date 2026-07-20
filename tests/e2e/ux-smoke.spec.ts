@@ -66,6 +66,8 @@ test.describe("cockpit en mode demonstration", () => {
     await page.getByRole("link", { name: "Dossier", exact: true }).click();
     await expect(page).toHaveURL(/tab=files/);
     await expect(page.getByRole("heading", { name: "Pieces indispensables" })).toBeVisible();
+    await expect(page.getByText("RIB", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Statuts", { exact: true })).toHaveCount(0);
   });
 
   test("propose les actions spectacle au clic droit", async ({ page }) => {
@@ -151,5 +153,16 @@ test.describe("cockpit en mode demonstration", () => {
     expect(scrolledBox?.y).toBe(initialBox?.y);
     expect(scrolledBox?.height).toBe(initialBox?.height);
     expect(scrolledBox?.height).toBe(720);
+  });
+
+  test("classe le RIB et les statuts comme documents de compagnie dans les subventions", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/subventions");
+
+    const requirementList = page.locator("details").filter({ hasText: /pieces demandees/ }).first();
+    await requirementList.locator("summary").click();
+    await expect(requirementList.getByText("RIB", { exact: true })).toBeVisible();
+    await expect(requirementList.getByText("Statuts", { exact: true })).toBeVisible();
+    await expect(requirementList.getByText("Document compagnie", { exact: true }).first()).toBeVisible();
   });
 });

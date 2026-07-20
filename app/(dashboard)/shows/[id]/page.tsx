@@ -12,6 +12,7 @@ import {
   getShowDocumentReadiness,
   getShowDocumentTypeLabel,
   isEssentialShowDocumentType,
+  isShowOwnedDocumentType,
   optionalShowDocumentTypes,
   resolveShowPosterUrl,
 } from "@/lib/show-documents";
@@ -39,9 +40,13 @@ function resolveTab(value: string | undefined): ShowTab {
 
 export default async function ShowDetailPage({ params, searchParams }: ShowDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const { documents, opportunities, reminders, show } = await getShowById(id);
+  const { documents: allDocuments, opportunities, reminders, show } = await getShowById(id);
 
   if (!show) notFound();
+
+  const documents = allDocuments.filter((document) =>
+    isShowOwnedDocumentType(document.documentType),
+  );
 
   const activeTab = resolveTab(query.tab);
   const weightedRevenue = opportunities.reduce(
@@ -151,7 +156,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
               <section className="border-t border-border pt-6">
                 <CardHeader>
                   <CardTitle>Documents facultatifs</CardTitle>
-                  <CardDescription>Devis, budget, RIB, statuts et autres pieces utiles.</CardDescription>
+                  <CardDescription>Devis, budget et autres pieces propres a ce spectacle.</CardDescription>
                 </CardHeader>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {optionalShowDocumentTypes.map((type) => {
