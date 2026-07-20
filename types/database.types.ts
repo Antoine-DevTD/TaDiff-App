@@ -191,6 +191,7 @@ export type Database = {
           status: "En diffusion" | "Creation" | "En pause";
           next_date: string | null;
           budget: number | null;
+          detailed_budget_enabled: boolean;
           notes: string | null;
           poster_url: string | null;
           created_at: string;
@@ -203,6 +204,7 @@ export type Database = {
           status?: "En diffusion" | "Creation" | "En pause";
           next_date?: string | null;
           budget?: number | null;
+          detailed_budget_enabled?: boolean;
           notes?: string | null;
           poster_url?: string | null;
           created_at?: string;
@@ -213,6 +215,7 @@ export type Database = {
           status?: "En diffusion" | "Creation" | "En pause";
           next_date?: string | null;
           budget?: number | null;
+          detailed_budget_enabled?: boolean;
           notes?: string | null;
           poster_url?: string | null;
           created_at?: string;
@@ -223,6 +226,59 @@ export type Database = {
             columns: ["company_id"];
             isOneToOne: false;
             referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      show_budget_items: {
+        Row: {
+          id: string;
+          company_id: string;
+          show_id: string;
+          kind: "expense" | "revenue";
+          category: string;
+          label: string;
+          amount: number;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          show_id: string;
+          kind: "expense" | "revenue";
+          category: string;
+          label: string;
+          amount?: number;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          company_id?: string;
+          show_id?: string;
+          kind?: "expense" | "revenue";
+          category?: string;
+          label?: string;
+          amount?: number;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "show_budget_items_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "show_budget_items_show_id_fkey";
+            columns: ["show_id"];
+            isOneToOne: false;
+            referencedRelation: "shows";
             referencedColumns: ["id"];
           },
         ];

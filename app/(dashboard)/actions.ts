@@ -62,6 +62,10 @@ import {
   type ReminderFormInput,
 } from "@/lib/validation/pipeline";
 import { showSchema, type ShowFormInput } from "@/lib/validation/show";
+import {
+  showBudgetItemSchema,
+  type ShowBudgetItemInput,
+} from "@/lib/validation/show-budget";
 import { feedbackSchema, type FeedbackFormInput } from "@/lib/validation/feedback";
 import { getDefaultProbability } from "@/lib/pipeline";
 import type { PipelineStage } from "@/types";
@@ -70,6 +74,13 @@ type ActionResult = {
   ok: boolean;
   message: string;
 };
+
+function isDetailedBudgetSchemaCacheError(message: string | undefined) {
+  return Boolean(
+    message?.includes("schema cache") &&
+      (message.includes("detailed_budget_enabled") || message.includes("show_budget_items")),
+  );
+}
 
 type PerformanceInvitationResult = ActionResult & {
   invitation?: {
@@ -232,16 +243,32 @@ export async function createShow(values: ShowFormInput): Promise<ActionResult> {
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase.from("shows").insert({
+  const showValues = {
     company_id: workspace.companyId,
     title: parsed.data.title,
     discipline: parsed.data.discipline,
     status: parsed.data.status,
     next_date: parsed.data.nextDate || null,
     budget: parsed.data.budget ?? 0,
+    detailed_budget_enabled: parsed.data.detailedBudgetEnabled,
     poster_url: parsed.data.posterUrl || null,
     notes: parsed.data.notes || null,
-  });
+  };
+  let { error } = await supabase.from("shows").insert(showValues);
+
+  if (isDetailedBudgetSchemaCacheError(error?.message)) {
+    const fallback = await supabase.from("shows").insert({
+      company_id: showValues.company_id,
+      title: showValues.title,
+      discipline: showValues.discipline,
+      status: showValues.status,
+      next_date: showValues.next_date,
+      budget: showValues.budget,
+      poster_url: showValues.poster_url,
+      notes: showValues.notes,
+    });
+    error = fallback.error;
+  }
 
   if (error) {
     return { ok: false, message: error.message };
@@ -273,18 +300,36 @@ export async function updateShow(showId: string, values: ShowFormInput): Promise
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase
+  const showValues = {
+    title: parsed.data.title,
+    discipline: parsed.data.discipline,
+    status: parsed.data.status,
+    next_date: parsed.data.nextDate || null,
+    budget: parsed.data.budget ?? 0,
+    detailed_budget_enabled: parsed.data.detailedBudgetEnabled,
+    poster_url: parsed.data.posterUrl || null,
+    notes: parsed.data.notes || null,
+  };
+  let { error } = await supabase
     .from("shows")
-    .update({
-      title: parsed.data.title,
-      discipline: parsed.data.discipline,
-      status: parsed.data.status,
-      next_date: parsed.data.nextDate || null,
-      budget: parsed.data.budget ?? 0,
-      poster_url: parsed.data.posterUrl || null,
-      notes: parsed.data.notes || null,
-    })
+    .update(showValues)
     .eq("id", showId);
+
+  if (isDetailedBudgetSchemaCacheError(error?.message)) {
+    const fallback = await supabase
+      .from("shows")
+      .update({
+        title: showValues.title,
+        discipline: showValues.discipline,
+        status: showValues.status,
+        next_date: showValues.next_date,
+        budget: showValues.budget,
+        poster_url: showValues.poster_url,
+        notes: showValues.notes,
+      })
+      .eq("id", showId);
+    error = fallback.error;
+  }
 
   if (error) {
     return { ok: false, message: error.message };
@@ -302,6 +347,133 @@ export async function updateShow(showId: string, values: ShowFormInput): Promise
   await logActivity("a modifie le spectacle", "spectacle", parsed.data.title);
 
   return { ok: true, message: "Spectacle mis a jour." };
+}
+
+export async function saveShowBudgetItem(
+  showId: string,
+  itemId: string | null,
+  values: ShowBudgetItemInput,
+) {
+  const parsed = showBudgetItemSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Ligne de budget invalide." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: true,
+      message: "Mode démo : ligne validée, non enregistrée.",
+      item: {
+        id: itemId ?? crypto.randomUUID(),
+        showId,
+        ...parsed.data,
+        sortOrder: 0,
+      },
+    };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: ownedShow } = await supabase
+    .from("shows")
+    .select("id")
+    .eq("id", showId)
+    .eq("company_id", workspace.companyId)
+    .maybeSingle();
+
+  if (!ownedShow) return { ok: false, message: "Spectacle introuvable dans cette compagnie." };
+
+  const budgetValues = {
+    kind: parsed.data.kind,
+    category: parsed.data.category,
+    label: parsed.data.label,
+    amount: parsed.data.amount,
+    updated_at: new Date().toISOString(),
+  };
+
+  const response = itemId
+    ? await supabase
+        .from("show_budget_items")
+        .update(budgetValues)
+        .eq("id", itemId)
+        .eq("show_id", showId)
+        .eq("company_id", workspace.companyId)
+        .select("id,show_id,kind,category,label,amount,sort_order")
+        .single()
+    : await supabase
+        .from("show_budget_items")
+        .insert({
+          ...budgetValues,
+          company_id: workspace.companyId,
+          show_id: showId,
+        })
+        .select("id,show_id,kind,category,label,amount,sort_order")
+        .single();
+
+  if (response.error || !response.data) {
+    const message = isDetailedBudgetSchemaCacheError(response.error?.message)
+      ? "Le budget détaillé doit être activé avec la migration 034."
+      : response.error?.message ?? "Impossible d'enregistrer cette ligne.";
+    return { ok: false, message };
+  }
+
+  revalidatePath(`/shows/${showId}`);
+  revalidatePath("/finances");
+
+  return {
+    ok: true,
+    message: itemId ? "Ligne mise à jour." : "Ligne ajoutée.",
+    item: {
+      id: response.data.id,
+      showId: response.data.show_id,
+      kind: response.data.kind,
+      category: response.data.category,
+      label: response.data.label,
+      amount: response.data.amount ?? 0,
+      sortOrder: response.data.sort_order,
+    },
+  };
+}
+
+export async function deleteShowBudgetItem(showId: string, itemId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) return { ok: true, message: "Mode démo : ligne supprimée." };
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("show_budget_items")
+    .delete()
+    .eq("id", itemId)
+    .eq("show_id", showId)
+    .eq("company_id", workspace.companyId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: isDetailedBudgetSchemaCacheError(error.message)
+        ? "Le budget détaillé doit être activé avec la migration 034."
+        : error.message,
+    };
+  }
+
+  revalidatePath(`/shows/${showId}`);
+  revalidatePath("/finances");
+  return { ok: true, message: "Ligne supprimée." };
 }
 
 export async function deleteShow(showId: string): Promise<ActionResult> {

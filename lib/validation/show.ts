@@ -6,6 +6,7 @@ export const showSchema = z.object({
   status: z.enum(["En diffusion", "Creation", "En pause"]),
   nextDate: z.string().optional(),
   budget: z.coerce.number().min(0, "Le budget doit etre positif").optional(),
+  detailedBudgetEnabled: z.coerce.boolean().default(false),
   posterUrl: z.string().url("Lien d'affiche invalide").optional().or(z.literal("")),
   notes: z.string().max(1200, "La note est trop longue").optional(),
 });

@@ -23,6 +23,7 @@ const defaultValues: ShowFormInput = {
   status: "En diffusion",
   nextDate: "",
   budget: 0,
+  detailedBudgetEnabled: false,
   posterUrl: "",
   notes: "",
 };
@@ -46,6 +47,7 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
           status: show.status,
           nextDate: show.nextDate || "",
           budget: show.budget,
+          detailedBudgetEnabled: show.detailedBudgetEnabled ?? false,
           posterUrl: show.posterUrl || "",
           notes: show.notes || "",
         }
@@ -103,10 +105,28 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
         >
           <Input type="date" {...register("nextDate")} />
         </Field>
-        <Field label="Budget prévisionnel" error={errors.budget?.message}>
+        <Field
+          label="Enveloppe de création estimée"
+          error={errors.budget?.message}
+          hint="Un ordre de grandeur suffit. Vous pourrez le détailler plus tard."
+        >
           <Input type="number" min="0" step="100" {...register("budget")} />
         </Field>
       </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-panel-strong/45 p-4 transition hover:border-accent/40">
+        <input
+          className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--accent)]"
+          type="checkbox"
+          {...register("detailedBudgetEnabled")}
+        />
+        <span>
+          <span className="block text-sm font-semibold">Je veux détailler le budget</span>
+          <span className="mt-1 block text-sm font-normal leading-5 text-muted">
+            Ajoute un espace simple pour lister les dépenses, les financements et ce qu&apos;il reste à trouver.
+          </span>
+        </span>
+      </label>
 
       <Field label="Affiche du spectacle" error={errors.posterUrl?.message}>
         <input type="hidden" {...register("posterUrl")} />

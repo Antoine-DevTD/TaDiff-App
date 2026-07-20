@@ -80,6 +80,7 @@ test.describe("cockpit en mode demonstration", () => {
 
     await page.getByRole("banner").getByRole("button", { name: "Ajouter" }).click();
     await expect(page.getByRole("dialog", { name: "Nouveau spectacle" })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /Je veux détailler le budget/ })).toBeVisible();
     await expect(page).toHaveURL(/\/shows$/);
 
     await page.keyboard.press("Escape");
@@ -88,6 +89,24 @@ test.describe("cockpit en mode demonstration", () => {
     await page.goto("/shows/new");
     await expect(page).toHaveURL(/\/shows\?create=1$/);
     await expect(page.getByRole("dialog", { name: "Nouveau spectacle" })).toBeVisible();
+  });
+
+  test("rend le budget detaille progressif et comprehensible", async ({ page }) => {
+    await page.goto("/shows/show-1");
+
+    await page.getByRole("link", { name: "Budget", exact: true }).click();
+    await expect(page).toHaveURL(/tab=budget/);
+    await expect(page.getByRole("heading", { name: /Comprendre l'équilibre/ })).toBeVisible();
+    await expect(page.getByText("Le spectacle coûte", { exact: true })).toBeVisible();
+    await expect(page.getByText("Déjà financé", { exact: true })).toBeVisible();
+    await expect(page.getByText("Reste à trouver", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Répartition des dépenses" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Ajouter une dépense" }).click();
+    await page.getByLabel("À quoi sert ce montant ?").fill("Location du studio de répétition");
+    await page.getByLabel("Montant", { exact: true }).fill("850");
+    await page.getByRole("button", { name: "Ajouter la ligne" }).click();
+    await expect(page.getByText("Location du studio de répétition", { exact: true })).toBeVisible();
   });
 
   test("propose les actions spectacle au clic droit", async ({ page }) => {

@@ -52,9 +52,20 @@ export type Show = {
   status: ShowStatus;
   nextDate: string;
   budget: number;
+  detailedBudgetEnabled?: boolean;
   notes: string;
   posterUrl?: string;
   costProfile?: CostProfile;
+};
+
+export type ShowBudgetItem = {
+  id: string;
+  showId: string;
+  kind: "expense" | "revenue";
+  category: string;
+  label: string;
+  amount: number;
+  sortOrder: number;
 };
 
 export type ShowDocumentType =

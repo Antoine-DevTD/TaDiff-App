@@ -11,6 +11,7 @@ import {
   pipelineDeals,
   quoteItems,
   reminders,
+  showBudgetItems,
   showDocuments,
   shows,
   treasurySnapshot,
@@ -35,6 +36,7 @@ import type {
   QuoteItem,
   Reminder,
   Show,
+  ShowBudgetItem,
   ShowDocument,
   TreasurySnapshot,
 } from "@/types";
@@ -55,7 +57,7 @@ export async function getShows(): Promise<Show[]> {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("shows")
-    .select("id,title,discipline,status,next_date,budget,notes,poster_url")
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (error || !data) {
@@ -69,12 +71,15 @@ export async function getShows(): Promise<Show[]> {
     status: show.status,
     nextDate: show.next_date ?? "",
     budget: show.budget ?? 0,
+    detailedBudgetEnabled:
+      "detailed_budget_enabled" in show ? Boolean(show.detailed_budget_enabled) : false,
     notes: show.notes ?? "",
     posterUrl: show.poster_url ?? "",
   }));
 }
 
 export async function getShowById(showId: string): Promise<{
+  budgetItems: ShowBudgetItem[];
   documents: ShowDocument[];
   opportunities: PipelineDeal[];
   reminders: Reminder[];
@@ -90,6 +95,7 @@ export async function getShowById(showId: string): Promise<{
 
     return {
       documents: showDocuments.filter((document) => document.showId === showId),
+      budgetItems: showBudgetItems.filter((item) => item.showId === showId),
       show,
       opportunities,
       reminders: filteredReminders,
@@ -99,15 +105,19 @@ export async function getShowById(showId: string): Promise<{
   const supabase = await getSupabaseServerClient();
   const { data: show, error: showError } = await supabase
     .from("shows")
-    .select("id,title,discipline,status,next_date,budget,notes,poster_url")
+    .select("*")
     .eq("id", showId)
     .maybeSingle();
 
   if (showError || !show) {
-    return { documents: [], show: null, opportunities: [], reminders: [] };
+    return { budgetItems: [], documents: [], show: null, opportunities: [], reminders: [] };
   }
 
-  const [{ data: opportunities, error: opportunitiesError }, { data: documents, error: documentsError }] =
+  const [
+    { data: opportunities, error: opportunitiesError },
+    { data: documents, error: documentsError },
+    { data: budgetRows, error: budgetError },
+  ] =
     await Promise.all([
       supabase
         .from("opportunities")
@@ -121,6 +131,12 @@ export async function getShowById(showId: string): Promise<{
         .select("id,show_id,title,document_type,status,file_url,storage_path,notes,updated_at")
         .eq("show_id", showId)
         .order("updated_at", { ascending: false }),
+      supabase
+        .from("show_budget_items")
+        .select("id,show_id,kind,category,label,amount,sort_order")
+        .eq("show_id", showId)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true }),
     ]);
 
   const resolvedShow: Show = {
@@ -130,12 +146,26 @@ export async function getShowById(showId: string): Promise<{
     status: show.status,
     nextDate: show.next_date ?? "",
     budget: show.budget ?? 0,
+    detailedBudgetEnabled:
+      "detailed_budget_enabled" in show ? Boolean(show.detailed_budget_enabled) : false,
     notes: show.notes ?? "",
     posterUrl: show.poster_url ?? "",
   };
 
   const resolvedDocuments: ShowDocument[] =
     documentsError || !documents ? [] : await mapShowDocumentRows(documents);
+  const resolvedBudgetItems: ShowBudgetItem[] =
+    budgetError || !budgetRows
+      ? []
+      : budgetRows.map((item) => ({
+          id: item.id,
+          showId: item.show_id,
+          kind: item.kind,
+          category: item.category,
+          label: item.label,
+          amount: item.amount ?? 0,
+          sortOrder: item.sort_order,
+        }));
 
   const resolvedOpportunities: PipelineDeal[] =
     opportunitiesError || !opportunities
@@ -175,6 +205,7 @@ export async function getShowById(showId: string): Promise<{
   if (remindersError || !reminderRows) {
     return {
       documents: resolvedDocuments,
+      budgetItems: resolvedBudgetItems,
       show: resolvedShow,
       opportunities: resolvedOpportunities,
       reminders: [],
@@ -183,6 +214,7 @@ export async function getShowById(showId: string): Promise<{
 
   return {
     documents: resolvedDocuments,
+    budgetItems: resolvedBudgetItems,
     show: resolvedShow,
     opportunities: resolvedOpportunities,
     reminders: reminderRows.map((reminder) => ({

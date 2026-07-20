@@ -4,10 +4,11 @@ import { ArrowLeft } from "lucide-react";
 import { DocumentSlot } from "@/components/documents/document-slot";
 import { ShowDocumentDeleteButton } from "@/components/documents/show-document-delete-button";
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
+import { ShowBudgetWorkspace } from "@/components/shows/show-budget-workspace";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { buildDealProfitability, formatCurrency, getShowCostProfile, getVerdictMeta } from "@/lib/finance";
+import { formatCurrency } from "@/lib/finance";
 import {
   essentialShowDocumentTypes,
   getShowDocumentReadiness,
@@ -28,20 +29,19 @@ type ShowDetailPageProps = {
   searchParams: Promise<{ tab?: string }>;
 };
 
-const showTabs: Array<{ id: ShowTab; label: string }> = [
+const baseShowTabs: Array<{ id: ShowTab; label: string }> = [
   { id: "overview", label: "Vue d'ensemble" },
   { id: "files", label: "Dossier" },
   { id: "dates", label: "Dates" },
-  { id: "budget", label: "Budget" },
 ];
 
-function resolveTab(value: string | undefined): ShowTab {
-  return showTabs.some((tab) => tab.id === value) ? (value as ShowTab) : "overview";
+function resolveTab(value: string | undefined, tabs: Array<{ id: ShowTab }>): ShowTab {
+  return tabs.some((tab) => tab.id === value) ? (value as ShowTab) : "overview";
 }
 
 export default async function ShowDetailPage({ params, searchParams }: ShowDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const { documents: allDocuments, opportunities, reminders, show } = await getShowById(id);
+  const { budgetItems, documents: allDocuments, opportunities, reminders, show } = await getShowById(id);
 
   if (!show) notFound();
 
@@ -49,16 +49,14 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
     isShowOwnedDocumentType(document.documentType),
   );
 
-  const activeTab = resolveTab(query.tab);
+  const showTabs = show.detailedBudgetEnabled
+    ? [...baseShowTabs, { id: "budget" as const, label: "Budget" }]
+    : baseShowTabs;
+  const activeTab = resolveTab(query.tab, showTabs);
   const weightedRevenue = opportunities.reduce(
     (total, deal) => total + Math.round((deal.value * deal.probability) / 100),
     0,
   );
-  const costProfile = getShowCostProfile(show);
-  const profitabilityRows = opportunities.map((deal) => ({
-    deal,
-    result: buildDealProfitability({ deal, show }),
-  }));
   const posterUrl = resolveShowPosterUrl(show, documents);
   const documentReadiness = getShowDocumentReadiness(documents, { hasPoster: Boolean(posterUrl) });
   const linkedOptionalDocuments = documents.filter(
@@ -270,50 +268,22 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
         </Card>
       ) : null}
 
-      {activeTab === "budget" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Rentabilite du spectacle</CardTitle>
-            <CardDescription>Base de couts et verdict de chaque date avant signature.</CardDescription>
-          </CardHeader>
-          <div className="grid gap-8 xl:grid-cols-2">
-            <section>
-              <h3 className="mb-3 text-sm font-semibold">Structure de couts</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <InfoCell label="Artistes" value={formatCurrency(costProfile.artistFees)} />
-                <InfoCell label="Technique" value={formatCurrency(costProfile.technicalFees)} />
-                <InfoCell label="Droits" value={formatCurrency(costProfile.rights)} />
-                <InfoCell label="Production" value={formatCurrency(costProfile.production)} />
-              </div>
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Budget de creation</p>
-                <p className="mt-2 text-2xl font-semibold">{formatCurrency(show.budget)}</p>
-              </div>
-            </section>
-            <section>
-              <h3 className="mb-3 text-sm font-semibold">Verdict des dates</h3>
-              <div className="space-y-3">
-                {profitabilityRows.length === 0 ? (
-                  <EmptyPanel text="Aucune date a calculer." />
-                ) : (
-                  profitabilityRows.map(({ deal, result }) => {
-                    const verdict = getVerdictMeta(result.verdict);
-
-                    return (
-                      <div key={deal.id} className="flex items-start justify-between gap-3 border-b border-border py-3 last:border-b-0">
-                        <div>
-                          <p className="text-sm font-medium">{deal.title}</p>
-                          <p className="mt-1 text-xs text-muted">Marge {formatCurrency(result.margin)} - point mort {formatCurrency(result.breakEven)}</p>
-                        </div>
-                        <Badge tone={verdict.tone}>{verdict.label}</Badge>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+      {activeTab === "budget" && show.detailedBudgetEnabled ? (
+        <section aria-labelledby="detailed-budget-title" className="space-y-6">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Budget du spectacle</p>
+            <h3 id="detailed-budget-title" className="mt-2 text-2xl font-semibold">Comprendre l&apos;équilibre sans faire de comptabilité</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Listez ce qui coûte de l&apos;argent et ce qui finance le projet. Commencez par les montants importants : le détail peut venir progressivement.
+            </p>
           </div>
-        </Card>
+          <ShowBudgetWorkspace
+            initialItems={budgetItems}
+            showId={show.id}
+            simpleBudget={show.budget}
+            weightedPipelineRevenue={weightedRevenue}
+          />
+        </section>
       ) : null}
     </div>
   );
@@ -408,23 +378,10 @@ function ShowPoster({ posterUrl, show }: { posterUrl: string; show: Show }) {
   );
 }
 
-function EmptyPanel({ text }: { text: string }) {
-  return <div className="border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">{text}</div>;
-}
-
 function ActionPanel({ href, text }: { href: string; text: string }) {
   return (
     <Link className="block border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted transition-colors hover:border-accent/45 hover:bg-panel-strong hover:text-foreground" href={href}>
       {text}
     </Link>
-  );
-}
-
-function InfoCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border border-border bg-panel-strong/45 p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
-      <p className="mt-2 font-medium">{value}</p>
-    </div>
   );
 }

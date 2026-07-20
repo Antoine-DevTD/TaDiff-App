@@ -12,6 +12,7 @@ import type {
   QuoteItem,
   Reminder,
   Show,
+  ShowBudgetItem,
   ShowDocument,
   TreasurySnapshot,
 } from "@/types";
@@ -35,6 +36,7 @@ export const shows: Show[] = [
     status: "En diffusion",
     nextDate: "2026-09-18",
     budget: 12500,
+    detailedBudgetEnabled: true,
     notes: "Version legere en tournee. Dossier diffusion et fiche technique a tenir a jour.",
     posterUrl: "",
     costProfile: {
@@ -52,6 +54,7 @@ export const shows: Show[] = [
     status: "Creation",
     nextDate: "2026-11-04",
     budget: 18400,
+    detailedBudgetEnabled: false,
     notes: "Montage coproduction en cours. Besoins lumiere et residence a confirmer.",
     posterUrl: "",
     costProfile: {
@@ -69,6 +72,7 @@ export const shows: Show[] = [
     status: "En pause",
     nextDate: "2027-01-12",
     budget: 9200,
+    detailedBudgetEnabled: false,
     notes: "Projet en pause, relance possible sur la prochaine saison scolaire.",
     posterUrl: "",
     costProfile: {
@@ -79,6 +83,17 @@ export const shows: Show[] = [
       production: 360,
     },
   },
+];
+
+export const showBudgetItems: ShowBudgetItem[] = [
+  { id: "budget-1", showId: "show-1", kind: "expense", category: "creation", label: "Répétitions rémunérées", amount: 3600, sortOrder: 0 },
+  { id: "budget-2", showId: "show-1", kind: "expense", category: "artistic", label: "Équipe artistique", amount: 4200, sortOrder: 1 },
+  { id: "budget-3", showId: "show-1", kind: "expense", category: "scenography", label: "Décor et costumes", amount: 1900, sortOrder: 2 },
+  { id: "budget-4", showId: "show-1", kind: "expense", category: "technical", label: "Création lumière et régie", amount: 1300, sortOrder: 3 },
+  { id: "budget-5", showId: "show-1", kind: "expense", category: "communication", label: "Affiche et dossier de diffusion", amount: 600, sortOrder: 4 },
+  { id: "budget-6", showId: "show-1", kind: "revenue", category: "own", label: "Apport de la compagnie", amount: 2500, sortOrder: 0 },
+  { id: "budget-7", showId: "show-1", kind: "revenue", category: "coproduction", label: "Coproduction confirmée", amount: 4000, sortOrder: 1 },
+  { id: "budget-8", showId: "show-1", kind: "revenue", category: "grants", label: "Aide à la création", amount: 3000, sortOrder: 2 },
 ];
 
 export const showDocuments: ShowDocument[] = [
