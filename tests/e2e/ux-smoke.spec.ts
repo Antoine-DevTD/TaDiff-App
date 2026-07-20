@@ -44,6 +44,12 @@ test.describe("cockpit en mode demonstration", () => {
       await expect(navigation.getByRole("link", { name: new RegExp(`^${label}`) })).toBeVisible();
     }
     await expect(page.getByText("A faire maintenant", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Ouvrir William" }).click();
+    const william = page.getByRole("region", { name: "Assistant William" });
+    await expect(william.getByText("Votre copilote TaDiff", { exact: true })).toBeVisible();
+    await expect(william.getByRole("link", { name: /Ajouter un spectacle/ })).toBeVisible();
+    await expect(william.getByRole("button", { name: "Visite guidee" })).toBeVisible();
   });
 
   test("donne acces aux rubriques secondaires depuis la navigation mobile", async ({ page }) => {

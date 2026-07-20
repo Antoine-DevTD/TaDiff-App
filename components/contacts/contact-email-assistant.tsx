@@ -1,6 +1,7 @@
 "use client";
 
-import { Copy, Mail, Sparkles } from "lucide-react";
+import { Copy, Mail } from "lucide-react";
+import { TadiffMark } from "@/components/brand/tadiff-mark";
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -70,8 +71,8 @@ export function ContactEmailAssistant({
     >
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
         <aside className="rounded-lg border border-border bg-panel-strong/55 p-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent/12 text-accent">
-            <Sparkles className="h-5 w-5" aria-hidden />
+          <div className="flex h-11 w-11 items-center justify-center">
+            <TadiffMark className="h-9 w-9" />
           </div>
           <p className="mt-4 text-sm font-semibold">William prepare une base</p>
           <p className="mt-2 text-sm text-muted">

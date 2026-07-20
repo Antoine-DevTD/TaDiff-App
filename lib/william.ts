@@ -1,6 +1,5 @@
-// William : assistant SANS IA. Recommandations calculees par regles simples
-// a partir des vraies donnees de la compagnie (relances, subventions, solde,
-// dossiers). Aucune generation de texte par modele : que des faits chiffres.
+// William remains deterministic until an AI provider is connected. Every
+// recommendation below is computed from actual company data.
 
 import type { GrantOpportunity, Reminder, ShowDocument, TreasurySnapshot } from "@/types";
 
@@ -36,13 +35,13 @@ export function buildWilliamTips({
   treasury: TreasurySnapshot | null;
 }): WilliamTip[] {
   const tips: WilliamTip[] = [];
-
   const overdue = reminders.filter((reminder) => daysUntil(reminder.dueDate) < 0);
+
   if (overdue.length > 0) {
     tips.push({
       id: "reminders-overdue",
       title: `${overdue.length} relance(s) en retard`,
-      detail: "Traite-les en priorité pour ne pas perdre une date ou une réponse.",
+      detail: "Traite-les en priorite pour ne pas perdre une date ou une reponse.",
       href: "/reminders",
       tone: "danger",
     });
@@ -53,11 +52,12 @@ export function buildWilliamTips({
     const days = daysUntil(grant.deadline);
     return days >= 0 && days <= 14;
   });
+
   if (soonGrants.length > 0) {
     tips.push({
       id: "grants-soon",
-      title: `${soonGrants.length} subvention(s) à déposer sous 14 jours`,
-      detail: "Vérifie les pièces du dossier et prépare le dépôt depuis le radar.",
+      title: `${soonGrants.length} subvention(s) a deposer sous 14 jours`,
+      detail: "Verifie les pieces du dossier et prepare le depot depuis le radar.",
       href: "/subventions",
       tone: "warning",
     });
@@ -66,8 +66,8 @@ export function buildWilliamTips({
   if (!treasury) {
     tips.push({
       id: "treasury-missing",
-      title: "Solde de trésorerie non renseigné",
-      detail: "Renseigne ton solde bancaire pour une projection fiable et une date de risque juste.",
+      title: "Solde de tresorerie non renseigne",
+      detail: "Renseigne ton solde bancaire pour obtenir une projection et une date de risque fiables.",
       href: "/finances",
       tone: "warning",
     });
@@ -77,8 +77,8 @@ export function buildWilliamTips({
   if (missingDocs > 0) {
     tips.push({
       id: "docs-missing",
-      title: `${missingDocs} pièce(s) de dossier manquante(s)`,
-      detail: "Complète les dossiers spectacle pour être prêt à déposer ou à vendre.",
+      title: `${missingDocs} piece(s) de dossier manquante(s)`,
+      detail: "Complete les dossiers spectacle pour etre pret a deposer ou a vendre.",
       href: "/shows",
       tone: "info",
     });
@@ -87,8 +87,8 @@ export function buildWilliamTips({
   if (tips.length === 0) {
     tips.push({
       id: "all-good",
-      title: "Tout est sous contrôle",
-      detail: "Aucune urgence détectée. Continue à alimenter tes dates et tes dossiers.",
+      title: "Tout est sous controle",
+      detail: "Aucune urgence detectee. Continue a alimenter tes dates et tes dossiers.",
       href: "/dashboard",
       tone: "success",
     });

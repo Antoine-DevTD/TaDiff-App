@@ -142,7 +142,7 @@ html[data-theatre-theme="regie"] {
 }
 
 .william-bubble-button {
-  animation: william-float 3s ease-in-out infinite, william-halo 2.4s ease-out infinite;
+  animation: william-halo 2.4s ease-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
