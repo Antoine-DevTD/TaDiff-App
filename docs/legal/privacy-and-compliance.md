@@ -27,7 +27,7 @@ Ce document est le registre de travail technique et organisationnel. Il ne rempl
 5. Signer ou accepter les DPA/accords de sous-traitance de Supabase, Vercel, Stripe et de tout futur outil email ou IA.
 6. Verifier la region du projet Supabase et documenter les transferts hors EEE ainsi que les garanties utilisees.
 7. Definir qui recoit les demandes envoyees a l'adresse RGPD et une procedure de reponse sous un mois.
-8. Completer `infos.md`, faire relire les CGU/CGV et implementer la preuve d'acceptation versionnee.
+8. Completer `docs/legal/information-to-complete.md`, faire relire les CGU/CGV et implementer la preuve d'acceptation versionnee.
 
 ## Registre simplifie des traitements
 

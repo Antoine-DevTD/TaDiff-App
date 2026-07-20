@@ -22,11 +22,11 @@ export function PipelineAddCard({ variant = "card" }: { variant?: "card" | "empt
         <Plus aria-hidden="true" className="h-5 w-5" />
       </span>
       <span className={cn("font-semibold", variant === "empty" ? "mt-4" : "mt-3 text-sm")}>
-        {variant === "empty" ? "Ajouter votre premiere date" : "Ajouter une date"}
+        {variant === "empty" ? "Ajouter votre première diffusion" : "Ajouter une diffusion"}
       </span>
       {variant === "empty" ? (
         <span className="mt-2 max-w-md text-sm text-muted">
-          Reliez un spectacle a un contact pour commencer le suivi.
+          Reliez un spectacle à un contact et choisissez le mode d&apos;exploitation.
         </span>
       ) : null}
     </button>

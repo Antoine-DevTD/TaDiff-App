@@ -64,6 +64,12 @@ export function getDocumentStatusTone(status: ShowDocumentStatus) {
   return "danger" as const;
 }
 
+export function getDocumentStatusLabel(status: ShowDocumentStatus) {
+  if (status === "Pret") return "Prêt";
+  if (status === "A mettre a jour") return "À mettre à jour";
+  return status;
+}
+
 export function resolveShowPosterUrl(show: Show, documents: ShowDocument[] = []) {
   const uploadedPoster = documents.find(
     (document) =>

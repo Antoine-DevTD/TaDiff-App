@@ -44,6 +44,9 @@ export async function POST(request: Request) {
     case "checkout.session.completed":
       await syncCheckoutSession(event.data.object);
       break;
+    case "checkout.session.async_payment_succeeded":
+      await syncCheckoutSession(event.data.object);
+      break;
     case "customer.subscription.created":
     case "customer.subscription.updated":
       await syncSubscription(event.data.object);
@@ -65,6 +68,11 @@ export async function POST(request: Request) {
 }
 
 async function syncCheckoutSession(session: Stripe.Checkout.Session) {
+  if (session.metadata?.purchaseType === "ai_credits") {
+    await grantAiCredits(session);
+    return;
+  }
+
   const companyId = session.metadata?.companyId ?? session.client_reference_id;
   const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
 
@@ -76,6 +84,22 @@ async function syncCheckoutSession(session: Stripe.Checkout.Session) {
     plan_code: session.metadata?.planCode || "beta",
     stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
     stripe_subscription_id: subscriptionId ?? null,
+  });
+}
+
+async function grantAiCredits(session: Stripe.Checkout.Session) {
+  const companyId = session.metadata?.companyId ?? session.client_reference_id;
+  const tokenAmount = Number(session.metadata?.tokenAmount);
+  if (!companyId || !Number.isSafeInteger(tokenAmount) || tokenAmount <= 0 || session.payment_status !== "paid") return;
+
+  const admin = getSupabaseAdminClient();
+  await admin.rpc("grant_ai_credit_purchase", {
+    p_company_id: companyId,
+    p_purchased_by: session.metadata?.purchasedBy || null,
+    p_token_amount: tokenAmount,
+    p_amount_paid: session.amount_total ?? 0,
+    p_currency: session.currency ?? "eur",
+    p_stripe_checkout_session_id: session.id,
   });
 }
 

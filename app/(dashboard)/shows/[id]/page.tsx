@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { DocumentSlot } from "@/components/documents/document-slot";
-import { ShowDocumentDeleteButton } from "@/components/documents/show-document-delete-button";
+import { DocumentDropzone } from "@/components/documents/document-dropzone";
+import { ShowDocumentsDownloadButton } from "@/components/documents/show-documents-download-button";
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
 import { ShowBudgetWorkspace } from "@/components/shows/show-budget-workspace";
 import { ShowEmailProfileForm } from "@/components/shows/show-email-profile-form";
@@ -13,8 +14,6 @@ import { formatCurrency } from "@/lib/finance";
 import {
   essentialShowDocumentTypes,
   getShowDocumentReadiness,
-  getShowDocumentTypeLabel,
-  isEssentialShowDocumentType,
   isShowOwnedDocumentType,
   optionalShowDocumentTypes,
   resolveShowPosterUrl,
@@ -61,9 +60,6 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
   );
   const posterUrl = resolveShowPosterUrl(show, documents);
   const documentReadiness = getShowDocumentReadiness(documents, { hasPoster: Boolean(posterUrl) });
-  const linkedOptionalDocuments = documents.filter(
-    (document) => !isEssentialShowDocumentType(document.documentType),
-  );
   const nextPerformanceDate = opportunities
     .map((deal) => deal.performanceDate)
     .filter(Boolean)
@@ -130,18 +126,23 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
           <div className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
             <div className="space-y-4">
               <ShowPoster posterUrl={posterUrl} show={show} />
-              <ReadinessPanel
-                missingCount={documentReadiness.missingCount}
-                percent={documentReadiness.percent}
-              />
+              {documentReadiness.missingCount > 0 ? (
+                <ReadinessPanel
+                  missingCount={documentReadiness.missingCount}
+                  percent={documentReadiness.percent}
+                />
+              ) : null}
             </div>
 
             <div className="space-y-6">
               <section>
-                <CardHeader>
-                  <CardTitle>Pieces indispensables</CardTitle>
-                  <CardDescription>Les pieces necessaires pour vendre et deposer le spectacle.</CardDescription>
-                </CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <CardHeader className="min-w-0">
+                    <CardTitle>Pièces indispensables</CardTitle>
+                    <CardDescription>Les pièces nécessaires pour vendre et déposer le spectacle.</CardDescription>
+                  </CardHeader>
+                  <ShowDocumentsDownloadButton documents={documents} showTitle={show.title} />
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {essentialShowDocumentTypes.map((type) => {
                     const document = documents.find((item) => item.documentType === type);
@@ -151,11 +152,13 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
                     return (
                       <DocumentSlot
                         key={type}
+                        documentId={document?.id}
+                        fileUrl={document?.fileUrl}
+                        previewUrl={document?.previewUrl}
                         showId={show.id}
                         showTitle={show.title}
                         type={type}
                         title={document?.title ?? (usesExistingPoster ? "Affiche spectacle" : null)}
-                        requirementLabel="Obligatoire"
                         status={status}
                       />
                     );
@@ -175,44 +178,29 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
                     return (
                       <DocumentSlot
                         key={type}
+                        documentId={document?.id}
+                        fileUrl={document?.fileUrl}
+                        previewUrl={document?.previewUrl}
                         showId={show.id}
                         showTitle={show.title}
                         type={type}
                         title={document?.title ?? null}
-                        requirementLabel="Facultatif"
                         status={document?.status ?? "Manquant"}
                       />
                     );
                   })}
                 </div>
-                {linkedOptionalDocuments.length > 0 ? (
-                  <p className="mt-3 text-xs text-muted">
-                    {linkedOptionalDocuments.length} document(s) facultatif(s) rattache(s) au spectacle.
-                  </p>
-                ) : null}
               </section>
 
-              {documents.length > 0 ? (
-                <section className="space-y-3 border-t border-border pt-6">
-                  <h3 className="text-sm font-semibold">Tous les fichiers</h3>
-                  {documents.map((document) => (
-                    <div key={document.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3 last:border-b-0">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{document.title}</p>
-                        <p className="text-xs text-muted">{getShowDocumentTypeLabel(document.documentType)}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {document.fileUrl ? (
-                          <a className="text-sm font-medium text-accent hover:text-accent-strong" href={document.fileUrl} rel="noreferrer" target="_blank">
-                            {document.storagePath ? "Telecharger" : "Ouvrir"}
-                          </a>
-                        ) : null}
-                        <ShowDocumentDeleteButton documentId={document.id} />
-                      </div>
-                    </div>
-                  ))}
-                </section>
-              ) : null}
+              <section className="border-t border-border pt-6">
+                <CardHeader>
+                  <CardTitle>Deposer plusieurs fichiers</CardTitle>
+                  <CardDescription>
+                    Glissez toutes les pieces du spectacle. TaDiff propose leur type avant de les ajouter au dossier.
+                  </CardDescription>
+                </CardHeader>
+                <DocumentDropzone showId={show.id} showTitle={show.title} />
+              </section>
             </div>
           </div>
         </Card>
@@ -327,15 +315,19 @@ function OverviewTab({
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Dossier indispensable</p>
-              <p className="mt-2 text-xl font-semibold">{documentMissingCount === 0 ? "Pret a deposer" : `${documentMissingCount} piece(s) a completer`}</p>
+              <p className="mt-2 text-xl font-semibold">{documentMissingCount === 0 ? "Prêt à déposer" : `${documentMissingCount} pièce(s) à compléter`}</p>
             </div>
             <Badge tone={documentMissingCount === 0 ? "success" : "warning"}>{documentPercent}%</Badge>
           </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-border">
-            <div className="h-full rounded-full bg-accent" style={{ width: `${documentPercent}%` }} />
-          </div>
+          {documentMissingCount > 0 ? (
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-border">
+              <div className="h-full rounded-full bg-accent" style={{ width: `${documentPercent}%` }} />
+            </div>
+          ) : null}
           <div className="mt-5 flex flex-wrap gap-3">
-            <ButtonLink href={`/shows/${show.id}?tab=files`}>Completer le dossier</ButtonLink>
+            {documentMissingCount > 0 ? (
+              <ButtonLink href={`/shows/${show.id}?tab=files`}>Compléter le dossier</ButtonLink>
+            ) : null}
             <ButtonLink href={`/shows/${show.id}?tab=dates`} variant="secondary">Voir les dates</ButtonLink>
           </div>
         </section>

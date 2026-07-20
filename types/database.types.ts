@@ -21,6 +21,9 @@ export type Database = {
           stripe_subscription_id: string | null;
           stripe_price_id: string | null;
           stripe_current_period_end: string | null;
+          ai_enabled: boolean;
+          ai_monthly_token_quota: number;
+          ai_bonus_token_balance: number;
           city: string | null;
           discipline: string | null;
           email: string | null;
@@ -44,6 +47,9 @@ export type Database = {
           stripe_subscription_id?: string | null;
           stripe_price_id?: string | null;
           stripe_current_period_end?: string | null;
+          ai_enabled?: boolean;
+          ai_monthly_token_quota?: number;
+          ai_bonus_token_balance?: number;
           city?: string | null;
           discipline?: string | null;
           email?: string | null;
@@ -66,6 +72,9 @@ export type Database = {
           stripe_subscription_id?: string | null;
           stripe_price_id?: string | null;
           stripe_current_period_end?: string | null;
+          ai_enabled?: boolean;
+          ai_monthly_token_quota?: number;
+          ai_bonus_token_balance?: number;
           city?: string | null;
           discipline?: string | null;
           email?: string | null;
@@ -155,6 +164,8 @@ export type Database = {
           full_name: string | null;
           role: "owner" | "admin" | "member" | "readonly";
           is_super_admin: boolean;
+          is_founder: boolean;
+          ai_access_enabled: boolean;
           created_at: string;
         };
         Insert: {
@@ -163,6 +174,8 @@ export type Database = {
           full_name?: string | null;
           role?: "owner" | "admin" | "member" | "readonly";
           is_super_admin?: boolean;
+          is_founder?: boolean;
+          ai_access_enabled?: boolean;
           created_at?: string;
         };
         Update: {
@@ -170,6 +183,8 @@ export type Database = {
           full_name?: string | null;
           role?: "owner" | "admin" | "member" | "readonly";
           is_super_admin?: boolean;
+          is_founder?: boolean;
+          ai_access_enabled?: boolean;
           created_at?: string;
         };
         Relationships: [
@@ -353,6 +368,12 @@ export type Database = {
           stage: string;
           value: number | null;
           probability: number;
+          exploitation_mode: string;
+          cession_fee: number;
+          estimated_box_office: number;
+          company_share_percent: number;
+          minimum_guarantee: number;
+          venue_rental: number;
           performance_date: string | null;
           next_action: string | null;
           next_follow_up_at: string | null;
@@ -368,6 +389,12 @@ export type Database = {
           stage?: string;
           value?: number | null;
           probability?: number;
+          exploitation_mode?: string;
+          cession_fee?: number;
+          estimated_box_office?: number;
+          company_share_percent?: number;
+          minimum_guarantee?: number;
+          venue_rental?: number;
           performance_date?: string | null;
           next_action?: string | null;
           next_follow_up_at?: string | null;
@@ -381,6 +408,12 @@ export type Database = {
           stage?: string;
           value?: number | null;
           probability?: number;
+          exploitation_mode?: string;
+          cession_fee?: number;
+          estimated_box_office?: number;
+          company_share_percent?: number;
+          minimum_guarantee?: number;
+          venue_rental?: number;
           performance_date?: string | null;
           next_action?: string | null;
           next_follow_up_at?: string | null;
@@ -889,6 +922,368 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_settings: {
+        Row: {
+          key: string;
+          value: Json;
+          public_read: boolean;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value?: Json;
+          public_read?: boolean;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          value?: Json;
+          public_read?: boolean;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      grant_catalog: {
+        Row: {
+          id: string;
+          title: string;
+          funder: string;
+          territory: string | null;
+          discipline: string | null;
+          deadline: string | null;
+          amount_max: number;
+          eligibility: string | null;
+          requirements: string[];
+          themes: string[];
+          source_url: string | null;
+          active: boolean;
+          last_verified_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          funder: string;
+          territory?: string | null;
+          discipline?: string | null;
+          deadline?: string | null;
+          amount_max?: number;
+          eligibility?: string | null;
+          requirements?: string[];
+          themes?: string[];
+          source_url?: string | null;
+          active?: boolean;
+          last_verified_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          funder?: string;
+          territory?: string | null;
+          discipline?: string | null;
+          deadline?: string | null;
+          amount_max?: number;
+          eligibility?: string | null;
+          requirements?: string[];
+          themes?: string[];
+          source_url?: string | null;
+          active?: boolean;
+          last_verified_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      patronage_catalog: {
+        Row: {
+          id: string;
+          organization_name: string;
+          program_name: string;
+          themes: string[];
+          territories: string[];
+          next_deadline: string | null;
+          amount_min: number;
+          amount_max: number;
+          eligibility: string | null;
+          source_url: string | null;
+          notes: string | null;
+          active: boolean;
+          last_verified_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_name: string;
+          program_name: string;
+          themes?: string[];
+          territories?: string[];
+          next_deadline?: string | null;
+          amount_min?: number;
+          amount_max?: number;
+          eligibility?: string | null;
+          source_url?: string | null;
+          notes?: string | null;
+          active?: boolean;
+          last_verified_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          organization_name?: string;
+          program_name?: string;
+          themes?: string[];
+          territories?: string[];
+          next_deadline?: string | null;
+          amount_min?: number;
+          amount_max?: number;
+          eligibility?: string | null;
+          source_url?: string | null;
+          notes?: string | null;
+          active?: boolean;
+          last_verified_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      platform_email_templates: {
+        Row: {
+          id: string;
+          name: string;
+          message_type: "first-touch" | "follow-up" | "date-option";
+          subject_template: string;
+          body_json: Json;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          message_type?: "first-touch" | "follow-up" | "date-option";
+          subject_template: string;
+          body_json: Json;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          message_type?: "first-touch" | "follow-up" | "date-option";
+          subject_template?: string;
+          body_json?: Json;
+          active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_settings: {
+        Row: {
+          id: boolean;
+          enabled: boolean;
+          provider: "deepseek" | "openai" | "anthropic" | "mistral";
+          model: string;
+          embedding_provider: "openai" | "supabase";
+          embedding_model: string;
+          rag_top_k: number;
+          system_prompt: string;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: boolean;
+          enabled?: boolean;
+          provider?: "deepseek" | "openai" | "anthropic" | "mistral";
+          model?: string;
+          embedding_provider?: "openai" | "supabase";
+          embedding_model?: string;
+          rag_top_k?: number;
+          system_prompt?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          enabled?: boolean;
+          provider?: "deepseek" | "openai" | "anthropic" | "mistral";
+          model?: string;
+          embedding_provider?: "openai" | "supabase";
+          embedding_model?: string;
+          rag_top_k?: number;
+          system_prompt?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_token_reservations: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          reserved_tokens: number;
+          status: "reserved" | "consumed" | "released";
+          created_at: string;
+          finalized_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id: string;
+          reserved_tokens: number;
+          status?: "reserved" | "consumed" | "released";
+          created_at?: string;
+          finalized_at?: string | null;
+        };
+        Update: {
+          reserved_tokens?: number;
+          status?: "reserved" | "consumed" | "released";
+          finalized_at?: string | null;
+        };
+        Relationships: [];
+      };
+      ai_usage_events: {
+        Row: {
+          id: string;
+          reservation_id: string | null;
+          company_id: string;
+          user_id: string;
+          provider: "deepseek" | "openai" | "anthropic" | "mistral";
+          model: string;
+          request_kind: string;
+          input_tokens: number;
+          output_tokens: number;
+          total_tokens: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reservation_id?: string | null;
+          company_id: string;
+          user_id: string;
+          provider: "deepseek" | "openai" | "anthropic";
+          model: string;
+          request_kind?: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      ai_credit_purchases: {
+        Row: {
+          id: string;
+          company_id: string;
+          purchased_by: string | null;
+          token_amount: number;
+          amount_paid: number;
+          currency: string;
+          stripe_checkout_session_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          purchased_by?: string | null;
+          token_amount: number;
+          amount_paid?: number;
+          currency?: string;
+          stripe_checkout_session_id: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      rag_documents: {
+        Row: {
+          id: string;
+          company_id: string | null;
+          source_type: "manual" | "grant_catalog" | "patronage_catalog" | "show" | "show_document" | "company_document";
+          source_id: string | null;
+          title: string;
+          content: string;
+          source_url: string | null;
+          metadata: Json;
+          embedding: string | null;
+          search_vector: unknown;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id?: string | null;
+          source_type: "manual" | "grant_catalog" | "patronage_catalog" | "show" | "show_document" | "company_document";
+          source_id?: string | null;
+          title: string;
+          content: string;
+          source_url?: string | null;
+          metadata?: Json;
+          embedding?: string | null;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          content?: string;
+          source_url?: string | null;
+          metadata?: Json;
+          embedding?: string | null;
+          active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rag_documents_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      email_templates: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          message_type: "first-touch" | "follow-up" | "date-option";
+          subject_template: string;
+          body_json: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          message_type?: "first-touch" | "follow-up" | "date-option";
+          subject_template: string;
+          body_json: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          message_type?: "first-touch" | "follow-up" | "date-option";
+          subject_template?: string;
+          body_json?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       feedback: {
         Row: {
           id: string;
@@ -1358,6 +1753,117 @@ export type Database = {
           new_status: string;
           new_response?: string | null;
         };
+        Returns: undefined;
+      };
+      search_rag_documents: {
+        Args: {
+          search_query: string;
+          target_company_id?: string | null;
+          match_count?: number;
+        };
+        Returns: {
+          id: string;
+          title: string;
+          content: string;
+          source_type: string;
+          source_url: string | null;
+          metadata: Json;
+          rank: number;
+        }[];
+      };
+      match_rag_documents: {
+        Args: {
+          query_embedding: string;
+          target_company_id?: string | null;
+          match_threshold?: number;
+          match_count?: number;
+        };
+        Returns: {
+          id: string;
+          title: string;
+          content: string;
+          source_type: string;
+          source_url: string | null;
+          metadata: Json;
+          similarity: number;
+        }[];
+      };
+      get_my_ai_entitlement: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          enabled: boolean;
+          is_unlimited: boolean;
+          monthly_quota: number;
+          monthly_used: number;
+          bonus_balance: number;
+          remaining_tokens: number;
+          period_started_at: string;
+        }[];
+      };
+      reserve_my_ai_tokens: {
+        Args: { p_requested_tokens: number };
+        Returns: string;
+      };
+      finalize_ai_token_reservation: {
+        Args: {
+          p_reservation_id: string;
+          p_provider: string;
+          p_model: string;
+          p_input_tokens: number;
+          p_output_tokens: number;
+          p_request_kind?: string;
+        };
+        Returns: undefined;
+      };
+      release_ai_token_reservation: {
+        Args: { p_reservation_id: string };
+        Returns: undefined;
+      };
+      grant_ai_credit_purchase: {
+        Args: {
+          p_company_id: string;
+          p_purchased_by: string | null;
+          p_token_amount: number;
+          p_amount_paid: number;
+          p_currency: string;
+          p_stripe_checkout_session_id: string;
+        };
+        Returns: undefined;
+      };
+      admin_list_ai_accounts: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          user_id: string;
+          email: string | null;
+          full_name: string;
+          company_id: string;
+          company_name: string;
+          company_ai_enabled: boolean;
+          user_ai_enabled: boolean;
+          is_super_admin: boolean;
+          is_founder: boolean;
+          role: string;
+          monthly_quota: number;
+          monthly_used: number;
+          account_monthly_used: number;
+          bonus_balance: number;
+        }[];
+      };
+      admin_set_company_ai: {
+        Args: {
+          p_company_id: string;
+          p_enabled: boolean;
+          p_monthly_quota: number;
+          p_bonus_balance: number;
+        };
+        Returns: undefined;
+      };
+      admin_set_user_ai_access: {
+        Args: { p_user_id: string; p_enabled: boolean };
+        Returns: undefined;
+      };
+      admin_set_founder_account: {
+        Args: { p_user_id: string; p_enabled: boolean };
         Returns: undefined;
       };
     };

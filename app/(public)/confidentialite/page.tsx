@@ -1,14 +1,15 @@
 /* eslint-disable react/no-unescaped-entities */
 import Link from "next/link";
 import { LegalList, LegalPage, LegalSection } from "@/components/legal/legal-page";
-import { legalInformation } from "@/lib/legal";
+import { getLegalInformation } from "@/lib/legal";
 
 export const metadata = {
   title: "Politique de confidentialite | TaDiff",
   description: "Comment TaDiff collecte, utilise et protege les donnees personnelles.",
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const legalInformation = await getLegalInformation();
   return (
     <LegalPage eyebrow="Vos donnees" title="Politique de confidentialite" introduction="Cette politique explique quelles donnees TaDiff utilise, pourquoi elles sont necessaires et comment exercer vos droits. Elle couvre le site public, les inscriptions a la beta et le cockpit TaDiff.">
       <LegalSection title="Responsable du traitement">

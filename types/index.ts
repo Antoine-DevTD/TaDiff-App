@@ -93,6 +93,7 @@ export type ShowDocument = {
   documentType: ShowDocumentType;
   status: ShowDocumentStatus;
   fileUrl: string;
+  previewUrl?: string;
   storagePath?: string;
   notes: string;
   updatedAt: string;
@@ -118,6 +119,8 @@ export type PipelineStage =
   | "Confirme"
   | "Perdu";
 
+export type ExploitationMode = "cession" | "corealisation" | "location" | "other";
+
 export type PipelineDeal = {
   id: string;
   title: string;
@@ -127,6 +130,12 @@ export type PipelineDeal = {
   stage: PipelineStage;
   value: number;
   probability: number;
+  exploitationMode: ExploitationMode;
+  cessionFee: number;
+  estimatedBoxOffice: number;
+  companySharePercent: number;
+  minimumGuarantee: number;
+  venueRental: number;
   performanceDate: string;
   nextAction: string;
   nextFollowUpAt: string;
@@ -260,6 +269,16 @@ export type EmailCampaign = {
   sentCount: number;
   openRate: number;
   nextSendAt: string;
+};
+
+export type EmailTemplate = {
+  id: string;
+  name: string;
+  messageType: "first-touch" | "follow-up" | "date-option";
+  subjectTemplate: string;
+  bodyJson: import("@/types/database.types").Json;
+  updatedAt: string;
+  scope?: "company" | "platform";
 };
 
 export type BillingPlan = {

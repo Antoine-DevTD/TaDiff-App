@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CompanyBillingForm } from "@/components/admin/company-billing-form";
+import { AiConfigurationPanel } from "@/components/admin/ai-configuration-panel";
+import { AiAccessManager } from "@/components/admin/ai-access-manager";
 import { FeedbackRow } from "@/components/admin/feedback-row";
+import { LegalInformationForm } from "@/components/admin/legal-information-form";
 import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
+import { PlatformCatalogManager } from "@/components/admin/platform-catalog-manager";
+import { PlatformEmailTemplateStudio } from "@/components/admin/platform-email-template-studio";
 import { RevenueForecastChart } from "@/components/admin/revenue-forecast-chart";
 import { PublicAnalyticsPanel } from "@/components/admin/public-analytics-panel";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +20,14 @@ import {
   getAdminCompanies,
   getAdminFeedback,
   getAdminMaintenanceMode,
+  getAdminLegalInformation,
+  getAdminGrantCatalog,
+  getAdminPatronageCatalog,
+  getAdminPlatformEmailTemplates,
+  getAdminAiSettings,
+  getAdminRagDocuments,
+  getAdminAiAccounts,
+  getAiProviderReadiness,
   getAdminPublicAnalyticsEvents,
   isSuperAdmin,
   type AdminAccessEvent,
@@ -41,19 +54,39 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const resolvedSearchParams = await searchParams;
   const activeTab =
-    resolvedSearchParams?.tab === "retours"
-      ? "retours"
-      : resolvedSearchParams?.tab === "audience"
-        ? "audience"
-        : "supervision";
-  const [companies, betaSignups, feedback, accessEvents, maintenanceActive, analyticsEvents] = await Promise.all([
+    ["retours", "audience", "informations", "catalogues", "emails", "ia"].includes(resolvedSearchParams?.tab ?? "")
+      ? (resolvedSearchParams?.tab as "retours" | "audience" | "informations" | "catalogues" | "emails" | "ia")
+      : "supervision";
+  const [
+    companies,
+    betaSignups,
+    feedback,
+    accessEvents,
+    maintenanceActive,
+    analyticsEvents,
+    legalInformation,
+    grantCatalog,
+    patronageCatalog,
+    platformEmailTemplates,
+    aiSettings,
+    ragDocuments,
+    aiAccounts,
+  ] = await Promise.all([
     getAdminCompanies(),
     getAdminBetaSignups(),
     getAdminFeedback(),
     getAdminAccessEvents(60),
     getAdminMaintenanceMode(),
     getAdminPublicAnalyticsEvents(30, 2000),
+    getAdminLegalInformation(),
+    getAdminGrantCatalog(),
+    getAdminPatronageCatalog(),
+    getAdminPlatformEmailTemplates(),
+    getAdminAiSettings(),
+    getAdminRagDocuments(),
+    getAdminAiAccounts(),
   ]);
+  const aiReadiness = getAiProviderReadiness();
 
   const activeCount = companies.filter((company) => company.billingStatus === "active").length;
   const compedCount = companies.filter((company) => company.billingStatus === "comped").length;
@@ -67,20 +100,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     <div className="space-y-6">
       <div>
         <p className="text-xs uppercase tracking-[0.18em] text-muted">Console interne</p>
-        <h2 className="mt-2 text-3xl font-semibold">
-          {activeTab === "retours"
-            ? "Retours compagnies"
-            : activeTab === "audience"
-              ? "Audience publique"
-              : "Supervision TaDiff"}
-        </h2>
-        <p className="mt-1 text-sm text-muted">
-          {activeTab === "retours"
-            ? "Bugs, idees et avis envoyes depuis le cockpit."
-            : activeTab === "audience"
-              ? "Visites, clics et inscriptions sur les pages publiques, sans adresse IP."
-              : "Reservee aux super admins. Compagnies, billing et inscriptions beta."}
-        </p>
+        <h2 className="mt-2 text-3xl font-semibold">{adminTabMeta[activeTab].title}</h2>
+        <p className="mt-1 text-sm text-muted">{adminTabMeta[activeTab].description}</p>
       </div>
 
       <div className="flex flex-wrap gap-2 border-b border-border">
@@ -91,9 +112,24 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           label={`Retours${openFeedback > 0 ? ` (${openFeedback})` : ""}`}
         />
         <AdminTab active={activeTab === "audience"} href="/admin?tab=audience" label="Audience" />
+        <AdminTab active={activeTab === "informations"} href="/admin?tab=informations" label="Informations" />
+        <AdminTab active={activeTab === "catalogues"} href="/admin?tab=catalogues" label="Catalogues" />
+        <AdminTab active={activeTab === "emails"} href="/admin?tab=emails" label="Emails" />
+        <AdminTab active={activeTab === "ia"} href="/admin?tab=ia" label="William IA" />
       </div>
 
-      {activeTab === "audience" ? (
+      {activeTab === "informations" ? (
+        <LegalInformationForm initialValue={legalInformation} />
+      ) : activeTab === "catalogues" ? (
+        <PlatformCatalogManager grants={grantCatalog} patronage={patronageCatalog} />
+      ) : activeTab === "emails" ? (
+        <PlatformEmailTemplateStudio templates={platformEmailTemplates} />
+      ) : activeTab === "ia" ? (
+        <div className="space-y-5">
+          <AiAccessManager accounts={aiAccounts} />
+          <AiConfigurationPanel documents={ragDocuments} readiness={aiReadiness} settings={aiSettings} />
+        </div>
+      ) : activeTab === "audience" ? (
         <PublicAnalyticsPanel events={analyticsEvents} generatedAt={new Date().toISOString()} />
       ) : activeTab === "retours" ? (
         <AdminFeedbackPanel feedback={feedback} openFeedback={openFeedback} />
@@ -217,6 +253,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     </div>
   );
 }
+
+const adminTabMeta = {
+  supervision: { title: "Supervision TaDiff", description: "Compagnies, facturation, acces et inscriptions beta." },
+  retours: { title: "Retours compagnies", description: "Bugs, idees et avis envoyes depuis le cockpit." },
+  audience: { title: "Audience publique", description: "Visites, clics et inscriptions sur les pages publiques, sans adresse IP." },
+  informations: { title: "Informations publiees", description: "Identite legale, contacts et prix modifiables sans redeploiement." },
+  catalogues: { title: "Catalogues de reference", description: "Subventions et programmes de mecenat proposes aux compagnies et a William." },
+  emails: { title: "Bibliotheque d'emails", description: "Modeles globaux personnalisables par les compagnies." },
+  ia: { title: "William IA", description: "Fournisseurs, secrets disponibles et corpus de recherche controle." },
+} as const;
 
 function AdminTab({ active, href, label }: { active: boolean; href: string; label: string }) {
   return (

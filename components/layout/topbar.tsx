@@ -54,7 +54,7 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
               onClick={() => window.dispatchEvent(new Event(pipelineCreateEvent))}
             >
               <Plus className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Ajouter une date</span>
+              <span className="hidden sm:inline">Ajouter une diffusion</span>
               <span className="sm:hidden">Ajouter</span>
             </Button>
           ) : null}

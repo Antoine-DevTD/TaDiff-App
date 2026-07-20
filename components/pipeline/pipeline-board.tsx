@@ -30,6 +30,7 @@ import { Select } from "@/components/ui/select";
 import {
   buildPipelineEmailDraft,
   getDefaultProbability,
+  getExploitationModeLabel,
   getPipelinePriorityScore,
   getPipelineRecommendation,
   getPipelineSignal,
@@ -415,7 +416,7 @@ function PipelineListView({
         <table className="w-full min-w-[1040px] text-left text-sm">
           <thead className="border-b border-border bg-panel-strong/60 text-xs uppercase tracking-[0.12em] text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Date possible</th>
+              <th className="px-4 py-3 font-medium">Diffusion</th>
               <th className="px-4 py-3 font-medium">Contact</th>
               <th className="px-4 py-3 font-medium">Jeu</th>
               <th className="px-4 py-3 font-medium">Etape</th>
@@ -552,7 +553,6 @@ function PipelineCard({
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: deal.id });
   const signal = getPipelineSignal(deal);
   const recommendation = getPipelineRecommendation(deal);
-  const weightedValue = Math.round((deal.value * deal.probability) / 100);
   const [copied, setCopied] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -690,9 +690,8 @@ function PipelineCard({
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 rounded-md border border-border bg-panel-strong/45 p-2 text-xs">
-        <InfoCell label="Montant" value={`${deal.value.toLocaleString("fr-FR")} EUR`} />
-        <InfoCell label="Probabilite" value={`${deal.probability}%`} />
-        <InfoCell label="Pondere" value={`${weightedValue.toLocaleString("fr-FR")} EUR`} />
+        <InfoCell label="Accord" value={getExploitationModeLabel(deal.exploitationMode)} />
+        <InfoCell label="Recette estimée" value={`${deal.value.toLocaleString("fr-FR")} EUR`} />
         <InfoCell
           label="Jeu"
           value={

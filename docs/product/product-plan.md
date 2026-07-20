@@ -1,4 +1,4 @@
-# TaDiff - Developpement produit
+# TaDiff - Plan produit
 
 ## Diffusion et invitations aux representations
 
@@ -10,7 +10,7 @@
 - Migrations associees : `031_beta_demo_signups.sql` puis `032_performance_invitations.sql`.
 
 Derniere mise a jour : 2026-07-05  
-Contexte : retour de reunion avec le directeur + notes produit Tony dans `ressources/Application TADIFF Informations VF .pdf`. Contrat en cours de redaction, objectif de proteger le role technique/produit.
+Contexte : retour de reunion avec le directeur + notes produit Tony dans `02 - Ressources/Application TADIFF Informations VF .pdf`. Contrat en cours de redaction, objectif de proteger le role technique/produit.
 
 ## 1. Vision
 
@@ -89,8 +89,8 @@ Avoir au minimum :
 - CRM utilisable ;
 - export documents ;
 - templates principaux ;
-- politique de confidentialite, cookies et mentions legales integrees ; voir `RGPD.md` ;
-- CGU, CGV et annexe RGPD integrees ; champs a completer dans `infos.md` ;
+- politique de confidentialite, cookies et mentions legales integrees ; voir `docs/legal/privacy-and-compliance.md` ;
+- CGU, CGV et annexe RGPD integrees ; champs a completer dans `docs/legal/information-to-complete.md` ;
 - validation juridique finale et acceptation versionnee dans le parcours de paiement restent a faire.
 - analytics landing interne : pages, CTA, sources UTM et conversions beta visibles dans l'onglet Audience du super-admin (migration 030, sans IP/email, retention 90 jours).
 
@@ -136,13 +136,13 @@ Avancement au 2026-07-05 (migrations 009 a 011 appliquees) :
 - CRUD complet : spectacles et contacts (edition + suppression), devis (statut, montants, echeance, suppression), frais fixes et relances (suppression) ;
 - radar subventions branche sur la base : formulaire d'ajout, changement de statut, suppression, import en un clic de 10 dispositifs de reference (CNM verifie, autres dates indicatives signalees) ;
 - etats honnetes "Fonction prevue - non branchee" / "Donnees de demonstration" sur campagnes, mecenat, Stripe, export FEC ;
-- Stripe : reste en placeholder assume (voir instruction.md section 4), a brancher avant la beta.
+- Stripe : reste en placeholder assume (voir `docs/engineering/implementation-reference.md`, section 4), a brancher avant la beta.
 
 Important : garder le principe actuel de vues coherentes derivees du meme graphe de donnees : compagnie, spectacle, contact, opportunite, relance, document, contrat, finance.
 
 ## 4 bis. Exigences produit issues des notes Tony
 
-Source : `ressources/Application TADIFF Informations VF .pdf`, extrait le 2026-07-05.
+Source : `02 - Ressources/Application TADIFF Informations VF .pdf`, extrait le 2026-07-05.
 
 Tony formule TADIFF comme une application SaaS fonctionnelle, pas comme une vitrine ni une maquette. Le document insiste sur un point central :
 

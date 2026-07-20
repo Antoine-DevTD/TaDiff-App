@@ -1,14 +1,15 @@
 /* eslint-disable react/no-unescaped-entities */
 import Link from "next/link";
 import { LegalList, LegalNotice, LegalPage, LegalSection } from "@/components/legal/legal-page";
-import { legalInformation } from "@/lib/legal";
+import { getLegalInformation } from "@/lib/legal";
 
 export const metadata = {
   title: "Conditions generales de vente | TaDiff",
   description: "Conditions commerciales de l'abonnement TaDiff.",
 };
 
-export default function TermsOfSalePage() {
+export default async function TermsOfSalePage() {
+  const legalInformation = await getLegalInformation();
   return (
     <LegalPage eyebrow={`Version ${legalInformation.legalVersion}`} title="Conditions generales de vente" introduction="Ces conditions encadrent la souscription et la facturation des abonnements professionnels au service TaDiff.">
       <LegalNotice>

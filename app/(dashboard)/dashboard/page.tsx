@@ -454,7 +454,7 @@ export default async function DashboardPage() {
             {mainAction ? (
               <ButtonLink href={mainAction.href}>Traiter maintenant</ButtonLink>
             ) : (
-              <ButtonLink href="/pipeline">Ajouter une date</ButtonLink>
+              <ButtonLink href="/pipeline">Ajouter une diffusion</ButtonLink>
             )}
             <ButtonLink href="/calendar" variant="secondary">
               Voir l&apos;agenda

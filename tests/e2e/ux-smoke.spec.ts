@@ -73,9 +73,35 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(backToShows).toBeVisible();
     await page.getByRole("link", { name: "Dossier", exact: true }).click();
     await expect(page).toHaveURL(/tab=files/);
-    await expect(page.getByRole("heading", { name: "Pieces indispensables" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Pièces indispensables" })).toBeVisible();
     await expect(page.getByText("RIB", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Statuts", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Tous les fichiers" })).toHaveCount(0);
+    await expect(page.getByText("Dossier artistique - diffusion 2026", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Visualiser Dossier artistique" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Télécharger Dossier artistique" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Télécharger toutes les pièces" })).toBeVisible();
+    await expect(page.getByText("Prêt", { exact: true }).first()).toBeVisible();
+
+    await page.getByLabel("Nouvelle version de Dossier artistique").setInputFiles({
+      name: "dossier-artistique-v2.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("nouvelle version du dossier artistique"),
+    });
+    await expect(page.getByRole("dialog", { name: "Remplacer Dossier artistique ?" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Remplacer Dossier artistique ?" })).toBeHidden();
+
+    await expect(page.getByRole("heading", { name: "Deposer plusieurs fichiers" })).toBeVisible();
+    await page.locator('input[type="file"][multiple]').setInputFiles({
+      name: "fiche-technique-tournee.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("fiche technique et besoins plateau"),
+    });
+    await expect(page.getByRole("option", { name: "Fiche technique", selected: true })).toBeAttached();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoHorizontalOverflow(page);
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.getByRole("link", { name: "Presentation", exact: true }).click();
     await expect(page).toHaveURL(/tab=presentation/);
     await expect(page.getByRole("heading", { name: "Donner de la matiere aux emails" })).toBeVisible();
@@ -142,14 +168,33 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/pipeline");
 
-    const trigger = page.getByRole("banner").getByRole("button", { name: "Ajouter une date" });
+    const trigger = page.getByRole("banner").getByRole("button", { name: "Ajouter une diffusion" });
     await trigger.click();
 
-    const dialog = page.getByRole("dialog", { name: "Ajouter une date a vendre" });
+    const dialog = page.getByRole("dialog", { name: "Ajouter une diffusion" });
     await expect(dialog).toBeVisible();
+    await expect(dialog).toBeFocused();
     await expect(dialog.getByRole("button", { name: "Choisir un contact" })).toBeVisible();
     await expect(dialog.getByText("Choisir un programmateur", { exact: true })).toHaveCount(0);
-    await expect(dialog).toBeFocused();
+    await expect(dialog.getByLabel("Chance d'aboutir")).toHaveCount(0);
+    await expect(dialog.getByRole("radio", { name: /Coréalisation/ })).toBeVisible();
+    await dialog.getByText("Coréalisation", { exact: true }).click();
+    await dialog.getByLabel("Billetterie totale estimée").fill("10000");
+    await dialog.getByLabel("Part revenant à la compagnie").fill("50");
+    await expect(dialog.getByText("5 000 EUR", { exact: true })).toBeVisible();
+    await dialog.getByLabel("Un minimum garanti est prévu").check();
+    await dialog.getByLabel("Montant du minimum garanti").fill("6000");
+    await expect(dialog.getByText("6 000 EUR", { exact: true })).toBeVisible();
+    await dialog.getByText("Location", { exact: true }).click();
+    await dialog.getByLabel("Billetterie totale estimée").fill("10000");
+    await dialog.getByLabel("Coût de location du lieu").fill("3000");
+    await expect(dialog.getByText("7 000 EUR", { exact: true })).toBeVisible();
+    await expect(dialog.locator('input[type="date"]')).toHaveCount(1);
+    await expect(dialog.locator("textarea")).toHaveCount(0);
+    await expect(dialog.getByRole("region", { name: "Action proposée par William" })).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoHorizontalOverflow(page);
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.keyboard.press("Shift+Tab");
     await expect
       .poll(() => dialog.evaluate((element) => element.contains(document.activeElement)))
@@ -163,8 +208,8 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/pipeline");
 
-    await page.getByRole("main").getByRole("button", { name: "Ajouter une date" }).click();
-    await expect(page.getByRole("dialog", { name: "Ajouter une date a vendre" })).toBeVisible();
+    await page.getByRole("main").getByRole("button", { name: "Ajouter une diffusion" }).click();
+    await expect(page.getByRole("dialog", { name: "Ajouter une diffusion" })).toBeVisible();
   });
 
   test("prepare un brouillon email pour n'importe quel contact", async ({ page }) => {
@@ -173,20 +218,38 @@ test.describe("cockpit en mode demonstration", () => {
 
     await expect(page.getByRole("heading", { name: "Preparer un email maintenant" })).toBeVisible();
     await expect(page.getByLabel("Contact", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("Spectacle facultatif", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("Objet", { exact: true })).toHaveValue(/Prise de contact/);
+    await expect(page.getByLabel("Spectacle", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Modele d'email", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Objet", { exact: true }).first()).toHaveValue(/notre spectacle/);
     await expect(page.getByRole("button", { name: "Ouvrir ma messagerie" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Gmail" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Outlook" })).toBeEnabled();
 
-    await page.getByLabel("Spectacle facultatif", { exact: true }).selectOption("show-1");
-    const messageField = page.getByRole("textbox", { name: "Message" });
-    await expect(messageField).toHaveValue(/fratrie/);
+    await page.getByLabel("Spectacle", { exact: true }).selectOption("show-1");
+    const messageField = page.locator(".email-editor .tiptap").first();
+    await expect(messageField).toContainText(/fratrie/);
     await expect(page.getByLabel("Dossier artistique")).toBeEnabled();
     await expect(page.getByLabel("Texte de la piece")).toBeDisabled();
     await page.getByLabel("Dossier artistique").check();
-    await expect(messageField).toHaveValue(/pieces jointes le dossier artistique/);
+    await expect(messageField).toContainText(/pieces jointes.*dossier artistique/i);
     await expect(page.getByRole("button", { name: "Telecharger les pieces" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Modeles d'emails" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nouveau modele" })).toBeVisible();
+  });
+
+  test("contextualise un email directement depuis un contact", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/contacts");
+
+    await page.getByRole("button", { name: "Preparer un email" }).first().click();
+    const dialog = page.getByRole("dialog", { name: /Preparer un email pour/ });
+    await expect(dialog).toBeVisible();
+    await dialog.getByLabel("Spectacle", { exact: true }).selectOption("show-1");
+    await expect(dialog.getByLabel("Objet", { exact: true })).toHaveValue(/Les lignes de fuite/);
+    await expect(dialog.locator(".email-editor .tiptap")).toContainText(/fratrie/);
+    await expect(dialog.getByText("4/4", { exact: true })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
   });
 
   test("garde la navigation fixe pendant le scroll des parametres", async ({ page }) => {

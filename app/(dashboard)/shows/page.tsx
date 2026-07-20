@@ -18,10 +18,8 @@ export default async function ShowsPage({
         <EmptyState
           title="Aucun spectacle"
           description="Creez votre premier spectacle pour suivre son dossier, son budget et ses prochaines dates."
-          actionLabel="Nouveau spectacle"
-          actionHref="/shows?create=1"
+          action={<ShowCreateDialog key={create === "1" ? "open" : "closed"} initialOpen={create === "1"} />}
         />
-        <ShowCreateDialog initialOpen={create === "1"} showTrigger={false} />
       </>
     );
   }
@@ -43,7 +41,7 @@ export default async function ShowsPage({
   return (
     <>
       <ShowsCatalogue items={catalogueItems} />
-      <ShowCreateDialog initialOpen={create === "1"} showTrigger={false} />
+      <ShowCreateDialog key={create === "1" ? "open" : "closed"} initialOpen={create === "1"} showTrigger={false} />
     </>
   );
 }

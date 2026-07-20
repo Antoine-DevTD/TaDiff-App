@@ -1,10 +1,11 @@
 /* eslint-disable react/no-unescaped-entities */
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
-import { legalInformation } from "@/lib/legal";
+import { getLegalInformation } from "@/lib/legal";
 
 export const metadata = { title: "Mentions legales | TaDiff", description: "Informations legales relatives au site TaDiff." };
 
-export default function LegalNoticePage() {
+export default async function LegalNoticePage() {
+  const legalInformation = await getLegalInformation();
   return (
     <LegalPage eyebrow="Informations legales" title="Mentions legales" introduction="Les informations ci-dessous identifient l'editeur et les prestataires responsables du fonctionnement de tadiff.com.">
       <LegalSection title="Editeur">
@@ -12,7 +13,8 @@ export default function LegalNoticePage() {
         <p>{legalInformation.operatorAddress}</p>
         <p>{legalInformation.operatorRegistration}</p>
         <p>{legalInformation.operatorVat}</p>
-        <p>Contact : <a className="text-accent underline" href="mailto:contact@tadiff.com">contact@tadiff.com</a></p>
+        <p>Contact : <a className="text-accent underline" href={`mailto:${legalInformation.legalEmail}`}>{legalInformation.legalEmail}</a></p>
+        {legalInformation.professionalPhone ? <p>Telephone : {legalInformation.professionalPhone}</p> : null}
         <p>Directeur de la publication : {legalInformation.publicationDirector}</p>
       </LegalSection>
       <LegalSection title="Transition TaDiff">

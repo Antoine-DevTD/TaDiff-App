@@ -22,9 +22,11 @@ Renseigner les informations exactement comme elles figurent au registre officiel
 | Email support | contact@tadiff.com - A CONFIRMER |
 | Email facturation | contact@tadiff.com - A CONFIRMER |
 
-## 2. Configuration Vercel
+## 2. Publication dans TaDiff
 
-Ajouter ces variables dans Vercel, environnement Production, puis redeployer. Ne pas mettre de guillemets autour des valeurs.
+Apres application de `sql/038_platform_admin_and_ai_foundation.sql`, renseigner ces valeurs depuis l'onglet `Informations` de la console super-admin. Les pages legales sont actualisees sans modifier le code ni redeployer Vercel.
+
+Les variables Vercel ci-dessous restent uniquement des valeurs de secours si la base est indisponible ou si la migration n'est pas encore appliquee. Ne pas mettre de guillemets autour des valeurs.
 
 ```env
 NEXT_PUBLIC_LEGAL_NAME=ARKENCIEL Compagnie
@@ -33,6 +35,8 @@ NEXT_PUBLIC_LEGAL_ADDRESS=A COMPLETER
 NEXT_PUBLIC_LEGAL_REGISTRATION=A COMPLETER
 NEXT_PUBLIC_LEGAL_VAT=A COMPLETER
 NEXT_PUBLIC_LEGAL_DIRECTOR=A COMPLETER
+NEXT_PUBLIC_LEGAL_PHONE=
+NEXT_PUBLIC_LEGAL_EMAIL=contact@tadiff.com
 NEXT_PUBLIC_PRIVACY_EMAIL=contact@tadiff.com
 NEXT_PUBLIC_SUPPORT_EMAIL=contact@tadiff.com
 NEXT_PUBLIC_BILLING_EMAIL=contact@tadiff.com
@@ -40,7 +44,7 @@ NEXT_PUBLIC_BETA_PRICE=19,99 EUR TTC par mois
 NEXT_PUBLIC_LEGAL_VERSION=1.0
 ```
 
-Quand la societe TaDiff reprend l'exploitation, remplacer les valeurs juridiques ARKENCIEL par celles de TaDiff, incrementer `NEXT_PUBLIC_LEGAL_VERSION`, conserver une copie de l'ancienne version et redeployer.
+Quand la societe TaDiff reprend l'exploitation, remplacer les valeurs juridiques ARKENCIEL depuis la console, incrementer la version et conserver une copie immuable de l'ancienne version avant publication.
 
 ## 3. Decisions commerciales a valider
 

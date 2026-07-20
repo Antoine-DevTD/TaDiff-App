@@ -29,6 +29,7 @@ import type {
   CompanyProfile,
   Contact,
   EmailCampaign,
+  EmailTemplate,
   FixedCost,
   GrantOpportunity,
   PatronageDeal,
@@ -126,7 +127,7 @@ export async function getShowById(showId: string): Promise<{
       supabase
         .from("opportunities")
         .select(
-          "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
+          "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,venue_rental,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
         )
         .eq("show_id", showId)
         .order("created_at", { ascending: false }),
@@ -187,6 +188,12 @@ export async function getShowById(showId: string): Promise<{
           stage: deal.stage as PipelineDeal["stage"],
           value: deal.value ?? 0,
           probability: deal.probability ?? 0,
+          exploitationMode: (deal.exploitation_mode ?? "cession") as PipelineDeal["exploitationMode"],
+          cessionFee: deal.cession_fee ?? 0,
+          estimatedBoxOffice: deal.estimated_box_office ?? 0,
+          companySharePercent: deal.company_share_percent ?? 50,
+          minimumGuarantee: deal.minimum_guarantee ?? 0,
+          venueRental: deal.venue_rental ?? 0,
           performanceDate: deal.performance_date ?? "",
           nextAction: deal.next_action ?? "Prochaine action a definir",
           nextFollowUpAt: deal.next_follow_up_at ?? "",
@@ -316,7 +323,7 @@ export async function getContactById(contactId: string): Promise<{
     supabase
       .from("opportunities")
       .select(
-        "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title,discipline,status,next_date,budget,notes,poster_url,id)",
+        "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,venue_rental,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title,discipline,status,next_date,budget,notes,poster_url,id)",
       )
       .eq("contact_id", contactId)
       .order("created_at", { ascending: false }),
@@ -359,6 +366,12 @@ export async function getContactById(contactId: string): Promise<{
     stage: deal.stage as PipelineDeal["stage"],
     value: deal.value ?? 0,
     probability: deal.probability ?? 0,
+    exploitationMode: (deal.exploitation_mode ?? "cession") as PipelineDeal["exploitationMode"],
+    cessionFee: deal.cession_fee ?? 0,
+    estimatedBoxOffice: deal.estimated_box_office ?? 0,
+    companySharePercent: deal.company_share_percent ?? 50,
+    minimumGuarantee: deal.minimum_guarantee ?? 0,
+    venueRental: deal.venue_rental ?? 0,
     performanceDate: deal.performance_date ?? "",
     nextAction: deal.next_action ?? "Prochaine action a definir",
     nextFollowUpAt: deal.next_follow_up_at ?? "",
@@ -435,7 +448,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     supabase
       .from("opportunities")
       .select(
-        "id,title,contact_id,show_id,stage,value,probability,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
+        "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,venue_rental,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -461,6 +474,12 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     stage: deal.stage as PipelineDeal["stage"],
     value: deal.value ?? 0,
     probability: deal.probability ?? 0,
+    exploitationMode: (deal.exploitation_mode ?? "cession") as PipelineDeal["exploitationMode"],
+    cessionFee: deal.cession_fee ?? 0,
+    estimatedBoxOffice: deal.estimated_box_office ?? 0,
+    companySharePercent: deal.company_share_percent ?? 50,
+    minimumGuarantee: deal.minimum_guarantee ?? 0,
+    venueRental: deal.venue_rental ?? 0,
     performanceDate: deal.performance_date ?? "",
     nextAction: deal.next_action ?? "Prochaine action a definir",
     nextFollowUpAt: deal.next_follow_up_at ?? "",
@@ -539,24 +558,24 @@ async function mapShowDocumentRows(rows: ShowDocumentRow[]): Promise<ShowDocumen
   const rowsWithPath = rows.filter(
     (row): row is ShowDocumentRow & { storage_path: string } => Boolean(row.storage_path),
   );
-  const urlByPath = new Map<string, string>();
+  const downloadUrlByPath = new Map<string, string>();
+  const previewUrlByPath = new Map<string, string>();
 
   if (rowsWithPath.length > 0) {
     const supabase = await getSupabaseServerClient();
-    const signed = await Promise.all(
-      rowsWithPath.map((row) =>
-        supabase.storage
-          .from("documents")
-          .createSignedUrl(row.storage_path, 3600, {
-            download: buildDownloadFileName(row.title, row.storage_path),
-          }),
-      ),
-    );
+    const signed = await Promise.all(rowsWithPath.map(async (row) => {
+      const [preview, download] = await Promise.all([
+        supabase.storage.from("documents").createSignedUrl(row.storage_path, 3600),
+        supabase.storage.from("documents").createSignedUrl(row.storage_path, 3600, {
+          download: buildDownloadFileName(row.title, row.storage_path),
+        }),
+      ]);
+      return { download: download.data?.signedUrl, preview: preview.data?.signedUrl, row };
+    }));
 
-    signed.forEach(({ data }, index) => {
-      if (data?.signedUrl) {
-        urlByPath.set(rowsWithPath[index].storage_path, data.signedUrl);
-      }
+    signed.forEach(({ download, preview, row }) => {
+      if (download) downloadUrlByPath.set(row.storage_path, download);
+      if (preview) previewUrlByPath.set(row.storage_path, preview);
     });
   }
 
@@ -567,7 +586,11 @@ async function mapShowDocumentRows(rows: ShowDocumentRow[]): Promise<ShowDocumen
     documentType: document.document_type as ShowDocument["documentType"],
     status: document.status as ShowDocument["status"],
     fileUrl:
-      (document.storage_path ? urlByPath.get(document.storage_path) : undefined) ??
+      (document.storage_path ? downloadUrlByPath.get(document.storage_path) : undefined) ??
+      document.file_url ??
+      "",
+    previewUrl:
+      (document.storage_path ? previewUrlByPath.get(document.storage_path) : undefined) ??
       document.file_url ??
       "",
     storagePath: document.storage_path ?? "",
@@ -724,6 +747,44 @@ export async function getPatronageDeals(): Promise<PatronageDeal[]> {
 
 export async function getEmailCampaigns(): Promise<EmailCampaign[]> {
   return emailCampaigns;
+}
+
+export async function getEmailTemplates(): Promise<EmailTemplate[]> {
+  if (!hasSupabaseEnv()) return [];
+
+  const supabase = await getSupabaseServerClient();
+  const [companyResult, platformResult] = await Promise.all([
+    supabase
+      .from("email_templates")
+      .select("id,name,message_type,subject_template,body_json,updated_at")
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("platform_email_templates")
+      .select("id,name,message_type,subject_template,body_json,updated_at")
+      .eq("active", true)
+      .order("updated_at", { ascending: false }),
+  ]);
+
+  const companyTemplates = (companyResult.data ?? []).map((template) => ({
+    id: template.id,
+    name: template.name,
+    messageType: template.message_type,
+    subjectTemplate: template.subject_template,
+    bodyJson: template.body_json,
+    updatedAt: template.updated_at,
+    scope: "company" as const,
+  }));
+  const platformTemplates = (platformResult.data ?? []).map((template) => ({
+    id: template.id,
+    name: template.name,
+    messageType: template.message_type,
+    subjectTemplate: template.subject_template,
+    bodyJson: template.body_json,
+    updatedAt: template.updated_at,
+    scope: "platform" as const,
+  }));
+
+  return [...platformTemplates, ...companyTemplates];
 }
 
 export async function getBillingPlans(): Promise<BillingPlan[]> {

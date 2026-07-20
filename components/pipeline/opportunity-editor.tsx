@@ -6,8 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { getDefaultProbability, pipelineStages } from "@/lib/pipeline";
-import type { Contact, PipelineDeal, PipelineStage, Show } from "@/types";
+import {
+  calculateCompanyRevenue,
+  exploitationModes,
+  getDefaultProbability,
+  getWilliamOpportunityAction,
+  pipelineStages,
+} from "@/lib/pipeline";
+import type { Contact, ExploitationMode, PipelineDeal, PipelineStage, Show } from "@/types";
 
 export function OpportunityEditor({
   contacts,
@@ -32,6 +38,12 @@ export function OpportunityEditor({
     stage: deal.stage,
     value: String(deal.value),
     probability: String(deal.probability),
+    exploitationMode: deal.exploitationMode,
+    cessionFee: String(deal.cessionFee),
+    estimatedBoxOffice: String(deal.estimatedBoxOffice),
+    companySharePercent: String(deal.companySharePercent),
+    minimumGuarantee: String(deal.minimumGuarantee),
+    venueRental: String(deal.venueRental),
     performanceDate: deal.performanceDate,
     nextAction: deal.nextAction === "Prochaine action a definir" ? "" : deal.nextAction,
     nextFollowUpAt: deal.nextFollowUpAt,
@@ -58,6 +70,14 @@ export function OpportunityEditor({
 
     const selectedContact = contacts.find((contact) => contact.id === draft.contactId);
     const selectedShow = shows.find((show) => show.id === draft.showId);
+    const revenue = calculateCompanyRevenue({
+      exploitationMode: draft.exploitationMode,
+      cessionFee: Number(draft.cessionFee) || 0,
+      estimatedBoxOffice: Number(draft.estimatedBoxOffice) || 0,
+      companySharePercent: Number(draft.companySharePercent) || 0,
+      minimumGuarantee: Number(draft.minimumGuarantee) || 0,
+      venueRental: Number(draft.venueRental) || 0,
+    });
 
     onSaved(
       {
@@ -67,8 +87,14 @@ export function OpportunityEditor({
         showId: draft.showId,
         venue: selectedContact?.organization ?? "Structure a renseigner",
         stage: draft.stage,
-        value: Number(draft.value) || 0,
+        value: revenue,
         probability: Number(draft.probability) || 0,
+        exploitationMode: draft.exploitationMode,
+        cessionFee: Number(draft.cessionFee) || 0,
+        estimatedBoxOffice: Number(draft.estimatedBoxOffice) || 0,
+        companySharePercent: Number(draft.companySharePercent) || 0,
+        minimumGuarantee: Number(draft.minimumGuarantee) || 0,
+        venueRental: Number(draft.venueRental) || 0,
         performanceDate: draft.performanceDate,
         nextAction: draft.nextAction || "Prochaine action a definir",
         nextFollowUpAt: draft.nextFollowUpAt,
@@ -82,7 +108,7 @@ export function OpportunityEditor({
   }
 
   async function removeDeal() {
-    const confirmed = window.confirm("Supprimer cette date possible ?");
+    const confirmed = window.confirm("Supprimer cette diffusion ?");
 
     if (!confirmed) {
       return;
@@ -99,7 +125,7 @@ export function OpportunityEditor({
   return (
     <div className="mt-3 space-y-2 rounded-md border border-border bg-panel-strong/55 p-3">
       <Input
-        aria-label="Titre date possible"
+        aria-label="Titre de la diffusion"
         className="min-h-9 text-xs"
         value={draft.title}
         onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
@@ -136,29 +162,30 @@ export function OpportunityEditor({
           ))}
         </Select>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Input
-          aria-label="Montant"
-          className="min-h-9 text-xs"
-          min="0"
-          step="100"
-          type="number"
-          value={draft.value}
-          onChange={(event) => setDraft((current) => ({ ...current, value: event.target.value }))}
-        />
-        <Input
-          aria-label="Probabilite"
-          className="min-h-9 text-xs"
-          max="100"
-          min="0"
-          step="5"
-          type="number"
-          value={draft.probability}
-          onChange={(event) =>
-            setDraft((current) => ({ ...current, probability: event.target.value }))
-          }
-        />
-      </div>
+      <Select
+        aria-label="Mode d'exploitation"
+        className="min-h-9 text-xs"
+        value={draft.exploitationMode}
+        onChange={(event) => setDraft((current) => ({ ...current, exploitationMode: event.target.value as ExploitationMode }))}
+      >
+        {exploitationModes.map((mode) => <option key={mode.id} value={mode.id}>{mode.label}</option>)}
+      </Select>
+      {draft.exploitationMode === "cession" || draft.exploitationMode === "other" ? (
+        <Input aria-label="Montant attendu" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.cessionFee} onChange={(event) => setDraft((current) => ({ ...current, cessionFee: event.target.value }))} />
+      ) : null}
+      {draft.exploitationMode === "corealisation" ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
+          <Input aria-label="Part compagnie" className="min-h-9 text-xs" min="0" max="100" step="5" type="number" value={draft.companySharePercent} onChange={(event) => setDraft((current) => ({ ...current, companySharePercent: event.target.value }))} />
+          <Input aria-label="Minimum garanti" className="col-span-2 min-h-9 text-xs" min="0" step="100" type="number" value={draft.minimumGuarantee} onChange={(event) => setDraft((current) => ({ ...current, minimumGuarantee: event.target.value }))} />
+        </div>
+      ) : null}
+      {draft.exploitationMode === "location" ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
+          <Input aria-label="Coût de location" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.venueRental} onChange={(event) => setDraft((current) => ({ ...current, venueRental: event.target.value }))} />
+        </div>
+      ) : null}
       <Input
         aria-label="Date de jeu"
         className="min-h-9 text-xs"
@@ -186,6 +213,16 @@ export function OpportunityEditor({
           setDraft((current) => ({ ...current, nextAction: event.target.value }))
         }
       />
+      <button
+        className="w-full rounded-md border border-accent/25 bg-accent/5 px-2 py-2 text-xs font-medium text-accent hover:bg-accent/10"
+        type="button"
+        onClick={() => {
+          const suggestion = getWilliamOpportunityAction(draft.stage, draft.exploitationMode);
+          setDraft((current) => ({ ...current, nextAction: suggestion.action, nextFollowUpAt: suggestion.dueDate }));
+        }}
+      >
+        Demander une action à William
+      </button>
       <Select
         aria-label="Etape"
         className="min-h-9 text-xs"

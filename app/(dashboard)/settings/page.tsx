@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { CompanyDocumentsPanel } from "@/components/settings/company-documents-panel";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { TeamAccessPanel } from "@/components/settings/team-access-panel";
+import { AiCreditsPanel } from "@/components/settings/ai-credits-panel";
+import { getAiEntitlement } from "@/lib/ai/entitlement";
 import { getWorkspaceAccess, type BillingStatus, type CompanyRole } from "@/lib/supabase/access";
 import { isSuperAdmin } from "@/lib/supabase/admin";
 import {
@@ -25,6 +27,7 @@ export default async function SettingsPage() {
     members,
     inviteCode,
     companyDocuments,
+    aiEntitlement,
   ] = await Promise.all([
     getDashboardData(),
     getQuoteItems(),
@@ -34,6 +37,7 @@ export default async function SettingsPage() {
     getCompanyMembers(),
     getCompanyInviteCode(),
     getCompanyDocuments(),
+    getAiEntitlement(),
   ]);
   return (
     <div className="space-y-6">
@@ -83,6 +87,8 @@ export default async function SettingsPage() {
           />
         </Card>
       ) : null}
+
+      <AiCreditsPanel canManage={access.canManage} entitlement={aiEntitlement} />
 
       <Card className="space-y-4 p-5">
           <div>

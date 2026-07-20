@@ -29,8 +29,8 @@ export function PipelineCreatePanel({
       open={isOpen}
       onClose={() => setIsOpen(false)}
       eyebrow="Diffusion"
-      title="Ajouter une date a vendre"
-      description="Reliez un spectacle a un contact, puis indiquez la prochaine etape utile."
+      title="Ajouter une diffusion"
+      description="Cession, coréalisation ou location : choisissez le montage réel, TaDiff adapte la suite."
       className="max-w-4xl"
     >
       <OpportunityForm

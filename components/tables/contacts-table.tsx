@@ -33,7 +33,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ContactForm } from "@/components/forms/contact-form";
 import { cn } from "@/lib/utils";
-import type { Contact } from "@/types";
+import type { Contact, EmailTemplate, Show } from "@/types";
 
 type ContactFilter = {
   label: string;
@@ -50,7 +50,7 @@ type ContactContextMenu = {
   y: number;
 } | null;
 
-export function ContactsTable({ contacts }: { contacts: Contact[] }) {
+export function ContactsTable({ contacts, shows, templates }: { contacts: Contact[]; shows: Show[]; templates: EmailTemplate[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState("");
   const [railLocked, setRailLocked] = useState(false);
@@ -297,6 +297,8 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
 
       <ContactEmailAssistant
         contact={emailContact}
+        shows={shows}
+        templates={templates}
         open={Boolean(emailContact)}
         onClose={() => setEmailContact(null)}
       />

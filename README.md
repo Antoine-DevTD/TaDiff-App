@@ -24,6 +24,12 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Documentation
+
+Start with [`docs/README.md`](docs/README.md) for the product, engineering,
+operations, legal and agent documentation map. Agent sessions should read
+`AGENTS.md` first and load only the relevant documentation bundle.
+
 ## Useful Commands
 
 ```bash

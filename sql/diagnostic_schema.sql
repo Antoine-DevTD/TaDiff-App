@@ -1,7 +1,7 @@
 -- Diagnostic du schema TaDiff
 --
 -- A coller tel quel dans le SQL editor Supabase.
--- Liste tout ce qui manque par rapport au schema attendu (migrations 001 a 012).
+-- Liste les colonnes et fonctions critiques manquantes dans le schema attendu.
 -- Si le resultat est vide : le schema est complet.
 --
 -- Reparation : rejouer dans l'ordre les migrations citees dans la colonne
@@ -47,7 +47,14 @@ with attendu_colonnes(table_name, column_name, migration) as (
     -- 011 stockage documents
     ('show_documents', 'storage_path', '011'),
     -- 012 logs d'activite
-    ('activity_logs', 'id', '012')
+    ('activity_logs', 'id', '012'),
+    -- 036 modeles d'exploitation
+    ('opportunities', 'exploitation_mode', '036'),
+    ('opportunities', 'cession_fee', '036'),
+    ('opportunities', 'estimated_box_office', '036'),
+    ('opportunities', 'company_share_percent', '036'),
+    ('opportunities', 'minimum_guarantee', '036'),
+    ('opportunities', 'venue_rental', '036')
 ),
 attendu_fonctions(function_name, migration) as (
   values

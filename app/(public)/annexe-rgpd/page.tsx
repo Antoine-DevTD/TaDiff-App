@@ -1,13 +1,14 @@
 /* eslint-disable react/no-unescaped-entities */
 import { LegalList, LegalNotice, LegalPage, LegalSection } from "@/components/legal/legal-page";
-import { legalInformation } from "@/lib/legal";
+import { getLegalInformation } from "@/lib/legal";
 
 export const metadata = {
   title: "Annexe RGPD | TaDiff",
   description: "Accord de traitement des donnees pour les clients TaDiff.",
 };
 
-export default function DataProcessingPage() {
+export default async function DataProcessingPage() {
+  const legalInformation = await getLegalInformation();
   return (
     <LegalPage eyebrow={`Version ${legalInformation.legalVersion}`} title="Annexe relative au traitement des donnees" introduction="Cette annexe encadre les traitements effectues par TaDiff pour le compte des compagnies clientes, conformement a l'article 28 du RGPD.">
       <LegalNotice>

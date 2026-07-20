@@ -409,6 +409,30 @@ option {
   color: var(--color-foreground);
 }
 
+.email-editor .tiptap {
+  min-height: 17rem;
+  outline: none;
+}
+
+.email-editor .tiptap p + p,
+.email-editor .tiptap ul + p,
+.email-editor .tiptap p + ul {
+  margin-top: 1rem;
+}
+
+.email-editor .tiptap ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+
+.email-editor .tiptap p.is-editor-empty:first-child::before {
+  color: var(--color-muted);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0.65;
 }

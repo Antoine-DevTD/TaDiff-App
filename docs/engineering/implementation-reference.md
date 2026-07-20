@@ -1,4 +1,4 @@
-# Instructions agent - TaDiff
+# TaDiff - Reference d'implementation
 
 ## Ajouts diffusion du 18 juillet 2026
 
@@ -8,13 +8,13 @@
 - Le suivi actuel est exact pour le lien et la reponse, mais pas pour l'envoi ou l'ouverture du mail car le brouillon passe encore par `mailto:`.
 - Pour creer un superadmin reel : `npm run admin:create -- adresse@email.fr`. La commande exige la service role dans `.env.local`, genere un mot de passe temporaire fort et ne doit jamais etre appelee depuis le navigateur.
 
-Ce document est le point d'entree pour toute nouvelle conversation Claude/Codex
-sur le projet TaDiff.
+Ce document est la reference detaillee d'implementation. Le point d'entree des
+agents est `AGENTS.md`, puis `docs/ai/CONTEXT_MAP.md`.
 
 Objectif : eviter de repartir de zero, proteger l'etat du repo, et faire avancer
 le produit dans la bonne direction.
 
-## 1. A lire en premier
+## 1. Lecture pour un audit global
 
 Lire ces fichiers dans cet ordre avant de proposer ou modifier du code :
 
@@ -24,14 +24,14 @@ Lire ces fichiers dans cet ordre avant de proposer ou modifier du code :
    - setup Supabase ;
    - integrations externes.
 
-2. `developpement.md`
+2. `docs/product/product-plan.md`
    - vision produit ;
    - planning 23 juillet / 6 aout / 6 septembre / 20 septembre ;
    - modules a construire ;
    - priorites immediates ;
    - exigences issues de Tony.
 
-3. `ressources/notes_tony_application_tadiff.md`
+3. `02 - Ressources/notes_tony_application_tadiff.md`
    - synthese du document de Tony ;
    - exigence centrale : pas de fausse maquette apres connexion ;
    - chaque action visible doit fonctionner ou afficher un etat "Fonction prevue - non branchee dans cette version".
@@ -54,7 +54,7 @@ Lire ces fichiers dans cet ordre avant de proposer ou modifier du code :
 7. `data/mock-data.ts`
    - donnees demo utilisees quand Supabase n'est pas configure.
 
-8. `Contrat/Contre_proposition_TADIFF_Titouan.md`
+8. `01 - Contrat/Contre_proposition_TADIFF_Titouan.md`
    - uniquement si la tache touche au contrat, a la propriete intellectuelle, a la maintenance, au capital, aux frais ou a la gouvernance.
 
 ## 2. Vision produit
@@ -111,7 +111,7 @@ Deja en place (mise a jour 2026-07-05) :
 - compagnie de demonstration installable en un clic depuis /settings (`data/demo-company.ts`, action `seedDemoCompany`) : "Compagnie de l'Estran", 3 spectacles, 8 contacts, 7 dates, relances, frais fixes, tresorerie, documents, 3 devis, 4 subventions, dates relatives au jour de l'installation ; refuse si l'espace contient deja des donnees ;
 - visite guidee "William (version scriptee)" : moteur spotlight `components/tour/guided-tour.tsx` monte dans le layout dashboard, parcours de 10 etapes dans `data/tour-steps.ts`, ancres `data-tour` sur cockpit/pipeline/shows/subventions/finances/calendar, lanceur `components/tour/tour-launcher.tsx` ;
 - checklist onboarding "Commencer" sur le cockpit (`components/onboarding/getting-started.tsx`) : 7 etapes calculees sur les vraies donnees, masquee quand tout est fait ;
-- script du webinaire du 23 juillet : `docs/webinaire-23-juillet.md` ;
+- script du webinaire du 23 juillet : `docs/operations/webinar-2026-07-23.md` ;
 - mecenat branche sur la table patronage_deals : formulaire d'ajout, changement de statut, suppression ; la demo Estran inclut 3 partenaires mecenat (les packs restent du contenu statique mock) ;
 - recuperation de mot de passe : /forgot-password (envoi du lien via Supabase Auth) et /reset-password (nouveau mot de passe apres retour du lien, via /auth/callback) ;
 - edition des frais fixes (bouton Modifier sur chaque ligne de /finances) et des relances (bouton Modifier dans la liste /reminders) ;
@@ -497,9 +497,9 @@ Points sensibles :
 
 Fichiers utiles :
 
-- `Contrat/Contre_proposition_TADIFF_Titouan.md`
-- `Contrat/Message_reponse_Tony.md`
-- `Contrat/Checklist_avocat_TADIFF.md`
+- `01 - Contrat/Contre_proposition_TADIFF_Titouan.md`
+- `01 - Contrat/Message_reponse_Tony.md`
+- `01 - Contrat/Checklist_avocat_TADIFF.md`
 
 Ne pas donner de conseil juridique definitif. Dire quand un avocat doit valider.
 
@@ -531,7 +531,7 @@ Si aucune tache plus precise n'est donnee, travailler sur :
 1. Stripe mode test : code checkout/webhook fait ; appliquer migration 020, creer le prix beta 19,99 EUR, poser les cles env, tester un paiement complet -> `companies.billing_status` ;
 2. emails Resend : envoi depuis fiche contact, templates, historique, brouillons si non branche (attend la cle Resend) ;
 3. page beta : verifier compteur 10 places + liste d'attente 30 en conditions reelles ;
-4. editeur de budget avance + contrats de corealisation (minimum garanti lieu/compagnie puis partage des recettes, simulation de remplissage jauge x prix x taux) : cadre dans developpement.md section Devis, backlog apres le 23 juillet ;
-5. console super admin : Phase A (supervision + billing) et Phase B (retours/bugs) FAITES ; reste Phase C catalogues globaux subventions/mecenat (voir developpement.md "Console super admin") ;
+4. editeur de budget avance + contrats de corealisation (minimum garanti lieu/compagnie puis partage des recettes, simulation de remplissage jauge x prix x taux) : cadre dans `docs/product/product-plan.md`, section Devis, backlog apres le 23 juillet ;
+5. console super admin : Phase A (supervision + billing) et Phase B (retours/bugs) FAITES ; reste Phase C catalogues globaux subventions/mecenat (voir `docs/product/product-plan.md`, section Console super admin) ;
 6. association documents <-> contact/devis/contrat + upload direct depuis la page Documents ;
 7. vue mois/semaine du calendrier.

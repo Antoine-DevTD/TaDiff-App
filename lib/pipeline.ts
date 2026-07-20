@@ -1,4 +1,67 @@
-import type { PipelineDeal, PipelineStage } from "@/types";
+import type { ExploitationMode, PipelineDeal, PipelineStage } from "@/types";
+
+export const exploitationModes: Array<{
+  id: ExploitationMode;
+  label: string;
+  description: string;
+}> = [
+  { id: "cession", label: "Cession", description: "Le lieu achète la représentation." },
+  { id: "corealisation", label: "Coréalisation", description: "Vous partagez les recettes de billetterie." },
+  { id: "location", label: "Location", description: "Vous louez le lieu et gardez les recettes." },
+  { id: "other", label: "Autre accord", description: "Mise à disposition ou montage particulier." },
+];
+
+export function getExploitationModeLabel(mode: ExploitationMode) {
+  return exploitationModes.find((item) => item.id === mode)?.label ?? "Accord à préciser";
+}
+
+export function calculateCompanyRevenue(input: {
+  exploitationMode: ExploitationMode;
+  cessionFee: number;
+  estimatedBoxOffice: number;
+  companySharePercent: number;
+  minimumGuarantee: number;
+  venueRental: number;
+}) {
+  if (input.exploitationMode === "corealisation") {
+    const sharedRevenue = input.estimatedBoxOffice * (input.companySharePercent / 100);
+    return Math.max(sharedRevenue, input.minimumGuarantee);
+  }
+
+  if (input.exploitationMode === "location") {
+    return Math.max(0, input.estimatedBoxOffice - input.venueRental);
+  }
+
+  return input.cessionFee;
+}
+
+export function getWilliamOpportunityAction(stage: PipelineStage, mode: ExploitationMode) {
+  const delayDays = stage === "Confirme" ? 3 : 7;
+  const dueDate = new Date(Date.now() + delayDays * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+
+  if (stage === "Confirme") {
+    return { action: "Préparer le contrat et vérifier les conditions d'accueil", dueDate };
+  }
+
+  if (stage === "Perdu") return { action: "", dueDate: "" };
+
+  if (stage === "Negociation") {
+    const action = mode === "corealisation"
+      ? "Valider le partage de billetterie et le minimum garanti"
+      : mode === "location"
+        ? "Vérifier le coût de location et les conditions techniques"
+        : "Envoyer une proposition financière et les conditions d'accueil";
+    return { action, dueDate };
+  }
+
+  if (stage === "Contacte" || stage === "Relance prevue") {
+    return { action: "Relancer avec le dossier artistique et proposer un échange", dueDate };
+  }
+
+  return { action: "Envoyer le dossier artistique et qualifier le besoin du lieu", dueDate };
+}
 
 export const pipelineStages: Array<{
   id: PipelineStage;

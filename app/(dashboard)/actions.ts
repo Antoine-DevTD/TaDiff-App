@@ -71,13 +71,78 @@ import {
   type ShowBudgetItemInput,
 } from "@/lib/validation/show-budget";
 import { feedbackSchema, type FeedbackFormInput } from "@/lib/validation/feedback";
-import { getDefaultProbability } from "@/lib/pipeline";
+import {
+  calculateCompanyRevenue,
+  getDefaultProbability,
+  getWilliamOpportunityAction,
+} from "@/lib/pipeline";
 import type { PipelineStage } from "@/types";
+import { emailTemplateSchema, type EmailTemplateInput } from "@/lib/validation/email-template";
+import type { Json } from "@/types/database.types";
 
 type ActionResult = {
   ok: boolean;
   message: string;
 };
+
+export async function saveEmailTemplate(
+  templateId: string | null,
+  values: EmailTemplateInput,
+): Promise<ActionResult> {
+  const parsed = emailTemplateSchema.safeParse(values);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Modele invalide." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : modele valide, non enregistre." };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const supabase = await getSupabaseServerClient();
+  const payload = {
+    name: parsed.data.name,
+    message_type: parsed.data.messageType,
+    subject_template: parsed.data.subjectTemplate,
+    body_json: parsed.data.bodyJson as Json,
+    updated_at: new Date().toISOString(),
+  };
+
+  const result = templateId
+    ? await supabase.from("email_templates").update(payload).eq("id", templateId)
+    : await (async () => {
+        const workspace = await getOrCreateWorkspace();
+        if (!workspace.companyId) return { error: { message: workspace.error ?? "Compagnie introuvable." } };
+        return supabase.from("email_templates").insert({ ...payload, company_id: workspace.companyId });
+      })();
+
+  if (result.error) {
+    return {
+      ok: false,
+      message: result.error.message.includes("schema cache")
+        ? "Appliquez la migration 037_email_templates.sql avant d'enregistrer."
+        : result.error.message,
+    };
+  }
+
+  revalidatePath("/campaigns");
+  revalidatePath("/contacts");
+  return { ok: true, message: "Modele enregistre." };
+}
+
+export async function deleteEmailTemplate(templateId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) return { ok: true, message: "Mode demo : modele retire." };
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("email_templates").delete().eq("id", templateId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/campaigns");
+  revalidatePath("/contacts");
+  return { ok: true, message: "Modele supprime." };
+}
 
 function isDetailedBudgetSchemaCacheError(message: string | undefined) {
   return Boolean(
@@ -116,6 +181,18 @@ function isOpportunitySchemaCacheError(message: string | undefined) {
         message.includes("next_follow_up_at") ||
         message.includes("performance_date") ||
         message.includes("probability")),
+  );
+}
+
+function isOpportunityExploitationSchemaError(message: string | undefined) {
+  return Boolean(
+    message?.includes("schema cache") &&
+      (message.includes("exploitation_mode") ||
+        message.includes("cession_fee") ||
+        message.includes("estimated_box_office") ||
+        message.includes("company_share_percent") ||
+        message.includes("minimum_guarantee") ||
+        message.includes("venue_rental")),
   );
 }
 
@@ -839,6 +916,74 @@ export async function createShowDocument(values: ShowDocumentFormInput): Promise
   await logActivity("a ajoute le document", "document", parsed.data.title);
 
   return { ok: true, message: "Document ajoute au spectacle." };
+}
+
+export async function replaceShowDocument(
+  documentId: string,
+  values: ShowDocumentFormInput,
+): Promise<ActionResult> {
+  const parsed = showDocumentSchema.safeParse(values);
+
+  if (!parsed.success || !parsed.data.storagePath) {
+    return { ok: false, message: "La nouvelle version du document n'est pas valide." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : nouvelle version validee, non enregistree." };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: existing, error: lookupError } = await supabase
+    .from("show_documents")
+    .select("id,show_id,title,storage_path")
+    .eq("id", documentId)
+    .eq("company_id", workspace.companyId)
+    .maybeSingle();
+
+  if (lookupError || !existing || existing.show_id !== parsed.data.showId) {
+    await supabase.storage.from("documents").remove([parsed.data.storagePath]);
+    return { ok: false, message: lookupError?.message ?? "Document introuvable." };
+  }
+
+  const { error } = await supabase
+    .from("show_documents")
+    .update({
+      title: parsed.data.title,
+      document_type: parsed.data.documentType,
+      status: parsed.data.status,
+      file_url: parsed.data.fileUrl || null,
+      storage_path: parsed.data.storagePath,
+      notes: parsed.data.notes || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", documentId)
+    .eq("company_id", workspace.companyId);
+
+  if (error) {
+    await supabase.storage.from("documents").remove([parsed.data.storagePath]);
+    return { ok: false, message: error.message };
+  }
+
+  if (existing.storage_path && existing.storage_path !== parsed.data.storagePath) {
+    await supabase.storage.from("documents").remove([existing.storage_path]);
+  }
+
+  revalidatePath(`/shows/${existing.show_id}`);
+  revalidatePath("/shows");
+  revalidatePath("/documents");
+  revalidatePath("/subventions");
+  revalidatePath("/dashboard");
+  await logActivity("a remplace le document", "document", existing.title);
+
+  return { ok: true, message: "Nouvelle version enregistree." };
 }
 
 export async function prepareDocumentUpload(
@@ -1612,17 +1757,28 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
   }
 
   const supabase = await getSupabaseServerClient();
+  const revenue = calculateCompanyRevenue(parsed.data);
+  const williamAction = getWilliamOpportunityAction(
+    parsed.data.stage,
+    parsed.data.exploitationMode,
+  );
   const basePayload = {
     company_id: workspace.companyId,
     title: parsed.data.title,
     contact_id: parsed.data.contactId || null,
     show_id: parsed.data.showId || null,
     stage: parsed.data.stage,
-    value: parsed.data.value,
-    probability: parsed.data.probability,
+    value: revenue,
+    probability: getDefaultProbability(parsed.data.stage),
+    exploitation_mode: parsed.data.exploitationMode,
+    cession_fee: parsed.data.cessionFee,
+    estimated_box_office: parsed.data.estimatedBoxOffice,
+    company_share_percent: parsed.data.companySharePercent,
+    minimum_guarantee: parsed.data.minimumGuarantee,
+    venue_rental: parsed.data.venueRental,
     performance_date: parsed.data.performanceDate || null,
-    next_action: parsed.data.nextAction || null,
-    next_follow_up_at: parsed.data.nextFollowUpAt || null,
+    next_action: parsed.data.nextAction || williamAction.action || null,
+    next_follow_up_at: parsed.data.nextFollowUpAt || williamAction.dueDate || null,
     lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
   };
   let { data: opportunity, error } = await supabase
@@ -1630,6 +1786,10 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
     .insert(basePayload)
     .select("id")
     .single();
+
+  if (error && isOpportunityExploitationSchemaError(error.message)) {
+    return { ok: false, message: "Appliquez la migration SQL 036 avant de créer une diffusion." };
+  }
 
   if (error && isOpportunitySchemaCacheError(error.message)) {
     const retry = await supabase
@@ -1646,13 +1806,16 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
     return { ok: false, message: error?.message ?? "Date non creee." };
   }
 
-  if (parsed.data.nextFollowUpAt) {
+  const nextFollowUpAt = parsed.data.nextFollowUpAt || williamAction.dueDate;
+  const nextAction = parsed.data.nextAction || williamAction.action;
+
+  if (nextFollowUpAt && nextAction) {
     await ensureOpportunityReminder({
       companyId: workspace.companyId,
-      title: parsed.data.nextAction || `Contacter ${parsed.data.title}`,
-      dueDate: parsed.data.nextFollowUpAt,
+      title: nextAction,
+      dueDate: nextFollowUpAt,
       relatedTo: parsed.data.title,
-      priority: parsed.data.probability >= 60 ? "high" : "normal",
+      priority: getDefaultProbability(parsed.data.stage) >= 60 ? "high" : "normal",
       opportunityId: opportunity.id,
       contactId: parsed.data.contactId || null,
     });
@@ -1669,9 +1832,7 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
 
   return {
     ok: true,
-    message: parsed.data.nextFollowUpAt
-      ? "Date creee avec action."
-      : "Date creee.",
+    message: nextFollowUpAt ? "Diffusion créée avec l'action proposée par William." : "Diffusion créée.",
   };
 }
 
@@ -1696,13 +1857,20 @@ export async function updateOpportunity(
   }
 
   const supabase = await getSupabaseServerClient();
+  const revenue = calculateCompanyRevenue(parsed.data);
   const basePayload = {
     title: parsed.data.title,
     contact_id: parsed.data.contactId || null,
     show_id: parsed.data.showId || null,
     stage: parsed.data.stage,
-    value: parsed.data.value,
-    probability: parsed.data.probability,
+    value: revenue,
+    probability: getDefaultProbability(parsed.data.stage),
+    exploitation_mode: parsed.data.exploitationMode,
+    cession_fee: parsed.data.cessionFee,
+    estimated_box_office: parsed.data.estimatedBoxOffice,
+    company_share_percent: parsed.data.companySharePercent,
+    minimum_guarantee: parsed.data.minimumGuarantee,
+    venue_rental: parsed.data.venueRental,
     performance_date: parsed.data.performanceDate || null,
     next_action: parsed.data.nextAction || null,
     next_follow_up_at: parsed.data.nextFollowUpAt || null,
@@ -1712,6 +1880,10 @@ export async function updateOpportunity(
     .from("opportunities")
     .update(basePayload)
     .eq("id", opportunityId);
+
+  if (error && isOpportunityExploitationSchemaError(error.message)) {
+    return { ok: false, message: "Appliquez la migration SQL 036 avant de modifier cette diffusion." };
+  }
 
   if (error && isOpportunitySchemaCacheError(error.message)) {
     const retry = await supabase

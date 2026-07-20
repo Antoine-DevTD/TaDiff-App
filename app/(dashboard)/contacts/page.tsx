@@ -2,10 +2,10 @@ import { ContactImportPanel } from "@/components/contacts/contact-import-panel";
 import { ContactCreateDialog } from "@/components/contacts/contact-create-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ContactsTable } from "@/components/tables/contacts-table";
-import { getContacts } from "@/lib/supabase/queries";
+import { getContacts, getEmailTemplates, getShows } from "@/lib/supabase/queries";
 
 export default async function ContactsPage() {
-  const contacts = await getContacts();
+  const [contacts, shows, templates] = await Promise.all([getContacts(), getShows(), getEmailTemplates()]);
 
   return (
     <div className="space-y-6">
@@ -26,7 +26,7 @@ export default async function ContactsPage() {
         </div>
       ) : (
         <div data-tour="contacts-carnet">
-          <ContactsTable contacts={contacts} />
+          <ContactsTable contacts={contacts} shows={shows} templates={templates} />
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   CalendarPlus,
   ChevronDown,
@@ -10,6 +10,7 @@ import {
   Landmark,
   Mail,
   Play,
+  Send,
   Theater,
   WalletCards,
   X,
@@ -19,6 +20,7 @@ import { TadiffMark } from "@/components/brand/tadiff-mark";
 import { tourStartEvent } from "@/components/tour/guided-tour";
 import { cn } from "@/lib/utils";
 import type { WilliamTip } from "@/lib/william";
+import { askWilliamAction } from "@/app/(dashboard)/william/actions";
 
 const toneDot: Record<WilliamTip["tone"], string> = {
   danger: "bg-danger",
@@ -103,8 +105,13 @@ function TipLink({ tip, onSelect }: { tip: WilliamTip; onSelect: () => void }) {
   );
 }
 
-export function WilliamBubble({ tips }: { tips: WilliamTip[] }) {
+export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: WilliamTip[] }) {
   const [open, setOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [answerError, setAnswerError] = useState<string | null>(null);
+  const [remainingTokens, setRemainingTokens] = useState<number | null>(null);
+  const [asking, startAsking] = useTransition();
   const pathname = usePathname();
   const urgentCount = tips.filter((tip) => tip.tone === "danger" || tip.tone === "warning").length;
   const priorityTip = tips[0];
@@ -120,6 +127,21 @@ export function WilliamBubble({ tips }: { tips: WilliamTip[] }) {
   function startTour() {
     window.dispatchEvent(new Event(tourStartEvent));
     setOpen(false);
+  }
+
+  function submitQuestion(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAnswerError(null);
+    startAsking(async () => {
+      const result = await askWilliamAction(question);
+      if (!result.ok) {
+        setAnswerError(result.message);
+        return;
+      }
+      setAnswer(result.answer.text);
+      setRemainingTokens(result.answer.remainingTokens);
+      setQuestion("");
+    });
   }
 
   return (
@@ -151,6 +173,35 @@ export function WilliamBubble({ tips }: { tips: WilliamTip[] }) {
           </div>
 
           <div className="max-h-[min(34rem,calc(100vh-9rem))] space-y-4 overflow-y-auto overscroll-contain p-4">
+            {aiEnabled ? (
+              <section aria-labelledby="william-question-title">
+                <p id="william-question-title" className="text-xs font-semibold uppercase text-muted">Demander a William</p>
+                {answer ? <div className="mt-2 whitespace-pre-wrap rounded-md border border-accent/25 bg-accent-soft/25 p-3 text-sm leading-6">{answer}</div> : null}
+                {answerError ? <p className="mt-2 rounded-md bg-danger/10 p-3 text-sm text-danger" role="alert">{answerError}</p> : null}
+                <form className="mt-2 flex items-end gap-2" onSubmit={submitQuestion}>
+                  <label className="sr-only" htmlFor="william-question">Votre question</label>
+                  <textarea
+                    id="william-question"
+                    className="min-h-20 flex-1 resize-y rounded-md border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
+                    maxLength={12000}
+                    placeholder="Quelle aide correspond a mon spectacle ?"
+                    value={question}
+                    onChange={(event) => setQuestion(event.target.value)}
+                  />
+                  <button
+                    aria-label="Envoyer a William"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent text-white transition hover:bg-accent-strong disabled:opacity-50"
+                    disabled={asking || question.trim().length < 3}
+                    title="Envoyer"
+                    type="submit"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </form>
+                {remainingTokens !== null ? <p className="mt-2 text-[11px] text-muted">{new Intl.NumberFormat("fr-FR").format(remainingTokens)} credits disponibles</p> : null}
+              </section>
+            ) : null}
+
             <section aria-labelledby="william-priority-title">
               <p id="william-priority-title" className="text-xs font-semibold uppercase text-muted">Priorite suggeree</p>
               {priorityTip ? (
