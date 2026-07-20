@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import type { GrantDossierState } from "@/lib/grants";
 
-type ZipEntry = {
+export type ZipEntry = {
   data: Uint8Array;
   name: string;
 };
@@ -145,7 +145,7 @@ function buildPlaceholder(requirement: GrantDossierState["requirements"][number]
     .join("\n");
 }
 
-async function fetchDocument(fileUrl: string) {
+export async function fetchDocument(fileUrl: string) {
   try {
     const response = await fetch(fileUrl);
 
@@ -186,7 +186,7 @@ function textFile(value: string) {
   return encoder.encode(value);
 }
 
-function sanitizeFilename(value: string) {
+export function sanitizeFilename(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -196,7 +196,7 @@ function sanitizeFilename(value: string) {
     .slice(0, 80);
 }
 
-function createZip(entries: ZipEntry[]) {
+export function createZip(entries: ZipEntry[]) {
   const chunks: Uint8Array[] = [];
   const centralEntries: CentralEntry[] = [];
   let offset = 0;

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  betaDisciplines,
   betaSignupSchema,
   type BetaSignupFormInput,
   type BetaSignupFormValues,
@@ -85,12 +86,9 @@ export function BetaSignupForm() {
         </Field>
         <Field label="Discipline" error={errors.discipline?.message}>
           <Select {...register("discipline")}>
-            <option value="Theatre">Theatre</option>
-            <option value="Danse">Danse</option>
-            <option value="Musique">Musique</option>
-            <option value="Cirque">Cirque</option>
-            <option value="Jeune public">Jeune public</option>
-            <option value="Pluridisciplinaire">Pluridisciplinaire</option>
+            {betaDisciplines.map((discipline) => (
+              <option key={discipline} value={discipline}>{discipline}</option>
+            ))}
           </Select>
         </Field>
       </div>

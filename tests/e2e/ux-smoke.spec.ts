@@ -70,6 +70,10 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("heading", { name: "Pieces indispensables" })).toBeVisible();
     await expect(page.getByText("RIB", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Statuts", { exact: true })).toHaveCount(0);
+    await page.getByRole("link", { name: "Presentation", exact: true }).click();
+    await expect(page).toHaveURL(/tab=presentation/);
+    await expect(page.getByRole("heading", { name: "Donner de la matiere aux emails" })).toBeVisible();
+    await expect(page.getByLabel("Logline")).toHaveValue(/fratrie/);
     await backToShows.click();
     await expect(page).toHaveURL(/\/shows$/);
     await expect(page.getByRole("link", { name: "Ouvrir Les lignes de fuite" })).toBeVisible();
@@ -168,6 +172,15 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("button", { name: "Ouvrir ma messagerie" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Gmail" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Outlook" })).toBeEnabled();
+
+    await page.getByLabel("Spectacle facultatif", { exact: true }).selectOption("show-1");
+    const messageField = page.getByRole("textbox", { name: "Message" });
+    await expect(messageField).toHaveValue(/fratrie/);
+    await expect(page.getByLabel("Dossier artistique")).toBeEnabled();
+    await expect(page.getByLabel("Texte de la piece")).toBeDisabled();
+    await page.getByLabel("Dossier artistique").check();
+    await expect(messageField).toHaveValue(/pieces jointes le dossier artistique/);
+    await expect(page.getByRole("button", { name: "Telecharger les pieces" })).toBeVisible();
   });
 
   test("garde la navigation fixe pendant le scroll des parametres", async ({ page }) => {

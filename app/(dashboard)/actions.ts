@@ -63,6 +63,10 @@ import {
 } from "@/lib/validation/pipeline";
 import { showSchema, type ShowFormInput } from "@/lib/validation/show";
 import {
+  showEmailProfileSchema,
+  type ShowEmailProfileInput,
+} from "@/lib/validation/show-email-profile";
+import {
   showBudgetItemSchema,
   type ShowBudgetItemInput,
 } from "@/lib/validation/show-budget";
@@ -347,6 +351,58 @@ export async function updateShow(showId: string, values: ShowFormInput): Promise
   await logActivity("a modifie le spectacle", "spectacle", parsed.data.title);
 
   return { ok: true, message: "Spectacle mis a jour." };
+}
+
+export async function updateShowEmailProfile(
+  showId: string,
+  values: ShowEmailProfileInput,
+): Promise<ActionResult> {
+  const parsed = showEmailProfileSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "La presentation contient des erreurs.",
+    };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : presentation validee, non enregistree." };
+  }
+
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("shows")
+    .update({
+      logline: parsed.data.logline?.trim() || null,
+      themes: parsed.data.themes.map((theme) => theme.trim()).filter(Boolean),
+      target_audience: parsed.data.targetAudience?.trim() || null,
+      email_pitch: parsed.data.emailPitch?.trim() || null,
+    })
+    .eq("id", showId);
+
+  if (error) {
+    const migrationMissing = error.message.includes("schema cache");
+    return {
+      ok: false,
+      message: migrationMissing
+        ? "Appliquez la migration 035_show_email_profiles.sql avant d'enregistrer."
+        : error.message,
+    };
+  }
+
+  await logActivity("a affine la presentation", "spectacle", showId);
+  revalidatePath(`/shows/${showId}`);
+  revalidatePath("/shows");
+  revalidatePath("/campaigns");
+
+  return { ok: true, message: "Presentation enregistree." };
 }
 
 export async function saveShowBudgetItem(

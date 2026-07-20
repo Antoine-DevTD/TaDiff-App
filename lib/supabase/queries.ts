@@ -73,6 +73,10 @@ export async function getShows(): Promise<Show[]> {
     budget: show.budget ?? 0,
     detailedBudgetEnabled:
       "detailed_budget_enabled" in show ? Boolean(show.detailed_budget_enabled) : false,
+    logline: "logline" in show ? show.logline ?? "" : "",
+    themes: "themes" in show ? show.themes ?? [] : [],
+    targetAudience: "target_audience" in show ? show.target_audience ?? "" : "",
+    emailPitch: "email_pitch" in show ? show.email_pitch ?? "" : "",
     notes: show.notes ?? "",
     posterUrl: show.poster_url ?? "",
   }));
@@ -148,6 +152,10 @@ export async function getShowById(showId: string): Promise<{
     budget: show.budget ?? 0,
     detailedBudgetEnabled:
       "detailed_budget_enabled" in show ? Boolean(show.detailed_budget_enabled) : false,
+    logline: "logline" in show ? show.logline ?? "" : "",
+    themes: "themes" in show ? show.themes ?? [] : [],
+    targetAudience: "target_audience" in show ? show.target_audience ?? "" : "",
+    emailPitch: "email_pitch" in show ? show.email_pitch ?? "" : "",
     notes: show.notes ?? "",
     posterUrl: show.poster_url ?? "",
   };

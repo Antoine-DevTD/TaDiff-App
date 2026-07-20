@@ -53,6 +53,10 @@ export type Show = {
   nextDate: string;
   budget: number;
   detailedBudgetEnabled?: boolean;
+  logline?: string;
+  themes?: string[];
+  targetAudience?: string;
+  emailPitch?: string;
   notes: string;
   posterUrl?: string;
   costProfile?: CostProfile;

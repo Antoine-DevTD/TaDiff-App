@@ -192,6 +192,10 @@ export type Database = {
           next_date: string | null;
           budget: number | null;
           detailed_budget_enabled: boolean;
+          logline: string | null;
+          themes: string[];
+          target_audience: string | null;
+          email_pitch: string | null;
           notes: string | null;
           poster_url: string | null;
           created_at: string;
@@ -205,6 +209,10 @@ export type Database = {
           next_date?: string | null;
           budget?: number | null;
           detailed_budget_enabled?: boolean;
+          logline?: string | null;
+          themes?: string[];
+          target_audience?: string | null;
+          email_pitch?: string | null;
           notes?: string | null;
           poster_url?: string | null;
           created_at?: string;
@@ -216,6 +224,10 @@ export type Database = {
           next_date?: string | null;
           budget?: number | null;
           detailed_budget_enabled?: boolean;
+          logline?: string | null;
+          themes?: string[];
+          target_audience?: string | null;
+          email_pitch?: string | null;
           notes?: string | null;
           poster_url?: string | null;
           created_at?: string;

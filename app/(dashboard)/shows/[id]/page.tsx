@@ -5,6 +5,7 @@ import { DocumentSlot } from "@/components/documents/document-slot";
 import { ShowDocumentDeleteButton } from "@/components/documents/show-document-delete-button";
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
 import { ShowBudgetWorkspace } from "@/components/shows/show-budget-workspace";
+import { ShowEmailProfileForm } from "@/components/shows/show-email-profile-form";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,7 @@ import { getShowById } from "@/lib/supabase/queries";
 import { cn } from "@/lib/utils";
 import type { Show } from "@/types";
 
-type ShowTab = "overview" | "files" | "dates" | "budget";
+type ShowTab = "overview" | "presentation" | "files" | "dates" | "budget";
 
 type ShowDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -31,6 +32,7 @@ type ShowDetailPageProps = {
 
 const baseShowTabs: Array<{ id: ShowTab; label: string }> = [
   { id: "overview", label: "Vue d'ensemble" },
+  { id: "presentation", label: "Presentation" },
   { id: "files", label: "Dossier" },
   { id: "dates", label: "Dates" },
 ];
@@ -120,6 +122,8 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
           weightedRevenue={weightedRevenue}
         />
       ) : null}
+
+      {activeTab === "presentation" ? <ShowEmailProfileForm show={show} /> : null}
 
       {activeTab === "files" ? (
         <Card>

@@ -1,17 +1,18 @@
 import { EmailWorkspace } from "@/components/campaigns/email-workspace";
 import { Badge } from "@/components/ui/badge";
-import { getContacts, getEmailCampaigns, getShows } from "@/lib/supabase/queries";
+import { getContacts, getEmailCampaigns, getShowDocuments, getShows } from "@/lib/supabase/queries";
 
 export default async function CampaignsPage() {
-  const [contacts, shows, campaigns] = await Promise.all([
+  const [contacts, shows, campaigns, documents] = await Promise.all([
     getContacts(),
     getShows(),
     getEmailCampaigns(),
+    getShowDocuments(),
   ]);
 
   return (
     <div className="space-y-6">
-      <EmailWorkspace contacts={contacts} shows={shows} />
+      <EmailWorkspace contacts={contacts} documents={documents} shows={shows} />
 
       {campaigns.length > 0 ? (
         <details className="group rounded-lg border border-border bg-panel">
