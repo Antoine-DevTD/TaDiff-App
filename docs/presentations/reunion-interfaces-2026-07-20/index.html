@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaDiff - Revue des interfaces</title>
+  <style>
+    :root {
+      --stage: #081121;
+      --stage-soft: #111d32;
+      --paper: #f7f9fd;
+      --panel: #ffffff;
+      --ink: #0b1427;
+      --muted: #62708a;
+      --line: #ccd7e9;
+      --blue: #2455dc;
+      --blue-soft: #e8efff;
+      --gold: #d6a334;
+      --red: #c83d31;
+      --green: #198754;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      overflow: hidden;
+      background: #020712;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+    .deck {
+      position: absolute;
+      inset: 0;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      margin: auto;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 20px 80px rgb(0 0 0 / 45%);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 24px;
+      padding: 42px 52px 30px;
+      overflow: hidden;
+      visibility: hidden;
+      opacity: 0;
+      background: var(--paper);
+      transition: opacity 220ms ease;
+    }
+    .slide.active { visibility: visible; opacity: 1; }
+    .slide.dark { color: #fff; background: var(--stage); }
+
+    .slide-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 30px;
+    }
+    .slide-head > div { min-width: 0; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+    .dark .eyebrow { color: #8eaeff; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 850px; margin-bottom: 18px; font-size: 58px; line-height: 1.02; letter-spacing: 0; }
+    h2 { margin-bottom: 0; font-size: 34px; line-height: 1.12; letter-spacing: 0; }
+    h3 { margin-bottom: 7px; font-size: 18px; line-height: 1.2; }
+    p { color: var(--muted); font-size: 16px; line-height: 1.55; }
+    .dark p { color: #b8c6df; }
+    .lead { max-width: 760px; font-size: 21px; }
+    .slide-number { flex: 0 0 auto; margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 700; }
+    .dark .slide-number { color: #8391aa; }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 42px;
+      font-size: 21px;
+      font-weight: 800;
+    }
+    .brand img { width: 38px; height: 38px; }
+    .title-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 520px;
+      align-items: center;
+      gap: 70px;
+      height: 100%;
+    }
+    .title-copy strong { color: #7fa1ff; }
+    .title-shot {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #32415d;
+      background: #fff;
+      box-shadow: 28px 28px 0 #14213a, 0 26px 70px rgb(0 0 0 / 35%);
+    }
+    .title-shot img { display: block; width: 100%; }
+    .cue {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      color: #aebbd2;
+      font-size: 14px;
+    }
+    .cue::before { width: 24px; height: 2px; content: ""; background: var(--gold); }
+
+    .screen-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 30px;
+      min-height: 0;
+      align-items: stretch;
+    }
+    .screen-frame {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid #b9c7dc;
+      background: #dce6f5;
+      box-shadow: 0 16px 34px rgb(15 29 55 / 14%);
+    }
+    .screen-frame img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top left;
+    }
+    .screen-frame.contain img { object-fit: contain; background: #eaf0fa; }
+    .screen-frame.focus-right img { object-position: top right; }
+
+    .explain {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-height: 0;
+      padding: 2px 0;
+    }
+    .explain-block {
+      border-left: 3px solid var(--line);
+      padding-left: 15px;
+    }
+    .explain-block.use { border-color: var(--blue); }
+    .explain-block.value { border-color: var(--gold); }
+    .explain-block p { margin: 0; font-size: 14px; line-height: 1.46; }
+    .steps { margin: 0; padding: 0; list-style: none; counter-reset: steps; }
+    .steps li {
+      position: relative;
+      min-height: 30px;
+      padding: 3px 0 8px 38px;
+      color: #263550;
+      font-size: 14px;
+      line-height: 1.35;
+      counter-increment: steps;
+    }
+    .steps li::before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: grid;
+      width: 26px;
+      height: 26px;
+      place-items: center;
+      border: 1px solid #b7c7e4;
+      color: var(--blue);
+      content: counter(steps);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .dual-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr 300px;
+      gap: 22px;
+      min-height: 0;
+    }
+    .dual-item { display: grid; grid-template-rows: 1fr auto; min-width: 0; min-height: 0; gap: 10px; }
+    .dual-item .screen-frame { min-height: 0; }
+    .dual-item strong { color: #1b2a44; font-size: 14px; }
+
+    .pill-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 20px; }
+    .pill {
+      border: 1px solid #354564;
+      padding: 8px 12px;
+      color: #c9d5e9;
+      font-size: 13px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      align-self: center;
+    }
+    .summary-card {
+      min-height: 150px;
+      border-top: 4px solid var(--blue);
+      padding: 24px;
+      background: #fff;
+      color: var(--ink);
+      box-shadow: 0 12px 28px rgb(15 29 55 / 12%);
+    }
+    .summary-card:nth-child(2) { border-color: var(--gold); }
+    .summary-card:nth-child(3) { border-color: var(--green); }
+    .summary-card strong { display: block; margin-bottom: 8px; font-size: 19px; }
+    .summary-card p, .dark .summary-card p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .slide-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 20px;
+      color: #75829a;
+      font-size: 11px;
+    }
+    .slide-foot strong { color: var(--blue); }
+    .dark .slide-foot strong { color: #8eaeff; }
+
+    .speaker-notes {
+      position: absolute;
+      right: 22px;
+      bottom: 76px;
+      z-index: 30;
+      display: none;
+      width: min(430px, calc(100% - 44px));
+      border: 1px solid #53637f;
+      padding: 16px 18px;
+      color: #f5f7fb;
+      background: rgb(8 17 33 / 96%);
+      box-shadow: 0 12px 34px rgb(0 0 0 / 32%);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    body.notes-visible .active .speaker-notes { display: block; }
+
+    .progress { position: fixed; top: 0; left: 0; z-index: 100; height: 4px; background: var(--blue); transition: width 180ms ease; }
+    .controls {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      border: 1px solid #33405a;
+      background: rgb(4 10 20 / 88%);
+    }
+    .controls button {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 0;
+      color: #fff;
+      background: transparent;
+      cursor: pointer;
+    }
+    .controls button:hover { background: #1e2d48; }
+    .counter { min-width: 54px; color: #aab7cd; text-align: center; font-size: 12px; }
+
+    @media (max-width: 760px) {
+      .deck { width: 100vw; height: 100vh; }
+      .slide { gap: 15px; padding: 28px 24px 24px; }
+      h1 { font-size: 38px; }
+      h2 { font-size: 27px; }
+      .title-layout, .screen-layout, .dual-layout { grid-template-columns: 1fr; }
+      .title-shot, .screen-frame { min-height: 0; }
+      .explain { display: none; }
+      .dual-layout .explain { display: none; }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      @page { size: 13.333in 7.5in; margin: 0; }
+      body { overflow: visible; background: #fff; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .deck { position: static; width: auto; height: auto; box-shadow: none; overflow: visible; }
+      .slide {
+        position: relative;
+        display: grid !important;
+        width: 13.333in;
+        height: 7.5in;
+        page-break-after: always;
+        break-after: page;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      .controls, .progress, .speaker-notes { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <main class="deck" id="deck">
+    <section class="slide dark active">
+      <div></div>
+      <div class="title-layout">
+        <div class="title-copy">
+          <div class="brand"><img src="../../../public/icons/tadiff-mark.svg" alt="">TaDiff</div>
+          <p class="eyebrow">Revue produit - 20 juillet 2026</p>
+          <h1>Le cockpit qui aide une compagnie à <strong>savoir quoi faire.</strong></h1>
+          <p class="lead">Tour des interfaces, de la première visite au pilotage quotidien.</p>
+          <div class="cue">Support de réunion - environ 15 minutes</div>
+        </div>
+        <div class="title-shot"><img src="assets/03-cockpit.png" alt="Cockpit TaDiff"></div>
+      </div>
+      <footer class="slide-foot"><strong>TaDiff</strong><span>Revue des interfaces</span></footer>
+      <aside class="speaker-notes">Fil conducteur : TaDiff ne demande pas aux compagnies de devenir gestionnaires. Il rassemble les informations et transforme les urgences en prochaines actions compréhensibles.</aside>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">01 - Découvrir</p><h2>Une promesse immédiatement lisible</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/01-landing.png" alt="Landing page TaDiff"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>À quoi sert cette page ?</h3><p>Présenter TaDiff comme un cockpit de compagnie, avec une promesse centrée sur le métier et non sur la technologie.</p></div>
+          <div class="explain-block use"><h3>Comment l’utiliser ?</h3><ol class="steps"><li>Comprendre la proposition</li><li>Voir un aperçu du cockpit</li><li>Réserver une place bêta</li></ol></div>
+          <div class="explain-block value"><h3>Ce qu’elle doit provoquer</h3><p>Le visiteur doit se reconnaître dans ses difficultés avant même de créer un compte.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Landing</strong><span>tadiff.com</span></footer>
+      <aside class="speaker-notes">Ne pas s’attarder sur la landing. La valeur du produit se démontre dans le cockpit. Insister sur la simplicité et le vocabulaire du spectacle vivant.</aside>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">02 - Rejoindre</p><h2>Une entrée bêta volontairement limitée</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/02-beta.png" alt="Inscription bêta TaDiff"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Objectif</h3><p>Qualifier les premières compagnies et recueillir leurs besoins avant l’ouverture générale.</p></div>
+          <div class="explain-block use"><h3>Parcours</h3><ol class="steps"><li>Renseigner ses coordonnées</li><li>Choisir sa discipline</li><li>Décrire son besoin principal</li></ol></div>
+          <div class="explain-block value"><h3>Positionnement</h3><p>30 places à 19,99 EUR par mois, avec un accompagnement rapproché pendant la phase de test.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Bêta</strong><span>Inscription et liste d’attente</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">03 - Piloter</p><h2>Le cockpit : l’écran du matin</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/03-cockpit.png" alt="Vue d'ensemble TaDiff"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Une seule question</h3><p>« Qu’est-ce que je dois faire maintenant pour que ma compagnie avance ? »</p></div>
+          <div class="explain-block use"><h3>Lecture</h3><ol class="steps"><li>Traiter la priorité du jour</li><li>Contrôler trésorerie et dates</li><li>Voir les dossiers et échéances</li></ol></div>
+          <div class="explain-block value"><h3>Ce que cela remplace</h3><p>Les tableaux éparpillés, les rappels mentaux et la recherche d’informations dans plusieurs outils.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Aujourd’hui</strong><span>État de la compagnie et priorité suivante</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">04 - Être accompagné</p><h2>William donne un cap, puis un chemin</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/04-william.png" alt="Assistant William ouvert"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Rôle</h3><p>Répondre aux questions et relier chaque recommandation à l’état réel de la compagnie.</p></div>
+          <div class="explain-block use"><h3>Exemple</h3><ol class="steps"><li>Demander quoi faire</li><li>Recevoir trois priorités maximum</li><li>Ouvrir directement la bonne page</li></ol></div>
+          <div class="explain-block value"><h3>Architecture</h3><p>Données fraîches du compte pour piloter, RAG documentaire pour expliquer les aides, règles et dossiers.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>William</strong><span>Copilote contextuel, actions toujours validées par l’utilisateur</span></footer>
+      <aside class="speaker-notes">La version visible propose déjà des raccourcis et priorités. La nouvelle couche IA lit spectacles, actions, dossiers, échéances et finances avant de répondre.</aside>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">05 - Produire</p><h2>Les spectacles comme un jeu de fiches</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/05-spectacles.png" alt="Catalogue des spectacles"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Vue immédiate</h3><p>L’affiche, le titre, la prochaine représentation et le nombre de pièces manquantes suffisent pour choisir où agir.</p></div>
+          <div class="explain-block use"><h3>Actions</h3><ol class="steps"><li>Cliquer pour ouvrir</li><li>Ajouter depuis le bouton +</li><li>Clic droit pour modifier ou supprimer</li></ol></div>
+          <div class="explain-block value"><h3>Principe</h3><p>Chaque spectacle devient le point d’entrée vers son dossier, sa diffusion, son budget et sa présentation.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Spectacles</strong><span>Catalogue et dossiers</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">06 - Centraliser</p><h2>Une fiche unique par spectacle</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/06-spectacle.png" alt="Fiche spectacle"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Vue d’ensemble</h3><p>Affiche, prochaine représentation, chiffre d’affaires potentiel et état du dossier sont réunis.</p></div>
+          <div class="explain-block use"><h3>Navigation</h3><ol class="steps"><li>Présentation commerciale</li><li>Dossier de diffusion</li><li>Dates et budget</li></ol></div>
+          <div class="explain-block value"><h3>Résultat</h3><p>La compagnie ne cherche plus quelle version d’un document ou quel tableau correspond au spectacle.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Fiche spectacle</strong><span>Retour permanent vers tous les spectacles</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">07 - Être prêt</p><h2>Le dossier indique exactement ce qui manque</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/07-dossier-spectacle.png" alt="Dossier d'un spectacle"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Pièces suivies</h3><p>Affiche, dossier artistique, note d’intention, synopsis, texte et fiche technique.</p></div>
+          <div class="explain-block use"><h3>Utilisation</h3><ol class="steps"><li>Déposer un ou plusieurs fichiers</li><li>Prévisualiser ou télécharger</li><li>Remplacer une ancienne version</li></ol></div>
+          <div class="explain-block value"><h3>Automatisation</h3><p>TaDiff reconnaît le type probable du fichier et prépare le dossier à transmettre ou déposer.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Dossier spectacle</strong><span>Pièces indispensables et facultatives</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">08 - Comprendre les chiffres</p><h2>Un budget progressif, pas un tableur imposé</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/08-budget-spectacle.png" alt="Budget détaillé d'un spectacle"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Deux niveaux</h3><p>Une lecture simple pour commencer, puis un budget détaillé facultatif pour les compagnies qui en ont besoin.</p></div>
+          <div class="explain-block use"><h3>Construction</h3><ol class="steps"><li>Lister les dépenses de création</li><li>Ajouter les financements acquis</li><li>Voir ce qu’il reste à trouver</li></ol></div>
+          <div class="explain-block value"><h3>Lecture métier</h3><p>Scénographie, répétitions rémunérées, technique, production et recettes sont expliquées sans jargon comptable.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Budget spectacle</strong><span>Simple d’abord, détaillé au besoin</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">09 - Avancer</p><h2>Une feuille de route rattachée aux spectacles</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/09-actions.png" alt="Actions TaDiff"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Organisation</h3><p>Les actions sont regroupées par spectacle, avec une zone séparée pour les tâches générales de la compagnie.</p></div>
+          <div class="explain-block use"><h3>En quelques secondes</h3><ol class="steps"><li>Choisir le spectacle par son affiche</li><li>Sélectionner une action rapide</li><li>Fixer aujourd’hui, demain ou une date</li></ol></div>
+          <div class="explain-block value"><h3>Lisibilité</h3><p>Retard, aujourd’hui, sept prochains jours et plus tard : on voit immédiatement l’ordre de traitement.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>À faire</strong><span>Actions rapides et priorisées</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">10 - Entretenir les relations</p><h2>Un carnet de contacts, pas un CRM opaque</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/10-contacts.png" alt="Carnet de contacts"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Tous les interlocuteurs</h3><p>Programmateurs, lieux, équipes, partenaires, prestataires et mécènes peuvent cohabiter dans le même carnet.</p></div>
+          <div class="explain-block use"><h3>Actions</h3><ol class="steps"><li>Importer et mapper un fichier Excel</li><li>Filtrer par rôle ou catégorie</li><li>Préparer un email ou une action</li></ol></div>
+          <div class="explain-block value"><h3>Souplesse</h3><p>Les tags sont personnalisables et la fiche peut être modifiée sans quitter le carnet.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Contacts</strong><span>Équipe, lieux et partenaires</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">11 - Diffuser</p><h2>Suivre toutes les formes d’exploitation</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/11-diffusion.png" alt="Suivi de diffusion"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Au-delà de la cession</h3><p>Vente de date, coréalisation avec partage de recettes, minimum garanti ou location de lieu.</p></div>
+          <div class="explain-block use"><h3>Parcours</h3><ol class="steps"><li>Choisir contact et spectacle</li><li>Choisir le modèle économique</li><li>Laisser William proposer l’action suivante</li></ol></div>
+          <div class="explain-block value"><h3>Décision</h3><p>Le revenu estimé est calculé selon le montage réel, sans demander une fausse « chance d’aboutir ».</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Diffuser</strong><span>Dates, discussions et modèles économiques</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">12 - Écrire</p><h2>Préparer des emails personnalisés sans repartir de zéro</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/12-emails.png" alt="Éditeur d'emails"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Contexte automatique</h3><p>Le contact, le spectacle, la logline, les thèmes et la structure d’accueil alimentent le brouillon.</p></div>
+          <div class="explain-block use"><h3>Validation humaine</h3><ol class="steps"><li>Choisir un modèle</li><li>Relire et ajuster le message</li><li>Ouvrir Gmail ou Outlook</li></ol></div>
+          <div class="explain-block value"><h3>Documents</h3><p>Les pièces disponibles peuvent être sélectionnées et téléchargées ensemble avant l’envoi.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Emails</strong><span>Aucun message ne part sans validation</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">13 - Planifier</p><h2>Un seul agenda pour toutes les échéances</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/13-agenda.png" alt="Agenda TaDiff"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Ce qui remonte</h3><p>Représentations, relances, subventions, frais fixes et événements internes.</p></div>
+          <div class="explain-block use"><h3>Lecture</h3><ol class="steps"><li>Filtrer par type d’échéance</li><li>Repérer les urgences</li><li>Ouvrir l’élément concerné</li></ol></div>
+          <div class="explain-block value"><h3>Prochaine évolution</h3><p>Une vraie vue mois et semaine, puis synchronisation avec les calendriers externes.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Agenda</strong><span>Dates et échéances</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">14 - Financer</p><h2>Subventions et mécénat, deux parcours distincts</h2></div><span class="slide-number"></span></header>
+      <div class="dual-layout">
+        <div class="dual-item"><div class="screen-frame"><img src="assets/14-subventions.png" alt="Subventions"></div><strong>Subventions : échéance, éligibilité et pièces demandées</strong></div>
+        <div class="dual-item"><div class="screen-frame"><img src="assets/15-mecenat.png" alt="Mécénat"></div><strong>Mécénat : entreprises, thèmes et prochaines actions</strong></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Radar</h3><p>Mettre en avant les dispositifs pertinents selon la compagnie et ses spectacles.</p></div>
+          <div class="explain-block use"><h3>Parcours</h3><ol class="steps"><li>Examiner l’opportunité</li><li>Contrôler les pièces</li><li>Télécharger le dossier prêt</li></ol></div>
+          <div class="explain-block value"><h3>Avec William</h3><p>Expliquer l’aide, comparer les critères et préparer une checklist de dépôt.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Aides et mécénat</strong><span>Sources et dates à vérifier avant dépôt</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">15 - Anticiper</p><h2>Des finances expliquées en langage courant</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/16-finances.png" alt="Finances TaDiff"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Les réponses attendues</h3><p>Combien avons-nous ? Que va-t-il sortir ? Quand risquons-nous de passer dans le rouge ?</p></div>
+          <div class="explain-block use"><h3>À renseigner</h3><ol class="steps"><li>Solde de trésorerie</li><li>Frais fixes récurrents</li><li>Recettes et devis attendus</li></ol></div>
+          <div class="explain-block value"><h3>Projection</h3><p>TaDiff lisse les coûts de structure et aide à vérifier la rentabilité d’une date avant signature.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Finances</strong><span>Trésorerie, coûts fixes et projection</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">16 - Administrer</p><h2>Documents, facturation et réglages restent reliés</h2></div><span class="slide-number"></span></header>
+      <div class="dual-layout">
+        <div class="dual-item"><div class="screen-frame"><img src="assets/17-dossiers.png" alt="Dossiers"></div><strong>Dossiers : documents permanents et pièces par spectacle</strong></div>
+        <div class="dual-item"><div class="screen-frame"><img src="assets/18-facturation.png" alt="Facturation"></div><strong>Facturation : devis, acomptes et soldes attendus</strong></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Une même donnée</h3><p>Le RIB ou les statuts sont déposés une fois au niveau de la compagnie, puis réutilisés dans les dossiers.</p></div>
+          <div class="explain-block use"><h3>Continuité</h3><ol class="steps"><li>Préparer un devis</li><li>Suivre acompte et solde</li><li>Projeter l’entrée en trésorerie</li></ol></div>
+          <div class="explain-block value"><h3>Objectif</h3><p>Éviter les doubles saisies entre production, administration et pilotage financier.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Dossiers et facturation</strong><span>Une information, plusieurs usages</span></footer>
+    </section>
+
+    <section class="slide">
+      <header class="slide-head"><div><p class="eyebrow">17 - Configurer</p><h2>La compagnie garde la maîtrise de son espace</h2></div><span class="slide-number"></span></header>
+      <div class="screen-layout">
+        <div class="screen-frame"><img src="assets/19-parametres.png" alt="Paramètres TaDiff"></div>
+        <div class="explain">
+          <div class="explain-block"><h3>Réglages utiles</h3><p>Identité de la compagnie, documents permanents, équipe, rôles et accès.</p></div>
+          <div class="explain-block use"><h3>Gestion</h3><ol class="steps"><li>Compléter le profil</li><li>Inviter les membres</li><li>Attribuer les droits adaptés</li></ol></div>
+          <div class="explain-block value"><h3>Plateforme</h3><p>Une console superadmin séparée pilote les comptes, contenus globaux, quotas William et paramètres légaux.</p></div>
+        </div>
+      </div>
+      <footer class="slide-foot"><strong>Paramètres</strong><span>Équipe, accès et documents de compagnie</span></footer>
+    </section>
+
+    <section class="slide dark">
+      <header class="slide-head"><div><p class="eyebrow">Conclusion</p><h2>Un produit déjà cohérent, à éprouver avec les compagnies</h2></div><span class="slide-number"></span></header>
+      <div class="summary-grid">
+        <div class="summary-card"><strong>Ce qui fonctionne</strong><p>Le cockpit, les spectacles, les dossiers, les contacts, la diffusion, les emails, les aides et les finances forment un même parcours.</p></div>
+        <div class="summary-card"><strong>Ce qu’il faut valider</strong><p>Le vocabulaire, l’ordre des priorités et la simplicité réelle avec des utilisateurs qui ne veulent pas « faire de l’administration ».</p></div>
+        <div class="summary-card"><strong>Prochaine étape</strong><p>Stabiliser les migrations, tester le parcours complet et observer dix compagnies bêta sans leur expliquer chaque écran.</p></div>
+      </div>
+      <div>
+        <p class="lead">TaDiff doit devenir l’endroit où une compagnie comprend sa situation et agit, sans ressentir la complexité derrière.</p>
+        <div class="pill-row"><span class="pill">Cockpit métier</span><span class="pill">Données reliées</span><span class="pill">Actions courtes</span><span class="pill">William contextuel</span><span class="pill">Validation humaine</span></div>
+      </div>
+      <footer class="slide-foot"><strong>TaDiff</strong><span>Questions et arbitrages</span></footer>
+      <aside class="speaker-notes">Terminer en demandant les arbitrages prioritaires : quelles interfaces doivent être irréprochables pour la bêta, quelles données métier manquent, et quelles promesses ne doivent pas encore être faites.</aside>
+    </section>
+  </main>
+
+  <nav class="controls" aria-label="Navigation du diaporama">
+    <button type="button" id="previous" title="Diapositive précédente" aria-label="Diapositive précédente">←</button>
+    <span class="counter"><span id="current">1</span>/<span id="total">18</span></span>
+    <button type="button" id="next" title="Diapositive suivante" aria-label="Diapositive suivante">→</button>
+    <button type="button" id="notes" title="Afficher les notes (N)" aria-label="Afficher les notes">N</button>
+    <button type="button" id="fullscreen" title="Plein écran (F)" aria-label="Plein écran">⛶</button>
+  </nav>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const progress = document.getElementById("progress");
+    const currentLabel = document.getElementById("current");
+    const totalLabel = document.getElementById("total");
+    let current = Math.max(0, Math.min(slides.length - 1, Number(location.hash.slice(1)) - 1 || 0));
+
+    totalLabel.textContent = String(slides.length);
+    slides.forEach((slide, index) => {
+      const number = slide.querySelector(".slide-number");
+      if (number) number.textContent = `${String(index + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}`;
+    });
+
+    function show(index) {
+      current = Math.max(0, Math.min(slides.length - 1, index));
+      slides.forEach((slide, slideIndex) => slide.classList.toggle("active", slideIndex === current));
+      currentLabel.textContent = String(current + 1);
+      progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+      history.replaceState(null, "", `#${current + 1}`);
+    }
+
+    document.getElementById("previous").addEventListener("click", () => show(current - 1));
+    document.getElementById("next").addEventListener("click", () => show(current + 1));
+    document.getElementById("notes").addEventListener("click", () => document.body.classList.toggle("notes-visible"));
+    document.getElementById("fullscreen").addEventListener("click", () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
+    document.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) { event.preventDefault(); show(current + 1); }
+      if (["ArrowLeft", "PageUp"].includes(event.key)) { event.preventDefault(); show(current - 1); }
+      if (event.key.toLowerCase() === "n") document.body.classList.toggle("notes-visible");
+      if (event.key.toLowerCase() === "f") document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+      if (event.key === "Home") show(0);
+      if (event.key === "End") show(slides.length - 1);
+    });
+    show(current);
+  </script>
+</body>
+</html>
