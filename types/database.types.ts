@@ -453,6 +453,8 @@ export type Database = {
           related_to: string | null;
           opportunity_id: string | null;
           contact_id: string | null;
+          show_id: string | null;
+          action_type: "call" | "email" | "document" | "quote" | "administration" | "other";
           priority: "low" | "normal" | "high";
           done: boolean;
           completed_at: string | null;
@@ -466,6 +468,8 @@ export type Database = {
           related_to?: string | null;
           opportunity_id?: string | null;
           contact_id?: string | null;
+          show_id?: string | null;
+          action_type?: "call" | "email" | "document" | "quote" | "administration" | "other";
           priority?: "low" | "normal" | "high";
           done?: boolean;
           completed_at?: string | null;
@@ -477,6 +481,8 @@ export type Database = {
           related_to?: string | null;
           opportunity_id?: string | null;
           contact_id?: string | null;
+          show_id?: string | null;
+          action_type?: "call" | "email" | "document" | "quote" | "administration" | "other";
           priority?: "low" | "normal" | "high";
           done?: boolean;
           completed_at?: string | null;
@@ -502,6 +508,13 @@ export type Database = {
             columns: ["contact_id"];
             isOneToOne: false;
             referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reminders_show_id_fkey";
+            columns: ["show_id"];
+            isOneToOne: false;
+            referencedRelation: "shows";
             referencedColumns: ["id"];
           },
         ];

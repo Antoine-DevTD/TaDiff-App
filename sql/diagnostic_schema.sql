@@ -19,6 +19,8 @@ with attendu_colonnes(table_name, column_name, migration) as (
     ('reminders', 'contact_id', '004'),
     ('reminders', 'priority', '004'),
     ('reminders', 'completed_at', '004'),
+    ('reminders', 'show_id', '041'),
+    ('reminders', 'action_type', '041'),
     -- 005 finance / growth
     ('grant_opportunities', 'id', '005'),
     ('patronage_deals', 'id', '005'),

@@ -520,7 +520,7 @@ export async function getReminders(): Promise<Reminder[]> {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("reminders")
-    .select("id,title,due_date,related_to,done,priority")
+    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type")
     .eq("done", false)
     .order("due_date", { ascending: true });
 
@@ -535,6 +535,9 @@ export async function getReminders(): Promise<Reminder[]> {
     relatedTo: reminder.related_to ?? "",
     done: reminder.done,
     priority: reminder.priority,
+    showId: reminder.show_id ?? undefined,
+    contactId: reminder.contact_id ?? undefined,
+    actionType: reminder.action_type,
   }));
 }
 

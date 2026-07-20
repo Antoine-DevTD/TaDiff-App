@@ -147,7 +147,7 @@ async function callMistral(input: GenerateAiTextInput, signal: AbortSignal) {
 }
 
 function buildUserPrompt(input: GenerateAiTextInput) {
-  return `Contexte verifie :\n${input.context || "Aucune source pertinente retrouvee."}\n\nQuestion :\n${input.question}\n\nReponds uniquement a partir du contexte lorsqu'une affirmation factuelle concerne TaDiff ou une aide. Signale clairement les informations a verifier.`;
+  return `Contexte disponible :\n${input.context || "Aucune donnee disponible."}\n\nQuestion :\n${input.question}\n\nUtilise l'etat operationnel pour les faits propres au compte et les sources documentaires pour les connaissances externes. Signale clairement les informations manquantes ou a verifier.`;
 }
 
 function requireSecret(name: "OPENAI_API_KEY" | "DEEPSEEK_API_KEY" | "ANTHROPIC_API_KEY" | "MISTRAL_API_KEY") {

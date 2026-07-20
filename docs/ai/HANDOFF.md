@@ -2,7 +2,7 @@
 
 Date : 20 juillet 2026
 Branche : `main`
-Etat : travail non commite present, ne pas ecraser.
+Etat : changements applicatifs verifies et livres ; des ressources locales non suivies peuvent rester presentes.
 
 ## Chantier en cours
 
@@ -11,6 +11,7 @@ Etat : travail non commite present, ne pas ecraser.
 - Amelioration du dossier spectacle : depot multiple, visualisation, telechargement et remplacement de versions.
 - Console plateforme : migration `038_platform_admin_and_ai_foundation.sql`, informations legales, catalogues, templates globaux et configuration William/RAG ajoutes au code ; application Supabase confirmee le 20 juillet 2026.
 - Acces William : migration `039_ai_access_quotas_and_credits.sql`, autorisations par compte, quotas mensuels et achats de credits ajoutes au code ; migration a appliquer avant le rodage.
+- Pilotage William : `lib/ai/company-context.ts` construit un contexte borne et filtre par compagnie avant chaque reponse. La migration `042_william_operational_context.sql` doit etre appliquee pour remplacer l'ancien prompt par defaut sans ecraser un prompt admin personnalise.
 
 ## Fichiers et migrations sensibles
 
@@ -21,6 +22,8 @@ Etat : travail non commite present, ne pas ecraser.
 - `sql/037_email_templates.sql`
 - `sql/038_platform_admin_and_ai_foundation.sql`
 - `sql/039_ai_access_quotas_and_credits.sql`
+- `sql/042_william_operational_context.sql`
+- `lib/ai/company-context.ts`
 - `types/database.types.ts`
 
 ## Verification connue

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpDown,
   BellPlus,
@@ -17,7 +18,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -26,7 +27,6 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { createReminder } from "@/app/(dashboard)/actions";
 import { Badge } from "@/components/ui/badge";
 import { ContactEmailAssistant } from "@/components/contacts/contact-email-assistant";
 import { Dialog } from "@/components/ui/dialog";
@@ -51,6 +51,7 @@ type ContactContextMenu = {
 } | null;
 
 export function ContactsTable({ contacts, shows, templates }: { contacts: Contact[]; shows: Show[]; templates: EmailTemplate[] }) {
+  const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState("");
   const [railLocked, setRailLocked] = useState(false);
@@ -59,8 +60,6 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [emailContact, setEmailContact] = useState<Contact | null>(null);
   const [contextMenu, setContextMenu] = useState<ContactContextMenu>(null);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
   const [activeFilter, setActiveFilter] = useState<ContactFilter>({
     label: "Tous les contacts",
     value: "all",
@@ -121,7 +120,6 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
 
   function handleContactAction(action: ContactAction, contact: Contact) {
     setContextMenu(null);
-    setActionMessage(null);
 
     if (action === "edit") {
       setEditingContact(contact);
@@ -133,17 +131,7 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
       return;
     }
 
-    startTransition(async () => {
-      const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const result = await createReminder({
-        title: `Contacter ${contact.name}`,
-        dueDate,
-        relatedTo: contact.organization || contact.name,
-        priority: "normal",
-        contactId: contact.id,
-      });
-      setActionMessage(result.message);
-    });
+    router.push(`/reminders?contactId=${encodeURIComponent(contact.id)}`);
   }
 
   return (
@@ -242,9 +230,6 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
               </tbody>
             </table>
           </div>
-          {actionMessage ? (
-            <p className="border-t border-border px-4 py-3 text-sm text-muted">{actionMessage}</p>
-          ) : null}
         </section>
       </div>
 
@@ -275,7 +260,7 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
       {contextMenu ? (
         <ContactContextMenu
           contact={contextMenu.contact}
-          disabled={isPending}
+          disabled={false}
           left={contextMenu.x}
           top={contextMenu.y}
           onAction={handleContactAction}

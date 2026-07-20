@@ -581,6 +581,8 @@ function PipelineCard({
         relatedTo: deal.title,
         priority: signal.tone === "danger" ? "high" : "normal",
         opportunityId: deal.id,
+        showId: deal.showId,
+        actionType: "call",
       });
 
       setMessage(result.message);

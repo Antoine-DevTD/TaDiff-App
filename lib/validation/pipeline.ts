@@ -33,6 +33,8 @@ export const reminderSchema = z.object({
   priority: z.enum(["low", "normal", "high"]),
   opportunityId: z.string().optional(),
   contactId: z.string().optional(),
+  showId: z.string().optional(),
+  actionType: z.enum(["call", "email", "document", "quote", "administration", "other"]).optional(),
 });
 
 export type OpportunityFormInput = z.input<typeof opportunitySchema>;

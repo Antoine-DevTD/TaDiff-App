@@ -893,13 +893,17 @@ Fonctions futures :
 
 Architecture IA recommandee :
 
-- RAG sur les documents de la compagnie ;
+- contexte operationnel frais, lu dans Supabase a chaque demande et strictement limite a la compagnie connectee, pour les priorites, spectacles, actions, diffusion, echeances et finances ;
+- RAG sur les textes longs des documents de la compagnie, avec consentement, version et suppression synchronisee ;
 - RAG sur la base subventions/mecenat ;
+- RAG sur les guides TaDiff, modeles de mails, contrats et methodes de production ;
 - outils/actions internes controles ;
 - modele economique par quotas pour eviter les couts non maitrises ;
 - petit modele pour les actions simples ;
 - modele plus fort pour les dossiers complexes ;
 - logs et validation utilisateur avant action sensible.
+
+Le RAG ne doit pas remplacer les donnees metier vivantes. Une question comme "qu'est-ce que je dois faire ?" doit d'abord interroger l'etat du compte, classer au maximum trois priorites et proposer un chemin direct dans TaDiff. Le RAG intervient ensuite pour expliquer une regle, verifier une aide ou exploiter le contenu d'un document long.
 
 Modeles a etudier :
 

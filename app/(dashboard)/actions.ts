@@ -78,7 +78,7 @@ import {
 } from "@/lib/pipeline";
 import type { PipelineStage } from "@/types";
 import { emailTemplateSchema, type EmailTemplateInput } from "@/lib/validation/email-template";
-import type { Json } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 type ActionResult = {
   ok: boolean;
@@ -240,6 +240,8 @@ async function ensureOpportunityReminder({
   companyId,
   dueDate,
   opportunityId,
+  showId,
+  actionType = "call",
   priority = "normal",
   relatedTo,
   title,
@@ -248,6 +250,8 @@ async function ensureOpportunityReminder({
   companyId: string;
   dueDate: string;
   opportunityId: string;
+  showId?: string | null;
+  actionType?: "call" | "email" | "document" | "quote" | "administration" | "other";
   priority?: "low" | "normal" | "high";
   relatedTo: string;
   title: string;
@@ -273,6 +277,8 @@ async function ensureOpportunityReminder({
         related_to: relatedTo,
         priority,
         contact_id: contactId ?? null,
+        show_id: showId ?? null,
+        action_type: actionType,
       })
       .eq("id", existingReminder.id);
 
@@ -291,6 +297,8 @@ async function ensureOpportunityReminder({
     priority,
     opportunity_id: opportunityId,
     contact_id: contactId ?? null,
+    show_id: showId ?? null,
+    action_type: actionType,
   });
 
   if (error) {
@@ -1818,6 +1826,7 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
       priority: getDefaultProbability(parsed.data.stage) >= 60 ? "high" : "normal",
       opportunityId: opportunity.id,
       contactId: parsed.data.contactId || null,
+      showId: parsed.data.showId || null,
     });
   }
 
@@ -1910,6 +1919,7 @@ export async function updateOpportunity(
         priority: parsed.data.probability >= 60 ? "high" : "normal",
         opportunityId,
         contactId: parsed.data.contactId || null,
+        showId: parsed.data.showId || null,
       });
     }
   }
@@ -2195,7 +2205,7 @@ export async function updateOpportunityStage(
     const workspace = await getOrCreateWorkspace();
     const { data: opportunity } = await supabase
       .from("opportunities")
-      .select("id,title,contact_id,next_action")
+      .select("id,title,contact_id,show_id,next_action")
       .eq("id", opportunityId)
       .single();
 
@@ -2208,6 +2218,7 @@ export async function updateOpportunityStage(
         priority: "normal",
         opportunityId: opportunity.id,
         contactId: opportunity.contact_id,
+        showId: opportunity.show_id,
       });
     }
   }
@@ -2257,7 +2268,7 @@ export async function scheduleOpportunityFollowUp(
   const supabase = await getSupabaseServerClient();
   const { data: opportunity, error: opportunityError } = await supabase
     .from("opportunities")
-    .select("id,title,contact_id,next_action,stage")
+    .select("id,title,contact_id,show_id,next_action,stage")
     .eq("id", opportunityId)
     .single();
 
@@ -2289,6 +2300,7 @@ export async function scheduleOpportunityFollowUp(
     priority: days === 3 ? "high" : "normal",
     opportunityId: opportunity.id,
     contactId: opportunity.contact_id,
+    showId: opportunity.show_id,
   });
 
   if (!reminderResult.ok) {
@@ -3101,6 +3113,8 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
     priority: parsed.data.priority,
     opportunity_id: parsed.data.opportunityId || null,
     contact_id: parsed.data.contactId || null,
+    show_id: parsed.data.showId || null,
+    action_type: parsed.data.actionType ?? "other",
   });
 
   if (error) {
@@ -3137,14 +3151,18 @@ export async function updateReminder(
   }
 
   const supabase = await getSupabaseServerClient();
+  const updatePayload: Database["public"]["Tables"]["reminders"]["Update"] = {
+    title: parsed.data.title,
+    due_date: parsed.data.dueDate,
+    related_to: parsed.data.relatedTo || null,
+    priority: parsed.data.priority,
+  };
+  if (parsed.data.showId !== undefined) updatePayload.show_id = parsed.data.showId || null;
+  if (parsed.data.actionType !== undefined) updatePayload.action_type = parsed.data.actionType;
+
   const { error } = await supabase
     .from("reminders")
-    .update({
-      title: parsed.data.title,
-      due_date: parsed.data.dueDate,
-      related_to: parsed.data.relatedTo || null,
-      priority: parsed.data.priority,
-    })
+    .update(updatePayload)
     .eq("id", reminderId);
 
   if (error) {

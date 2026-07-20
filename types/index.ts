@@ -176,6 +176,9 @@ export type Reminder = {
   relatedTo: string;
   done: boolean;
   priority: "low" | "normal" | "high";
+  showId?: string;
+  contactId?: string;
+  actionType?: "call" | "email" | "document" | "quote" | "administration" | "other";
 };
 
 export type CostProfile = {
