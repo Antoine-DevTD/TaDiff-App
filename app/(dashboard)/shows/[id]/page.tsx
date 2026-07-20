@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { DocumentSlot } from "@/components/documents/document-slot";
 import { ShowDocumentDeleteButton } from "@/components/documents/show-document-delete-button";
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
@@ -73,6 +74,13 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
         <div className="min-w-0">
+          <Link
+            className="mb-4 inline-flex min-h-10 items-center gap-2 rounded-md border border-border bg-panel px-3 text-sm font-medium text-muted transition hover:border-accent/40 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            href="/shows"
+          >
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+            Tous les spectacles
+          </Link>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Fiche spectacle</p>
           <h2 className="mt-2 truncate text-3xl font-semibold">{show.title}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted text-pretty">

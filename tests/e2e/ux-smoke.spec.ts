@@ -63,11 +63,16 @@ test.describe("cockpit en mode demonstration", () => {
     await page.goto("/shows/show-1");
 
     await expect(page.getByRole("heading", { level: 2, name: "Les lignes de fuite" })).toBeVisible();
+    const backToShows = page.getByRole("link", { name: "Tous les spectacles" });
+    await expect(backToShows).toBeVisible();
     await page.getByRole("link", { name: "Dossier", exact: true }).click();
     await expect(page).toHaveURL(/tab=files/);
     await expect(page.getByRole("heading", { name: "Pieces indispensables" })).toBeVisible();
     await expect(page.getByText("RIB", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Statuts", { exact: true })).toHaveCount(0);
+    await backToShows.click();
+    await expect(page).toHaveURL(/\/shows$/);
+    await expect(page.getByRole("link", { name: "Ouvrir Les lignes de fuite" })).toBeVisible();
   });
 
   test("propose les actions spectacle au clic droit", async ({ page }) => {
