@@ -1,41 +1,25 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { TheatreThemeSwitcher } from "@/components/theme/theatre-theme-switcher";
-import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 import { CompanyDocumentsPanel } from "@/components/settings/company-documents-panel";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { TeamAccessPanel } from "@/components/settings/team-access-panel";
-import { DemoCompanyPanel } from "@/components/settings/demo-company-panel";
-import { WorkspaceExportPanel } from "@/components/settings/workspace-export-panel";
 import { getWorkspaceAccess, type BillingStatus, type CompanyRole } from "@/lib/supabase/access";
 import { isSuperAdmin } from "@/lib/supabase/admin";
 import {
-  getActivityLog,
-  getBillingPlans,
-  getCommercialPacks,
   getDashboardData,
-  getEmailCampaigns,
   getCompanyDocuments,
   getCompanyInviteCode,
   getCompanyMembers,
   getCompanyProfile,
-  getGrantOpportunities,
-  getPatronageDeals,
   getQuoteItems,
 } from "@/lib/supabase/queries";
 
 export default async function SettingsPage() {
   const [
     dashboard,
-    commercialPacks,
-    grants,
-    patronageDeals,
-    campaigns,
-    plans,
     quotes,
     access,
-    activity,
     superAdmin,
     companyProfile,
     members,
@@ -43,34 +27,14 @@ export default async function SettingsPage() {
     companyDocuments,
   ] = await Promise.all([
     getDashboardData(),
-    getCommercialPacks(),
-    getGrantOpportunities(),
-    getPatronageDeals(),
-    getEmailCampaigns(),
-    getBillingPlans(),
     getQuoteItems(),
     getWorkspaceAccess(),
-    getActivityLog(15),
     isSuperAdmin(),
     getCompanyProfile(),
     getCompanyMembers(),
     getCompanyInviteCode(),
     getCompanyDocuments(),
   ]);
-  const currentPlan = plans.find((plan) => plan.current) ?? plans[0];
-  const backup = {
-    billingPlan: currentPlan,
-    campaigns,
-    commercialPacks,
-    contacts: dashboard.contacts,
-    grants,
-    patronageDeals,
-    pipelineDeals: dashboard.pipelineDeals,
-    quotes,
-    reminders: dashboard.reminders,
-    shows: dashboard.shows,
-  };
-
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-4">
@@ -104,23 +68,6 @@ export default async function SettingsPage() {
         <CompanyDocumentsPanel documents={companyDocuments} canManage={access.canManage} />
       </Card>
 
-      <Card className="space-y-4 p-5">
-        <div>
-          <p className="text-base font-semibold">Apparence</p>
-          <p className="mt-1 text-sm text-muted">
-            Mode clair, sombre ou système, puis direction artistique de l&apos;interface.
-          </p>
-        </div>
-        <div>
-          <p className="mb-2 text-sm font-medium">Mode</p>
-          <ThemeModeSwitcher />
-        </div>
-        <div className="border-t border-border pt-4">
-          <p className="mb-2 text-sm font-medium">Direction artistique</p>
-          <TheatreThemeSwitcher embedded />
-        </div>
-      </Card>
-
       {members.length > 0 ? (
         <Card className="space-y-4 p-5">
           <div>
@@ -137,9 +84,7 @@ export default async function SettingsPage() {
         </Card>
       ) : null}
 
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="space-y-6">
-        <Card className="space-y-4 p-5">
+      <Card className="space-y-4 p-5">
           <div>
             <p className="text-base font-semibold">Compagnie et accès</p>
             <p className="mt-1 text-sm text-muted">
@@ -170,55 +115,7 @@ export default async function SettingsPage() {
               href="/admin"
             />
           ) : null}
-        </Card>
-        </div>
-
-        <div className="space-y-6">
-          <WorkspaceExportPanel backup={backup} />
-          <DemoCompanyPanel />
-
-          <Card className="space-y-4 p-5">
-            <div>
-              <p className="text-base font-semibold">Activité récente</p>
-              <p className="mt-1 text-sm text-muted">
-                Les 15 dernières actions de la compagnie (créations, modifications,
-                suppressions, statuts).
-              </p>
-            </div>
-            {activity.length === 0 ? (
-              <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-                Aucune activité enregistrée pour le moment. Le journal démarre avec la
-                migration 012 : chaque action métier y sera tracée.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {activity.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="flex flex-col gap-1 rounded-md border border-border bg-panel-strong/35 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <p className="min-w-0">
-                      <span className="font-medium">{entry.actorName}</span>{" "}
-                      <span className="text-muted">{entry.action}</span>
-                      {entry.entityLabel ? (
-                        <span className="font-medium"> {entry.entityLabel}</span>
-                      ) : null}
-                    </p>
-                    <p className="shrink-0 text-xs text-muted">
-                      {new Date(entry.createdAt).toLocaleDateString("fr-FR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </div>
-      </section>
+      </Card>
     </div>
   );
 }

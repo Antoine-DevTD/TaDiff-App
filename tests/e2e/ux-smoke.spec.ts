@@ -128,4 +128,28 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("button", { name: "Gmail" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Outlook" })).toBeEnabled();
   });
+
+  test("garde la navigation fixe pendant le scroll des parametres", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/settings");
+
+    const navigation = page.getByRole("navigation", { name: "Navigation principale" });
+    const sidebar = navigation.locator("xpath=ancestor::aside");
+    const initialBox = await sidebar.boundingBox();
+
+    await expect(page.getByText("Apparence", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Sauvegarde", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Compagnie de demonstration", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Activite recente", { exact: true })).toHaveCount(0);
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+    const scrolledBox = await sidebar.boundingBox();
+    expect(initialBox).not.toBeNull();
+    expect(scrolledBox).not.toBeNull();
+    expect(scrolledBox?.y).toBe(initialBox?.y);
+    expect(scrolledBox?.height).toBe(initialBox?.height);
+    expect(scrolledBox?.height).toBe(720);
+  });
 });

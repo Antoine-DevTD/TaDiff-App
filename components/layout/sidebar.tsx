@@ -51,7 +51,8 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-white/10 bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
+      <div aria-hidden="true" className="hidden w-60 shrink-0 lg:block" />
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 border-r border-white/10 bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
         <div className="flex h-20 items-center gap-3 border-b border-white/10 px-5">
           <TadiffMark className="h-9 w-9 shadow-sm shadow-accent/30" />
           <div className="min-w-0">
@@ -209,7 +210,9 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
 
 function AdminSidebar({ pathname }: { pathname: string }) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
+    <>
+      <div aria-hidden="true" className="hidden w-64 shrink-0 lg:block" />
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-border bg-ink text-white shadow-xl shadow-ink/10 lg:flex lg:flex-col">
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
         <TadiffMark className="h-8 w-8 shadow-sm shadow-accent/30" />
         <div>
@@ -246,6 +249,7 @@ function AdminSidebar({ pathname }: { pathname: string }) {
       <div className="border-t border-white/10 p-3">
         <SignOutButton />
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
