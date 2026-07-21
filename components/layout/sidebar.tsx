@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Settings, X } from "lucide-react";
+import { BookOpen, MoreHorizontal, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -67,7 +67,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
 
         <nav aria-label="Navigation principale" className="flex-1 space-y-1 overflow-y-auto p-3">
           {dashboardSections.map((section) => {
-            const active = section.id === activeSection.id;
+            const active = !pathname.startsWith("/settings") && !pathname.startsWith("/resources") && section.id === activeSection.id;
 
             return (
               <Link
@@ -102,8 +102,21 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
 
         <div className="space-y-2 border-t border-white/10 p-3">
           <Link
+            href="/resources"
+            className={cn(
+              "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+              pathname.startsWith("/resources") && "bg-white/[0.16] text-white",
+            )}
+          >
+            <BookOpen className="h-4 w-4" aria-hidden />
+            Ressources
+          </Link>
+          <Link
             href="/settings"
-            className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className={cn(
+              "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white",
+              pathname.startsWith("/settings") && "bg-white/[0.16] text-white",
+            )}
           >
             <Settings className="h-4 w-4" aria-hidden />
             Parametres
@@ -189,6 +202,17 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
                   </span>
                 </Link>
               ))}
+              <Link
+                href="/resources"
+                onClick={() => setMoreOpen(false)}
+                className="flex min-h-16 items-center gap-3 rounded-md border border-border bg-panel-strong/55 px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <BookOpen className="h-5 w-5 text-accent" aria-hidden />
+                <span>
+                  <span className="block text-sm font-semibold">Ressources</span>
+                  <span className="block text-xs text-muted">Liens et outils utiles</span>
+                </span>
+              </Link>
               <Link
                 href="/settings"
                 onClick={() => setMoreOpen(false)}

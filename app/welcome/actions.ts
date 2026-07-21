@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { hasSupabaseEnv } from "@/lib/env";
+import { demoWebinarEmail } from "@/lib/demo-webinar";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 const welcomeOnboardingSchema = z.object({
   fullName: z.string().trim().min(2, "Indiquez votre nom."),
   companyName: z.string().trim().min(2, "Indiquez le nom de la compagnie."),
   logoUrl: z.string().trim().url("URL invalide").optional().or(z.literal("")),
+  replay: z.boolean().optional(),
   showReadiness: z.enum(["ready", "later"]),
 });
 
@@ -51,6 +53,14 @@ export async function completeWelcomeOnboarding(
       ok: false,
       message: "Session introuvable. Reconnectez-vous pour terminer l'accueil.",
       nextPath: "/login",
+    };
+  }
+
+  if (parsed.data.replay && user.email?.toLowerCase() !== demoWebinarEmail) {
+    return {
+      ok: false,
+      message: "La relecture du parcours est reservee au compte du webinaire.",
+      nextPath: "/dashboard",
     };
   }
 
@@ -103,6 +113,8 @@ export async function completeWelcomeOnboarding(
       parsed.data.showReadiness === "ready"
         ? "Espace pret. William va vous guider vers votre premier spectacle."
         : "Espace pret. William va vous montrer le cockpit.",
-    nextPath: "/dashboard?startTour=1",
+    nextPath: parsed.data.replay
+      ? "/dashboard?startTour=1&webinarReplay=1"
+      : "/dashboard?startTour=1",
   };
 }

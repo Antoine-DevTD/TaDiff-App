@@ -13,7 +13,7 @@ export type ContactEmailDraftOptions = {
 };
 
 const templateLabels: Record<ContactEmailTemplate, string> = {
-  "first-touch": "Prise de contact",
+  "first-touch": "Premier contact",
   "follow-up": "Relance",
   "date-option": "Proposition de spectacle",
 };
@@ -77,7 +77,7 @@ export function buildContactEmailDraft(
   }
 
   return {
-      subject: show ? `Prise de contact - ${show.title}` : `Prise de contact - ${organization}`,
+      subject: show ? `Premier contact - ${show.title}` : `Premier contact - ${organization}`,
       body: [
         `Bonjour ${firstName},`,
         "",

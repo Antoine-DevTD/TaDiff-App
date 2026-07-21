@@ -1,26 +1,31 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CompanyDocumentsPanel } from "@/components/settings/company-documents-panel";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { TeamAccessPanel } from "@/components/settings/team-access-panel";
 import { AiCreditsPanel } from "@/components/settings/ai-credits-panel";
 import { getAiEntitlement } from "@/lib/ai/entitlement";
+import { demoWebinarEmail } from "@/lib/demo-webinar";
+import { hasSupabaseEnv } from "@/lib/env";
 import { getWorkspaceAccess, type BillingStatus, type CompanyRole } from "@/lib/supabase/access";
 import { isSuperAdmin } from "@/lib/supabase/admin";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getDashboardData,
   getCompanyDocuments,
   getCompanyInviteCode,
   getCompanyMembers,
   getCompanyProfile,
-  getQuoteItems,
 } from "@/lib/supabase/queries";
 
 export default async function SettingsPage() {
+  const supabase = hasSupabaseEnv() ? await getSupabaseServerClient() : null;
+  const currentUser = supabase ? (await supabase.auth.getUser()).data.user : null;
+  const isWebinarDemo = currentUser?.email?.toLowerCase() === demoWebinarEmail;
   const [
     dashboard,
-    quotes,
     access,
     superAdmin,
     companyProfile,
@@ -30,7 +35,6 @@ export default async function SettingsPage() {
     aiEntitlement,
   ] = await Promise.all([
     getDashboardData(),
-    getQuoteItems(),
     getWorkspaceAccess(),
     isSuperAdmin(),
     getCompanyProfile(),
@@ -41,11 +45,10 @@ export default async function SettingsPage() {
   ]);
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-3">
         <MetricCard label="Spectacles" value={dashboard.shows.length.toString()} detail="Catalogue" />
         <MetricCard label="Contacts" value={dashboard.contacts.length.toString()} detail="Carnet de contacts" />
         <MetricCard label="Dates" value={dashboard.pipelineDeals.length.toString()} detail="Dates a vendre" />
-        <MetricCard label="Devis" value={quotes.length.toString()} detail="Facturation" />
       </section>
 
       {companyProfile ? (
@@ -89,6 +92,18 @@ export default async function SettingsPage() {
       ) : null}
 
       <AiCreditsPanel canManage={access.canManage} entitlement={aiEntitlement} />
+
+      {isWebinarDemo ? (
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-base font-semibold">Parcours du webinaire</p>
+            <p className="mt-1 text-sm text-muted">
+              Rejouez l&apos;accueil de première connexion et relancez la visite guidée sans supprimer les données de démonstration.
+            </p>
+          </div>
+          <ButtonLink href="/welcome?replay=1">Rejouer la première connexion</ButtonLink>
+        </Card>
+      ) : null}
 
       <Card className="space-y-4 p-5">
           <div>

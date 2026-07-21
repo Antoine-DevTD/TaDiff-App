@@ -50,6 +50,14 @@ export function RichEmailEditor({
     editor?.setEditable(editable);
   }, [editable, editor]);
 
+  useEffect(() => {
+    if (!editor) return;
+    const nextContent = content as JSONContent;
+    if (JSON.stringify(editor.getJSON()) !== JSON.stringify(nextContent)) {
+      editor.commands.setContent(nextContent);
+    }
+  }, [content, editor]);
+
   if (!editor) return <div className="min-h-72 animate-pulse rounded-md bg-panel-strong" />;
 
   function insertVariable(token: string) {

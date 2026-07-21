@@ -44,12 +44,34 @@ test.describe("cockpit en mode demonstration", () => {
       await expect(navigation.getByRole("link", { name: new RegExp(`^${label}`) })).toBeVisible();
     }
     await expect(page.getByText("A faire maintenant", { exact: true })).toBeVisible();
+    const cockpitOrder = await page.locator('[data-tour="cockpit-pulse"], [data-tour="cockpit-priorite"]').evaluateAll((elements) => elements.map((element) => element.getAttribute("data-tour")));
+    expect(cockpitOrder).toEqual(["cockpit-pulse", "cockpit-priorite"]);
 
     await page.getByRole("button", { name: "Ouvrir William" }).click();
     const william = page.getByRole("region", { name: "Assistant William" });
     await expect(william.getByText("Votre copilote TaDiff", { exact: true })).toBeVisible();
     await expect(william.getByRole("link", { name: /Ajouter un spectacle/ })).toBeVisible();
     await expect(william.getByRole("button", { name: "Visite guidee" })).toBeVisible();
+    const compactBox = await william.boundingBox();
+    await william.getByRole("button", { name: "Agrandir William" }).click();
+    const expandedBox = await william.boundingBox();
+    expect(expandedBox?.width).toBeGreaterThan(compactBox?.width ?? 0);
+    await expect(william.getByRole("button", { name: "Reduire William" })).toBeVisible();
+  });
+
+  test("ajoute puis termine une action sans actualiser la page", async ({ page }) => {
+    await page.goto("/reminders");
+
+    await page.getByRole("button", { name: "Ajouter une action", exact: true }).first().click();
+    const dialog = page.getByRole("dialog", { name: "Que faut-il faire ?" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Autre", exact: true }).click();
+    await dialog.getByLabel("Action").fill("Verifier le dossier du webinaire");
+    await dialog.getByRole("button", { name: "Ajouter l'action" }).click();
+
+    await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Marquer Verifier le dossier du webinaire comme fait" }).click();
+    await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toHaveCount(0);
   });
 
   test("donne acces aux rubriques secondaires depuis la navigation mobile", async ({ page }) => {
@@ -109,6 +131,15 @@ test.describe("cockpit en mode demonstration", () => {
     await backToShows.click();
     await expect(page).toHaveURL(/\/shows$/);
     await expect(page.getByRole("link", { name: "Ouvrir Les lignes de fuite" })).toBeVisible();
+  });
+
+  test("ouvre une action deja rattachee depuis la fiche spectacle", async ({ page }) => {
+    await page.goto("/shows/show-1?tab=dates");
+
+    await page.getByRole("button", { name: "Ajouter une action" }).click();
+    const dialog = page.getByRole("dialog", { name: "Que faut-il faire ?" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Les lignes de fuite" })).toHaveAttribute("aria-pressed", "true");
   });
 
   test("cree un spectacle dans une fenetre sans page dediee", async ({ page }) => {
@@ -233,6 +264,12 @@ test.describe("cockpit en mode demonstration", () => {
     await page.getByLabel("Dossier artistique").check();
     await expect(messageField).toContainText(/pieces jointes.*dossier artistique/i);
     await expect(page.getByRole("button", { name: "Telecharger les pieces" })).toBeVisible();
+    await page.getByRole("button", { name: "Gmail" }).click();
+    const attachmentDialog = page.getByRole("dialog", { name: "Preparer les fichiers avant le brouillon" });
+    await expect(attachmentDialog).toBeVisible();
+    await expect(attachmentDialog).toContainText(/ne peuvent pas ajouter automatiquement/);
+    await page.keyboard.press("Escape");
+    await expect(attachmentDialog).toBeHidden();
     await expect(page.getByRole("heading", { name: "Modeles d'emails" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Nouveau modele" })).toBeVisible();
   });
@@ -248,8 +285,10 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(dialog.getByLabel("Objet", { exact: true })).toHaveValue(/Les lignes de fuite/);
     await expect(dialog.locator(".email-editor .tiptap")).toContainText(/fratrie/);
     await expect(dialog.getByText("4/4", { exact: true })).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
+    await dialog.getByRole("button", { name: "Pieces et William" }).click();
+    await expect(page).toHaveURL(/\/campaigns\?contactId=contact-1&showId=show-1/);
+    await expect(page.getByLabel("Contact", { exact: true })).toHaveValue("contact-1");
+    await expect(page.getByLabel("Spectacle", { exact: true })).toHaveValue("show-1");
   });
 
   test("garde la navigation fixe pendant le scroll des parametres", async ({ page }) => {

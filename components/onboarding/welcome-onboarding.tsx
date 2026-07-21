@@ -21,10 +21,12 @@ export function WelcomeOnboarding({
   initialCompanyName,
   initialFullName,
   initialLogoUrl,
+  replay = false,
 }: {
   initialCompanyName: string;
   initialFullName: string;
   initialLogoUrl: string;
+  replay?: boolean;
 }) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
@@ -34,6 +36,7 @@ export function WelcomeOnboarding({
     fullName: initialFullName,
     companyName: initialCompanyName,
     logoUrl: initialLogoUrl,
+    replay,
     showReadiness: "ready",
   });
 

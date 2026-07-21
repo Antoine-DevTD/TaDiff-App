@@ -97,7 +97,7 @@ export function ContactEmailAssistant({ contact, shows, templates, onClose, open
           {message ? <p className="rounded-md bg-panel-strong px-3 py-2 text-sm text-muted" role="status">{message}</p> : null}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             <p className="text-xs text-muted">La mise en forme est conservee lors de la copie. L&apos;ouverture par email utilise une version texte compatible.</p>
-            <div className="flex flex-wrap gap-2"><Button type="button" variant="secondary" onClick={copyDraft}><Copy className="mr-2 h-4 w-4" />Copier avec mise en forme</Button><Button disabled={!contact.email || !bodyText} type="button" onClick={openMailer}><Mail className="mr-2 h-4 w-4" />Ouvrir ma messagerie</Button><Button aria-label="Ouvrir la page Emails" title="Ouvrir la page Emails" type="button" variant="ghost" onClick={() => { window.location.href = "/campaigns"; }}><ExternalLink className="h-4 w-4" /></Button></div>
+            <div className="flex flex-wrap gap-2"><Button type="button" variant="secondary" onClick={copyDraft}><Copy className="mr-2 h-4 w-4" />Copier avec mise en forme</Button><Button disabled={!contact.email || !bodyText} type="button" onClick={openMailer}><Mail className="mr-2 h-4 w-4" />Ouvrir ma messagerie</Button><Button title="Ajouter des pieces ou demander a William" type="button" variant="ghost" onClick={() => { window.location.href = `/campaigns?contactId=${contact.id}${selectedShow ? `&showId=${selectedShow.id}` : ""}`; }}><ExternalLink className="mr-2 h-4 w-4" />Pieces et William</Button></div>
           </div>
         </div>
       </div>

@@ -3,6 +3,9 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { BillingStatus } from "@/lib/supabase/access";
 import { fallbackLegalInformation, mergeLegalInformation, type LegalInformation } from "@/lib/legal";
 import type { Json } from "@/types/database.types";
+import { platformPermissionValues, type PlatformPermission } from "@/lib/platform-permissions";
+export { platformPermissionValues } from "@/lib/platform-permissions";
+export type { PlatformPermission } from "@/lib/platform-permissions";
 
 export type AdminCompany = {
   id: string;
@@ -169,6 +172,19 @@ export type AdminAiAccount = {
   bonusBalance: number;
 };
 
+export type AdminWilliamQuestionEvent = {
+  id: string;
+  questionExcerpt: string;
+  topic: string;
+  requestKind: string;
+  answered: boolean;
+  outOfScope: boolean;
+  createdAt: string;
+};
+
+export type PlatformAdminAccess = { isSuperAdmin: boolean; permissions: PlatformPermission[] };
+export type AdminPlatformAdmin = { userId: string; email: string; fullName: string; permissions: PlatformPermission[]; updatedAt: string };
+
 /** Le flag is_super_admin ne se donne qu'en SQL (voir sql/013_super_admin.sql). */
 export async function isSuperAdmin(): Promise<boolean> {
   if (!hasSupabaseEnv()) {
@@ -183,6 +199,37 @@ export async function isSuperAdmin(): Promise<boolean> {
   }
 
   return data === true;
+}
+
+export async function getPlatformAdminAccess(): Promise<PlatformAdminAccess> {
+  if (!hasSupabaseEnv()) return { isSuperAdmin: false, permissions: [] };
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("get_my_platform_permissions");
+  const row = data?.[0];
+  if (error || !row) return { isSuperAdmin: false, permissions: [] };
+  return {
+    isSuperAdmin: row.is_super_admin,
+    permissions: (row.permissions ?? []).filter((permission): permission is PlatformPermission => platformPermissionValues.includes(permission as PlatformPermission)),
+  };
+}
+
+export async function hasPlatformPermission(permission: PlatformPermission) {
+  const access = await getPlatformAdminAccess();
+  return access.isSuperAdmin || access.permissions.includes(permission);
+}
+
+export async function getAdminPlatformAdmins(): Promise<AdminPlatformAdmin[]> {
+  if (!hasSupabaseEnv() || !(await isSuperAdmin())) return [];
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_platform_admins");
+  if (error || !data) return [];
+  return data.map((entry) => ({
+    userId: entry.user_id,
+    email: entry.email,
+    fullName: entry.full_name,
+    permissions: (entry.permissions ?? []).filter((permission): permission is PlatformPermission => platformPermissionValues.includes(permission as PlatformPermission)),
+    updatedAt: entry.updated_at,
+  }));
 }
 
 export async function getAdminCompanies(): Promise<AdminCompany[]> {
@@ -482,6 +529,28 @@ export async function getAdminAiAccounts(): Promise<AdminAiAccount[]> {
     monthlyUsed: account.monthly_used,
     accountMonthlyUsed: account.account_monthly_used,
     bonusBalance: account.bonus_balance,
+  }));
+}
+
+export async function getAdminWilliamQuestionEvents(days = 30, limit = 500): Promise<AdminWilliamQuestionEvent[]> {
+  if (!hasSupabaseEnv()) return [];
+  const since = new Date(Date.now() - Math.max(1, days) * 86_400_000).toISOString();
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("william_question_events")
+    .select("id,question_excerpt,topic,request_kind,answered,out_of_scope,created_at")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(Math.min(Math.max(limit, 1), 2000));
+  if (error || !data) return [];
+  return data.map((event) => ({
+    id: event.id,
+    questionExcerpt: event.question_excerpt,
+    topic: event.topic,
+    requestKind: event.request_kind,
+    answered: event.answered,
+    outOfScope: event.out_of_scope,
+    createdAt: event.created_at,
   }));
 }
 

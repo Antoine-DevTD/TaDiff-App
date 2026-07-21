@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { DocumentSlot } from "@/components/documents/document-slot";
 import { DocumentDropzone } from "@/components/documents/document-dropzone";
 import { ShowDocumentsDownloadButton } from "@/components/documents/show-documents-download-button";
+import { UnclassifiedDocuments } from "@/components/documents/unclassified-documents";
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
 import { ShowBudgetWorkspace } from "@/components/shows/show-budget-workspace";
 import { ShowEmailProfileForm } from "@/components/shows/show-email-profile-form";
+import { ShowActionDialog } from "@/components/shows/show-action-dialog";
+import { ShowWorkspaceDocuments } from "@/components/shows/show-workspace-documents";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,11 +21,11 @@ import {
   optionalShowDocumentTypes,
   resolveShowPosterUrl,
 } from "@/lib/show-documents";
-import { getShowById } from "@/lib/supabase/queries";
+import { getContacts, getShowById, getShowDocuments, getShowWorkDocuments, getShows } from "@/lib/supabase/queries";
 import { cn } from "@/lib/utils";
 import type { Show } from "@/types";
 
-type ShowTab = "overview" | "presentation" | "files" | "dates" | "budget";
+type ShowTab = "overview" | "presentation" | "files" | "workspace" | "dates" | "budget";
 
 type ShowDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -33,6 +36,7 @@ const baseShowTabs: Array<{ id: ShowTab; label: string }> = [
   { id: "overview", label: "Vue d'ensemble" },
   { id: "presentation", label: "Presentation" },
   { id: "files", label: "Dossier" },
+  { id: "workspace", label: "Documents de travail" },
   { id: "dates", label: "Dates" },
 ];
 
@@ -42,7 +46,14 @@ function resolveTab(value: string | undefined, tabs: Array<{ id: ShowTab }>): Sh
 
 export default async function ShowDetailPage({ params, searchParams }: ShowDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const { budgetItems, documents: allDocuments, opportunities, reminders, show } = await getShowById(id);
+  const [showDetail, contacts, allShows, catalogueDocuments, workDocuments] = await Promise.all([
+    getShowById(id),
+    getContacts(),
+    getShows(),
+    getShowDocuments(),
+    getShowWorkDocuments(id),
+  ]);
+  const { budgetItems, documents: allDocuments, opportunities, reminders, show } = showDetail;
 
   if (!show) notFound();
 
@@ -59,6 +70,13 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
     0,
   );
   const posterUrl = resolveShowPosterUrl(show, documents);
+  const showsWithPosters = allShows.map((item) => ({
+    ...item,
+    posterUrl: resolveShowPosterUrl(
+      item,
+      catalogueDocuments.filter((document) => document.showId === item.id),
+    ),
+  }));
   const documentReadiness = getShowDocumentReadiness(documents, { hasPoster: Boolean(posterUrl) });
   const nextPerformanceDate = opportunities
     .map((deal) => deal.performanceDate)
@@ -85,6 +103,11 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-3">
           <Badge tone={show.status === "En diffusion" ? "success" : "info"}>{show.status}</Badge>
+          {show.captureUrl ? (
+            <a className="inline-flex min-h-10 items-center gap-2 rounded-md border border-border bg-panel px-3 text-sm font-medium hover:border-accent/40 hover:text-accent" href={show.captureUrl} rel="noreferrer" target="_blank">
+              Voir la captation <ExternalLink className="h-4 w-4" />
+            </a>
+          ) : null}
           <ShowEditDialog show={show} />
         </div>
       </div>
@@ -120,6 +143,12 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
       ) : null}
 
       {activeTab === "presentation" ? <ShowEmailProfileForm show={show} /> : null}
+
+      {activeTab === "workspace" ? (
+        <Card className="p-5">
+          <ShowWorkspaceDocuments documents={workDocuments.documents} folders={workDocuments.folders} showId={show.id} />
+        </Card>
+      ) : null}
 
       {activeTab === "files" ? (
         <Card>
@@ -192,6 +221,11 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
                 </div>
               </section>
 
+              <UnclassifiedDocuments
+                documents={documents.filter((document) => document.documentType === "A renseigner")}
+                showId={show.id}
+              />
+
               <section className="border-t border-border pt-6">
                 <CardHeader>
                   <CardTitle>Deposer plusieurs fichiers</CardTitle>
@@ -243,10 +277,15 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold">Actions a faire</h3>
-                <Link className="text-sm font-medium text-accent hover:text-accent-strong" href="/reminders">Toutes les actions</Link>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <Link className="text-sm font-medium text-accent hover:text-accent-strong" href="/reminders">Toutes les actions</Link>
+                  <ShowActionDialog contacts={contacts} currentShowId={show.id} shows={showsWithPosters} />
+                </div>
               </div>
               {reminders.length === 0 ? (
-                <ActionPanel href="/reminders" text="Aucune action ouverte pour ce spectacle." />
+                <div className="border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
+                  Aucune action ouverte pour ce spectacle. Utilisez le bouton ci-dessus pour ajouter la prochaine étape.
+                </div>
               ) : (
                 reminders.map((reminder) => (
                   <Link key={reminder.id} className="block border-b border-border py-4 transition-colors hover:text-accent" href="/reminders">

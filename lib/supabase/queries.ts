@@ -17,8 +17,10 @@ import {
   treasurySnapshot,
 } from "@/data/mock-data";
 import { hasSupabaseEnv } from "@/lib/env";
+import { betaReservedSeatLimit } from "@/lib/beta";
 import { buildDownloadFileName } from "@/lib/documents-upload";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { createPrivateObjectUrls, type StorageProvider } from "@/lib/storage/server";
 import type {
   ActivityEntry,
   BillingPlan,
@@ -30,6 +32,7 @@ import type {
   Contact,
   EmailCampaign,
   EmailTemplate,
+  Exploitation,
   FixedCost,
   GrantOpportunity,
   PatronageDeal,
@@ -39,10 +42,10 @@ import type {
   Show,
   ShowBudgetItem,
   ShowDocument,
+  ShowWorkDocument,
+  ShowWorkFolder,
   TreasurySnapshot,
 } from "@/types";
-
-const betaReservedSeatLimit = 30;
 
 type DashboardStat = {
   detail: string;
@@ -80,6 +83,7 @@ export async function getShows(): Promise<Show[]> {
     emailPitch: "email_pitch" in show ? show.email_pitch ?? "" : "",
     notes: show.notes ?? "",
     posterUrl: show.poster_url ?? "",
+    captureUrl: "capture_url" in show ? show.capture_url ?? "" : "",
   }));
 }
 
@@ -133,7 +137,7 @@ export async function getShowById(showId: string): Promise<{
         .order("created_at", { ascending: false }),
       supabase
         .from("show_documents")
-        .select("id,show_id,title,document_type,status,file_url,storage_path,notes,updated_at")
+        .select("id,show_id,title,document_type,status,file_url,storage_path,storage_provider,notes,updated_at")
         .eq("show_id", showId)
         .order("updated_at", { ascending: false }),
       supabase
@@ -159,6 +163,7 @@ export async function getShowById(showId: string): Promise<{
     emailPitch: "email_pitch" in show ? show.email_pitch ?? "" : "",
     notes: show.notes ?? "",
     posterUrl: show.poster_url ?? "",
+    captureUrl: "capture_url" in show ? show.capture_url ?? "" : "",
   };
 
   const resolvedDocuments: ShowDocument[] =
@@ -438,6 +443,47 @@ export async function getContactById(contactId: string): Promise<{
   };
 }
 
+export async function getExploitations(): Promise<Exploitation[]> {
+  if (!hasSupabaseEnv()) return [];
+  const supabase = await getSupabaseServerClient();
+  const [{ data: rows, error }, { data: performanceRows }, { data: showRows }] = await Promise.all([
+    supabase.from("exploitations").select("*").order("start_date", { ascending: false }),
+    supabase.from("exploitation_performances").select("*").order("performance_date"),
+    supabase.from("shows").select("id,title"),
+  ]);
+  if (error || !rows) return [];
+  return rows.map((row) => ({
+    id: row.id,
+    showId: row.show_id,
+    contactId: row.contact_id ?? "",
+    title: row.title,
+    showTitle: showRows?.find((show) => show.id === row.show_id)?.title ?? "Spectacle",
+    venue: row.venue ?? "Lieu a renseigner",
+    city: row.city ?? "",
+    exploitationMode: row.exploitation_mode as Exploitation["exploitationMode"],
+    status: row.status as Exploitation["status"],
+    startDate: row.start_date,
+    endDate: row.end_date,
+    cessionFeePerPerformance: row.cession_fee_per_performance,
+    companySharePercent: row.company_share_percent,
+    minimumGuarantee: row.minimum_guarantee,
+    venueRentalTotal: row.venue_rental_total,
+    fixedCostsTotal: row.fixed_costs_total,
+    performances: (performanceRows ?? []).filter((performance) => performance.exploitation_id === row.id).map((performance) => ({
+      id: performance.id,
+      performanceDate: performance.performance_date,
+      performanceTime: performance.performance_time ?? "",
+      capacity: performance.capacity,
+      paidTickets: performance.paid_tickets,
+      complimentaryTickets: performance.complimentary_tickets,
+      grossBoxOffice: performance.gross_box_office,
+      ticketingFees: performance.ticketing_fees,
+      variableCosts: performance.variable_costs,
+      sacdDeclared: performance.sacd_declared,
+    })),
+  }));
+}
+
 export async function getPipelineDeals(): Promise<PipelineDeal[]> {
   if (!hasSupabaseEnv()) {
     return pipelineDeals;
@@ -549,6 +595,7 @@ type ShowDocumentRow = {
   status: string;
   file_url: string | null;
   storage_path: string | null;
+  storage_provider: string;
   notes: string | null;
   updated_at: string;
 };
@@ -565,15 +612,13 @@ async function mapShowDocumentRows(rows: ShowDocumentRow[]): Promise<ShowDocumen
   const previewUrlByPath = new Map<string, string>();
 
   if (rowsWithPath.length > 0) {
-    const supabase = await getSupabaseServerClient();
     const signed = await Promise.all(rowsWithPath.map(async (row) => {
-      const [preview, download] = await Promise.all([
-        supabase.storage.from("documents").createSignedUrl(row.storage_path, 3600),
-        supabase.storage.from("documents").createSignedUrl(row.storage_path, 3600, {
-          download: buildDownloadFileName(row.title, row.storage_path),
-        }),
-      ]);
-      return { download: download.data?.signedUrl, preview: preview.data?.signedUrl, row };
+      const urls = await createPrivateObjectUrls(
+        (row.storage_provider || "supabase") as StorageProvider,
+        row.storage_path,
+        buildDownloadFileName(row.title, row.storage_path),
+      );
+      return { download: urls.downloadUrl, preview: urls.previewUrl, row };
     }));
 
     signed.forEach(({ download, preview, row }) => {
@@ -612,7 +657,7 @@ export async function getShowDocuments(showId?: string): Promise<ShowDocument[]>
   const supabase = await getSupabaseServerClient();
   let query = supabase
     .from("show_documents")
-    .select("id,show_id,title,document_type,status,file_url,storage_path,notes,updated_at")
+    .select("id,show_id,title,document_type,status,file_url,storage_path,storage_provider,notes,updated_at")
     .order("updated_at", { ascending: false });
 
   if (showId) {
@@ -626,6 +671,44 @@ export async function getShowDocuments(showId?: string): Promise<ShowDocument[]>
   }
 
   return mapShowDocumentRows(data);
+}
+
+export async function getShowWorkDocuments(showId: string): Promise<{
+  folders: ShowWorkFolder[];
+  documents: ShowWorkDocument[];
+}> {
+  if (!hasSupabaseEnv()) return { folders: [], documents: [] };
+  const supabase = await getSupabaseServerClient();
+  const [{ data: folderRows }, { data: documentRows }] = await Promise.all([
+    supabase.from("show_work_folders").select("id,show_id,parent_id,name").eq("show_id", showId).order("name"),
+    supabase.from("show_work_documents")
+      .select("id,show_id,folder_id,title,storage_path,storage_provider,mime_type,file_size,version_number,updated_at")
+      .eq("show_id", showId).order("updated_at", { ascending: false }),
+  ]);
+  const documents = await Promise.all((documentRows ?? []).map(async (row) => {
+    const urls = await createPrivateObjectUrls(
+      (row.storage_provider || "supabase") as StorageProvider,
+      row.storage_path,
+      buildDownloadFileName(row.title, row.storage_path),
+    );
+    return {
+      id: row.id,
+      showId: row.show_id,
+      folderId: row.folder_id,
+      title: row.title,
+      fileUrl: urls.downloadUrl,
+      storagePath: row.storage_path,
+      storageProvider: (row.storage_provider || "supabase") as StorageProvider,
+      mimeType: row.mime_type ?? "",
+      fileSize: row.file_size,
+      versionNumber: row.version_number,
+      updatedAt: row.updated_at,
+    } satisfies ShowWorkDocument;
+  }));
+  return {
+    folders: (folderRows ?? []).map((row) => ({ id: row.id, showId: row.show_id, parentId: row.parent_id, name: row.name })),
+    documents,
+  };
 }
 
 export async function getBetaSignupStats(): Promise<{
@@ -994,7 +1077,7 @@ export async function getCompanyDocuments(): Promise<CompanyDocument[]> {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("company_documents")
-    .select("id,title,doc_type,storage_path,file_url,note,created_at")
+    .select("id,title,doc_type,storage_path,storage_provider,file_url,note,created_at")
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
@@ -1005,21 +1088,14 @@ export async function getCompanyDocuments(): Promise<CompanyDocument[]> {
   const urlByPath = new Map<string, string>();
 
   if (rowsWithPath.length > 0) {
-    const signed = await Promise.all(
-      rowsWithPath.map((row) =>
-        supabase.storage
-          .from("documents")
-          .createSignedUrl(row.storage_path, 3600, {
-            download: buildDownloadFileName(row.title, row.storage_path),
-          }),
+    const signed = await Promise.all(rowsWithPath.map((row) =>
+      createPrivateObjectUrls(
+        (row.storage_provider || "supabase") as StorageProvider,
+        row.storage_path,
+        buildDownloadFileName(row.title, row.storage_path),
       ),
-    );
-
-    signed.forEach(({ data: signedData }, index) => {
-      if (signedData?.signedUrl) {
-        urlByPath.set(rowsWithPath[index].storage_path, signedData.signedUrl);
-      }
-    });
+    ));
+    signed.forEach((urls, index) => urlByPath.set(rowsWithPath[index].storage_path, urls.downloadUrl));
   }
 
   return data.map((row) => ({
@@ -1032,6 +1108,20 @@ export async function getCompanyDocuments(): Promise<CompanyDocument[]> {
     note: row.note ?? "",
     createdAt: row.created_at,
   }));
+}
+
+export async function getPlatformResources() {
+  const fallback = [
+    { id: "artcena", title: "ARTCENA", description: "Centre national des arts du cirque, de la rue et du theatre.", category: "Metier", url: "https://www.artcena.fr/" },
+    { id: "culturepay", title: "CulturePay", description: "Ressources de paie et gestion sociale pour le spectacle vivant.", category: "Administration", url: "https://culturepay.fr/" },
+    { id: "sacd", title: "SACD", description: "Demarches, droits et declarations des auteurs.", category: "Droits", url: "https://www.sacd.fr/" },
+  ];
+  if (!hasSupabaseEnv()) return fallback;
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("platform_resources")
+    .select("id,title,description,category,url").eq("active", true).order("sort_order");
+  if (error || !data) return fallback;
+  return data.map((resource) => ({ ...resource, description: resource.description ?? "" }));
 }
 
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {

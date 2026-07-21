@@ -25,6 +25,7 @@ const defaultValues: ShowFormInput = {
   budget: 0,
   detailedBudgetEnabled: false,
   posterUrl: "",
+  captureUrl: "",
   notes: "",
 };
 
@@ -49,6 +50,7 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
           budget: show.budget,
           detailedBudgetEnabled: show.detailedBudgetEnabled ?? false,
           posterUrl: show.posterUrl || "",
+          captureUrl: show.captureUrl || "",
           notes: show.notes || "",
         }
       : defaultValues,
@@ -137,6 +139,14 @@ export function ShowForm({ show, onSuccess }: { show?: Show; onSuccess?: () => v
             setValue("posterUrl", url, { shouldDirty: true, shouldValidate: true })
           }
         />
+      </Field>
+
+      <Field
+        label="Lien de captation (optionnel)"
+        error={errors.captureUrl?.message}
+        hint="Ajoutez une captation non repertoriee YouTube ou Vimeo. TaDiff ne stocke pas la video."
+      >
+        <Input placeholder="https://youtu.be/..." {...register("captureUrl")} />
       </Field>
 
       <Field label="Note de production" error={errors.notes?.message}>

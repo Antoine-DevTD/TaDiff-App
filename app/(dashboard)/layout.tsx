@@ -7,7 +7,7 @@ import { WilliamAssistant } from "@/components/william/william-assistant";
 import { ThemeApplier } from "@/components/theme/theme-applier";
 import { Topbar } from "@/components/layout/topbar";
 import { hasSupabaseEnv } from "@/lib/env";
-import { isSuperAdmin } from "@/lib/supabase/admin";
+import { getPlatformAdminAccess } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getWorkspaceLabel } from "@/lib/supabase/workspace";
 
@@ -29,7 +29,8 @@ export default async function DashboardLayout({
       redirect("/login");
     }
 
-    superAdmin = await isSuperAdmin();
+    const platformAccess = await getPlatformAdminAccess();
+    superAdmin = platformAccess.isSuperAdmin || platformAccess.permissions.length > 0;
     workspaceLabel = superAdmin ? "Console interne" : await getWorkspaceLabel();
   }
 

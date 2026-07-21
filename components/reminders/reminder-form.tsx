@@ -32,6 +32,7 @@ export function ReminderForm({
   initialContactId,
   initialShowId,
   onClose,
+  onCreated,
   open,
   shows,
 }: {
@@ -39,6 +40,7 @@ export function ReminderForm({
   initialContactId?: string;
   initialShowId?: string;
   onClose: () => void;
+  onCreated?: (reminder: Reminder) => void;
   open: boolean;
   shows: Show[];
 }) {
@@ -102,6 +104,7 @@ export function ReminderForm({
       });
       setMessage(result.message);
       if (result.ok) {
+        if (result.reminder) onCreated?.(result.reminder);
         router.refresh();
         onClose();
       }
@@ -201,7 +204,7 @@ export function ReminderForm({
               </Select>
             </label>
           ) : null}
-          <label className="mt-4 block text-sm font-medium">
+          <label className="mt-4 block text-sm font-medium" htmlFor="reminder-title">
             <span className="flex flex-wrap items-center justify-between gap-2">
               <span>Action</span>
               <button className="inline-flex min-h-9 items-center gap-2 rounded-md px-3 text-xs font-medium text-accent transition hover:bg-accent/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" disabled={!selectedShow || isWilliamPending} type="button" onClick={askWilliamForSuggestion}>
@@ -209,7 +212,7 @@ export function ReminderForm({
                 {isWilliamPending ? "William cherche..." : "Suggestion William"}
               </button>
             </span>
-            <Input className="mt-2" placeholder="Decrivez l'action en quelques mots" value={title} onChange={(event) => setTitle(event.target.value)} />
+            <Input id="reminder-title" className="mt-2" placeholder="Decrivez l'action en quelques mots" value={title} onChange={(event) => setTitle(event.target.value)} />
           </label>
         </ComposerSection>
 

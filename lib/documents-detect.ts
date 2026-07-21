@@ -37,7 +37,7 @@ export function detectDocumentType(filename: string, text?: string): ShowOwnedDo
     }
   }
 
-  return "Dossier artistique";
+  return "A renseigner";
 }
 
 /**

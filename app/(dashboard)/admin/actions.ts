@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { hasSupabaseEnv } from "@/lib/env";
-import { isSuperAdmin } from "@/lib/supabase/admin";
+import {
+  hasPlatformPermission,
+  isSuperAdmin,
+} from "@/lib/supabase/admin";
+import { platformPermissionValues, type PlatformPermission } from "@/lib/platform-permissions";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
   adminBillingSchema,
@@ -50,8 +54,8 @@ export async function adminSetFeedbackStatus(
     return { ok: false, message: "La console admin demande une base Supabase connectee." };
   }
 
-  if (!(await isSuperAdmin())) {
-    return { ok: false, message: "Acces reserve aux super admins." };
+  if (!(await hasPlatformPermission("manage_feedback"))) {
+    return { ok: false, message: "Permission de gestion des retours requise." };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -187,16 +191,42 @@ export async function adminUpdateCompanyBilling(
   return { ok: true, message: "Compagnie mise a jour." };
 }
 
-async function requireAdminDatabase() {
+async function requireAdminDatabase(permission: PlatformPermission) {
   if (!hasSupabaseEnv()) return null;
-  if (!(await isSuperAdmin())) return null;
+  if (!(await hasPlatformPermission(permission))) return null;
   return getSupabaseServerClient();
+}
+
+export async function adminSetPlatformAdminAccess(
+  userId: string,
+  permissions: string[],
+): Promise<ActionResult> {
+  if (!hasSupabaseEnv() || !(await isSuperAdmin())) {
+    return { ok: false, message: "Seul un super-admin peut deleguer ces droits." };
+  }
+  const validPermissions = permissions.filter((permission): permission is PlatformPermission =>
+    platformPermissionValues.includes(permission as PlatformPermission),
+  );
+  if (!userId || validPermissions.length !== permissions.length) {
+    return { ok: false, message: "Compte ou permissions invalides." };
+  }
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_set_platform_admin", {
+    target_user_id: userId,
+    new_permissions: validPermissions,
+  });
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/admin");
+  return {
+    ok: true,
+    message: validPermissions.length ? "Droits administrateur enregistres." : "Acces administrateur retire.",
+  };
 }
 
 export async function adminSaveLegalInformation(values: LegalInformationInput): Promise<ActionResult> {
   const parsed = legalInformationSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: "Certaines informations legales sont invalides." };
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_legal");
   if (!supabase) return { ok: false, message: "Acces super-admin et migration 038 requis." };
   const { data: userData } = await supabase.auth.getUser();
   const { error } = await supabase.from("platform_settings").upsert({
@@ -214,7 +244,7 @@ export async function adminSaveLegalInformation(values: LegalInformationInput): 
 export async function adminSaveGrantCatalogItem(id: string | null, values: GrantCatalogInput): Promise<ActionResult> {
   const parsed = grantCatalogSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Aide invalide." };
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_catalogs");
   if (!supabase) return { ok: false, message: "Acces super-admin et migration 038 requis." };
   const payload = {
     title: parsed.data.title,
@@ -240,7 +270,7 @@ export async function adminSaveGrantCatalogItem(id: string | null, values: Grant
 }
 
 export async function adminDeleteGrantCatalogItem(id: string): Promise<ActionResult> {
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_catalogs");
   if (!supabase) return { ok: false, message: "Acces super-admin requis." };
   const { error } = await supabase.from("grant_catalog").delete().eq("id", id);
   if (error) return { ok: false, message: error.message };
@@ -251,7 +281,7 @@ export async function adminDeleteGrantCatalogItem(id: string): Promise<ActionRes
 export async function adminSavePatronageCatalogItem(id: string | null, values: PatronageCatalogInput): Promise<ActionResult> {
   const parsed = patronageCatalogSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Programme invalide." };
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_catalogs");
   if (!supabase) return { ok: false, message: "Acces super-admin et migration 038 requis." };
   const payload = {
     organization_name: parsed.data.organizationName,
@@ -277,7 +307,7 @@ export async function adminSavePatronageCatalogItem(id: string | null, values: P
 }
 
 export async function adminDeletePatronageCatalogItem(id: string): Promise<ActionResult> {
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_catalogs");
   if (!supabase) return { ok: false, message: "Acces super-admin requis." };
   const { error } = await supabase.from("patronage_catalog").delete().eq("id", id);
   if (error) return { ok: false, message: error.message };
@@ -288,7 +318,7 @@ export async function adminDeletePatronageCatalogItem(id: string): Promise<Actio
 export async function adminSavePlatformEmailTemplate(id: string | null, values: PlatformEmailTemplateInput): Promise<ActionResult> {
   const parsed = platformEmailTemplateSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: "Le modele d'email est incomplet." };
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_email_templates");
   if (!supabase) return { ok: false, message: "Acces super-admin et migration 038 requis." };
   const payload = {
     name: parsed.data.name,
@@ -308,7 +338,7 @@ export async function adminSavePlatformEmailTemplate(id: string | null, values: 
 }
 
 export async function adminDeletePlatformEmailTemplate(id: string): Promise<ActionResult> {
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_email_templates");
   if (!supabase) return { ok: false, message: "Acces super-admin requis." };
   const { error } = await supabase.from("platform_email_templates").delete().eq("id", id);
   if (error) return { ok: false, message: error.message };
@@ -320,7 +350,7 @@ export async function adminDeletePlatformEmailTemplate(id: string): Promise<Acti
 export async function adminSaveAiSettings(values: AiSettingsInput): Promise<ActionResult> {
   const parsed = aiSettingsSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Configuration IA invalide." };
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_ai");
   if (!supabase) return { ok: false, message: "Acces super-admin et migration 038 requis." };
   const { data: userData } = await supabase.auth.getUser();
   const { error } = await supabase.from("ai_settings").upsert({
@@ -343,7 +373,7 @@ export async function adminSaveAiSettings(values: AiSettingsInput): Promise<Acti
 export async function adminSaveRagDocument(id: string | null, values: RagDocumentInput): Promise<ActionResult> {
   const parsed = ragDocumentSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Document invalide." };
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_ai");
   if (!supabase) return { ok: false, message: "Acces super-admin et migration 038 requis." };
   const payload = {
     title: parsed.data.title,
@@ -366,7 +396,7 @@ export async function adminSaveRagDocument(id: string | null, values: RagDocumen
 }
 
 export async function adminDeleteRagDocument(id: string): Promise<ActionResult> {
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_ai");
   if (!supabase) return { ok: false, message: "Acces super-admin requis." };
   const { error } = await supabase.from("rag_documents").delete().eq("id", id).eq("source_type", "manual");
   if (error) return { ok: false, message: error.message };
@@ -375,7 +405,7 @@ export async function adminDeleteRagDocument(id: string): Promise<ActionResult> 
 }
 
 export async function adminIndexRagDocuments(): Promise<ActionResult> {
-  const supabase = await requireAdminDatabase();
+  const supabase = await requireAdminDatabase("manage_ai");
   if (!supabase) return { ok: false, message: "Acces super-admin et migration 038 requis." };
   const { data: settings, error: settingsError } = await supabase
     .from("ai_settings")

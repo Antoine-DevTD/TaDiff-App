@@ -5,6 +5,12 @@ import { logActivity } from "@/lib/activity-log";
 import { hasSupabaseEnv } from "@/lib/env";
 import { requireManagerAccess, requireWriteAccess } from "@/lib/supabase/access";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  getConfiguredStorageProvider,
+  preparePrivateUpload,
+  removePrivateObject,
+  type StorageProvider,
+} from "@/lib/storage/server";
 import { getOrCreateWorkspace } from "@/lib/supabase/workspace";
 import { calendarEventSchema, type CalendarEventInput } from "@/lib/validation/calendar";
 import { companyProfileSchema, type CompanyProfileInput } from "@/lib/validation/company";
@@ -20,6 +26,7 @@ import {
   type ShowDocumentFormInput,
 } from "@/lib/validation/document";
 import { getDocumentFileError, sanitizeDocumentFilename } from "@/lib/documents-upload";
+import { showDocumentTypes } from "@/lib/show-documents";
 import { getPosterFileError } from "@/lib/poster-upload";
 import { quoteSchema, type QuoteFormInput } from "@/lib/validation/billing";
 import {
@@ -76,13 +83,14 @@ import {
   getDefaultProbability,
   getWilliamOpportunityAction,
 } from "@/lib/pipeline";
-import type { PipelineStage } from "@/types";
+import type { PipelineStage, Reminder } from "@/types";
 import { emailTemplateSchema, type EmailTemplateInput } from "@/lib/validation/email-template";
 import type { Database, Json } from "@/types/database.types";
 
 type ActionResult = {
   ok: boolean;
   message: string;
+  reminder?: Reminder;
 };
 
 export async function saveEmailTemplate(
@@ -308,6 +316,92 @@ async function ensureOpportunityReminder({
   return { ok: true, message: "Action creee." };
 }
 
+export async function createExploitation(values: {
+  showId: string; contactId?: string; title: string; venue?: string; city?: string;
+  exploitationMode: "cession" | "corealisation" | "location" | "other";
+  startDate: string; endDate: string; cessionFeePerPerformance: number;
+  companySharePercent: number; minimumGuarantee: number; venueRentalTotal: number;
+  fixedCostsTotal: number;
+}): Promise<ActionResult> {
+  if (!values.showId || !values.title.trim() || !values.startDate || !values.endDate) {
+    return { ok: false, message: "Spectacle, titre et periode sont requis." };
+  }
+  const start = new Date(`${values.startDate}T12:00:00`);
+  const end = new Date(`${values.endDate}T12:00:00`);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end < start) {
+    return { ok: false, message: "La periode d'exploitation est invalide." };
+  }
+  const dayCount = Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+  if (dayCount > 60) {
+    return { ok: false, message: "Une serie est limitee a 60 representations. Creez plusieurs exploitations pour une periode plus longue." };
+  }
+  const dates: string[] = [];
+  for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    dates.push(cursor.toISOString().slice(0, 10));
+  }
+  if (!hasSupabaseEnv()) return { ok: false, message: "Une base Supabase est requise." };
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const supabase = await getSupabaseServerClient();
+  const { data: exploitation, error } = await supabase.from("exploitations").insert({
+    company_id: workspace.companyId,
+    show_id: values.showId,
+    contact_id: values.contactId || null,
+    title: values.title.trim(),
+    venue: values.venue?.trim() || null,
+    city: values.city?.trim() || null,
+    exploitation_mode: values.exploitationMode,
+    status: "confirmee",
+    start_date: values.startDate,
+    end_date: values.endDate,
+    cession_fee_per_performance: Math.max(0, values.cessionFeePerPerformance || 0),
+    company_share_percent: Math.min(100, Math.max(0, values.companySharePercent || 0)),
+    minimum_guarantee: Math.max(0, values.minimumGuarantee || 0),
+    venue_rental_total: Math.max(0, values.venueRentalTotal || 0),
+    fixed_costs_total: Math.max(0, values.fixedCostsTotal || 0),
+  }).select("id").single();
+  if (error || !exploitation) return { ok: false, message: error?.message ?? "Exploitation non creee." };
+  const { error: performanceError } = await supabase.from("exploitation_performances").insert(
+    dates.map((performanceDate) => ({ company_id: workspace.companyId!, exploitation_id: exploitation.id, performance_date: performanceDate })),
+  );
+  if (performanceError) {
+    await supabase.from("exploitations").delete().eq("id", exploitation.id);
+    return { ok: false, message: performanceError.message };
+  }
+  revalidatePath("/pipeline");
+  revalidatePath("/finances");
+  revalidatePath("/calendar");
+  return { ok: true, message: `${dates.length} representation(s) ajoutee(s) a l'exploitation.` };
+}
+
+export async function updateExploitationPerformance(performanceId: string, values: {
+  capacity: number; paidTickets: number; complimentaryTickets: number;
+  grossBoxOffice: number; ticketingFees: number; variableCosts: number; sacdDeclared: boolean;
+}): Promise<ActionResult> {
+  if (!performanceId || Object.values(values).some((value) => typeof value === "number" && value < 0)) {
+    return { ok: false, message: "Chiffres de billetterie invalides." };
+  }
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("exploitation_performances").update({
+    capacity: values.capacity,
+    paid_tickets: values.paidTickets,
+    complimentary_tickets: values.complimentaryTickets,
+    gross_box_office: values.grossBoxOffice,
+    ticketing_fees: values.ticketingFees,
+    variable_costs: values.variableCosts,
+    sacd_declared: values.sacdDeclared,
+    updated_at: new Date().toISOString(),
+  }).eq("id", performanceId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/pipeline");
+  revalidatePath("/finances");
+  return { ok: true, message: "Billetterie mise a jour." };
+}
+
 export async function createShow(values: ShowFormInput): Promise<ActionResult> {
   const parsed = showSchema.safeParse(values);
 
@@ -341,6 +435,7 @@ export async function createShow(values: ShowFormInput): Promise<ActionResult> {
     budget: parsed.data.budget ?? 0,
     detailed_budget_enabled: parsed.data.detailedBudgetEnabled,
     poster_url: parsed.data.posterUrl || null,
+    capture_url: parsed.data.captureUrl || null,
     notes: parsed.data.notes || null,
   };
   let { error } = await supabase.from("shows").insert(showValues);
@@ -354,6 +449,7 @@ export async function createShow(values: ShowFormInput): Promise<ActionResult> {
       next_date: showValues.next_date,
       budget: showValues.budget,
       poster_url: showValues.poster_url,
+      capture_url: showValues.capture_url,
       notes: showValues.notes,
     });
     error = fallback.error;
@@ -397,6 +493,7 @@ export async function updateShow(showId: string, values: ShowFormInput): Promise
     budget: parsed.data.budget ?? 0,
     detailed_budget_enabled: parsed.data.detailedBudgetEnabled,
     poster_url: parsed.data.posterUrl || null,
+    capture_url: parsed.data.captureUrl || null,
     notes: parsed.data.notes || null,
   };
   let { error } = await supabase
@@ -414,6 +511,7 @@ export async function updateShow(showId: string, values: ShowFormInput): Promise
         next_date: showValues.next_date,
         budget: showValues.budget,
         poster_url: showValues.poster_url,
+        capture_url: showValues.capture_url,
         notes: showValues.notes,
       })
       .eq("id", showId);
@@ -907,6 +1005,7 @@ export async function createShowDocument(values: ShowDocumentFormInput): Promise
     status: parsed.data.status,
     file_url: parsed.data.fileUrl || null,
     storage_path: parsed.data.storagePath || null,
+    storage_provider: getConfiguredStorageProvider(),
     notes: parsed.data.notes || null,
     updated_at: new Date().toISOString(),
   });
@@ -951,13 +1050,13 @@ export async function replaceShowDocument(
   const supabase = await getSupabaseServerClient();
   const { data: existing, error: lookupError } = await supabase
     .from("show_documents")
-    .select("id,show_id,title,storage_path")
+    .select("id,show_id,title,storage_path,storage_provider")
     .eq("id", documentId)
     .eq("company_id", workspace.companyId)
     .maybeSingle();
 
   if (lookupError || !existing || existing.show_id !== parsed.data.showId) {
-    await supabase.storage.from("documents").remove([parsed.data.storagePath]);
+    await removePrivateObject(getConfiguredStorageProvider(), parsed.data.storagePath);
     return { ok: false, message: lookupError?.message ?? "Document introuvable." };
   }
 
@@ -969,6 +1068,7 @@ export async function replaceShowDocument(
       status: parsed.data.status,
       file_url: parsed.data.fileUrl || null,
       storage_path: parsed.data.storagePath,
+      storage_provider: getConfiguredStorageProvider(),
       notes: parsed.data.notes || null,
       updated_at: new Date().toISOString(),
     })
@@ -976,12 +1076,12 @@ export async function replaceShowDocument(
     .eq("company_id", workspace.companyId);
 
   if (error) {
-    await supabase.storage.from("documents").remove([parsed.data.storagePath]);
+    await removePrivateObject(getConfiguredStorageProvider(), parsed.data.storagePath);
     return { ok: false, message: error.message };
   }
 
   if (existing.storage_path && existing.storage_path !== parsed.data.storagePath) {
-    await supabase.storage.from("documents").remove([existing.storage_path]);
+    await removePrivateObject((existing.storage_provider || "supabase") as StorageProvider, existing.storage_path);
   }
 
   revalidatePath(`/shows/${existing.show_id}`);
@@ -992,6 +1092,22 @@ export async function replaceShowDocument(
   await logActivity("a remplace le document", "document", existing.title);
 
   return { ok: true, message: "Nouvelle version enregistree." };
+}
+
+export async function classifyShowDocument(documentId: string, showId: string, documentType: string): Promise<ActionResult> {
+  if (!showDocumentTypes.includes(documentType as (typeof showDocumentTypes)[number]) || documentType === "A renseigner") {
+    return { ok: false, message: "Choisissez un type de document precis." };
+  }
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("show_documents").update({
+    document_type: documentType as (typeof showDocumentTypes)[number],
+    updated_at: new Date().toISOString(),
+  }).eq("id", documentId).eq("show_id", showId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath(`/shows/${showId}`);
+  return { ok: true, message: "Type de document enregistre." };
 }
 
 export async function prepareDocumentUpload(
@@ -1032,21 +1148,134 @@ export async function prepareDocumentUpload(
   }
 
   const storagePath = `${workspace.companyId}/${parsed.data.showId}/${crypto.randomUUID()}-${sanitizeDocumentFilename(parsed.data.fileName)}`;
-  const supabase = await getSupabaseServerClient();
-  const { data, error } = await supabase.storage
-    .from("documents")
-    .createSignedUploadUrl(storagePath);
-
-  if (error || !data) {
-    return { ok: false, message: error?.message ?? "Impossible de preparer l'upload." };
+  let prepared;
+  try {
+    prepared = await preparePrivateUpload(storagePath, parsed.data.fileType);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Impossible de preparer l'upload." };
   }
 
   return {
     ok: true,
     message: "Upload pret.",
-    signedUrl: data.signedUrl,
+    signedUrl: prepared.signedUrl,
     storagePath,
   };
+}
+
+export async function createShowWorkFolder(showId: string, name: string, parentId?: string | null): Promise<ActionResult> {
+  const cleanName = name.trim().slice(0, 100);
+  if (!showId || !cleanName) return { ok: false, message: "Le nom du dossier est requis." };
+  if (!hasSupabaseEnv()) return { ok: false, message: "Une base Supabase est requise." };
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.from("show_work_folders").insert({
+    company_id: workspace.companyId,
+    show_id: showId,
+    parent_id: parentId || null,
+    name: cleanName,
+  });
+  if (error) return { ok: false, message: error.message };
+  revalidatePath(`/shows/${showId}`);
+  return { ok: true, message: "Dossier cree." };
+}
+
+export async function createShowWorkDocument(values: {
+  showId: string;
+  folderId?: string | null;
+  title: string;
+  storagePath: string;
+  mimeType: string;
+  fileSize: number;
+}): Promise<ActionResult> {
+  if (!values.showId || !values.storagePath || !values.title.trim()) return { ok: false, message: "Document incomplet." };
+  const fileError = getDocumentFileError({ size: values.fileSize, type: values.mimeType });
+  if (fileError) return { ok: false, message: fileError };
+  if (!hasSupabaseEnv()) return { ok: false, message: "Une base Supabase est requise." };
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const supabase = await getSupabaseServerClient();
+  const provider = getConfiguredStorageProvider();
+  const { data: userData } = await supabase.auth.getUser();
+  const { data: document, error } = await supabase.from("show_work_documents").insert({
+    company_id: workspace.companyId,
+    show_id: values.showId,
+    folder_id: values.folderId || null,
+    title: values.title.trim().slice(0, 180),
+    storage_path: values.storagePath,
+    storage_provider: provider,
+    mime_type: values.mimeType,
+    file_size: values.fileSize,
+    created_by: userData.user?.id ?? null,
+  }).select("id").single();
+  if (error || !document) return { ok: false, message: error?.message ?? "Document non enregistre." };
+  const { error: versionError } = await supabase.from("show_work_document_versions").insert({
+    document_id: document.id,
+    company_id: workspace.companyId,
+    storage_path: values.storagePath,
+    storage_provider: provider,
+    mime_type: values.mimeType,
+    file_size: values.fileSize,
+    version_number: 1,
+    created_by: userData.user?.id ?? null,
+  });
+  if (versionError) return { ok: false, message: versionError.message };
+  revalidatePath(`/shows/${values.showId}`);
+  return { ok: true, message: "Document de travail ajoute." };
+}
+
+export async function replaceShowWorkDocument(documentId: string, values: {
+  showId: string; storagePath: string; mimeType: string; fileSize: number;
+}): Promise<ActionResult> {
+  if (!documentId || !values.storagePath) return { ok: false, message: "Nouvelle version invalide." };
+  const fileError = getDocumentFileError({ size: values.fileSize, type: values.mimeType });
+  if (fileError) return { ok: false, message: fileError };
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const supabase = await getSupabaseServerClient();
+  const { data: existing, error } = await supabase.from("show_work_documents")
+    .select("id,version_number").eq("id", documentId).eq("company_id", workspace.companyId).single();
+  if (error || !existing) return { ok: false, message: error?.message ?? "Document introuvable." };
+  const nextVersion = existing.version_number + 1;
+  const provider = getConfiguredStorageProvider();
+  const { data: userData } = await supabase.auth.getUser();
+  const { error: versionError } = await supabase.from("show_work_document_versions").insert({
+    document_id: documentId, company_id: workspace.companyId, storage_path: values.storagePath,
+    storage_provider: provider, mime_type: values.mimeType, file_size: values.fileSize,
+    version_number: nextVersion, created_by: userData.user?.id ?? null,
+  });
+  if (versionError) return { ok: false, message: versionError.message };
+  const { error: updateError } = await supabase.from("show_work_documents").update({
+    storage_path: values.storagePath, storage_provider: provider, mime_type: values.mimeType,
+    file_size: values.fileSize, version_number: nextVersion, updated_at: new Date().toISOString(),
+  }).eq("id", documentId).eq("company_id", workspace.companyId);
+  if (updateError) return { ok: false, message: updateError.message };
+  revalidatePath(`/shows/${values.showId}`);
+  return { ok: true, message: `Version ${nextVersion} enregistree.` };
+}
+
+export async function deleteShowWorkDocument(documentId: string, showId: string): Promise<ActionResult> {
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const supabase = await getSupabaseServerClient();
+  const { data: versions } = await supabase.from("show_work_document_versions")
+    .select("storage_path,storage_provider").eq("document_id", documentId).eq("company_id", workspace.companyId);
+  const { error } = await supabase.from("show_work_documents").delete().eq("id", documentId).eq("company_id", workspace.companyId);
+  if (error) return { ok: false, message: error.message };
+  await Promise.allSettled((versions ?? []).map((version) =>
+    removePrivateObject((version.storage_provider || "supabase") as StorageProvider, version.storage_path),
+  ));
+  revalidatePath(`/shows/${showId}`);
+  return { ok: true, message: "Document supprime." };
 }
 
 export async function updateCompanyProfile(
@@ -1133,6 +1362,7 @@ export async function createCompanyDocument(
     title: parsed.data.title,
     doc_type: parsed.data.docType,
     storage_path: parsed.data.storagePath || null,
+    storage_provider: getConfiguredStorageProvider(),
     file_url: parsed.data.fileUrl || null,
     note: parsed.data.note || null,
   });
@@ -1162,7 +1392,7 @@ export async function deleteCompanyDocument(documentId: string): Promise<ActionR
   const supabase = await getSupabaseServerClient();
   const { data: document } = await supabase
     .from("company_documents")
-    .select("id,storage_path")
+    .select("id,storage_path,storage_provider")
     .eq("id", documentId)
     .maybeSingle();
 
@@ -1173,7 +1403,7 @@ export async function deleteCompanyDocument(documentId: string): Promise<ActionR
   }
 
   if (document?.storage_path) {
-    await supabase.storage.from("documents").remove([document.storage_path]);
+    await removePrivateObject((document.storage_provider || "supabase") as StorageProvider, document.storage_path);
   }
 
   revalidatePath("/settings");
@@ -1377,7 +1607,7 @@ export async function deleteShowDocument(documentId: string): Promise<ActionResu
   const supabase = await getSupabaseServerClient();
   const { data: document, error: lookupError } = await supabase
     .from("show_documents")
-    .select("id,show_id,title,storage_path")
+    .select("id,show_id,title,storage_path,storage_provider")
     .eq("id", documentId)
     .maybeSingle();
 
@@ -1386,12 +1616,10 @@ export async function deleteShowDocument(documentId: string): Promise<ActionResu
   }
 
   if (document.storage_path) {
-    const { error: storageError } = await supabase.storage
-      .from("documents")
-      .remove([document.storage_path]);
-
-    if (storageError) {
-      return { ok: false, message: storageError.message };
+    try {
+      await removePrivateObject((document.storage_provider || "supabase") as StorageProvider, document.storage_path);
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : "Suppression du fichier impossible." };
     }
   }
 
@@ -3071,7 +3299,21 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : action valide, non enregistree." };
+    return {
+      ok: true,
+      message: "Mode demo : action ajoutee pour cette visite.",
+      reminder: {
+        id: `demo-${Date.now()}`,
+        label: parsed.data.title,
+        dueDate: parsed.data.dueDate,
+        relatedTo: parsed.data.relatedTo ?? "",
+        done: false,
+        priority: parsed.data.priority,
+        showId: parsed.data.showId,
+        contactId: parsed.data.contactId,
+        actionType: parsed.data.actionType ?? "other",
+      },
+    };
   }
 
   const accessError = await requireWriteAccess();
@@ -3105,20 +3347,24 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
     }
   }
 
-  const { error } = await supabase.from("reminders").insert({
-    company_id: workspace.companyId,
-    title: parsed.data.title,
-    due_date: parsed.data.dueDate,
-    related_to: parsed.data.relatedTo || null,
-    priority: parsed.data.priority,
-    opportunity_id: parsed.data.opportunityId || null,
-    contact_id: parsed.data.contactId || null,
-    show_id: parsed.data.showId || null,
-    action_type: parsed.data.actionType ?? "other",
-  });
+  const { data: createdReminder, error } = await supabase
+    .from("reminders")
+    .insert({
+      company_id: workspace.companyId,
+      title: parsed.data.title,
+      due_date: parsed.data.dueDate,
+      related_to: parsed.data.relatedTo || null,
+      priority: parsed.data.priority,
+      opportunity_id: parsed.data.opportunityId || null,
+      contact_id: parsed.data.contactId || null,
+      show_id: parsed.data.showId || null,
+      action_type: parsed.data.actionType ?? "other",
+    })
+    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type")
+    .single();
 
-  if (error) {
-    return { ok: false, message: error.message };
+  if (error || !createdReminder) {
+    return { ok: false, message: error?.message ?? "Action non creee." };
   }
 
   revalidatePath("/reminders");
@@ -3127,7 +3373,21 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
 
   await logActivity("a cree l'action", "action", parsed.data.title);
 
-  return { ok: true, message: "Action creee." };
+  return {
+    ok: true,
+    message: "Action creee.",
+    reminder: {
+      id: createdReminder.id,
+      label: createdReminder.title,
+      dueDate: createdReminder.due_date,
+      relatedTo: createdReminder.related_to ?? "",
+      done: createdReminder.done,
+      priority: createdReminder.priority,
+      showId: createdReminder.show_id ?? undefined,
+      contactId: createdReminder.contact_id ?? undefined,
+      actionType: createdReminder.action_type,
+    },
+  };
 }
 
 export async function updateReminder(
@@ -3190,14 +3450,28 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
     return { ok: false, message: accessError };
   }
 
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase
+  const { data: completedReminder, error } = await supabase
     .from("reminders")
     .update({ done: true, completed_at: new Date().toISOString() })
-    .eq("id", reminderId);
+    .eq("id", reminderId)
+    .eq("company_id", workspace.companyId)
+    .eq("done", false)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     return { ok: false, message: error.message };
+  }
+
+  if (!completedReminder) {
+    return { ok: false, message: "Action introuvable ou deja terminee." };
   }
 
   revalidatePath("/reminders");

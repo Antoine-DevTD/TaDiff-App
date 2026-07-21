@@ -326,18 +326,11 @@ export default async function DashboardPage() {
       done: reminders.length > 0,
     },
     {
-      id: "fixed-costs",
-      label: "Renseigner les frais fixes",
-      detail: "Assurance, banque, comptable, stockage : la base de la projection.",
+      id: "finances",
+      label: "Poser les bases financieres",
+      detail: "Frais fixes et tresorerie permettent de calculer la marge de securite.",
       href: "/finances",
-      done: fixedCosts.length > 0,
-    },
-    {
-      id: "treasury",
-      label: "Saisir la tresorerie",
-      detail: "Le cockpit calcule la marge de securite et la date de risque.",
-      href: "/finances",
-      done: treasury !== null,
+      done: fixedCosts.length > 0 && treasury !== null,
     },
   ];
   const onboardingComplete = onboardingSteps.every((step) => step.done);
@@ -432,7 +425,7 @@ export default async function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="theme-cockpit-priority order-first space-y-4 border-accent/35 p-5 xl:col-span-2" data-tour="cockpit-priorite">
+        <Card className="theme-cockpit-priority space-y-4 border-accent/35 p-5 xl:col-span-2" data-tour="cockpit-priorite">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
@@ -468,7 +461,7 @@ export default async function DashboardPage() {
         <Card className="theme-cockpit-roadmap space-y-4 p-5" data-tour="cockpit-plan">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Ensuite
+              A faire ensuite
             </p>
             <DashboardSectionTitle
               className="text-2xl"

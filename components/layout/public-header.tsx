@@ -3,6 +3,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { publicNavItems } from "@/lib/constants";
 import { TadiffMark } from "@/components/brand/tadiff-mark";
 import { getBetaSignupStats } from "@/lib/supabase/queries";
+import { betaReservedSeatLimit } from "@/lib/beta";
 
 export async function PublicHeader() {
   const stats = await getBetaSignupStats();
@@ -11,7 +12,7 @@ export async function PublicHeader() {
       ? "Beta complete : liste d'attente ouverte"
       : stats.remainingReservedSeats === 1
         ? "Derniere place beta disponible a 19,99 EUR / mois"
-        : "Beta de lancement : 30 places a 19,99 EUR / mois";
+        : `Beta de lancement : ${betaReservedSeatLimit} places a 19,99 EUR / mois`;
   return (
     <>
       <div className="beta-band sticky top-0 z-30 border-b border-white/15 text-white shadow-lg shadow-ink/10">

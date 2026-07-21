@@ -59,7 +59,7 @@ export const dashboardSections: DashboardSection[] = [
     id: "finances",
     href: "/finances",
     label: "Finances",
-    summary: "Tresorerie et factures",
+    summary: "Tresorerie et projections",
   },
   {
     id: "files",
@@ -119,12 +119,6 @@ export const dashboardNavItems: DashboardNavItem[] = [
     summary: "Cash, frais fixes et projections",
   },
   {
-    section: "finances",
-    href: "/billing",
-    label: "Devis et factures",
-    summary: "Acomptes et soldes",
-  },
-  {
     section: "files",
     href: "/subventions",
     label: "Subventions",
@@ -153,6 +147,12 @@ export const dashboardNavItems: DashboardNavItem[] = [
     href: "/settings",
     label: "Parametres",
     summary: "Compte et donnees",
+  },
+  {
+    section: "files",
+    href: "/resources",
+    label: "Ressources",
+    summary: "Liens et outils utiles",
   },
 ];
 

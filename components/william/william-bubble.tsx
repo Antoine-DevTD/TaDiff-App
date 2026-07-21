@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   CalendarPlus,
   ChevronDown,
   FileText,
   Landmark,
   Mail,
+  Maximize2,
+  Minimize2,
   Play,
   Send,
   Theater,
@@ -107,6 +111,7 @@ function TipLink({ tip, onSelect }: { tip: WilliamTip; onSelect: () => void }) {
 
 export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: WilliamTip[] }) {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [answerError, setAnswerError] = useState<string | null>(null);
@@ -129,11 +134,12 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
     setOpen(false);
   }
 
-  function submitQuestion(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function askQuestion(nextQuestion: string) {
+    const value = nextQuestion.trim();
+    if (value.length < 3) return;
     setAnswerError(null);
     startAsking(async () => {
-      const result = await askWilliamAction(question);
+      const result = await askWilliamAction(value);
       if (!result.ok) {
         setAnswerError(result.message);
         return;
@@ -144,6 +150,17 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
     });
   }
 
+  function submitQuestion(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    askQuestion(question);
+  }
+
+  const suggestedQuestions = [
+    ...tips.slice(0, 2).map((tip) => `Comment faire avancer : ${tip.title.toLocaleLowerCase("fr-FR")} ?`),
+    "Quelles sont mes trois prochaines priorites ?",
+    "Quel email puis-je preparer maintenant ?",
+  ].slice(0, 4);
+
   return (
     <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3 sm:bottom-5 sm:right-5 print:hidden">
       {open ? (
@@ -151,7 +168,12 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
           id="william-panel"
           aria-label="Assistant William"
           role="region"
-          className="w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-border bg-panel shadow-xl shadow-ink/20"
+          className={cn(
+            "overflow-hidden rounded-lg border border-border bg-panel shadow-xl shadow-ink/20 transition-[width,height] duration-300",
+            expanded
+              ? "h-[min(46rem,calc(100vh-2rem))] w-[min(58rem,calc(100vw-2rem))]"
+              : "w-[22rem] max-w-[calc(100vw-2rem)]",
+          )}
         >
           <div className="flex items-center justify-between gap-3 border-b border-border bg-accent px-4 py-2 text-white">
             <div className="flex items-center gap-2.5">
@@ -161,22 +183,49 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                 <p className="text-[11px] text-white/75">Votre copilote TaDiff</p>
               </div>
             </div>
-            <button
-              aria-label="Fermer William"
-              className="flex h-10 w-10 items-center justify-center rounded-md transition hover:bg-white/15"
-              title="Fermer"
-              type="button"
-              onClick={() => setOpen(false)}
-            >
-              <X aria-hidden="true" className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                aria-label={expanded ? "Reduire William" : "Agrandir William"}
+                className="flex h-10 w-10 items-center justify-center rounded-md transition hover:bg-white/15"
+                title={expanded ? "Reduire" : "Agrandir"}
+                type="button"
+                onClick={() => setExpanded((value) => !value)}
+              >
+                {expanded ? <Minimize2 aria-hidden="true" className="h-5 w-5" /> : <Maximize2 aria-hidden="true" className="h-5 w-5" />}
+              </button>
+              <button
+                aria-label="Fermer William"
+                className="flex h-10 w-10 items-center justify-center rounded-md transition hover:bg-white/15"
+                title="Fermer"
+                type="button"
+                onClick={() => setOpen(false)}
+              >
+                <X aria-hidden="true" className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          <div className="max-h-[min(34rem,calc(100vh-9rem))] space-y-4 overflow-y-auto overscroll-contain p-4">
+          <div className={cn("space-y-4 overflow-y-auto overscroll-contain p-4", expanded ? "h-[calc(100%-3.6rem)]" : "max-h-[min(34rem,calc(100vh-9rem))]")}>
             {aiEnabled ? (
               <section aria-labelledby="william-question-title">
                 <p id="william-question-title" className="text-xs font-semibold uppercase text-muted">Demander a William</p>
-                {answer ? <div className="mt-2 whitespace-pre-wrap rounded-md border border-accent/25 bg-accent-soft/25 p-3 text-sm leading-6">{answer}</div> : null}
+                {answer ? (
+                  <div className="mt-2 rounded-md border border-accent/25 bg-accent-soft/25 p-3 text-sm leading-6">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        a: ({ children, href }) => <a className="font-medium text-accent underline underline-offset-2" href={href} rel="noreferrer" target="_blank">{children}</a>,
+                        li: ({ children }) => <li className="ml-4 pl-1">{children}</li>,
+                        ol: ({ children }) => <ol className="my-2 list-decimal space-y-1">{children}</ol>,
+                        p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                        ul: ({ children }) => <ul className="my-2 list-disc space-y-1">{children}</ul>,
+                      }}
+                    >
+                      {answer}
+                    </ReactMarkdown>
+                  </div>
+                ) : null}
                 {answerError ? <p className="mt-2 rounded-md bg-danger/10 p-3 text-sm text-danger" role="alert">{answerError}</p> : null}
                 <form className="mt-2 flex items-end gap-2" onSubmit={submitQuestion}>
                   <label className="sr-only" htmlFor="william-question">Votre question</label>
@@ -199,10 +248,23 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                   </button>
                 </form>
                 {remainingTokens !== null ? <p className="mt-2 text-[11px] text-muted">{new Intl.NumberFormat("fr-FR").format(remainingTokens)} credits disponibles</p> : null}
+                <div className="mt-3 flex flex-wrap gap-2" aria-label="Questions suggerees">
+                  {suggestedQuestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      className="rounded-full border border-border bg-panel-strong px-3 py-1.5 text-left text-xs font-medium transition hover:border-accent hover:text-accent disabled:opacity-50"
+                      disabled={asking}
+                      type="button"
+                      onClick={() => askQuestion(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
               </section>
             ) : null}
 
-            <section aria-labelledby="william-priority-title">
+            {!aiEnabled ? <section aria-labelledby="william-priority-title">
               <p id="william-priority-title" className="text-xs font-semibold uppercase text-muted">Priorite suggeree</p>
               {priorityTip ? (
                 <Link
@@ -235,7 +297,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                   </div>
                 </details>
               ) : null}
-            </section>
+            </section> : null}
 
             <section className="border-t border-border pt-3" aria-labelledby="william-actions-title">
               <div className="flex items-center justify-between gap-3">
@@ -245,7 +307,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                   Visite guidee
                 </button>
               </div>
-              <div className="mt-2 divide-y divide-border">
+              {!aiEnabled ? <div className="mt-2 divide-y divide-border">
                 {quickActions.map((action) => {
                   const Icon = action.icon;
                   return (
@@ -260,7 +322,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                     </Link>
                   );
                 })}
-              </div>
+              </div> : <p className="mt-2 text-sm leading-6 text-muted">Posez votre question avec vos mots. William consulte l&apos;etat de votre compagnie avant de vous proposer une prochaine etape.</p>}
             </section>
           </div>
         </div>

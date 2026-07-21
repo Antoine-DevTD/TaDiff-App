@@ -129,7 +129,7 @@ export function EmailTemplateStudio({ contacts, shows, templates }: { contacts: 
         <div className="min-w-0 p-5">
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
             <label className="block text-sm font-medium">Nom du modele<Input className="mt-2" value={name} onChange={(event) => setName(event.target.value)} /></label>
-            <label className="block text-sm font-medium">Usage<Select className="mt-2" value={messageType} onChange={(event) => setMessageType(event.target.value as ContactEmailTemplate)}><option value="first-touch">Prise de contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select></label>
+            <label className="block text-sm font-medium">Usage<Select className="mt-2" value={messageType} onChange={(event) => setMessageType(event.target.value as ContactEmailTemplate)}><option value="first-touch">Premier contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select></label>
           </div>
 
           <label className="mt-4 block text-sm font-medium">Objet<Input className="mt-2" value={subject} onChange={(event) => setSubject(event.target.value)} /></label>

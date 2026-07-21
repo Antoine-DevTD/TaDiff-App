@@ -80,7 +80,7 @@ export function PlatformEmailTemplateStudio({ templates }: { templates: AdminPla
         <div className="min-w-0 space-y-4 p-5">
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
             <Field label="Nom"><Input value={name} onChange={(event) => setName(event.target.value)} /></Field>
-            <Field label="Usage"><Select value={messageType} onChange={(event) => setMessageType(event.target.value as typeof messageType)}><option value="first-touch">Prise de contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select></Field>
+            <Field label="Usage"><Select value={messageType} onChange={(event) => setMessageType(event.target.value as typeof messageType)}><option value="first-touch">Premier contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select></Field>
           </div>
           <Field label="Objet"><Input value={subject} onChange={(event) => setSubject(event.target.value)} /></Field>
           <div className="flex flex-wrap gap-1.5">{emailVariables.slice(0, 8).map((variable) => <button key={variable.token} className="rounded-full border border-border px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent" type="button" onClick={() => setSubject((current) => `${current} ${variable.token}`)}>{variable.token}</button>)}</div>

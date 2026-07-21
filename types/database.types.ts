@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      platform_admin_access: {
+        Row: { user_id: string; permissions: string[]; granted_by: string | null; created_at: string; updated_at: string };
+        Insert: { user_id: string; permissions?: string[]; granted_by?: string | null; created_at?: string; updated_at?: string };
+        Update: { permissions?: string[]; granted_by?: string | null; updated_at?: string };
+        Relationships: [];
+      };
+      platform_resources: {
+        Row: { id: string; title: string; description: string | null; category: string; url: string; active: boolean; sort_order: number; created_at: string; updated_at: string };
+        Insert: { id?: string; title: string; description?: string | null; category?: string; url: string; active?: boolean; sort_order?: number; created_at?: string; updated_at?: string };
+        Update: { title?: string; description?: string | null; category?: string; url?: string; active?: boolean; sort_order?: number; updated_at?: string };
+        Relationships: [];
+      };
+      william_question_events: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          question_excerpt: string;
+          topic: "actions" | "spectacles" | "diffusion" | "emails" | "documents" | "finances" | "aides" | "agenda" | "tadiff" | "autre";
+          request_kind: string;
+          answered: boolean;
+          out_of_scope: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id: string;
+          question_excerpt: string;
+          topic: "actions" | "spectacles" | "diffusion" | "emails" | "documents" | "finances" | "aides" | "agenda" | "tadiff" | "autre";
+          request_kind?: string;
+          answered?: boolean;
+          out_of_scope?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          question_excerpt?: string;
+          topic?: "actions" | "spectacles" | "diffusion" | "emails" | "documents" | "finances" | "aides" | "agenda" | "tadiff" | "autre";
+          request_kind?: string;
+          answered?: boolean;
+          out_of_scope?: boolean;
+        };
+        Relationships: [];
+      };
       companies: {
         Row: {
           id: string;
@@ -95,6 +139,7 @@ export type Database = {
           title: string;
           doc_type: string;
           storage_path: string | null;
+          storage_provider: "supabase" | "r2";
           file_url: string | null;
           note: string | null;
           created_at: string;
@@ -106,6 +151,7 @@ export type Database = {
           title: string;
           doc_type?: string;
           storage_path?: string | null;
+          storage_provider?: "supabase" | "r2";
           file_url?: string | null;
           note?: string | null;
           created_at?: string;
@@ -117,6 +163,7 @@ export type Database = {
           title?: string;
           doc_type?: string;
           storage_path?: string | null;
+          storage_provider?: "supabase" | "r2";
           file_url?: string | null;
           note?: string | null;
           created_at?: string;
@@ -213,6 +260,7 @@ export type Database = {
           email_pitch: string | null;
           notes: string | null;
           poster_url: string | null;
+          capture_url: string | null;
           created_at: string;
         };
         Insert: {
@@ -230,6 +278,7 @@ export type Database = {
           email_pitch?: string | null;
           notes?: string | null;
           poster_url?: string | null;
+          capture_url?: string | null;
           created_at?: string;
         };
         Update: {
@@ -245,6 +294,7 @@ export type Database = {
           email_pitch?: string | null;
           notes?: string | null;
           poster_url?: string | null;
+          capture_url?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -309,6 +359,24 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      show_work_folders: {
+        Row: { id: string; company_id: string; show_id: string; parent_id: string | null; name: string; created_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; parent_id?: string | null; name: string; created_at?: string };
+        Update: { parent_id?: string | null; name?: string };
+        Relationships: [];
+      };
+      show_work_documents: {
+        Row: { id: string; company_id: string; show_id: string; folder_id: string | null; title: string; storage_path: string; storage_provider: "supabase" | "r2"; mime_type: string | null; file_size: number; version_number: number; created_by: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; folder_id?: string | null; title: string; storage_path: string; storage_provider?: "supabase" | "r2"; mime_type?: string | null; file_size?: number; version_number?: number; created_by?: string | null; created_at?: string; updated_at?: string };
+        Update: { folder_id?: string | null; title?: string; storage_path?: string; storage_provider?: "supabase" | "r2"; mime_type?: string | null; file_size?: number; version_number?: number; updated_at?: string };
+        Relationships: [];
+      };
+      show_work_document_versions: {
+        Row: { id: string; document_id: string; company_id: string; storage_path: string; storage_provider: "supabase" | "r2"; mime_type: string | null; file_size: number; version_number: number; created_by: string | null; created_at: string };
+        Insert: { id?: string; document_id: string; company_id: string; storage_path: string; storage_provider?: "supabase" | "r2"; mime_type?: string | null; file_size?: number; version_number: number; created_by?: string | null; created_at?: string };
+        Update: never;
+        Relationships: [];
       };
       contacts: {
         Row: {
@@ -444,6 +512,18 @@ export type Database = {
           },
         ];
       };
+      exploitations: {
+        Row: { id: string; company_id: string; show_id: string; contact_id: string | null; opportunity_id: string | null; title: string; venue: string | null; city: string | null; exploitation_mode: string; status: string; start_date: string; end_date: string; cession_fee_per_performance: number; company_share_percent: number; minimum_guarantee: number; venue_rental_total: number; fixed_costs_total: number; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; contact_id?: string | null; opportunity_id?: string | null; title: string; venue?: string | null; city?: string | null; exploitation_mode?: string; status?: string; start_date: string; end_date: string; cession_fee_per_performance?: number; company_share_percent?: number; minimum_guarantee?: number; venue_rental_total?: number; fixed_costs_total?: number; created_at?: string; updated_at?: string };
+        Update: { title?: string; contact_id?: string | null; venue?: string | null; city?: string | null; exploitation_mode?: string; status?: string; start_date?: string; end_date?: string; cession_fee_per_performance?: number; company_share_percent?: number; minimum_guarantee?: number; venue_rental_total?: number; fixed_costs_total?: number; updated_at?: string };
+        Relationships: [];
+      };
+      exploitation_performances: {
+        Row: { id: string; company_id: string; exploitation_id: string; performance_date: string; performance_time: string | null; capacity: number; paid_tickets: number; complimentary_tickets: number; gross_box_office: number; ticketing_fees: number; variable_costs: number; sacd_declared: boolean; notes: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; exploitation_id: string; performance_date: string; performance_time?: string | null; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; created_at?: string; updated_at?: string };
+        Update: { performance_date?: string; performance_time?: string | null; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; updated_at?: string };
+        Relationships: [];
+      };
       reminders: {
         Row: {
           id: string;
@@ -535,10 +615,12 @@ export type Database = {
             | "Fiche technique"
             | "RIB"
             | "Statuts"
-            | "Devis";
+            | "Devis"
+            | "A renseigner";
           status: "Manquant" | "A mettre a jour" | "Pret";
           file_url: string | null;
           storage_path: string | null;
+          storage_provider: "supabase" | "r2";
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -558,10 +640,12 @@ export type Database = {
             | "Fiche technique"
             | "RIB"
             | "Statuts"
-            | "Devis";
+            | "Devis"
+            | "A renseigner";
           status?: "Manquant" | "A mettre a jour" | "Pret";
           file_url?: string | null;
           storage_path?: string | null;
+          storage_provider?: "supabase" | "r2";
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -580,10 +664,12 @@ export type Database = {
             | "Fiche technique"
             | "RIB"
             | "Statuts"
-            | "Devis";
+            | "Devis"
+            | "A renseigner";
           status?: "Manquant" | "A mettre a jour" | "Pret";
           file_url?: string | null;
           storage_path?: string | null;
+          storage_provider?: "supabase" | "r2";
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -1631,6 +1717,17 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      has_platform_permission: { Args: { requested_permission: string }; Returns: boolean };
+      is_platform_admin_user: { Args: Record<PropertyKey, never>; Returns: boolean };
+      get_my_platform_permissions: {
+        Args: Record<PropertyKey, never>;
+        Returns: { is_super_admin: boolean; permissions: string[] }[];
+      };
+      admin_list_platform_admins: {
+        Args: Record<PropertyKey, never>;
+        Returns: { user_id: string; email: string; full_name: string; permissions: string[]; updated_at: string }[];
+      };
+      admin_set_platform_admin: { Args: { target_user_id: string; new_permissions: string[] }; Returns: undefined };
       admin_list_companies: {
         Args: Record<PropertyKey, never>;
         Returns: {

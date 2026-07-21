@@ -51,11 +51,18 @@ export function RemindersWorkspace({ contacts, initialContactId, reminders, show
   }
 
   function markDone(id: string) {
+    const removed = items.find((item) => item.id === id);
     setItems((current) => current.filter((item) => item.id !== id));
     startTransition(async () => {
       const result = await completeReminder(id);
-      if (!result.ok) setItems(reminders);
+      if (!result.ok && removed) {
+        setItems((current) => current.some((item) => item.id === id) ? current : [...current, removed]);
+      }
     });
+  }
+
+  function addCreatedReminder(reminder: Reminder) {
+    setItems((current) => current.some((item) => item.id === reminder.id) ? current : [...current, reminder]);
   }
 
   return (
@@ -96,7 +103,7 @@ export function RemindersWorkspace({ contacts, initialContactId, reminders, show
         </div>
       )}
 
-      <ReminderForm key={`${composerOpen}-${composerShowId ?? "new"}-${initialContactId ?? "contact"}`} contacts={contacts} initialContactId={initialContactId} initialShowId={composerShowId} open={composerOpen} shows={shows} onClose={() => setComposerOpen(false)} />
+      <ReminderForm key={`${composerOpen}-${composerShowId ?? "new"}-${initialContactId ?? "contact"}`} contacts={contacts} initialContactId={initialContactId} initialShowId={composerShowId} open={composerOpen} shows={shows} onClose={() => setComposerOpen(false)} onCreated={addCreatedReminder} />
     </div>
   );
 }

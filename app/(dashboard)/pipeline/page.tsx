@@ -2,17 +2,25 @@ import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 import { PipelineAddCard } from "@/components/pipeline/pipeline-add-card";
 import { PipelineCreatePanel } from "@/components/pipeline/pipeline-create-panel";
 import { PipelineInsights } from "@/components/pipeline/pipeline-insights";
-import { getContacts, getPipelineDeals, getShows } from "@/lib/supabase/queries";
+import { ExploitationWorkspace } from "@/components/pipeline/exploitation-workspace";
+import { getContacts, getExploitations, getPipelineDeals, getShows } from "@/lib/supabase/queries";
 
 export default async function PipelinePage() {
-  const [deals, contacts, shows] = await Promise.all([
+  const [deals, contacts, shows, exploitations] = await Promise.all([
     getPipelineDeals(),
     getContacts(),
     getShows(),
+    getExploitations(),
   ]);
 
   return (
     <div className="space-y-6">
+      <ExploitationWorkspace contacts={contacts} exploitations={exploitations} shows={shows} />
+
+      <div className="border-t border-border pt-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Prospection et negociations</p>
+        <h2 className="mt-2 text-2xl font-semibold">Dates a concretiser</h2>
+      </div>
       <PipelineCreatePanel contacts={contacts} shows={shows} />
 
       {deals.length === 0 ? (

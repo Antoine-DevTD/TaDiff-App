@@ -9,6 +9,7 @@ export const showDocumentTypes = [
   "Budget",
   "Fiche technique",
   "Devis",
+  "A renseigner",
 ] as const;
 
 export type ShowOwnedDocumentType = (typeof showDocumentTypes)[number];
@@ -49,6 +50,7 @@ export const requiredShowDocumentTypes = essentialShowDocumentTypes;
 
 export function getShowDocumentTypeLabel(type: ShowDocument["documentType"]) {
   if (type === "Texte") return "Texte de la piece";
+  if (type === "A renseigner") return "A renseigner";
   return type;
 }
 

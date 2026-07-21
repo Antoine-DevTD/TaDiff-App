@@ -1,6 +1,7 @@
 import { BetaSignupForm } from "@/components/beta/beta-signup-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { betaReservedSeatLimit } from "@/lib/beta";
 import { getBetaSignupStats } from "@/lib/supabase/queries";
 
 const betaBenefits = [
@@ -35,14 +36,14 @@ export default async function BetaPage() {
               <Badge className="mt-3 w-fit bg-white/10 text-white">Liste d&apos;attente ouverte</Badge>
             ) : null}
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-              30 compagnies pour tester le cockpit avant le lancement.
+              {betaReservedSeatLimit} compagnies pour tester le cockpit avant le lancement.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">
-              La beta TaDiff demarre le 6 aout 2026 a 19,99 EUR. Les 30 premieres
+              La beta TaDiff demarre le 6 aout 2026 a 19,99 EUR. Les {betaReservedSeatLimit} premieres
               compagnies gardent un accompagnement prioritaire pendant la periode de test.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <HeroMetric label="Places beta" value="30" />
+              <HeroMetric label="Places beta" value={betaReservedSeatLimit.toString()} />
               <HeroMetric
                 label="Deja reservees"
                 value={stats.reservedCount.toString()}
@@ -64,7 +65,7 @@ export default async function BetaPage() {
                     : "Reserver une place beta"}
               </p>
               <p className="mt-2 text-sm text-muted">
-                Les 30 premieres places sont reservees. Au-dela, les compagnies passent sur
+                Les {betaReservedSeatLimit} premieres places sont reservees. Au-dela, les compagnies passent sur
                 liste d&apos;attente prioritaire.
               </p>
             </div>

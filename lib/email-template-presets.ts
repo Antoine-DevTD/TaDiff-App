@@ -34,7 +34,7 @@ export const builtInEmailTemplates: BuiltInEmailTemplate[] = [
   },
   {
     id: "builtin-follow-up",
-    name: "Relance attentive",
+    name: "Relance",
     messageType: "follow-up",
     subjectTemplate: "Suite a notre echange - @titre_spectacle",
     bodyJson: {

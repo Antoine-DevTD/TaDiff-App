@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StripeCheckoutForm } from "@/components/billing/stripe-checkout-form";
 import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
+import { betaReservedSeatLimit } from "@/lib/beta";
 import { formatCurrency, getFixedCostSharePerPerformance } from "@/lib/finance";
 import { getBillingPlans, getFixedCosts, getQuoteItems } from "@/lib/supabase/queries";
 import { hasSupabaseAdminEnv } from "@/lib/supabase/admin-client";
@@ -36,9 +36,6 @@ export default async function BillingPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <ButtonLink href="/pricing" variant="secondary">
-          Voir les plans publics
-        </ButtonLink>
       </div>
 
       <section className="grid gap-4 md:grid-cols-4">
@@ -103,7 +100,7 @@ export default async function BillingPage() {
                 <div>
                   <p className="font-medium">Beta pilote</p>
                   <p className="mt-1 text-sm text-muted">
-                    Abonnement test a 19,99 EUR / mois pour les 30 compagnies de la beta.
+                    Abonnement test a 19,99 EUR / mois pour les {betaReservedSeatLimit} compagnies de la beta.
                   </p>
                 </div>
                 <p className="shrink-0 text-sm font-semibold">19,99 EUR</p>

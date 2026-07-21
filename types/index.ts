@@ -59,6 +59,7 @@ export type Show = {
   emailPitch?: string;
   notes: string;
   posterUrl?: string;
+  captureUrl?: string;
   costProfile?: CostProfile;
 };
 
@@ -82,7 +83,8 @@ export type ShowDocumentType =
   | "Fiche technique"
   | "RIB"
   | "Statuts"
-  | "Devis";
+  | "Devis"
+  | "A renseigner";
 
 export type ShowDocumentStatus = "Manquant" | "A mettre a jour" | "Pret";
 
@@ -96,6 +98,22 @@ export type ShowDocument = {
   previewUrl?: string;
   storagePath?: string;
   notes: string;
+  updatedAt: string;
+};
+
+export type ShowWorkFolder = { id: string; showId: string; parentId: string | null; name: string };
+
+export type ShowWorkDocument = {
+  id: string;
+  showId: string;
+  folderId: string | null;
+  title: string;
+  fileUrl: string;
+  storagePath: string;
+  storageProvider: "supabase" | "r2";
+  mimeType: string;
+  fileSize: number;
+  versionNumber: number;
   updatedAt: string;
 };
 
@@ -120,6 +138,21 @@ export type PipelineStage =
   | "Perdu";
 
 export type ExploitationMode = "cession" | "corealisation" | "location" | "other";
+
+export type ExploitationPerformance = {
+  id: string; performanceDate: string; performanceTime: string; capacity: number;
+  paidTickets: number; complimentaryTickets: number; grossBoxOffice: number;
+  ticketingFees: number; variableCosts: number; sacdDeclared: boolean;
+};
+
+export type Exploitation = {
+  id: string; showId: string; contactId: string; title: string; showTitle: string;
+  venue: string; city: string; exploitationMode: ExploitationMode;
+  status: "preparation" | "confirmee" | "terminee" | "annulee";
+  startDate: string; endDate: string; cessionFeePerPerformance: number;
+  companySharePercent: number; minimumGuarantee: number; venueRentalTotal: number;
+  fixedCostsTotal: number; performances: ExploitationPerformance[];
+};
 
 export type PipelineDeal = {
   id: string;

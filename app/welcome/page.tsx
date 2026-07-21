@@ -1,18 +1,20 @@
 import { redirect } from "next/navigation";
 import { WelcomeOnboarding } from "@/components/onboarding/welcome-onboarding";
 import { hasSupabaseEnv } from "@/lib/env";
+import { demoWebinarEmail } from "@/lib/demo-webinar";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function WelcomePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ preview?: string }>;
+  searchParams?: Promise<{ preview?: string; replay?: string }>;
 }) {
   let initialFullName = "";
   let initialCompanyName = "";
   let initialLogoUrl = "";
   const params = await searchParams;
   const devPreview = process.env.NODE_ENV !== "production" && params?.preview === "1";
+  const replay = params?.replay === "1";
 
   if (hasSupabaseEnv() && !devPreview) {
     const supabase = await getSupabaseServerClient();
@@ -22,6 +24,10 @@ export default async function WelcomePage({
 
     if (!user) {
       redirect("/login");
+    }
+
+    if (replay && user.email?.toLowerCase() !== demoWebinarEmail) {
+      redirect("/dashboard");
     }
 
     initialFullName =
@@ -60,6 +66,7 @@ export default async function WelcomePage({
       initialCompanyName={initialCompanyName}
       initialFullName={initialFullName}
       initialLogoUrl={initialLogoUrl}
+      replay={replay}
     />
   );
 }

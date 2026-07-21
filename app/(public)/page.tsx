@@ -16,6 +16,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { pipelineDeals } from "@/data/mock-data";
 import { formatCurrency } from "@/lib/finance";
 import { getBetaSignupStats } from "@/lib/supabase/queries";
+import { betaReservedSeatLimit } from "@/lib/beta";
 
 const problems = [
   "Une date signee sans savoir si elle sera rentable.",
@@ -63,10 +64,10 @@ export default async function LandingPage() {
   const betaStats = await getBetaSignupStats();
   const betaFull = betaStats.remainingReservedSeats === 0;
   const betaLabel = betaFull
-    ? "Les 30 places sont attribuees. La liste d'attente reste ouverte."
+    ? `Les ${betaReservedSeatLimit} places sont attribuees. La liste d'attente reste ouverte.`
     : betaStats.remainingReservedSeats === 1
       ? "Derniere place disponible pour la beta."
-      : `${betaStats.remainingReservedSeats} places disponibles sur 30.`;
+      : `${betaStats.remainingReservedSeats} places disponibles sur ${betaReservedSeatLimit}.`;
 
   return (
     <main>
@@ -196,7 +197,7 @@ export default async function LandingPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">Beta accompagnee</p>
             <h2 className="mt-3 text-3xl font-semibold text-balance">
-              30 compagnies pour construire la bonne version.
+              {betaReservedSeatLimit} compagnies pour construire la bonne version.
             </h2>
             <p className="mt-3 max-w-2xl text-white/80">
               Acces a 19,99 EUR / mois pendant la beta, retours reguliers et accompagnement

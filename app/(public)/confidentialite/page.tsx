@@ -23,6 +23,7 @@ export default async function PrivacyPage() {
           <li>Compte : identite, email, compagnie, role et informations de connexion.</li>
           <li>Cockpit : contacts professionnels, spectacles, dates, documents, finances, contrats, subventions et actions saisies par la compagnie.</li>
           <li>Securite et support : adresse IP, navigateur, pages du cockpit consultees, date et heure de connexion.</li>
+          <li>William : question adressee a l&apos;assistant, contexte strictement necessaire a la reponse, consommation de credits et categorie generale de la demande.</li>
           <li>Facturation : offre, statut de l&apos;abonnement, identifiants techniques Stripe et documents comptables. TaDiff ne stocke pas les numeros de carte bancaire.</li>
         </LegalList>
       </LegalSection>
@@ -44,6 +45,7 @@ export default async function PrivacyPage() {
           <li>Demandes beta et prospects : jusqu&apos;a 3 ans apres le dernier contact, sauf opposition plus tot.</li>
           <li>Compte et donnees du cockpit : pendant la relation contractuelle, puis le temps necessaire a la cloture, a l&apos;export et aux obligations legales.</li>
           <li>Journaux de connexion et de navigation authentifiee : 90 jours.</li>
+          <li>Extraits statistiques des questions adressees a William : 90 jours. Les emails et numeros de telephone sont masques avant enregistrement.</li>
           <li>Pieces comptables et factures : 10 ans lorsque la loi l&apos;impose.</li>
           <li>Demandes d&apos;exercice de droits : le temps necessaire au traitement et a la preuve de la reponse.</li>
         </LegalList>
@@ -60,6 +62,10 @@ export default async function PrivacyPage() {
       </LegalSection>
       <LegalSection title="Audience publique">
         <p>TaDiff mesure les pages publiques consultees, les clics sur certains appels a l&apos;action, la provenance et la conversion en inscription beta. Cette mesure repose sur un identifiant aleatoire limite a la session de l&apos;onglet. Aucune adresse IP, adresse email ou empreinte de l&apos;appareil n&apos;est enregistree dans ce traitement. Les evenements sont supprimes apres 90 jours et l&apos;opposition est disponible sur la page Cookies.</p>
+      </LegalSection>
+      <LegalSection title="Assistant William">
+        <p>Lorsque William est active pour un compte, la question et le contexte utile de la compagnie sont transmis au fournisseur d&apos;intelligence artificielle configure par TaDiff afin de produire la reponse. Les reponses restent indicatives et doivent etre verifiees avant toute decision juridique, sociale, fiscale ou financiere.</p>
+        <p>TaDiff conserve separement un extrait limite de la question afin de mesurer les themes demandes et les reponses a ameliorer. Cet extrait est reserve aux administrateurs autorises, n&apos;inclut pas le dossier operationnel transmis au modele et est automatiquement supprime apres 90 jours.</p>
       </LegalSection>
       <LegalSection title="Donnees des clients">
         <p>Lorsque TaDiff heberge les contacts et documents saisis par une compagnie pour son propre compte, les obligations de sous-traitance sont detaillees dans l'<Link className="text-accent underline" href="/annexe-rgpd">annexe RGPD</Link>.</p>

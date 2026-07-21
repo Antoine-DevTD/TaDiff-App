@@ -20,7 +20,9 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
   const pathname = usePathname();
   const activeItem = getDashboardItem(pathname);
   const activeSection = getDashboardSection(pathname);
-  const sectionItems = getDashboardSectionItems(activeSection.id);
+  const sectionItems = pathname.startsWith("/settings") || pathname.startsWith("/resources")
+    ? []
+    : getDashboardSectionItems(activeSection.id);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-panel/92 backdrop-blur-xl">

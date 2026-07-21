@@ -3,16 +3,19 @@ import Link from "next/link";
 import { CompanyBillingForm } from "@/components/admin/company-billing-form";
 import { AiConfigurationPanel } from "@/components/admin/ai-configuration-panel";
 import { AiAccessManager } from "@/components/admin/ai-access-manager";
+import { WilliamAnalyticsPanel } from "@/components/admin/william-analytics-panel";
 import { FeedbackRow } from "@/components/admin/feedback-row";
 import { LegalInformationForm } from "@/components/admin/legal-information-form";
 import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
 import { PlatformCatalogManager } from "@/components/admin/platform-catalog-manager";
 import { PlatformEmailTemplateStudio } from "@/components/admin/platform-email-template-studio";
+import { PlatformAdminManager } from "@/components/admin/platform-admin-manager";
 import { RevenueForecastChart } from "@/components/admin/revenue-forecast-chart";
 import { PublicAnalyticsPanel } from "@/components/admin/public-analytics-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { buildRevenueForecast } from "@/lib/admin-forecast";
+import { betaReservedSeatLimit } from "@/lib/beta";
 import { formatCurrency } from "@/lib/finance";
 import {
   getAdminBetaSignups,
@@ -27,9 +30,12 @@ import {
   getAdminAiSettings,
   getAdminRagDocuments,
   getAdminAiAccounts,
+  getAdminWilliamQuestionEvents,
   getAiProviderReadiness,
   getAdminPublicAnalyticsEvents,
-  isSuperAdmin,
+  getAdminPlatformAdmins,
+  getPlatformAdminAccess,
+  type PlatformPermission,
   type AdminAccessEvent,
   type AdminCompany,
 } from "@/lib/supabase/admin";
@@ -48,15 +54,17 @@ type AdminPageProps = {
 };
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
-  if (!(await isSuperAdmin())) {
+  const access = await getPlatformAdminAccess();
+  if (!access.isSuperAdmin && access.permissions.length === 0) {
     notFound();
   }
 
   const resolvedSearchParams = await searchParams;
-  const activeTab =
-    ["retours", "audience", "informations", "catalogues", "emails", "ia"].includes(resolvedSearchParams?.tab ?? "")
-      ? (resolvedSearchParams?.tab as "retours" | "audience" | "informations" | "catalogues" | "emails" | "ia")
-      : "supervision";
+  const allowedTabs = getAllowedTabs(access.isSuperAdmin, access.permissions);
+  const requestedTab = resolvedSearchParams?.tab ?? "supervision";
+  const activeTab = allowedTabs.includes(requestedTab as AdminTabId)
+    ? (requestedTab as AdminTabId)
+    : allowedTabs[0];
   const [
     companies,
     betaSignups,
@@ -71,6 +79,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     aiSettings,
     ragDocuments,
     aiAccounts,
+    williamQuestionEvents,
+    platformAdmins,
   ] = await Promise.all([
     getAdminCompanies(),
     getAdminBetaSignups(),
@@ -85,6 +95,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     getAdminAiSettings(),
     getAdminRagDocuments(),
     getAdminAiAccounts(),
+    getAdminWilliamQuestionEvents(),
+    getAdminPlatformAdmins(),
   ]);
   const aiReadiness = getAiProviderReadiness();
 
@@ -105,20 +117,23 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </div>
 
       <div className="flex flex-wrap gap-2 border-b border-border">
-        <AdminTab active={activeTab === "supervision"} href="/admin" label="Supervision" />
-        <AdminTab
+        {allowedTabs.includes("supervision") ? <AdminTab active={activeTab === "supervision"} href="/admin" label="Supervision" /> : null}
+        {allowedTabs.includes("retours") ? <AdminTab
           active={activeTab === "retours"}
           href="/admin?tab=retours"
           label={`Retours${openFeedback > 0 ? ` (${openFeedback})` : ""}`}
-        />
-        <AdminTab active={activeTab === "audience"} href="/admin?tab=audience" label="Audience" />
-        <AdminTab active={activeTab === "informations"} href="/admin?tab=informations" label="Informations" />
-        <AdminTab active={activeTab === "catalogues"} href="/admin?tab=catalogues" label="Catalogues" />
-        <AdminTab active={activeTab === "emails"} href="/admin?tab=emails" label="Emails" />
-        <AdminTab active={activeTab === "ia"} href="/admin?tab=ia" label="William IA" />
+        /> : null}
+        {allowedTabs.includes("audience") ? <AdminTab active={activeTab === "audience"} href="/admin?tab=audience" label="Audience" /> : null}
+        {allowedTabs.includes("informations") ? <AdminTab active={activeTab === "informations"} href="/admin?tab=informations" label="Informations" /> : null}
+        {allowedTabs.includes("catalogues") ? <AdminTab active={activeTab === "catalogues"} href="/admin?tab=catalogues" label="Catalogues" /> : null}
+        {allowedTabs.includes("emails") ? <AdminTab active={activeTab === "emails"} href="/admin?tab=emails" label="Emails" /> : null}
+        {allowedTabs.includes("ia") ? <AdminTab active={activeTab === "ia"} href="/admin?tab=ia" label="William IA" /> : null}
+        {allowedTabs.includes("administrateurs") ? <AdminTab active={activeTab === "administrateurs"} href="/admin?tab=administrateurs" label="Administrateurs" /> : null}
       </div>
 
-      {activeTab === "informations" ? (
+      {activeTab === "administrateurs" ? (
+        <PlatformAdminManager accounts={aiAccounts} admins={platformAdmins} />
+      ) : activeTab === "informations" ? (
         <LegalInformationForm initialValue={legalInformation} />
       ) : activeTab === "catalogues" ? (
         <PlatformCatalogManager grants={grantCatalog} patronage={patronageCatalog} />
@@ -126,7 +141,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <PlatformEmailTemplateStudio templates={platformEmailTemplates} />
       ) : activeTab === "ia" ? (
         <div className="space-y-5">
-          <AiAccessManager accounts={aiAccounts} />
+          {access.isSuperAdmin ? <AiAccessManager accounts={aiAccounts} /> : null}
+          <WilliamAnalyticsPanel events={williamQuestionEvents} />
           <AiConfigurationPanel documents={ragDocuments} readiness={aiReadiness} settings={aiSettings} />
         </div>
       ) : activeTab === "audience" ? (
@@ -135,7 +151,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <AdminFeedbackPanel feedback={feedback} openFeedback={openFeedback} />
       ) : (
         <>
-      <Card className="space-y-3 p-5">
+      {access.isSuperAdmin ? <Card className="space-y-3 p-5">
         <div>
           <p className="text-base font-semibold">Mode maintenance</p>
           <p className="mt-1 text-sm text-muted">
@@ -144,12 +160,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </p>
         </div>
         <MaintenanceToggle active={maintenanceActive} />
-      </Card>
+      </Card> : null}
 
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} active(s), ${compedCount} offerte(s)`} />
         <MetricCard label="MRR beta" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) a 19,99 EUR`} />
-        <MetricCard label="Beta reservee" value={`${reserved.length}/30`} detail="Places confirmees" />
+        <MetricCard label="Beta reservee" value={`${reserved.length}/${betaReservedSeatLimit}`} detail="Places confirmees" />
         <MetricCard label="Liste d'attente" value={waitlist.length.toString()} detail="Compagnies en attente" />
       </section>
 
@@ -179,7 +195,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         ) : (
           <div className="space-y-3">
             {companies.map((company) => (
-              <CompanyRow key={company.id} company={company} />
+              <CompanyRow key={company.id} company={company} canManageBilling={access.isSuperAdmin} />
             ))}
           </div>
         )}
@@ -211,7 +227,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div>
           <p className="text-base font-semibold">Inscriptions beta</p>
           <p className="mt-1 text-sm text-muted">
-            30 places reservees puis liste d&apos;attente, dans l&apos;ordre d&apos;arrivee.
+            {betaReservedSeatLimit} places reservees puis liste d&apos;attente, dans l&apos;ordre d&apos;arrivee.
           </p>
         </div>
         {betaSignups.length === 0 ? (
@@ -262,7 +278,23 @@ const adminTabMeta = {
   catalogues: { title: "Catalogues de reference", description: "Subventions et programmes de mecenat proposes aux compagnies et a William." },
   emails: { title: "Bibliotheque d'emails", description: "Modeles globaux personnalisables par les compagnies." },
   ia: { title: "William IA", description: "Fournisseurs, secrets disponibles et corpus de recherche controle." },
+  administrateurs: { title: "Administrateurs delegues", description: "Acces internes limites, sans droit sur la facturation ni les comptes offerts." },
 } as const;
+
+type AdminTabId = keyof typeof adminTabMeta;
+
+function getAllowedTabs(isSuperAdmin: boolean, permissions: PlatformPermission[]): AdminTabId[] {
+  if (isSuperAdmin) return ["supervision", "retours", "audience", "informations", "catalogues", "emails", "ia", "administrateurs"];
+  const tabs: AdminTabId[] = [];
+  if (["view_companies", "view_beta", "view_access"].some((permission) => permissions.includes(permission as PlatformPermission))) tabs.push("supervision");
+  if (permissions.includes("manage_feedback")) tabs.push("retours");
+  if (permissions.includes("view_audience")) tabs.push("audience");
+  if (permissions.includes("manage_legal")) tabs.push("informations");
+  if (permissions.includes("manage_catalogs")) tabs.push("catalogues");
+  if (permissions.includes("manage_email_templates")) tabs.push("emails");
+  if (permissions.includes("manage_ai")) tabs.push("ia");
+  return tabs;
+}
 
 function AdminTab({ active, href, label }: { active: boolean; href: string; label: string }) {
   return (
@@ -347,7 +379,7 @@ function AccessEventRow({ event }: { event: AdminAccessEvent }) {
   );
 }
 
-function CompanyRow({ company }: { company: AdminCompany }) {
+function CompanyRow({ company, canManageBilling }: { company: AdminCompany; canManageBilling: boolean }) {
   const meta = statusMeta[company.billingStatus];
   const shortId = company.id.slice(0, 8);
 
@@ -391,9 +423,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
           <VolumeCell label="Dates" value={company.dealCount} />
         </div>
       </div>
-      <div className="mt-3">
-        <CompanyBillingForm company={company} />
-      </div>
+      {canManageBilling ? <div className="mt-3"><CompanyBillingForm company={company} /></div> : null}
     </div>
   );
 }
