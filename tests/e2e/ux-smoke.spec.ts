@@ -223,6 +223,20 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByText("Rendez-vous technique test", { exact: true }).first()).toBeVisible();
   });
 
+  test("met en avant une subvention depuis le calendrier", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/calendar");
+
+    await page.locator('button[title*="Aide"]').first().click();
+    await expect(page.getByText(/tail s.*lectionn/i)).toBeVisible();
+    await expect(page.getByText(/Spectacle concern/i)).toBeVisible();
+    await page.getByRole("button", { name: "Ouvrir la subvention" }).click();
+
+    await expect(page).toHaveURL(/\/subventions\?focus=/);
+    await expect(page.getByRole("heading", { name: "Les aides, spectacle par spectacle" })).toBeVisible();
+    await expect(page.locator('[id^="grant-"].ring-2')).toBeVisible();
+  });
+
   test("ouvre une action deja rattachee depuis la fiche spectacle", async ({ page }) => {
     await page.goto("/shows/show-1?tab=dates");
 
@@ -397,6 +411,9 @@ test.describe("cockpit en mode demonstration", () => {
     await page.getByRole("tab", { name: /Lieux/ }).click();
     await expect(page.getByText("Scene nationale du Littoral", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Mina Laurent", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Carte" }).click();
+    await expect(page.getByRole("region", { name: "Carte des lieux" })).toBeVisible();
+    await expect(page.getByText("3 lieux sur la carte")).toBeVisible();
 
     await page.getByRole("tab", { name: /Personnes/ }).click();
     await page.getByLabel("Sélectionner Mina Laurent").check();

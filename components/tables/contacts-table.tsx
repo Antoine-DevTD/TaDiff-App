@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   ArrowUpDown,
   BellPlus,
@@ -8,6 +9,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Mail,
+  List,
+  Map as MapIcon,
   Menu,
   Pencil,
   Pin,
@@ -39,6 +42,11 @@ import { ContactForm } from "@/components/forms/contact-form";
 import { cn } from "@/lib/utils";
 import type { Contact, EmailTemplate, Show, ShowDocument } from "@/types";
 
+const VenueMap = dynamic(
+  () => import("@/components/contacts/venue-map").then((module) => module.VenueMap),
+  { loading: () => <div className="min-h-[620px] animate-pulse bg-panel-strong/55" />, ssr: false },
+);
+
 type ContactFilter = {
   label: string;
   value: string;
@@ -66,6 +74,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
   const [contactsToDelete, setContactsToDelete] = useState<Contact[]>([]);
   const [removedContactIds, setRemovedContactIds] = useState<string[]>([]);
   const [contactTab, setContactTab] = useState<"person" | "venue">("person");
+  const [venueView, setVenueView] = useState<"list" | "map">("list");
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [contextMenu, setContextMenu] = useState<ContactContextMenu>(null);
   const [activeFilter, setActiveFilter] = useState<ContactFilter>({
@@ -223,6 +232,12 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
               </div>
             </div>
             <div className="flex w-full flex-col gap-2 sm:max-w-4xl sm:flex-row sm:justify-end">
+              {contactTab === "venue" ? (
+                <div className="inline-flex shrink-0 rounded-md border border-border bg-panel-strong/45 p-1" aria-label="Affichage des lieux">
+                  <ViewButton active={venueView === "list"} icon={List} label="Liste" onClick={() => setVenueView("list")} />
+                  <ViewButton active={venueView === "map"} icon={MapIcon} label="Carte" onClick={() => setVenueView("map")} />
+                </div>
+              ) : null}
               {selectedContacts.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-1 rounded-md border border-accent/20 bg-accent/5 p-1">
                   <span className="px-2 text-xs font-semibold text-accent">{selectedContacts.length} sélectionné{selectedContacts.length > 1 ? "s" : ""}</span>
@@ -252,6 +267,14 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
             </div>
           </div>
 
+          {contactTab === "venue" && venueView === "map" ? (
+            <VenueMap
+              contacts={activeContacts}
+              venues={filteredContacts}
+              onCreateAction={(venue) => setReminderContacts([venue])}
+              onWrite={(venue) => setEmailContacts([venue])}
+            />
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1040px] text-left text-sm">
               <thead className="border-b border-border bg-panel text-muted">
@@ -305,6 +328,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
               </tbody>
             </table>
           </div>
+          )}
         </section>
       </div>
 
@@ -395,6 +419,23 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
         }}
       />
     </div>
+  );
+}
+
+function ViewButton({ active, icon: Icon, label, onClick }: { active: boolean; icon: typeof List; label: string; onClick: () => void }) {
+  return (
+    <button
+      className={cn(
+        "inline-flex min-h-8 items-center gap-2 rounded px-3 text-sm font-medium transition",
+        active ? "bg-panel text-foreground shadow-sm" : "text-muted hover:text-foreground",
+      )}
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+    >
+      <Icon className="h-4 w-4" aria-hidden />
+      {label}
+    </button>
   );
 }
 

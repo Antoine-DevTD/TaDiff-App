@@ -891,6 +891,14 @@ export async function updateContact(
     email: parsed.data.email || null,
     phone: parsed.data.phone || null,
     city: parsed.data.city || null,
+    address: parsed.data.contactType === "venue" ? parsed.data.address || null : null,
+    postal_code: parsed.data.contactType === "venue" ? parsed.data.postalCode || null : null,
+    department: parsed.data.contactType === "venue" ? parsed.data.department || null : null,
+    region: parsed.data.contactType === "venue" ? parsed.data.region || null : null,
+    website: parsed.data.contactType === "venue" ? parsed.data.website || null : null,
+    capacity: parsed.data.contactType === "venue" && parsed.data.capacity ? Number(parsed.data.capacity) : null,
+    latitude: parsed.data.contactType === "venue" && parsed.data.latitude ? Number(parsed.data.latitude.replace(",", ".")) : null,
+    longitude: parsed.data.contactType === "venue" && parsed.data.longitude ? Number(parsed.data.longitude.replace(",", ".")) : null,
     status: parsed.data.status,
     tags: normalizeContactTags(parsed.data.tags),
   };
@@ -943,7 +951,14 @@ function isContactTagsSchemaCacheError(error: { message?: string } | null) {
 }
 
 function isContactKindSchemaCacheError(error: { message?: string } | null) {
-  return Boolean(error?.message?.includes("contact_type") || error?.message?.includes("venue_id"));
+  return Boolean(
+    error?.message?.includes("contact_type") ||
+    error?.message?.includes("venue_id") ||
+    error?.message?.includes("address") ||
+    error?.message?.includes("postal_code") ||
+    error?.message?.includes("latitude") ||
+    error?.message?.includes("longitude"),
+  );
 }
 
 export async function deleteContact(contactId: string): Promise<ActionResult> {
@@ -2040,6 +2055,14 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
     email: parsed.data.email || null,
     phone: parsed.data.phone || null,
     city: parsed.data.city || null,
+    address: parsed.data.contactType === "venue" ? parsed.data.address || null : null,
+    postal_code: parsed.data.contactType === "venue" ? parsed.data.postalCode || null : null,
+    department: parsed.data.contactType === "venue" ? parsed.data.department || null : null,
+    region: parsed.data.contactType === "venue" ? parsed.data.region || null : null,
+    website: parsed.data.contactType === "venue" ? parsed.data.website || null : null,
+    capacity: parsed.data.contactType === "venue" && parsed.data.capacity ? Number(parsed.data.capacity) : null,
+    latitude: parsed.data.contactType === "venue" && parsed.data.latitude ? Number(parsed.data.latitude.replace(",", ".")) : null,
+    longitude: parsed.data.contactType === "venue" && parsed.data.longitude ? Number(parsed.data.longitude.replace(",", ".")) : null,
     status: parsed.data.status,
     tags: normalizeContactTags(parsed.data.tags),
   };
@@ -2145,12 +2168,22 @@ export async function importContacts(
   const supabase = await getSupabaseServerClient();
   const payload = parsedContacts.map((contact) => ({
     company_id: workspace.companyId,
+    contact_type: contact.contactType,
+    venue_id: null,
     name: contact.name,
-    organization: contact.organization,
-    role: contact.role || null,
+    organization: contact.contactType === "venue" ? contact.name : contact.organization,
+    role: contact.contactType === "venue" ? "Lieu" : contact.role || null,
     email: contact.email || null,
     phone: contact.phone || null,
     city: contact.city || null,
+    address: contact.contactType === "venue" ? contact.address || null : null,
+    postal_code: contact.contactType === "venue" ? contact.postalCode || null : null,
+    department: contact.contactType === "venue" ? contact.department || null : null,
+    region: contact.contactType === "venue" ? contact.region || null : null,
+    website: contact.contactType === "venue" ? contact.website || null : null,
+    capacity: contact.contactType === "venue" && contact.capacity ? Number(contact.capacity) : null,
+    latitude: contact.contactType === "venue" && contact.latitude ? Number(contact.latitude.replace(",", ".")) : null,
+    longitude: contact.contactType === "venue" && contact.longitude ? Number(contact.longitude.replace(",", ".")) : null,
     status: contact.status,
     tags: normalizeContactTags(contact.tags),
   }));
@@ -3475,6 +3508,46 @@ export async function updateGrantStatus(
   await logActivity("a change le statut d'une subvention", "subvention", status);
 
   return { ok: true, message: "Statut du dispositif mis a jour." };
+}
+
+export async function updateGrantShow(grantId: string, showId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : spectacle rattache." };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  if (showId) {
+    const { data: show } = await supabase
+      .from("shows")
+      .select("id")
+      .eq("id", showId)
+      .eq("company_id", workspace.companyId)
+      .maybeSingle();
+    if (!show) return { ok: false, message: "Ce spectacle n'appartient pas a la compagnie." };
+  }
+
+  const { error } = await supabase
+    .from("grant_opportunities")
+    .update({ show_id: showId || null })
+    .eq("id", grantId)
+    .eq("company_id", workspace.companyId);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+  await logActivity("a rattache une subvention a un spectacle", "subvention", showId || "compagnie");
+
+  return { ok: true, message: showId ? "Spectacle rattache." : "Aide classee au niveau de la compagnie." };
 }
 
 export async function deleteGrantOpportunity(grantId: string): Promise<ActionResult> {

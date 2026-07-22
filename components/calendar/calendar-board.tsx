@@ -36,6 +36,8 @@ export type CalendarBoardItem = {
   startTime: string | null;
   endTime: string | null;
   location: string;
+  relatedShowId?: string;
+  relatedShowTitle?: string;
 };
 
 type CalendarGroup = "all" | "show" | "reminder" | "funding" | "finance" | "event";
@@ -158,6 +160,7 @@ export function CalendarBoard({
   const [filter, setFilter] = useState<CalendarGroup>("all");
   const [cursor, setCursor] = useState(() => startOfDay(new Date()));
   const [draft, setDraft] = useState<EventDraft | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startSaving] = useTransition();
 
@@ -203,6 +206,10 @@ export function CalendarBoard({
         .sort((left, right) => left.date.localeCompare(right.date))
         .slice(0, 8),
     [today, visibleItems],
+  );
+  const selectedItem = useMemo(
+    () => items.find((item) => item.id === selectedItemId) ?? null,
+    [items, selectedItemId],
   );
   const mobileDays = useMemo(() => {
     const inCurrentPeriod = days.filter((day) =>
@@ -356,9 +363,9 @@ export function CalendarBoard({
           </div>
         </div>
 
-        <div className="grid xl:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="hidden overflow-x-auto md:block">
-            <div className="min-w-[52rem]">
+            <div className="min-w-[48rem]">
               <div className="grid grid-cols-7 border-b border-border bg-panel-strong/35">
                 {weekdayLabels.map((label) => (
                   <div key={label} className="px-3 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
@@ -379,7 +386,7 @@ export function CalendarBoard({
                       key={key}
                       data-calendar-date={toIsoDate(day)}
                       className={cn(
-                        "group/day relative min-h-28 border-b border-r border-border p-2 transition-colors hover:bg-accent/[0.035]",
+                        "group/day relative min-h-36 border-b border-r border-border p-2.5 transition-colors hover:bg-accent/[0.035]",
                         view === "week" && "min-h-[34rem]",
                         isOtherMonth && "bg-panel-strong/25 text-muted",
                       )}
@@ -410,11 +417,15 @@ export function CalendarBoard({
                           <button
                             key={item.id}
                             type="button"
-                            className={cn("flex w-full items-center gap-1.5 overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs transition hover:-translate-y-px hover:shadow-sm", kindStyles[item.kind].chip)}
+                            className={cn(
+                              "flex w-full items-center gap-1.5 overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs transition hover:-translate-y-px hover:shadow-sm",
+                              kindStyles[item.kind].chip,
+                              selectedItemId === item.id && "ring-2 ring-accent ring-offset-1 ring-offset-panel",
+                            )}
                             title={`${item.label} - ${item.meta}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              router.push(item.href);
+                              setSelectedItemId(item.id);
                             }}
                           >
                             <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
@@ -466,7 +477,7 @@ export function CalendarBoard({
                           key={item.id}
                           className={cn("flex min-h-11 w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm", kindStyles[item.kind].chip)}
                           type="button"
-                          onClick={() => router.push(item.href)}
+                          onClick={() => setSelectedItemId(item.id)}
                         >
                           <span className={cn("h-2 w-2 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
                           <span className="min-w-0 flex-1">
@@ -485,19 +496,66 @@ export function CalendarBoard({
           <aside className="border-t border-border bg-panel-strong/28 p-4 xl:border-l xl:border-t-0">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">En approche</p>
-                <p className="mt-1 text-lg font-semibold">Les prochaines dates</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  {selectedItem ? kindStyles[selectedItem.kind].label : "En approche"}
+                </p>
+                <p className="mt-1 text-lg font-semibold">
+                  {selectedItem ? "Détail sélectionné" : "Les prochaines dates"}
+                </p>
               </div>
               <CalendarDays className="h-5 w-5 text-accent" aria-hidden />
             </div>
-            <div className="mt-4 space-y-2">
+            {selectedItem ? (
+              <div className="mt-4 rounded-lg border border-accent/25 bg-panel p-4 shadow-sm ring-1 ring-accent/10">
+                <div className="flex items-start gap-3">
+                  <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", kindStyles[selectedItem.kind].dot)} />
+                  <div className="min-w-0">
+                    <p className="font-semibold leading-5">{selectedItem.label}</p>
+                    <p className="mt-1 text-sm text-muted">{selectedItem.meta}</p>
+                  </div>
+                </div>
+                <dl className="mt-4 grid grid-cols-2 gap-3 border-y border-border py-3 text-sm">
+                  <div>
+                    <dt className="text-xs text-muted">Date</dt>
+                    <dd className="mt-1 font-medium">{parseDate(selectedItem.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">{selectedItem.allDay ? "Type" : "Horaire"}</dt>
+                    <dd className="mt-1 font-medium">{formatSchedule(selectedItem)}</dd>
+                  </div>
+                </dl>
+                {selectedItem.relatedShowTitle ? (
+                  <div className="mt-3 rounded-md bg-accent/8 px-3 py-2">
+                    <p className="text-xs text-muted">Spectacle concerné</p>
+                    <p className="mt-0.5 text-sm font-semibold text-accent">{selectedItem.relatedShowTitle}</p>
+                  </div>
+                ) : null}
+                <div className="mt-4 flex gap-2">
+                  <Button type="button" className="flex-1" onClick={() => router.push(selectedItem.href)}>
+                    {selectedItem.kind === "grant" ? "Ouvrir la subvention" : "Ouvrir"}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setSelectedItemId(null)}>
+                    Fermer
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+            <div className={cn("space-y-2", selectedItem ? "mt-5 border-t border-border pt-4" : "mt-4")}>
               {upcoming.length === 0 ? (
                 <button className="w-full rounded-md border border-dashed border-border p-4 text-left text-sm text-muted hover:border-accent/35 hover:text-foreground" type="button" onClick={() => openDraft()}>
                   Rien à venir. Ajouter une première date.
                 </button>
               ) : (
                 upcoming.map((item) => (
-                  <button key={item.id} className="group flex w-full gap-3 rounded-md border border-transparent p-2.5 text-left transition hover:border-border hover:bg-panel" type="button" onClick={() => router.push(item.href)}>
+                  <button
+                    key={item.id}
+                    className={cn(
+                      "group flex w-full gap-3 rounded-md border p-2.5 text-left transition hover:border-border hover:bg-panel",
+                      selectedItemId === item.id ? "border-accent/30 bg-accent/8" : "border-transparent",
+                    )}
+                    type="button"
+                    onClick={() => setSelectedItemId(item.id)}
+                  >
                     <div className="w-10 shrink-0 text-center">
                       <p className="text-lg font-semibold leading-none">{parseDate(item.date).getDate()}</p>
                       <p className="mt-1 text-[10px] font-semibold uppercase text-muted">{parseDate(item.date).toLocaleDateString("fr-FR", { month: "short" })}</p>

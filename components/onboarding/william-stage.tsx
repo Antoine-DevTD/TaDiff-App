@@ -1,15 +1,8 @@
 "use client";
 
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useMemo, useRef, useState } from "react";
-import type { Group } from "three";
-import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
-
-const layerStyles = [
-  { color: "#1d1d1f", depth: 72, z: 0, metalness: 0.34, roughness: 0.3 },
-  { color: "#ffffff", depth: 34, z: 80, metalness: 0.08, roughness: 0.24 },
-  { color: "#087fe8", depth: 34, z: 122, metalness: 0.22, roughness: 0.22 },
-] as const;
+import { Shape, type Group } from "three";
 
 export function WilliamStage({
   activeStep,
@@ -25,7 +18,7 @@ export function WilliamStage({
       aria-hidden="true"
     >
       <Canvas
-        camera={{ position: [0, 0.1, 6.4], fov: 39 }}
+        camera={{ position: [0, 0.1, 6.8], fov: 42 }}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
         dpr={[1, 1.8]}
         onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
@@ -44,17 +37,18 @@ export function WilliamStage({
 }
 
 function ExtrudedTadiffMark({ activeStep, busy }: { activeStep: number; busy: boolean }) {
-  const svg = useLoader(SVGLoader, "/icons/tadiff-mark.svg");
   const rig = useRef<Group>(null);
   const [reduceMotion] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
-  const layers = useMemo(() => svg.paths.flatMap((path, pathIndex) =>
-    SVGLoader.createShapes(path).map((shape, shapeIndex) => ({
-      id: `${pathIndex}-${shapeIndex}`,
-      pathIndex,
-      shape,
-    }))), [svg]);
+  const feather = useMemo(() => {
+    const shape = new Shape();
+    shape.moveTo(0.2, -1.2);
+    shape.bezierCurveTo(1.05, -0.75, 1.58, 0.02, 1.78, 1.3);
+    shape.bezierCurveTo(1.12, 0.68, 0.58, 0.38, -0.02, 0.28);
+    shape.bezierCurveTo(0.38, -0.18, 0.5, -0.75, 0.2, -1.2);
+    return shape;
+  }, []);
 
   useFrame(({ clock }) => {
     if (!rig.current || reduceMotion) return;
@@ -69,30 +63,33 @@ function ExtrudedTadiffMark({ activeStep, busy }: { activeStep: number; busy: bo
 
   return (
     <group ref={rig} position={[0, 0.15, 0]} rotation={[-0.08, -0.18, 0]}>
-      <group position={[-2.048, 2.048, -0.24]} scale={[0.004, -0.004, 0.004]}>
-        {layers.map(({ id, pathIndex, shape }) => {
-          const style = layerStyles[Math.min(pathIndex, layerStyles.length - 1)];
-          return (
-            <mesh key={id} position={[0, 0, style.z]} castShadow receiveShadow>
-              <extrudeGeometry args={[shape, {
-                bevelEnabled: true,
-                bevelSegments: 4,
-                bevelSize: 9,
-                bevelThickness: 9,
-                curveSegments: 18,
-                depth: style.depth,
-                steps: 1,
-              }]} />
-              <meshStandardMaterial
-                color={style.color}
-                emissive={pathIndex === 2 ? "#035cad" : style.color}
-                emissiveIntensity={pathIndex === 2 ? 0.16 : 0.02}
-                metalness={style.metalness}
-                roughness={style.roughness}
-              />
-            </mesh>
-          );
-        })}
+      <group position={[-0.25, 0, 0]}>
+        <mesh position={[0, 0.76, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.8, 0.5, 0.38]} />
+          <meshStandardMaterial color="#1d1d1f" metalness={0.28} roughness={0.3} />
+        </mesh>
+        <mesh position={[0, -0.28, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.64, 2.08, 0.38]} />
+          <meshStandardMaterial color="#1d1d1f" metalness={0.28} roughness={0.3} />
+        </mesh>
+        <mesh position={[0.48, -0.14, 0.24]} castShadow receiveShadow>
+          <extrudeGeometry args={[feather, {
+            bevelEnabled: true,
+            bevelSegments: 5,
+            bevelSize: 0.06,
+            bevelThickness: 0.06,
+            curveSegments: 24,
+            depth: 0.24,
+            steps: 1,
+          }]} />
+          <meshStandardMaterial
+            color="#087fe8"
+            emissive="#035cad"
+            emissiveIntensity={0.16}
+            metalness={0.2}
+            roughness={0.24}
+          />
+        </mesh>
       </group>
     </group>
   );

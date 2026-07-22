@@ -16,35 +16,62 @@ type ImportMessage = {
 type SheetRow = string[];
 
 type ContactField =
+  | "contactType"
   | "name"
   | "organization"
   | "role"
   | "email"
   | "phone"
   | "city"
+  | "address"
+  | "postalCode"
+  | "department"
+  | "region"
+  | "website"
+  | "capacity"
+  | "latitude"
+  | "longitude"
   | "status"
   | "tags";
 
 type ColumnMapping = Record<ContactField, string>;
 
 const contactFields: { key: ContactField; label: string; required?: boolean }[] = [
+  { key: "contactType", label: "Type de fiche" },
   { key: "name", label: "Nom", required: true },
   { key: "organization", label: "Structure" },
   { key: "role", label: "Role" },
   { key: "email", label: "Email" },
   { key: "phone", label: "Telephone" },
   { key: "city", label: "Ville" },
+  { key: "address", label: "Adresse" },
+  { key: "postalCode", label: "Code postal" },
+  { key: "department", label: "Département" },
+  { key: "region", label: "Région" },
+  { key: "website", label: "Site web" },
+  { key: "capacity", label: "Jauge" },
+  { key: "latitude", label: "Latitude" },
+  { key: "longitude", label: "Longitude" },
   { key: "status", label: "Statut" },
   { key: "tags", label: "Tags / categories" },
 ];
 
 const emptyMapping: ColumnMapping = {
+  contactType: "",
   name: "",
   organization: "",
   role: "",
   email: "",
   phone: "",
   city: "",
+  address: "",
+  postalCode: "",
+  department: "",
+  region: "",
+  website: "",
+  capacity: "",
+  latitude: "",
+  longitude: "",
   status: "",
   tags: "",
 };
@@ -391,6 +418,7 @@ function autoMapColumns(headers: SheetRow): ColumnMapping {
   const normalizedHeaders = headers.map(normalizeHeader);
 
   return {
+    contactType: findIndexValue(normalizedHeaders, ["type", "type de fiche", "type de lieu", "categorie"]),
     name: findIndexValue(normalizedHeaders, ["nom", "name", "contact", "prenom nom"]),
     organization: findIndexValue(normalizedHeaders, [
       "structure",
@@ -404,6 +432,14 @@ function autoMapColumns(headers: SheetRow): ColumnMapping {
     email: findIndexValue(normalizedHeaders, ["email", "e-mail", "mail", "courriel"]),
     phone: findIndexValue(normalizedHeaders, ["telephone", "tel", "phone", "mobile", "portable"]),
     city: findIndexValue(normalizedHeaders, ["ville", "city", "commune"]),
+    address: findIndexValue(normalizedHeaders, ["adresse", "address", "adresse postale"]),
+    postalCode: findIndexValue(normalizedHeaders, ["code postal", "cp", "postal code"]),
+    department: findIndexValue(normalizedHeaders, ["departement", "department"]),
+    region: findIndexValue(normalizedHeaders, ["region"]),
+    website: findIndexValue(normalizedHeaders, ["web", "site", "site web", "website", "url"]),
+    capacity: findIndexValue(normalizedHeaders, ["jauge", "capacite", "capacity"]),
+    latitude: findIndexValue(normalizedHeaders, ["latitude", "lat"]),
+    longitude: findIndexValue(normalizedHeaders, ["longitude", "lon", "lng"]),
     status: findIndexValue(normalizedHeaders, ["statut", "status"]),
     tags: findIndexValue(normalizedHeaders, ["tags", "tag", "categorie", "categories", "type"]),
   };
@@ -416,25 +452,48 @@ function mapRowsToContacts(rows: SheetRow[], mapping: ColumnMapping): ContactFor
     const name = getMappedCell(row, mapping.name);
     const email = getMappedCell(row, mapping.email);
     const organization = getMappedCell(row, mapping.organization);
+    const contactType = normalizeContactType(getMappedCell(row, mapping.contactType));
 
     if (!name && !email) {
       continue;
     }
 
     contacts.push({
-      contactType: "person",
+      contactType,
       name: name || email,
-      organization: organization || "A renseigner",
+      organization: contactType === "venue" ? name || organization : organization || "A renseigner",
       role: getMappedCell(row, mapping.role),
       email,
       phone: getMappedCell(row, mapping.phone),
       city: getMappedCell(row, mapping.city),
+      address: getMappedCell(row, mapping.address),
+      postalCode: getMappedCell(row, mapping.postalCode),
+      department: getMappedCell(row, mapping.department),
+      region: getMappedCell(row, mapping.region),
+      website: getMappedCell(row, mapping.website),
+      capacity: parseOptionalNumber(getMappedCell(row, mapping.capacity)),
+      latitude: parseOptionalNumber(getMappedCell(row, mapping.latitude)),
+      longitude: parseOptionalNumber(getMappedCell(row, mapping.longitude)),
       status: normalizeStatus(getMappedCell(row, mapping.status)),
       tags: splitTags(getMappedCell(row, mapping.tags)),
     });
   }
 
   return contacts;
+}
+
+function normalizeContactType(value: string): ContactFormValues["contactType"] {
+  const normalized = normalizeHeader(value);
+  if (["lieu", "venue", "theatre", "salle", "festival"].some((word) => normalized.includes(word))) {
+    return "venue";
+  }
+  return "person";
+}
+
+function parseOptionalNumber(value: string) {
+  if (!value) return "" as const;
+  const parsed = Number(value.replace(",", ".").replace(/\s/g, ""));
+  return Number.isFinite(parsed) ? String(parsed) : "" as const;
 }
 
 function guessDelimiter(text: string) {
@@ -493,9 +552,9 @@ function splitTags(value: string) {
 
 function downloadCsvExample() {
   const content = [
-    "nom,email,telephone,structure,role,ville,statut,tags",
-    "Mina Laurent,mina@example.com,0612345678,Scene nationale,Programmatrice,La Rochelle,Prospect,Theatre;Grand plateau",
-    "Hugo Martin,hugo@example.com,0698765432,Festival Off,Directeur,Avignon,En discussion,Festival",
+    "type,nom,email,telephone,structure,role,adresse,code postal,ville,departement,region,web,jauge,latitude,longitude,statut,tags",
+    "personne,Mina Laurent,mina@example.com,0612345678,Scene nationale,Programmatrice,,,La Rochelle,,,,,,,Prospect,Theatre;Grand plateau",
+    "lieu,Theatre municipal,contact@theatre.fr,0546000000,,,,12 rue du Theatre,17000,La Rochelle,Charente-Maritime,Nouvelle-Aquitaine,https://theatre.example,450,46.1603,-1.1511,En discussion,Theatre",
   ].join("\n");
   const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);

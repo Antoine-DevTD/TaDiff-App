@@ -44,6 +44,10 @@ export default async function CalendarPage() {
       startTime: event.startTime,
       endTime: event.endTime,
       location: event.location,
+      relatedShowId: event.relatedShowId ?? undefined,
+      relatedShowTitle: event.relatedShowId
+        ? shows.find((show) => show.id === event.relatedShowId)?.title
+        : undefined,
     })),
     ...reminders.map((reminder) => ({
       id: `reminder-${reminder.id}`,
@@ -76,7 +80,7 @@ export default async function CalendarPage() {
     ...grants.map((grant) => ({
       id: `grant-${grant.id}`,
       date: grant.deadline,
-      href: "/subventions",
+      href: `/subventions?focus=${grant.id}#grant-${grant.id}`,
       kind: "grant" as const,
       label: grant.title,
       meta: `${grant.funder} · ${grant.status}`,
@@ -85,6 +89,10 @@ export default async function CalendarPage() {
       startTime: null,
       endTime: null,
       location: "",
+      relatedShowId: grant.relatedShowId,
+      relatedShowTitle: grant.relatedShowId
+        ? shows.find((show) => show.id === grant.relatedShowId)?.title
+        : undefined,
     })),
     ...fixedCosts.map((cost) => ({
       id: `fixed-cost-${cost.id}`,

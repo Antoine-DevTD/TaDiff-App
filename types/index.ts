@@ -190,6 +190,14 @@ export type Contact = {
   email: string;
   phone: string;
   city: string;
+  address?: string;
+  postalCode?: string;
+  department?: string;
+  region?: string;
+  website?: string;
+  capacity?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   status: "Prospect" | "En discussion" | "Partenaire";
   tags: string[];
 };

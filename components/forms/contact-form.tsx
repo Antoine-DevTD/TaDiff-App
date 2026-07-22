@@ -21,6 +21,14 @@ const defaultValues: ContactFormValues = {
   email: "",
   phone: "",
   city: "",
+  address: "",
+  postalCode: "",
+  department: "",
+  region: "",
+  website: "",
+  capacity: "",
+  latitude: "",
+  longitude: "",
   status: "Prospect",
   tags: [],
   directorName: "",
@@ -58,6 +66,14 @@ export function ContactForm({
           email: contact.email || "",
           phone: contact.phone || "",
           city: contact.city || "",
+          address: contact.address || "",
+          postalCode: contact.postalCode || "",
+          department: contact.department || "",
+          region: contact.region || "",
+          website: contact.website || "",
+          capacity: contact.capacity?.toString() ?? "",
+          latitude: contact.latitude?.toString() ?? "",
+          longitude: contact.longitude?.toString() ?? "",
           status: contact.status,
           tags: contact.tags ?? [],
           directorName: "",
@@ -123,6 +139,31 @@ export function ContactForm({
         </Field>
         {contactType === "person" ? <Field label="Structure" error={errors.organization?.message}><Input placeholder="Scène nationale" {...register("organization")} /></Field> : <Field label="Ville" error={errors.city?.message}><Input placeholder="La Rochelle" {...register("city")} /></Field>}
       </div>
+
+      {contactType === "venue" ? (
+        <section className="rounded-md border border-border bg-panel-strong/45 p-4">
+          <h4 className="font-semibold">Adresse et carte</h4>
+          <p className="mt-1 text-xs leading-5 text-muted">
+            Les coordonnées permettent d&apos;afficher précisément le lieu sur la carte.
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_10rem]">
+            <Field label="Adresse" error={errors.address?.message}><Input placeholder="12 rue du Théâtre" {...register("address")} /></Field>
+            <Field label="Code postal" error={errors.postalCode?.message}><Input placeholder="44000" {...register("postalCode")} /></Field>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Département" error={errors.department?.message}><Input placeholder="Loire-Atlantique" {...register("department")} /></Field>
+            <Field label="Région" error={errors.region?.message}><Input placeholder="Pays de la Loire" {...register("region")} /></Field>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Latitude" error={errors.latitude?.message}><Input inputMode="decimal" placeholder="47.2184" {...register("latitude")} /></Field>
+            <Field label="Longitude" error={errors.longitude?.message}><Input inputMode="decimal" placeholder="-1.5536" {...register("longitude")} /></Field>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Site web" error={errors.website?.message}><Input type="url" placeholder="https://..." {...register("website")} /></Field>
+            <Field label="Jauge" error={errors.capacity?.message}><Input min="0" type="number" placeholder="450" {...register("capacity")} /></Field>
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {contactType === "person" ? <Field label="Rôle" error={errors.role?.message}><Input placeholder="Programmatrice" {...register("role")} /></Field> : null}
