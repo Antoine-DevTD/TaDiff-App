@@ -21,6 +21,8 @@ import { betaReservedSeatLimit } from "@/lib/beta";
 import { buildDownloadFileName } from "@/lib/documents-upload";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { createPrivateObjectUrls, type StorageProvider } from "@/lib/storage/server";
+import { defaultShowBudgetProfile } from "@/lib/show-budget";
+import { showBudgetProfileSchema } from "@/lib/validation/show-budget";
 import type {
   ActivityEntry,
   BillingPlan,
@@ -41,6 +43,7 @@ import type {
   Reminder,
   Show,
   ShowBudgetItem,
+  ShowBudgetProfile,
   ShowDocument,
   ShowWorkDocument,
   ShowWorkFolder,
@@ -91,6 +94,7 @@ export async function getShows(): Promise<Show[]> {
 
 export async function getShowById(showId: string): Promise<{
   budgetItems: ShowBudgetItem[];
+  budgetProfile: ShowBudgetProfile;
   documents: ShowDocument[];
   opportunities: PipelineDeal[];
   reminders: Reminder[];
@@ -107,6 +111,7 @@ export async function getShowById(showId: string): Promise<{
     return {
       documents: showDocuments.filter((document) => document.showId === showId),
       budgetItems: showBudgetItems.filter((item) => item.showId === showId),
+      budgetProfile: { ...defaultShowBudgetProfile, showId },
       show,
       opportunities,
       reminders: filteredReminders,
@@ -121,13 +126,14 @@ export async function getShowById(showId: string): Promise<{
     .maybeSingle();
 
   if (showError || !show) {
-    return { budgetItems: [], documents: [], show: null, opportunities: [], reminders: [] };
+    return { budgetItems: [], budgetProfile: { ...defaultShowBudgetProfile, showId }, documents: [], show: null, opportunities: [], reminders: [] };
   }
 
   const [
     { data: opportunities, error: opportunitiesError },
     { data: documents, error: documentsError },
     { data: budgetRows, error: budgetError },
+    { data: budgetProfileRow },
   ] =
     await Promise.all([
       supabase
@@ -144,10 +150,15 @@ export async function getShowById(showId: string): Promise<{
         .order("updated_at", { ascending: false }),
       supabase
         .from("show_budget_items")
-        .select("id,show_id,kind,category,label,amount,sort_order")
+        .select("id,show_id,kind,category,label,amount,scope,sort_order")
         .eq("show_id", showId)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
+      supabase
+        .from("show_budget_profiles")
+        .select("*")
+        .eq("show_id", showId)
+        .maybeSingle(),
     ]);
 
   const resolvedShow: Show = {
@@ -170,20 +181,62 @@ export async function getShowById(showId: string): Promise<{
     captureUrl: "capture_url" in show ? show.capture_url ?? "" : "",
   };
 
+  let compatibleBudgetRows = budgetRows;
+  if (budgetError?.message.includes("scope")) {
+    const legacyBudgetResponse = await supabase
+      .from("show_budget_items")
+      .select("id,show_id,kind,category,label,amount,sort_order")
+      .eq("show_id", showId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    compatibleBudgetRows = legacyBudgetResponse.data?.map((item) => ({ ...item, scope: "creation" as const })) ?? null;
+  }
+
   const resolvedDocuments: ShowDocument[] =
     documentsError || !documents ? [] : await mapShowDocumentRows(documents);
   const resolvedBudgetItems: ShowBudgetItem[] =
-    budgetError || !budgetRows
+    !compatibleBudgetRows
       ? []
-      : budgetRows.map((item) => ({
+      : compatibleBudgetRows.map((item) => ({
           id: item.id,
           showId: item.show_id,
           kind: item.kind,
           category: item.category,
           label: item.label,
           amount: item.amount ?? 0,
+          scope: item.scope ?? "creation",
           sortOrder: item.sort_order,
         }));
+
+  const parsedBudgetProfile = budgetProfileRow
+    ? showBudgetProfileSchema.safeParse({
+        convention: budgetProfileRow.convention,
+        rateSourceUrl: budgetProfileRow.rate_source_url ?? "",
+        rateEffectiveDate: budgetProfileRow.rate_effective_date ?? "",
+        performancesTarget: budgetProfileRow.performances_target,
+        exploitationMode: budgetProfileRow.exploitation_mode,
+        cessionFee: budgetProfileRow.cession_fee,
+        venueRental: budgetProfileRow.venue_rental,
+        minimumGuarantee: budgetProfileRow.minimum_guarantee,
+        companySharePercent: budgetProfileRow.company_share_percent,
+        averageTicketPrice: budgetProfileRow.average_ticket_price,
+        venueCapacity: budgetProfileRow.venue_capacity,
+        expectedOccupancyPercent: budgetProfileRow.expected_occupancy_percent,
+        rightsTerritory: budgetProfileRow.rights_territory,
+        authorRightsPercent: budgetProfileRow.author_rights_percent,
+        sacdContributionPercent: budgetProfileRow.sacd_contribution_percent,
+        directorRightsPercent: budgetProfileRow.director_rights_percent,
+        musicRightsPercent: budgetProfileRow.music_rights_percent,
+        overheadPercent: budgetProfileRow.overhead_percent,
+        contingencyPercent: budgetProfileRow.contingency_percent,
+        cessionMarginPercent: budgetProfileRow.cession_margin_percent,
+        personnel: budgetProfileRow.personnel,
+      })
+    : null;
+  const resolvedBudgetProfile: ShowBudgetProfile = {
+    ...(parsedBudgetProfile?.success ? parsedBudgetProfile.data : defaultShowBudgetProfile),
+    showId,
+  };
 
   const resolvedOpportunities: PipelineDeal[] =
     opportunitiesError || !opportunities
@@ -230,6 +283,7 @@ export async function getShowById(showId: string): Promise<{
     return {
       documents: resolvedDocuments,
       budgetItems: resolvedBudgetItems,
+      budgetProfile: resolvedBudgetProfile,
       show: resolvedShow,
       opportunities: resolvedOpportunities,
       reminders: [],
@@ -239,6 +293,7 @@ export async function getShowById(showId: string): Promise<{
   return {
     documents: resolvedDocuments,
     budgetItems: resolvedBudgetItems,
+    budgetProfile: resolvedBudgetProfile,
     show: resolvedShow,
     opportunities: resolvedOpportunities,
     reminders: reminderRows.map((reminder) => ({
@@ -577,28 +632,53 @@ export async function getReminders({ includeCompleted = false }: { includeComple
   }
 
   const supabase = await getSupabaseServerClient();
-  let query = supabase
-    .from("reminders")
-    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at,completion_outcome,completion_note")
-    .order("due_date", { ascending: true });
+  const applyOpenFilter = <T extends { eq: (column: string, value: boolean) => T }>(query: T) =>
+    includeCompleted ? query : query.eq("done", false);
 
-  if (!includeCompleted) query = query.eq("done", false);
-
-  let { data, error } = await query;
-
-  if (error?.message.includes("completion_") || error?.message.includes("schema cache")) {
-    let fallbackQuery = supabase
+  const fullResult = await applyOpenFilter(
+    supabase
       .from("reminders")
-      .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at")
-      .order("due_date", { ascending: true });
-    if (!includeCompleted) fallbackQuery = fallbackQuery.eq("done", false);
-    const fallback = await fallbackQuery;
-    data = fallback.data?.map((reminder) => ({
+      .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at,completion_outcome,completion_note")
+      .order("due_date", { ascending: true }),
+  );
+
+  let data = fullResult.data;
+  let error = fullResult.error;
+
+  if (error) {
+    const linkedResult = await applyOpenFilter(
+      supabase
+        .from("reminders")
+        .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at")
+        .order("due_date", { ascending: true }),
+    );
+
+    data = linkedResult.data?.map((reminder) => ({
       ...reminder,
       completion_outcome: null,
       completion_note: null,
     })) ?? null;
-    error = fallback.error;
+    error = linkedResult.error;
+  }
+
+  if (error) {
+    const baseResult = await applyOpenFilter(
+      supabase
+        .from("reminders")
+        .select("id,title,due_date,related_to,done,priority")
+        .order("due_date", { ascending: true }),
+    );
+
+    data = baseResult.data?.map((reminder) => ({
+      ...reminder,
+      show_id: null,
+      contact_id: null,
+      action_type: "other" as const,
+      completed_at: null,
+      completion_outcome: null,
+      completion_note: null,
+    })) ?? null;
+    error = baseResult.error;
   }
 
   if (error || !data) {
@@ -1164,10 +1244,25 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
   }
 
   const supabase = await getSupabaseServerClient();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("calendar_events")
-    .select("id,title,event_date,kind,related_show_id,note")
+    .select("id,title,event_date,kind,related_show_id,note,all_day,start_time,end_time,location")
     .order("event_date", { ascending: true });
+
+  if (error && isMissingCalendarScheduleColumn(error.message)) {
+    const legacyResult = await supabase
+      .from("calendar_events")
+      .select("id,title,event_date,kind,related_show_id,note")
+      .order("event_date", { ascending: true });
+    data = legacyResult.data?.map((event) => ({
+      ...event,
+      all_day: true,
+      start_time: null,
+      end_time: null,
+      location: null,
+    })) ?? null;
+    error = legacyResult.error;
+  }
 
   if (error || !data) return [];
 
@@ -1178,7 +1273,17 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
     kind: event.kind,
     relatedShowId: event.related_show_id,
     note: event.note ?? "",
+    allDay: event.all_day,
+    startTime: event.start_time,
+    endTime: event.end_time,
+    location: event.location ?? "",
   }));
+}
+
+function isMissingCalendarScheduleColumn(message: string) {
+  return ["all_day", "start_time", "end_time", "location", "schema cache"].some((column) =>
+    message.toLowerCase().includes(column),
+  );
 }
 
 export async function getCompanyMembers(): Promise<CompanyMember[]> {

@@ -8,7 +8,7 @@ import { UnclassifiedDocuments } from "@/components/documents/unclassified-docum
 import { ShowEditDialog } from "@/components/shows/show-edit-dialog";
 import { ShowBudgetWorkspace } from "@/components/shows/show-budget-workspace";
 import { ShowEmailProfileForm } from "@/components/shows/show-email-profile-form";
-import { ShowActionDialog } from "@/components/shows/show-action-dialog";
+import { ShowActionsPanel } from "@/components/shows/show-actions-panel";
 import { ShowWorkspaceDocuments } from "@/components/shows/show-workspace-documents";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
     getShowDocuments(),
     getShowWorkDocuments(id),
   ]);
-  const { budgetItems, documents: allDocuments, opportunities, reminders, show } = showDetail;
+  const { budgetItems, budgetProfile, documents: allDocuments, opportunities, reminders, show } = showDetail;
 
   if (!show) notFound();
 
@@ -274,27 +274,12 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
               )}
             </section>
 
-            <section className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold">Actions a faire</h3>
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <Link className="text-sm font-medium text-accent hover:text-accent-strong" href="/reminders">Toutes les actions</Link>
-                  <ShowActionDialog contacts={contacts} currentShowId={show.id} shows={showsWithPosters} />
-                </div>
-              </div>
-              {reminders.length === 0 ? (
-                <div className="border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-                  Aucune action ouverte pour ce spectacle. Utilisez le bouton ci-dessus pour ajouter la prochaine étape.
-                </div>
-              ) : (
-                reminders.map((reminder) => (
-                  <Link key={reminder.id} className="block border-b border-border py-4 transition-colors hover:text-accent" href="/reminders">
-                    <p className="text-sm font-medium">{reminder.label}</p>
-                    <p className="mt-1 text-xs text-muted">{new Date(reminder.dueDate).toLocaleDateString("fr-FR")}</p>
-                  </Link>
-                ))
-              )}
-            </section>
+            <ShowActionsPanel
+              contacts={contacts}
+              currentShowId={show.id}
+              initialReminders={reminders}
+              shows={showsWithPosters}
+            />
           </div>
         </Card>
       ) : null}
@@ -303,13 +288,14 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
         <section aria-labelledby="detailed-budget-title" className="space-y-6">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Budget du spectacle</p>
-            <h3 id="detailed-budget-title" className="mt-2 text-2xl font-semibold">Comprendre l&apos;équilibre sans faire de comptabilité</h3>
+            <h3 id="detailed-budget-title" className="mt-2 text-2xl font-semibold">Construire le budget réel du spectacle</h3>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Listez ce qui coûte de l&apos;argent et ce qui finance le projet. Commencez par les montants importants : le détail peut venir progressivement.
+              Équipe, répétitions, scénographie, droits et exploitation : TaDiff transforme vos hypothèses en coût plateau, prix de cession et seuil de rentabilité.
             </p>
           </div>
           <ShowBudgetWorkspace
             initialItems={budgetItems}
+            initialProfile={budgetProfile}
             showId={show.id}
             simpleBudget={show.budget}
             weightedPipelineRevenue={weightedRevenue}

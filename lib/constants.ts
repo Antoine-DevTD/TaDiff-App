@@ -177,7 +177,10 @@ export function getDashboardSection(pathname: string) {
 
 export function getDashboardSectionItems(sectionId: DashboardSectionId) {
   return dashboardNavItems.filter(
-    (item) => item.section === sectionId && item.href !== "/settings",
+    (item) =>
+      item.section === sectionId &&
+      item.href !== "/settings" &&
+      item.href !== "/resources",
   );
 }
 

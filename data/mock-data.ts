@@ -98,14 +98,14 @@ export const shows: Show[] = [
 ];
 
 export const showBudgetItems: ShowBudgetItem[] = [
-  { id: "budget-1", showId: "show-1", kind: "expense", category: "creation", label: "Répétitions rémunérées", amount: 3600, sortOrder: 0 },
-  { id: "budget-2", showId: "show-1", kind: "expense", category: "artistic", label: "Équipe artistique", amount: 4200, sortOrder: 1 },
-  { id: "budget-3", showId: "show-1", kind: "expense", category: "scenography", label: "Décor et costumes", amount: 1900, sortOrder: 2 },
-  { id: "budget-4", showId: "show-1", kind: "expense", category: "technical", label: "Création lumière et régie", amount: 1300, sortOrder: 3 },
-  { id: "budget-5", showId: "show-1", kind: "expense", category: "communication", label: "Affiche et dossier de diffusion", amount: 600, sortOrder: 4 },
-  { id: "budget-6", showId: "show-1", kind: "revenue", category: "own", label: "Apport de la compagnie", amount: 2500, sortOrder: 0 },
-  { id: "budget-7", showId: "show-1", kind: "revenue", category: "coproduction", label: "Coproduction confirmée", amount: 4000, sortOrder: 1 },
-  { id: "budget-8", showId: "show-1", kind: "revenue", category: "grants", label: "Aide à la création", amount: 3000, sortOrder: 2 },
+  { id: "budget-1", showId: "show-1", kind: "expense", category: "creation", label: "Répétitions rémunérées", amount: 3600, scope: "creation", sortOrder: 0 },
+  { id: "budget-2", showId: "show-1", kind: "expense", category: "artistic", label: "Équipe artistique", amount: 4200, scope: "creation", sortOrder: 1 },
+  { id: "budget-3", showId: "show-1", kind: "expense", category: "scenography", label: "Décor et costumes", amount: 1900, scope: "creation", sortOrder: 2 },
+  { id: "budget-4", showId: "show-1", kind: "expense", category: "technical", label: "Création lumière et régie", amount: 1300, scope: "creation", sortOrder: 3 },
+  { id: "budget-5", showId: "show-1", kind: "expense", category: "communication", label: "Affiche et dossier de diffusion", amount: 600, scope: "creation", sortOrder: 4 },
+  { id: "budget-6", showId: "show-1", kind: "revenue", category: "own", label: "Apport de la compagnie", amount: 2500, scope: "creation", sortOrder: 0 },
+  { id: "budget-7", showId: "show-1", kind: "revenue", category: "coproduction", label: "Coproduction confirmée", amount: 4000, scope: "creation", sortOrder: 1 },
+  { id: "budget-8", showId: "show-1", kind: "revenue", category: "grants", label: "Aide à la création", amount: 3000, scope: "creation", sortOrder: 2 },
 ];
 
 export const showDocuments: ShowDocument[] = [

@@ -4,15 +4,17 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { ReminderForm } from "@/components/reminders/reminder-form";
 import { Button } from "@/components/ui/button";
-import type { Contact, Show } from "@/types";
+import type { Contact, Reminder, Show } from "@/types";
 
 export function ShowActionDialog({
   contacts,
   currentShowId,
+  onCreated,
   shows,
 }: {
   contacts: Contact[];
   currentShowId: string;
+  onCreated?: (reminder: Reminder) => void;
   shows: Show[];
 }) {
   const [open, setOpen] = useState(false);
@@ -29,6 +31,7 @@ export function ShowActionDialog({
         open={open}
         shows={shows}
         onClose={() => setOpen(false)}
+        onCreated={onCreated}
       />
     </>
   );

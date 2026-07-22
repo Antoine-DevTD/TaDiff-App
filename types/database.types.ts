@@ -238,6 +238,10 @@ export type Database = {
           kind: "event" | "deadline" | "show";
           related_show_id: string | null;
           note: string | null;
+          all_day: boolean;
+          start_time: string | null;
+          end_time: string | null;
+          location: string | null;
           created_at: string;
         };
         Insert: {
@@ -248,6 +252,10 @@ export type Database = {
           kind?: "event" | "deadline" | "show";
           related_show_id?: string | null;
           note?: string | null;
+          all_day?: boolean;
+          start_time?: string | null;
+          end_time?: string | null;
+          location?: string | null;
           created_at?: string;
         };
         Update: {
@@ -258,6 +266,10 @@ export type Database = {
           kind?: "event" | "deadline" | "show";
           related_show_id?: string | null;
           note?: string | null;
+          all_day?: boolean;
+          start_time?: string | null;
+          end_time?: string | null;
+          location?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -380,6 +392,7 @@ export type Database = {
           category: string;
           label: string;
           amount: number;
+          scope: "creation" | "performance";
           sort_order: number;
           created_at: string;
           updated_at: string;
@@ -392,6 +405,7 @@ export type Database = {
           category: string;
           label: string;
           amount?: number;
+          scope?: "creation" | "performance";
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -403,6 +417,7 @@ export type Database = {
           category?: string;
           label?: string;
           amount?: number;
+          scope?: "creation" | "performance";
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -422,6 +437,67 @@ export type Database = {
             referencedRelation: "shows";
             referencedColumns: ["id"];
           },
+        ];
+      };
+      show_budget_profiles: {
+        Row: {
+          show_id: string;
+          company_id: string;
+          convention: string;
+          rate_source_url: string | null;
+          rate_effective_date: string | null;
+          performances_target: number;
+          exploitation_mode: "cession" | "revenue_share" | "rental";
+          cession_fee: number;
+          venue_rental: number;
+          minimum_guarantee: number;
+          company_share_percent: number;
+          average_ticket_price: number;
+          venue_capacity: number;
+          expected_occupancy_percent: number;
+          rights_territory: "paris" | "outside_paris";
+          author_rights_percent: number;
+          sacd_contribution_percent: number;
+          director_rights_percent: number;
+          music_rights_percent: number;
+          overhead_percent: number;
+          contingency_percent: number;
+          cession_margin_percent: number;
+          personnel: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          show_id: string;
+          company_id: string;
+          convention?: string;
+          rate_source_url?: string | null;
+          rate_effective_date?: string | null;
+          performances_target?: number;
+          exploitation_mode?: "cession" | "revenue_share" | "rental";
+          cession_fee?: number;
+          venue_rental?: number;
+          minimum_guarantee?: number;
+          company_share_percent?: number;
+          average_ticket_price?: number;
+          venue_capacity?: number;
+          expected_occupancy_percent?: number;
+          rights_territory?: "paris" | "outside_paris";
+          author_rights_percent?: number;
+          sacd_contribution_percent?: number;
+          director_rights_percent?: number;
+          music_rights_percent?: number;
+          overhead_percent?: number;
+          contingency_percent?: number;
+          cession_margin_percent?: number;
+          personnel?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["show_budget_profiles"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName: "show_budget_profiles_company_id_fkey"; columns: ["company_id"]; isOneToOne: false; referencedRelation: "companies"; referencedColumns: ["id"] },
+          { foreignKeyName: "show_budget_profiles_show_id_fkey"; columns: ["show_id"]; isOneToOne: true; referencedRelation: "shows"; referencedColumns: ["id"] },
         ];
       };
       show_work_folders: {

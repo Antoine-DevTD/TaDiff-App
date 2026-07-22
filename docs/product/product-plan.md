@@ -702,7 +702,7 @@ Les devis doivent integrer :
 
 Objectif : aider une compagnie a ne pas vendre a perte.
 
-### Editeur de budget avance et corealisation (backlog, apres le 23 juillet)
+### Editeur de budget avance et corealisation (socle implemente le 22 juillet 2026)
 
 Demande Titouan du 2026-07-05. Deux briques liees :
 
@@ -727,6 +727,13 @@ Demande Titouan du 2026-07-05. Deux briques liees :
 Impact technique prevu : champs de type de contrat + parametres de partage sur
 l'opportunite (ou une table deal_terms), extension du calculateur de rentabilite,
 integration dans devis et projection de tresorerie.
+
+Socle livre : equipe et repetitions avec brut et charges, depenses de creation ou
+par representation, financements, cession, partage de billetterie avec minimum
+garanti, location, droits, marge, public minimum, prix de cession conseille et
+courbe de rentabilite. Restent a approfondir : hypotheses basse/moyenne/haute,
+ordre de partage de plusieurs minimums garantis, coproduction et synchronisation
+avec devis et tresorerie.
 
 ### Contrats
 

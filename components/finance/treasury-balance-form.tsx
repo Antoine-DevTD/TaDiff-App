@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { recordTreasuryBalance } from "@/app/(dashboard)/actions";
@@ -12,9 +11,15 @@ import {
   type TreasuryBalanceFormInput,
   type TreasuryBalanceFormValues,
 } from "@/lib/validation/finance";
+import type { TreasurySnapshot } from "@/types";
 
-export function TreasuryBalanceForm({ currentBalance }: { currentBalance: number | null }) {
-  const router = useRouter();
+export function TreasuryBalanceForm({
+  currentBalance,
+  onRecorded,
+}: {
+  currentBalance: number | null;
+  onRecorded?: (snapshot: TreasurySnapshot) => void;
+}) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const {
@@ -37,7 +42,7 @@ export function TreasuryBalanceForm({ currentBalance }: { currentBalance: number
 
       if (result.ok) {
         reset({ balance: values.balance, note: "" });
-        router.refresh();
+        if (result.treasurySnapshot) onRecorded?.(result.treasurySnapshot);
       }
     });
   }

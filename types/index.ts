@@ -19,6 +19,10 @@ export type CalendarEvent = {
   kind: CalendarEventKind;
   relatedShowId: string | null;
   note: string;
+  allDay: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  location: string;
 };
 
 export type CompanyRoleValue = "owner" | "admin" | "member" | "readonly";
@@ -72,7 +76,64 @@ export type ShowBudgetItem = {
   category: string;
   label: string;
   amount: number;
+  scope: "creation" | "performance";
   sortOrder: number;
+};
+
+export type ShowBudgetPersonnel = {
+  id: string;
+  label: string;
+  group: "plateau" | "creation" | "technique";
+  active: boolean;
+  count: number;
+  rehearsalServices: number;
+  rehearsalGrossRate: number;
+  performanceGrossRate: number;
+  chargeRate: number;
+};
+
+export type ShowBudgetProfile = {
+  showId: string;
+  convention: string;
+  rateSourceUrl: string;
+  rateEffectiveDate: string;
+  performancesTarget: number;
+  exploitationMode: "cession" | "revenue_share" | "rental";
+  cessionFee: number;
+  venueRental: number;
+  minimumGuarantee: number;
+  companySharePercent: number;
+  averageTicketPrice: number;
+  venueCapacity: number;
+  expectedOccupancyPercent: number;
+  rightsTerritory: "paris" | "outside_paris";
+  authorRightsPercent: number;
+  sacdContributionPercent: number;
+  directorRightsPercent: number;
+  musicRightsPercent: number;
+  overheadPercent: number;
+  contingencyPercent: number;
+  cessionMarginPercent: number;
+  personnel: ShowBudgetPersonnel[];
+};
+
+export type ShowBudgetSummary = {
+  creationCost: number;
+  creationPersonnel: number;
+  creationExpenses: number;
+  securedFunding: number;
+  remainingCreationCost: number;
+  performancePersonnel: number;
+  performanceExpenses: number;
+  rightsPerPerformance: number;
+  performanceCost: number;
+  performanceIncome: number;
+  contributionPerPerformance: number;
+  expectedAttendance: number;
+  expectedBoxOffice: number;
+  breakEvenPerformances: number | null;
+  audienceBreakEven: number | null;
+  recommendedCessionFee: number;
 };
 
 export type ShowDocumentType =

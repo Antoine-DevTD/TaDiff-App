@@ -77,7 +77,9 @@ import {
 } from "@/lib/validation/show-email-profile";
 import {
   showBudgetItemSchema,
+  showBudgetProfileSchema,
   type ShowBudgetItemInput,
+  type ShowBudgetProfileInput,
 } from "@/lib/validation/show-budget";
 import { feedbackSchema, type FeedbackFormInput } from "@/lib/validation/feedback";
 import {
@@ -92,8 +94,10 @@ import type { Database, Json } from "@/types/database.types";
 type ActionResult = {
   ok: boolean;
   message: string;
+  calendarEvent?: import("@/types").CalendarEvent;
   reminder?: Reminder;
   reminders?: Reminder[];
+  treasurySnapshot?: import("@/types").TreasurySnapshot;
 };
 
 export async function saveEmailTemplate(
@@ -640,6 +644,7 @@ export async function saveShowBudgetItem(
     category: parsed.data.category,
     label: parsed.data.label,
     amount: parsed.data.amount,
+    scope: parsed.data.scope,
     updated_at: new Date().toISOString(),
   };
 
@@ -650,7 +655,7 @@ export async function saveShowBudgetItem(
         .eq("id", itemId)
         .eq("show_id", showId)
         .eq("company_id", workspace.companyId)
-        .select("id,show_id,kind,category,label,amount,sort_order")
+        .select("id,show_id,kind,category,label,amount,scope,sort_order")
         .single()
     : await supabase
         .from("show_budget_items")
@@ -659,12 +664,14 @@ export async function saveShowBudgetItem(
           company_id: workspace.companyId,
           show_id: showId,
         })
-        .select("id,show_id,kind,category,label,amount,sort_order")
+        .select("id,show_id,kind,category,label,amount,scope,sort_order")
         .single();
 
   if (response.error || !response.data) {
-    const message = isDetailedBudgetSchemaCacheError(response.error?.message)
-      ? "Le budget détaillé doit être activé avec la migration 034."
+    const message = response.error?.message.includes("scope")
+      ? "Appliquez la migration 054 avant d'enregistrer une dépense par représentation."
+      : isDetailedBudgetSchemaCacheError(response.error?.message)
+        ? "Le budget détaillé doit être activé avec la migration 034."
       : response.error?.message ?? "Impossible d'enregistrer cette ligne.";
     return { ok: false, message };
   }
@@ -682,9 +689,74 @@ export async function saveShowBudgetItem(
       category: response.data.category,
       label: response.data.label,
       amount: response.data.amount ?? 0,
+      scope: response.data.scope ?? "creation",
       sortOrder: response.data.sort_order,
     },
   };
+}
+
+export async function saveShowBudgetProfile(showId: string, values: ShowBudgetProfileInput) {
+  const parsed = showBudgetProfileSchema.safeParse(values);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Hypothèses de budget invalides." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode démo : hypothèses validées.", profile: { showId, ...parsed.data } };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+
+  const supabase = await getSupabaseServerClient();
+  const { data: ownedShow } = await supabase.from("shows").select("id")
+    .eq("id", showId).eq("company_id", workspace.companyId).maybeSingle();
+  if (!ownedShow) return { ok: false, message: "Spectacle introuvable dans cette compagnie." };
+
+  const profileValues = {
+    company_id: workspace.companyId,
+    convention: parsed.data.convention,
+    rate_source_url: parsed.data.rateSourceUrl || null,
+    rate_effective_date: parsed.data.rateEffectiveDate || null,
+    performances_target: parsed.data.performancesTarget,
+    exploitation_mode: parsed.data.exploitationMode,
+    cession_fee: parsed.data.cessionFee,
+    venue_rental: parsed.data.venueRental,
+    minimum_guarantee: parsed.data.minimumGuarantee,
+    company_share_percent: parsed.data.companySharePercent,
+    average_ticket_price: parsed.data.averageTicketPrice,
+    venue_capacity: parsed.data.venueCapacity,
+    expected_occupancy_percent: parsed.data.expectedOccupancyPercent,
+    rights_territory: parsed.data.rightsTerritory,
+    author_rights_percent: parsed.data.authorRightsPercent,
+    sacd_contribution_percent: parsed.data.sacdContributionPercent,
+    director_rights_percent: parsed.data.directorRightsPercent,
+    music_rights_percent: parsed.data.musicRightsPercent,
+    overhead_percent: parsed.data.overheadPercent,
+    contingency_percent: parsed.data.contingencyPercent,
+    cession_margin_percent: parsed.data.cessionMarginPercent,
+    personnel: parsed.data.personnel as Json,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase.from("show_budget_profiles").upsert({
+    show_id: showId,
+    ...profileValues,
+  }, { onConflict: "show_id" });
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message.includes("schema cache")
+        ? "Appliquez la migration 054 avant d'enregistrer le budget théâtre."
+        : error.message,
+    };
+  }
+
+  revalidatePath(`/shows/${showId}`);
+  revalidatePath("/finances");
+  return { ok: true, message: "Hypothèses enregistrées.", profile: { showId, ...parsed.data } };
 }
 
 export async function deleteShowBudgetItem(showId: string, itemId: string): Promise<ActionResult> {
@@ -1502,7 +1574,22 @@ export async function createCalendarEvent(
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : evenement valide sans enregistrement." };
+    return {
+      ok: true,
+      message: "Mode demo : evenement ajoute pour cette visite.",
+      calendarEvent: {
+        id: `calendar-demo-${Date.now()}`,
+        title: parsed.data.title,
+        eventDate: parsed.data.eventDate,
+        kind: parsed.data.kind,
+        relatedShowId: parsed.data.relatedShowId || null,
+        note: parsed.data.note || "",
+        allDay: parsed.data.allDay,
+        startTime: parsed.data.allDay ? null : parsed.data.startTime || null,
+        endTime: parsed.data.allDay ? null : parsed.data.endTime || null,
+        location: parsed.data.location || "",
+      },
+    };
   }
 
   const accessError = await requireWriteAccess();
@@ -1518,24 +1605,80 @@ export async function createCalendarEvent(
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase.from("calendar_events").insert({
+  const eventPayload = {
     company_id: workspace.companyId,
     title: parsed.data.title,
     event_date: parsed.data.eventDate,
     kind: parsed.data.kind,
     related_show_id: parsed.data.relatedShowId || null,
     note: parsed.data.note || null,
-  });
+    all_day: parsed.data.allDay,
+    start_time: parsed.data.allDay ? null : parsed.data.startTime || null,
+    end_time: parsed.data.allDay ? null : parsed.data.endTime || null,
+    location: parsed.data.location || null,
+  };
+  let { data: createdEvent, error } = await supabase
+    .from("calendar_events")
+    .insert(eventPayload)
+    .select("id,title,event_date,kind,related_show_id,note,all_day,start_time,end_time,location")
+    .single();
 
-  if (error) {
-    return { ok: false, message: error.message };
+  if (error && isMissingCalendarScheduleColumn(error.message)) {
+    const legacyResult = await supabase
+      .from("calendar_events")
+      .insert({
+        company_id: eventPayload.company_id,
+        title: eventPayload.title,
+        event_date: eventPayload.event_date,
+        kind: eventPayload.kind,
+        related_show_id: eventPayload.related_show_id,
+        note: eventPayload.note,
+      })
+      .select("id,title,event_date,kind,related_show_id,note")
+      .single();
+
+    createdEvent = legacyResult.data
+      ? {
+          ...legacyResult.data,
+          all_day: parsed.data.allDay,
+          start_time: parsed.data.startTime || null,
+          end_time: parsed.data.endTime || null,
+          location: parsed.data.location || null,
+        }
+      : null;
+    error = legacyResult.error;
+  }
+
+  if (error || !createdEvent) {
+    return { ok: false, message: error?.message ?? "Evenement non ajoute." };
   }
 
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
   await logActivity("a ajoute un evenement a l agenda", "calendar", parsed.data.title);
 
-  return { ok: true, message: "Evenement ajoute a l'agenda." };
+  return {
+    ok: true,
+    message: "Evenement ajoute a l'agenda.",
+    calendarEvent: {
+      id: createdEvent.id,
+      title: createdEvent.title,
+      eventDate: createdEvent.event_date,
+      kind: createdEvent.kind,
+      relatedShowId: createdEvent.related_show_id,
+      note: createdEvent.note ?? "",
+      allDay: createdEvent.all_day,
+      startTime: createdEvent.start_time,
+      endTime: createdEvent.end_time,
+      location: createdEvent.location ?? "",
+    },
+  };
+}
+
+function isMissingCalendarScheduleColumn(message: string) {
+  return ["all_day", "start_time", "end_time", "location", "schema cache"].some((column) =>
+    message.toLowerCase().includes(column),
+  );
 }
 
 export async function deleteCalendarEvent(eventId: string): Promise<ActionResult> {
@@ -1779,7 +1922,16 @@ export async function recordTreasuryBalance(
   }
 
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : solde valide, non enregistre." };
+    return {
+      ok: true,
+      message: "Mode demo : solde mis a jour pour cette visite.",
+      treasurySnapshot: {
+        id: `treasury-demo-${Date.now()}`,
+        balance: parsed.data.balance,
+        recordedOn: new Date().toISOString().slice(0, 10),
+        note: parsed.data.note || "",
+      },
+    };
   }
 
   const accessError = await requireWriteAccess();
@@ -1795,14 +1947,18 @@ export async function recordTreasuryBalance(
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase.from("treasury_snapshots").insert({
-    company_id: workspace.companyId,
-    balance: parsed.data.balance,
-    note: parsed.data.note || null,
-  });
+  const { data: snapshot, error } = await supabase
+    .from("treasury_snapshots")
+    .insert({
+      company_id: workspace.companyId,
+      balance: parsed.data.balance,
+      note: parsed.data.note || null,
+    })
+    .select("id,balance,recorded_on,note")
+    .single();
 
-  if (error) {
-    return { ok: false, message: error.message };
+  if (error || !snapshot) {
+    return { ok: false, message: error?.message ?? "Solde non enregistre." };
   }
 
   revalidatePath("/finances");
@@ -1814,7 +1970,16 @@ export async function recordTreasuryBalance(
     `${parsed.data.balance.toLocaleString("fr-FR")} EUR`,
   );
 
-  return { ok: true, message: "Solde de tresorerie mis a jour." };
+  return {
+    ok: true,
+    message: "Solde de tresorerie mis a jour.",
+    treasurySnapshot: {
+      id: snapshot.id,
+      balance: snapshot.balance,
+      recordedOn: snapshot.recorded_on,
+      note: snapshot.note ?? "",
+    },
+  };
 }
 
 export async function createContact(values: ContactFormValues): Promise<ActionResult> {
@@ -3480,21 +3645,43 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
     }
   }
 
-  const { data: createdReminder, error } = await supabase
+  const reminderPayload = {
+    company_id: workspace.companyId,
+    title: parsed.data.title,
+    due_date: parsed.data.dueDate,
+    related_to: parsed.data.relatedTo || null,
+    priority: parsed.data.priority,
+    opportunity_id: parsed.data.opportunityId || null,
+    contact_id: parsed.data.contactId || null,
+    show_id: parsed.data.showId || null,
+    action_type: parsed.data.actionType ?? "other",
+  };
+  let { data: createdReminder, error } = await supabase
     .from("reminders")
-    .insert({
-      company_id: workspace.companyId,
-      title: parsed.data.title,
-      due_date: parsed.data.dueDate,
-      related_to: parsed.data.relatedTo || null,
-      priority: parsed.data.priority,
-      opportunity_id: parsed.data.opportunityId || null,
-      contact_id: parsed.data.contactId || null,
-      show_id: parsed.data.showId || null,
-      action_type: parsed.data.actionType ?? "other",
-    })
+    .insert(reminderPayload)
     .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type")
     .single();
+
+  if (error && isReminderOptionalColumnError(error.message)) {
+    const fallback = await supabase
+      .from("reminders")
+      .insert({
+        company_id: reminderPayload.company_id,
+        title: reminderPayload.title,
+        due_date: reminderPayload.due_date,
+        related_to: reminderPayload.related_to,
+        priority: reminderPayload.priority,
+        opportunity_id: reminderPayload.opportunity_id,
+        contact_id: reminderPayload.contact_id,
+      })
+      .select("id,title,due_date,related_to,done,priority,contact_id")
+      .single();
+
+    createdReminder = fallback.data
+      ? { ...fallback.data, show_id: null, action_type: "other" as const }
+      : null;
+    error = fallback.error;
+  }
 
   if (error || !createdReminder) {
     return { ok: false, message: error?.message ?? "Action non creee." };
@@ -3521,6 +3708,11 @@ export async function createReminder(values: ReminderFormInput): Promise<ActionR
       actionType: createdReminder.action_type,
     },
   };
+}
+
+function isReminderOptionalColumnError(message: string) {
+  return ["show_id", "action_type", "completion_", "reminder_events", "schema cache"]
+    .some((fragment) => message.toLowerCase().includes(fragment.toLowerCase()));
 }
 
 export async function updateReminder(

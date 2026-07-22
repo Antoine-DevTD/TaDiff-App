@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { FixedCostCreateDialog } from "@/components/finance/fixed-cost-create-dialog";
 import { FixedCostRowActions } from "@/components/finance/fixed-cost-row-actions";
-import { TreasuryBalanceForm } from "@/components/finance/treasury-balance-form";
-import { TreasuryChart } from "@/components/finance/treasury-chart";
+import { TreasuryOverview } from "@/components/finance/treasury-overview";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
 import {
   buildDealProfitability,
-  buildTreasuryProjection,
   formatCurrency,
   getFixedCostSharePerPerformance,
   getMonthlyFixedCostEquivalent,
@@ -112,12 +109,6 @@ export default async function FinancesPage() {
     costs: fixedCosts,
     targetPerformancesPerYear,
   });
-  const projection = buildTreasuryProjection({
-    currentCash: treasury?.balance ?? 0,
-    fixedCosts,
-    grants,
-    quotes,
-  });
   const showMap = new Map(shows.map((show) => [show.id, show]));
   const profitabilityRows = deals
     .filter((deal) => deal.stage !== "Perdu")
@@ -149,99 +140,14 @@ export default async function FinancesPage() {
         />
       ) : (
         <>
-          <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-            <Card className="space-y-5 p-5" data-tour="finance-tresorerie">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted">Tresorerie</p>
-                  <p className="mt-2 text-2xl font-semibold">
-                    {projection.status === "success"
-                      ? "La projection reste positive."
-                      : projection.status === "warning"
-                        ? "La marge de securite se reduit."
-                        : "Risque de passage dans le rouge."}
-                  </p>
-                  <p className="mt-2 max-w-2xl text-sm text-muted">
-                    La lecture reste volontairement simple : cash disponible, frais fixes,
-                    encaissements attendus et date de risque.
-                  </p>
-                </div>
-                <Badge tone={projection.status}>
-                  {projection.status === "success"
-                    ? "Vert"
-                    : projection.status === "warning"
-                      ? "Orange"
-                      : "Rouge"}
-                </Badge>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-4">
-                <MetricPanel
-                  label="Cash actuel"
-                  value={formatCurrency(projection.currentCash)}
-                  detail={
-                    isDemoTreasury
-                      ? "Demo"
-                      : treasury
-                        ? `Saisi le ${new Date(treasury.recordedOn).toLocaleDateString("fr-FR")}`
-                        : "A renseigner"
-                  }
-                />
-                <MetricPanel label="Frais fixes / mois" value={formatCurrency(monthlyFixedCosts)} detail={`${fixedCosts.length} lignes`} />
-                <MetricPanel label="Risque rouge" value={projection.riskDate.toLocaleDateString("fr-FR")} detail={`${projection.runwayDays} jours`} />
-                <MetricPanel label="A encaisser 30 j" value={formatCurrency(projection.expectedQuotes30)} detail="Devis actifs" />
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-3">
-                <ProjectionCard label="Projection 30 j" value={projection.cash30} />
-                <ProjectionCard label="Projection 60 j" value={projection.cash60} />
-                <ProjectionCard label="Projection 90 j" value={projection.cash90} />
-              </div>
-
-              {isDemoTreasury ? (
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-                  <PlannedFeatureBadge kind="demo-data" />
-                  <span>
-                    Le cash actuel est une valeur de demonstration. Connectez Supabase pour saisir
-                    le solde reel.
-                  </span>
-                </div>
-              ) : treasury ? (
-                <p className="text-xs text-muted">
-                  Solde saisi le {new Date(treasury.recordedOn).toLocaleDateString("fr-FR")}
-                  {treasury.note ? ` - ${treasury.note}` : ""}. L&apos;import bancaire CSV arrive
-                  dans un prochain lot.
-                </p>
-              ) : (
-                <p className="rounded-md bg-warning/10 px-3 py-2 text-xs text-warning">
-                  Aucun solde saisi : la projection part de 0 EUR. Renseignez votre solde bancaire
-                  ci-contre pour une lecture fiable.
-                </p>
-              )}
-            </Card>
-
-            <div className="space-y-6">
-            <Card className="space-y-4 p-5">
-              <div>
-                <p className="text-base font-semibold">Suivi de tresorerie</p>
-                <p className="mt-1 text-sm text-muted">
-                  Evolution de ton solde a chaque saisie.
-                </p>
-              </div>
-              <TreasuryChart snapshots={treasuryHistory} />
-            </Card>
-
-            <Card className="space-y-4 p-5">
-              <div>
-                <p className="text-base font-semibold">Mettre a jour le solde</p>
-                <p className="mt-1 text-sm text-muted">
-                  Le solde bancaire saisi alimente le cockpit, la projection et la date de risque.
-                </p>
-              </div>
-              <TreasuryBalanceForm currentBalance={treasury?.balance ?? null} />
-            </Card>
-            </div>
-          </section>
+          <TreasuryOverview
+            fixedCosts={fixedCosts}
+            grants={grants}
+            initialHistory={treasuryHistory}
+            initialTreasury={treasury}
+            isDemoTreasury={isDemoTreasury}
+            quotes={quotes}
+          />
 
           <section className="grid gap-3 md:grid-cols-3">
             <AdviceBlock
@@ -492,20 +398,6 @@ export default async function FinancesPage() {
   );
 }
 
-function ProjectionCard({ label, value }: { label: string; value: number }) {
-  const tone = value >= 0 ? "success" : "danger";
-
-  return (
-    <div className="rounded-lg border border-border bg-panel-strong/45 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
-        <Badge tone={tone}>{value >= 0 ? "OK" : "Rouge"}</Badge>
-      </div>
-      <p className="mt-3 text-lg font-semibold">{formatCurrency(value)}</p>
-    </div>
-  );
-}
-
 function AdviceBlock({ detail, title }: { detail: string; title: string }) {
   return (
     <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
@@ -530,24 +422,6 @@ function MetricCard({
       <p className="mt-3 text-2xl font-semibold">{value}</p>
       <p className="mt-2 text-xs text-muted">{detail}</p>
     </Card>
-  );
-}
-
-function MetricPanel({
-  detail,
-  label,
-  value,
-}: {
-  detail: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-panel-strong/45 p-4">
-      <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-2 text-lg font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-muted">{detail}</p>
-    </div>
   );
 }
 

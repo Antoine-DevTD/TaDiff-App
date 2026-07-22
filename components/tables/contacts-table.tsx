@@ -77,7 +77,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
 
   const activeContacts = useMemo(() => contacts.filter((contact) => !removedContactIds.includes(contact.id)), [contacts, removedContactIds]);
   const tabContacts = useMemo(() => activeContacts.filter((contact) => contact.contactType === contactTab), [activeContacts, contactTab]);
-  const filters = useMemo(() => buildFilters(tabContacts), [tabContacts]);
+  const filters = useMemo(() => buildFilters(tabContacts, contactTab), [contactTab, tabContacts]);
   const activeFilterExists = filters.some(
     (filter) => filter.kind === activeFilter.kind && filter.value === activeFilter.value,
   );
@@ -217,7 +217,9 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
               </button>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{resolvedFilter.label}</p>
-                <p className="text-xs text-muted">{filteredContacts.length} contact(s)</p>
+                <p className="text-xs text-muted">
+                  {filteredContacts.length} {contactTab === "venue" ? "lieu(x)" : "contact(s)"}
+                </p>
               </div>
             </div>
             <div className="flex w-full flex-col gap-2 sm:max-w-4xl sm:flex-row sm:justify-end">
@@ -296,7 +298,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
                 {table.getRowModel().rows.length === 0 ? (
                   <tr>
                     <td className="px-4 py-10 text-center text-sm text-muted" colSpan={columns.length}>
-                      Aucun contact ne correspond a ce filtre.
+                      Aucun {contactTab === "venue" ? "lieu" : "contact"} ne correspond à ce filtre.
                     </td>
                   </tr>
                 ) : null}
@@ -893,10 +895,10 @@ function SortableHeader({ label, onClick }: { label: string; onClick: () => void
   );
 }
 
-function buildFilters(contacts: Contact[]): ContactFilter[] {
+function buildFilters(contacts: Contact[], contactTab: "person" | "venue"): ContactFilter[] {
   const filters: ContactFilter[] = [
     {
-      label: "Tous les contacts",
+      label: contactTab === "venue" ? "Tous les lieux" : "Tous les contacts",
       value: "all",
       count: contacts.length,
       kind: "all",

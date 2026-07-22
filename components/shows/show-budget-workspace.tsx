@@ -7,17 +7,17 @@ import {
   deleteShowBudgetItem,
   saveShowBudgetItem,
 } from "@/app/(dashboard)/actions";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { TheatreBudgetPlanner } from "@/components/shows/theatre-budget-planner";
 import {
   expenseBudgetCategories,
   getBudgetCategoryLabel,
   revenueBudgetCategories,
   type ShowBudgetItemValues,
 } from "@/lib/validation/show-budget";
-import type { ShowBudgetItem } from "@/types";
+import type { ShowBudgetItem, ShowBudgetProfile } from "@/types";
 
 type BudgetKind = "expense" | "revenue";
 
@@ -36,11 +36,13 @@ const starterLines: Record<BudgetKind, Array<{ category: string; label: string }
 
 export function ShowBudgetWorkspace({
   initialItems,
+  initialProfile,
   showId,
   simpleBudget,
   weightedPipelineRevenue,
 }: {
   initialItems: ShowBudgetItem[];
+  initialProfile: ShowBudgetProfile;
   showId: string;
   simpleBudget: number;
   weightedPipelineRevenue: number;
@@ -49,11 +51,6 @@ export function ShowBudgetWorkspace({
   const [items, setItems] = useState(initialItems);
   const expenses = items.filter((item) => item.kind === "expense");
   const revenues = items.filter((item) => item.kind === "revenue");
-  const totalExpenses = expenses.reduce((total, item) => total + item.amount, 0);
-  const totalRevenues = revenues.reduce((total, item) => total + item.amount, 0);
-  const remaining = Math.max(totalExpenses - totalRevenues, 0);
-  const surplus = Math.max(totalRevenues - totalExpenses, 0);
-  const coverage = totalExpenses > 0 ? Math.min((totalRevenues / totalExpenses) * 100, 100) : 0;
 
   function updateItem(item: ShowBudgetItem) {
     setItems((current) => {
@@ -72,44 +69,15 @@ export function ShowBudgetWorkspace({
 
   return (
     <div className="space-y-8">
-      <section className="border-y border-border py-5">
-        <div className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
-          <BudgetMetric
-            label="Le spectacle coûte"
-            value={formatCurrency(totalExpenses)}
-            detail="Toutes les dépenses listées"
-          />
-          <BudgetMetric
-            label="Déjà financé"
-            value={formatCurrency(totalRevenues)}
-            detail={`${Math.round(coverage)} % du budget couvert`}
-            tone="success"
-          />
-          <BudgetMetric
-            label={remaining > 0 ? "Reste à trouver" : "Marge disponible"}
-            value={formatCurrency(remaining || surplus)}
-            detail={remaining > 0 ? "Pour équilibrer le projet" : "Les entrées couvrent les dépenses"}
-            tone={remaining > 0 ? "warning" : "success"}
-          />
-        </div>
+      <TheatreBudgetPlanner initialProfile={initialProfile} items={items} showId={showId} />
 
-        <div className="mt-5">
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="font-medium">Financement du projet</span>
-            <span className="text-muted">{Math.round(coverage)} %</span>
-          </div>
-          <div className="mt-2 h-3 overflow-hidden rounded-full bg-panel-strong">
-            <div
-              className="h-full rounded-full bg-success transition-[width] duration-500 motion-reduce:transition-none"
-              style={{ width: `${coverage}%` }}
-            />
-          </div>
-          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted">
-            <span>Enveloppe estimée au départ : {formatCurrency(simpleBudget)}</span>
-            <span>
-              Dates en discussion : {formatCurrency(weightedPipelineRevenue)} pondérés, non comptés dans les entrées
-            </span>
-          </div>
+      <section className="border-t border-border pt-7">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Dépenses et financements</p>
+        <h3 className="mt-2 text-xl font-semibold">Compléter le budget poste par poste</h3>
+        <p className="mt-1 text-sm text-muted">Scénographie, costumes, accessoires, communication, transports, subventions et coproductions.</p>
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted">
+          <span>Enveloppe initiale : {formatCurrency(simpleBudget)}</span>
+          <span>Dates en discussion : {formatCurrency(weightedPipelineRevenue)} pondérés, non comptés dans les financements.</span>
         </div>
       </section>
 
@@ -132,29 +100,6 @@ export function ShowBudgetWorkspace({
           <ExpenseBreakdown items={expenses} />
         </div>
       </section>
-    </div>
-  );
-}
-
-function BudgetMetric({
-  detail,
-  label,
-  tone = "neutral",
-  value,
-}: {
-  detail: string;
-  label: string;
-  tone?: "neutral" | "success" | "warning";
-  value: string;
-}) {
-  return (
-    <div className="bg-panel p-5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
-        {tone === "neutral" ? null : <Badge tone={tone}>{tone === "success" ? "Bon repère" : "À compléter"}</Badge>}
-      </div>
-      <p className="mt-3 text-2xl font-semibold tabular-nums">{value}</p>
-      <p className="mt-1 text-sm text-muted">{detail}</p>
     </div>
   );
 }
@@ -209,6 +154,7 @@ function BudgetSection({
                     category: starter.category,
                     label: starter.label,
                     amount: 0,
+                    scope: "creation",
                     sortOrder: 0,
                   })
                 }
@@ -265,7 +211,10 @@ function BudgetLine({
     <div className="group flex min-h-16 items-center gap-3 border-b border-border py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{item.label}</p>
-        <p className="mt-1 truncate text-xs text-muted">{getBudgetCategoryLabel(item.kind, item.category)}</p>
+        <p className="mt-1 truncate text-xs text-muted">
+          {getBudgetCategoryLabel(item.kind, item.category)}
+          {item.kind === "expense" ? ` · ${item.scope === "performance" ? "par représentation" : "création"}` : ""}
+        </p>
       </div>
       <p className="shrink-0 text-sm font-semibold tabular-nums">{formatCurrency(item.amount)}</p>
       <div className="flex shrink-0 items-center gap-1 opacity-100 transition lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
@@ -315,6 +264,7 @@ function BudgetLineEditor({
   const [category, setCategory] = useState(item?.category ?? categories[0].value);
   const [label, setLabel] = useState(item?.label ?? "");
   const [amount, setAmount] = useState(item?.amount ? String(item.amount) : "");
+  const [scope, setScope] = useState<"creation" | "performance">(item?.scope ?? "creation");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -326,6 +276,7 @@ function BudgetLineEditor({
       category,
       label,
       amount: Number(amount),
+      scope,
     };
 
     startTransition(async () => {
@@ -340,7 +291,7 @@ function BudgetLineEditor({
 
   return (
     <form className="mt-4 border border-accent/30 bg-accent/5 p-4" onSubmit={submit}>
-      <div className="grid gap-3 sm:grid-cols-[0.9fr_1.4fr_0.65fr]">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[0.9fr_1.3fr_0.75fr_0.65fr]">
         <label className="text-sm font-medium">
           Catégorie
           <Select className="mt-2" value={category} onChange={(event) => setCategory(event.target.value)}>
@@ -352,6 +303,13 @@ function BudgetLineEditor({
         <label className="text-sm font-medium">
           À quoi sert ce montant ?
           <Input className="mt-2" required value={label} onChange={(event) => setLabel(event.target.value)} />
+        </label>
+        <label className="text-sm font-medium">
+          Quand cette dépense revient-elle ?
+          <Select className="mt-2" disabled={kind === "revenue"} value={scope} onChange={(event) => setScope(event.target.value as "creation" | "performance")}>
+            <option value="creation">Une fois, à la création</option>
+            <option value="performance">À chaque représentation</option>
+          </Select>
         </label>
         <label className="text-sm font-medium">
           Montant
@@ -409,4 +367,3 @@ function formatCurrency(value: number) {
     maximumFractionDigits: 0,
   }).format(value);
 }
-

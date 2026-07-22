@@ -155,7 +155,7 @@ function ShowActionBoard({ archived, contacts, isPending, onAdd, onDone, onReope
             <h3 className="mt-1 truncate text-lg font-semibold">{show?.title || "Actions de la compagnie"}</h3>
             <p className="mt-1 text-sm text-muted">{ordered.length} action{ordered.length > 1 ? "s" : ""} {archived ? "terminée" : "à faire"}{ordered.length > 1 ? "s" : ""}</p>
           </div>
-          {!archived ? <Button aria-label={`Ajouter une action${show ? ` pour ${show.title}` : ""}`} className="h-10 w-10 shrink-0 p-0" title="Ajouter une action" type="button" variant="secondary" onClick={onAdd}><Plus className="h-4 w-4" /></Button> : null}
+          {!archived ? <Button aria-label={`Ajouter une action${show ? ` pour ${show.title}` : ""}`} className="h-12 w-12 shrink-0 p-0 shadow-sm" title="Ajouter une action" type="button" variant="secondary" onClick={onAdd}><Plus className="h-5 w-5" /></Button> : null}
         </div>
       </header>
       <div className="divide-y divide-border">

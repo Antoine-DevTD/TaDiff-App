@@ -94,7 +94,10 @@ test.describe("cockpit en mode demonstration", () => {
     const completionDialog = page.getByRole("dialog", { name: "Bravo ! Sur quoi cette action a-t-elle débouché ?" });
     await expect(completionDialog).toBeVisible();
     await completionDialog.getByRole("button", { name: "Ça avance" }).click();
-    await completionDialog.getByLabel(/Petit compte rendu/).fill("Le dossier est prêt, envoi prévu demain.");
+    const completionNote = completionDialog.getByLabel(/Petit compte rendu/);
+    await completionNote.pressSequentially("Le dossier est prêt, envoi prévu demain.");
+    await expect(completionNote).toBeFocused();
+    await expect(completionNote).toHaveValue("Le dossier est prêt, envoi prévu demain.");
     await completionDialog.getByRole("button", { name: "Enregistrer le résultat" }).click();
     await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Terminées (1)" }).click();
@@ -181,6 +184,45 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("link", { name: "Ouvrir Les lignes de fuite" })).toBeVisible();
   });
 
+  test("ferme les popups avec Echap ou un clic a cote", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/dashboard");
+
+    const trigger = page.getByRole("button", { name: "Donner un retour" });
+    await trigger.click();
+    const dialog = page.getByRole("dialog", { name: "Donner un retour" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByLabel("Votre message").pressSequentially("Un retour en cours");
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+    await page.mouse.click(8, 8);
+    await expect(dialog).toBeHidden();
+  });
+
+  test("ajoute un evenement horaire directement depuis le calendrier", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/calendar");
+
+    const day = page.locator("[data-calendar-date]").nth(15);
+    await day.click({ button: "right" });
+
+    const dialog = page.getByRole("dialog", { name: "Qu'est-ce qui se passe ?" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByLabel("Titre").fill("Rendez-vous technique test");
+    await dialog.getByLabel("Toute la journée").uncheck();
+    await dialog.getByLabel("Début").fill("14:30");
+    await dialog.getByLabel(/Fin/).fill("16:00");
+    await dialog.getByLabel(/Lieu/).fill("Plateau A");
+    await dialog.getByRole("button", { name: "Ajouter à l'agenda" }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText("Rendez-vous technique test", { exact: true })).toBeVisible();
+  });
+
   test("ouvre une action deja rattachee depuis la fiche spectacle", async ({ page }) => {
     await page.goto("/shows/show-1?tab=dates");
 
@@ -206,22 +248,27 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("dialog", { name: "Nouveau spectacle" })).toBeVisible();
   });
 
-  test("rend le budget detaille progressif et comprehensible", async ({ page }) => {
+  test("pilote un budget theatre detaille et sa rentabilite", async ({ page }) => {
     await page.goto("/shows/show-1");
 
     await page.getByRole("link", { name: "Budget", exact: true }).click();
     await expect(page).toHaveURL(/tab=budget/);
-    await expect(page.getByRole("heading", { name: /Comprendre l'équilibre/ })).toBeVisible();
-    await expect(page.getByText("Le spectacle coûte", { exact: true })).toBeVisible();
-    await expect(page.getByText("Déjà financé", { exact: true })).toBeVisible();
-    await expect(page.getByText("Reste à trouver", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Construire le budget réel/ })).toBeVisible();
+    await expect(page.getByText("Création à financer", { exact: true })).toBeVisible();
+    await expect(page.getByText("Coût d'un plateau", { exact: true })).toBeVisible();
+    await expect(page.getByText("Cession conseillée", { exact: true })).toBeVisible();
+    await expect(page.getByRole("img", { name: "Courbe de rentabilité du spectacle" })).toBeVisible();
+    await expect(page.getByLabel("Métier").first()).toHaveValue("Comédien ou comédienne");
     await expect(page.getByRole("heading", { name: "Répartition des dépenses" })).toBeVisible();
 
     await page.getByRole("button", { name: "Ajouter une dépense" }).click();
     await page.getByLabel("À quoi sert ce montant ?").fill("Location du studio de répétition");
+    await page.getByLabel("Quand cette dépense revient-elle ?").selectOption("creation");
     await page.getByLabel("Montant", { exact: true }).fill("850");
     await page.getByRole("button", { name: "Ajouter la ligne" }).click();
     await expect(page.getByText("Location du studio de répétition", { exact: true })).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoHorizontalOverflow(page);
   });
 
   test("propose les actions spectacle au clic droit", async ({ page }) => {

@@ -32,6 +32,7 @@ export const showBudgetItemSchema = z
     category: z.enum(budgetCategories),
     label: z.string().trim().min(2, "Précisez à quoi correspond ce montant.").max(120),
     amount: z.coerce.number().min(0, "Le montant doit être positif.").max(99_999_999),
+    scope: z.enum(["creation", "performance"]).default("creation"),
   })
   .superRefine((value, context) => {
     const categories = value.kind === "expense" ? expenseBudgetCategories : revenueBudgetCategories;
@@ -46,6 +47,48 @@ export const showBudgetItemSchema = z
 
 export type ShowBudgetItemInput = z.input<typeof showBudgetItemSchema>;
 export type ShowBudgetItemValues = z.infer<typeof showBudgetItemSchema>;
+
+const boundedAmount = z.coerce.number().min(0).max(99_999_999);
+const boundedPercent = z.coerce.number().min(0).max(100);
+
+export const showBudgetPersonnelSchema = z.object({
+  id: z.string().trim().min(1).max(80),
+  label: z.string().trim().min(2).max(100),
+  group: z.enum(["plateau", "creation", "technique"]),
+  active: z.boolean(),
+  count: z.coerce.number().int().min(1).max(100),
+  rehearsalServices: z.coerce.number().min(0).max(1000),
+  rehearsalGrossRate: boundedAmount,
+  performanceGrossRate: boundedAmount,
+  chargeRate: z.coerce.number().min(0).max(2),
+});
+
+export const showBudgetProfileSchema = z.object({
+  convention: z.string().trim().min(2).max(160),
+  rateSourceUrl: z.union([z.literal(""), z.url()]),
+  rateEffectiveDate: z.union([z.literal(""), z.iso.date()]),
+  performancesTarget: z.coerce.number().int().min(1).max(10000),
+  exploitationMode: z.enum(["cession", "revenue_share", "rental"]),
+  cessionFee: boundedAmount,
+  venueRental: boundedAmount,
+  minimumGuarantee: boundedAmount,
+  companySharePercent: boundedPercent,
+  averageTicketPrice: boundedAmount,
+  venueCapacity: z.coerce.number().int().min(0).max(100000),
+  expectedOccupancyPercent: boundedPercent,
+  rightsTerritory: z.enum(["paris", "outside_paris"]),
+  authorRightsPercent: boundedPercent,
+  sacdContributionPercent: boundedPercent,
+  directorRightsPercent: boundedPercent,
+  musicRightsPercent: boundedPercent,
+  overheadPercent: boundedPercent,
+  contingencyPercent: boundedPercent,
+  cessionMarginPercent: boundedPercent,
+  personnel: z.array(showBudgetPersonnelSchema).max(40),
+});
+
+export type ShowBudgetProfileInput = z.input<typeof showBudgetProfileSchema>;
+export type ShowBudgetProfileValues = z.infer<typeof showBudgetProfileSchema>;
 
 export function getBudgetCategoryLabel(kind: "expense" | "revenue", value: string) {
   const categories = kind === "expense" ? expenseBudgetCategories : revenueBudgetCategories;
