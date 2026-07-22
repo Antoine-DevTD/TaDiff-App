@@ -259,7 +259,7 @@ export function OpportunityForm({
           {exploitationMode === "cession" ? (
             <div className="max-w-sm">
               <Field label="Prix de cession envisagé" error={errors.cessionFee?.message} suffix="EUR">
-                <Input type="number" min="0" step="100" inputMode="numeric" {...register("cessionFee")} />
+                <Input type="number" min="0" step="0.01" inputMode="decimal" {...register("cessionFee")} />
               </Field>
             </div>
           ) : null}
@@ -267,7 +267,7 @@ export function OpportunityForm({
           {exploitationMode === "corealisation" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Billetterie totale estimée" error={errors.estimatedBoxOffice?.message} suffix="EUR">
-                <Input type="number" min="0" step="100" inputMode="numeric" {...register("estimatedBoxOffice")} />
+                <Input type="number" min="0" step="0.01" inputMode="decimal" {...register("estimatedBoxOffice")} />
               </Field>
               <Field label="Part revenant à la compagnie" error={errors.companySharePercent?.message} suffix="%">
                 <Input type="number" min="0" max="100" step="5" inputMode="numeric" {...register("companySharePercent")} />
@@ -286,7 +286,7 @@ export function OpportunityForm({
               </label>
               {hasMinimumGuarantee ? (
                 <Field label="Montant du minimum garanti" error={errors.minimumGuarantee?.message} suffix="EUR">
-                  <Input type="number" min="0" step="100" inputMode="numeric" {...register("minimumGuarantee")} />
+                  <Input type="number" min="0" step="0.01" inputMode="decimal" {...register("minimumGuarantee")} />
                 </Field>
               ) : null}
             </div>
@@ -295,10 +295,10 @@ export function OpportunityForm({
           {exploitationMode === "location" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Billetterie totale estimée" error={errors.estimatedBoxOffice?.message} suffix="EUR">
-                <Input type="number" min="0" step="100" inputMode="numeric" {...register("estimatedBoxOffice")} />
+                <Input type="number" min="0" step="0.01" inputMode="decimal" {...register("estimatedBoxOffice")} />
               </Field>
               <Field label="Coût de location du lieu" error={errors.venueRental?.message} suffix="EUR">
-                <Input type="number" min="0" step="100" inputMode="numeric" {...register("venueRental")} />
+                <Input type="number" min="0" step="0.01" inputMode="decimal" {...register("venueRental")} />
               </Field>
             </div>
           ) : null}
@@ -306,7 +306,7 @@ export function OpportunityForm({
           {exploitationMode === "other" ? (
             <div className="max-w-sm">
               <Field label="Recette estimée pour la compagnie" error={errors.cessionFee?.message} suffix="EUR">
-                <Input type="number" min="0" step="100" inputMode="numeric" {...register("cessionFee")} />
+                <Input type="number" min="0" step="0.01" inputMode="decimal" {...register("cessionFee")} />
               </Field>
             </div>
           ) : null}

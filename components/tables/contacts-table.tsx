@@ -34,6 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { deleteContacts } from "@/app/(dashboard)/actions";
 import { ContactEmailAssistant } from "@/components/contacts/contact-email-assistant";
+import { ContactImportPanel } from "@/components/contacts/contact-import-panel";
 import { ReminderForm } from "@/components/reminders/reminder-form";
 import { DestructiveActionDialog } from "@/components/ui/destructive-action-dialog";
 import { Dialog } from "@/components/ui/dialog";
@@ -238,6 +239,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
                   <ViewButton active={venueView === "map"} icon={MapIcon} label="Carte" onClick={() => setVenueView("map")} />
                 </div>
               ) : null}
+              <ContactImportPanel contactType={contactTab} />
               {selectedContacts.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-1 rounded-md border border-accent/20 bg-accent/5 p-1">
                   <span className="px-2 text-xs font-semibold text-accent">{selectedContacts.length} sélectionné{selectedContacts.length > 1 ? "s" : ""}</span>

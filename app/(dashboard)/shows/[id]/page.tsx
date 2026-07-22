@@ -79,6 +79,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
   }));
   const documentReadiness = getShowDocumentReadiness(documents, { hasPoster: Boolean(posterUrl) });
   const nextPerformanceDate = opportunities
+    .filter((deal) => deal.stage === "Confirme")
     .map((deal) => deal.performanceDate)
     .filter(Boolean)
     .sort()[0];

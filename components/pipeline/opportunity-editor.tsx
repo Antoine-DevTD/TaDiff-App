@@ -171,19 +171,19 @@ export function OpportunityEditor({
         {exploitationModes.map((mode) => <option key={mode.id} value={mode.id}>{mode.label}</option>)}
       </Select>
       {draft.exploitationMode === "cession" || draft.exploitationMode === "other" ? (
-        <Input aria-label="Montant attendu" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.cessionFee} onChange={(event) => setDraft((current) => ({ ...current, cessionFee: event.target.value }))} />
+        <Input aria-label="Montant attendu" className="min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.cessionFee} onChange={(event) => setDraft((current) => ({ ...current, cessionFee: event.target.value }))} />
       ) : null}
       {draft.exploitationMode === "corealisation" ? (
         <div className="grid grid-cols-2 gap-2">
-          <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
+          <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
           <Input aria-label="Part compagnie" className="min-h-9 text-xs" min="0" max="100" step="5" type="number" value={draft.companySharePercent} onChange={(event) => setDraft((current) => ({ ...current, companySharePercent: event.target.value }))} />
-          <Input aria-label="Minimum garanti" className="col-span-2 min-h-9 text-xs" min="0" step="100" type="number" value={draft.minimumGuarantee} onChange={(event) => setDraft((current) => ({ ...current, minimumGuarantee: event.target.value }))} />
+          <Input aria-label="Minimum garanti" className="col-span-2 min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.minimumGuarantee} onChange={(event) => setDraft((current) => ({ ...current, minimumGuarantee: event.target.value }))} />
         </div>
       ) : null}
       {draft.exploitationMode === "location" ? (
         <div className="grid grid-cols-2 gap-2">
-          <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
-          <Input aria-label="Coût de location" className="min-h-9 text-xs" min="0" step="100" type="number" value={draft.venueRental} onChange={(event) => setDraft((current) => ({ ...current, venueRental: event.target.value }))} />
+          <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
+          <Input aria-label="Coût de location" className="min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.venueRental} onChange={(event) => setDraft((current) => ({ ...current, venueRental: event.target.value }))} />
         </div>
       ) : null}
       <Input

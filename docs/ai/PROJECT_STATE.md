@@ -18,16 +18,17 @@ Derniere verification : 22 juillet 2026.
 - Administration plateforme delegable avec permissions choisies par le superadmin, sans delegation des exemptions de paiement.
 - Stockage documentaire interchangeable entre Supabase Storage et Cloudflare R2.
 - Documents de travail versionnes par spectacle, lien de captation et limites de spectacles actifs par formule.
-- Espace Ressources et suivi d'exploitation avec series, billetterie, resultat et preparation SACD.
+- La diffusion utilise un espace de travail focalisé par dossier : file par étape, spectacle et contact visibles, puis commandes directes pour écrire, inviter, créer une action, préparer un devis ou confirmer. Les exploitations confirmées couvrent séries, billetterie, résultat et préparation SACD avec le même choix visuel des modèles économiques.
 - Composeur email complet partage entre Emails et Contacts, avec pieces jointes et demandes guidees a William. William dispose d'une interface conversationnelle, d'un affichage progressif et des raccourcis Entree / Maj + Entree.
 - Carnet separe entre personnes et lieux. Une direction renseignee sur un lieu cree un contact personne rattache, et plusieurs personnes peuvent etre selectionnees pour preparer un email groupe en copie cachee.
 - Les contacts disposent d'actions groupees pour preparer un email, creer une action par contact et supprimer une selection. Les suppressions sensibles de contacts, spectacles et documents utilisent une confirmation reutilisable par maintien de trois secondes.
 - Les actions terminees restent consultables, acceptent un resultat facultatif et peuvent etre rouvertes. Les reports et clotures alimentent un historique borne exploitable par le contexte operationnel de William.
 - L'onglet Presentation propose un atelier William persistant par spectacle pour travailler logline, synopsis, note d'intention et presentation de diffusion. Il peut mener un entretien ou lire uniquement les extraits PDF explicitement autorises, puis proposer un brouillon que l'utilisateur choisit d'appliquer.
 - Le budget spectacle detaille couvre equipe et repetitions chargees, depenses de creation ou par representation, financements, cession, partage de billetterie, location, droits, prix de cession conseille, public minimum et courbe de rentabilite.
-- Le carnet de lieux propose une vue carte avec points colores par avancement, fiche rapide et creation d'action. Les coordonnees peuvent etre saisies ou mappees lors d'un import.
+- Le carnet de lieux propose une vue carte avec points colores par avancement, fiche rapide et creation d'action. La recherche d'adresse via la Base Adresse Nationale remplit la ville, le code postal et les coordonnees sans exposer latitude/longitude. Les imports Personnes et Lieux sont contextualises dans chaque onglet.
 - L'agenda propose une grille plus lisible et un panneau de detail persistant. Une subvention selectionnee ouvre son dossier en surbrillance.
-- Les subventions sont organisees par spectacle et peuvent etre rattachees ou reaffectees depuis leur dossier.
+- Les subventions utilisent le même langage visuel que les actions : vues par urgence et avancement, liste groupée par spectacle, dossier actif et pièces attendues directement manipulables.
+- La prochaine représentation d'un spectacle est dérivée des diffusions confirmées lorsqu'une date de jeu est renseignée. Les montants de diffusion, dont le minimum garanti, acceptent les valeurs non arrondies à la centaine.
 
 ## Etat technique a confirmer avant livraison
 
@@ -45,7 +46,7 @@ Derniere verification : 22 juillet 2026.
 
 ## Qualite
 
-- Dernier passage connu le 22 juillet 2026 : lint, TypeScript, build et 20 parcours Playwright passes, dont le replay webinaire et le rendu 3D desktop/mobile.
+- Dernier passage connu le 22 juillet 2026 : lint, TypeScript, build et 24 parcours Playwright passes, dont le replay webinaire, la diffusion focalisée, les subventions par dossier et le rendu 3D desktop/mobile.
 - Relancer les controles apres toute modification ; ce statut n'est pas une garantie sur un worktree plus recent.
 
 Pour la vision, le planning et le backlog complet, consulter `docs/product/product-plan.md`. Pour les contraintes d'implementation, consulter `docs/engineering/implementation-reference.md`.

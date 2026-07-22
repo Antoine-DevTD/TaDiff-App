@@ -1,11 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, X } from "lucide-react";
+import { MapPin, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { createContact, updateContact } from "@/app/(dashboard)/actions";
+import { AddressAutocomplete } from "@/components/contacts/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -85,6 +86,9 @@ export function ContactForm({
   // eslint-disable-next-line react-hooks/incompatible-library
   const tags = watch("tags") ?? [];
   const contactType = watch("contactType");
+  const address = watch("address") ?? "";
+  const latitude = watch("latitude") ?? "";
+  const longitude = watch("longitude") ?? "";
 
   function onSubmit(values: ContactFormValues) {
     startTransition(async () => {
@@ -137,27 +141,53 @@ export function ContactForm({
         <Field label={contactType === "venue" ? "Nom du lieu" : "Nom"} error={errors.name?.message}>
           <Input placeholder={contactType === "venue" ? "Théâtre municipal" : "Mina Laurent"} {...register("name")} />
         </Field>
-        {contactType === "person" ? <Field label="Structure" error={errors.organization?.message}><Input placeholder="Scène nationale" {...register("organization")} /></Field> : <Field label="Ville" error={errors.city?.message}><Input placeholder="La Rochelle" {...register("city")} /></Field>}
+        {contactType === "person" ? <Field label="Structure" error={errors.organization?.message}><Input placeholder="Scène nationale" {...register("organization")} /></Field> : null}
       </div>
 
       {contactType === "venue" ? (
         <section className="rounded-md border border-border bg-panel-strong/45 p-4">
           <h4 className="font-semibold">Adresse et carte</h4>
           <p className="mt-1 text-xs leading-5 text-muted">
-            Les coordonnées permettent d&apos;afficher précisément le lieu sur la carte.
+            Recherchez l&apos;adresse puis choisissez une proposition. La carte sera positionnée automatiquement.
           </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_10rem]">
-            <Field label="Adresse" error={errors.address?.message}><Input placeholder="12 rue du Théâtre" {...register("address")} /></Field>
+          <div className="mt-4">
+            <Field label="Adresse" error={errors.address?.message}>
+              <AddressAutocomplete
+                hasCoordinates={Boolean(latitude && longitude)}
+                value={address}
+                onChange={(nextAddress) => {
+                  setValue("address", nextAddress, { shouldDirty: true, shouldValidate: true });
+                  setValue("latitude", "", { shouldDirty: true });
+                  setValue("longitude", "", { shouldDirty: true });
+                }}
+                onSelect={(suggestion) => {
+                  setValue("address", suggestion.address, { shouldDirty: true, shouldValidate: true });
+                  setValue("postalCode", suggestion.postalCode, { shouldDirty: true });
+                  setValue("city", suggestion.city, { shouldDirty: true });
+                  setValue("department", suggestion.department, { shouldDirty: true });
+                  setValue("region", suggestion.region, { shouldDirty: true });
+                  setValue("latitude", String(suggestion.latitude), { shouldDirty: true });
+                  setValue("longitude", String(suggestion.longitude), { shouldDirty: true });
+                }}
+              />
+            </Field>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Code postal" error={errors.postalCode?.message}><Input placeholder="44000" {...register("postalCode")} /></Field>
+            <Field label="Ville" error={errors.city?.message}><Input placeholder="Nantes" {...register("city")} /></Field>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Département" error={errors.department?.message}><Input placeholder="Loire-Atlantique" {...register("department")} /></Field>
             <Field label="Région" error={errors.region?.message}><Input placeholder="Pays de la Loire" {...register("region")} /></Field>
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <Field label="Latitude" error={errors.latitude?.message}><Input inputMode="decimal" placeholder="47.2184" {...register("latitude")} /></Field>
-            <Field label="Longitude" error={errors.longitude?.message}><Input inputMode="decimal" placeholder="-1.5536" {...register("longitude")} /></Field>
-          </div>
+          <input type="hidden" {...register("latitude")} />
+          <input type="hidden" {...register("longitude")} />
+          {latitude && longitude ? (
+            <p className="mt-3 flex items-center gap-2 text-xs font-medium text-success">
+              <MapPin className="h-4 w-4" aria-hidden />
+              Adresse localisée sur la carte
+            </p>
+          ) : null}
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Site web" error={errors.website?.message}><Input type="url" placeholder="https://..." {...register("website")} /></Field>
             <Field label="Jauge" error={errors.capacity?.message}><Input min="0" type="number" placeholder="450" {...register("capacity")} /></Field>

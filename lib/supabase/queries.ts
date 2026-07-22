@@ -56,16 +56,29 @@ type DashboardStat = {
   value: string;
 };
 
+function getNextConfirmedDate(currentDate: string, dates: string[]) {
+  const today = new Date().toISOString().slice(0, 10);
+  return [currentDate, ...dates]
+    .filter((value) => Boolean(value) && value >= today)
+    .sort()[0] ?? "";
+}
+
 export async function getShows(): Promise<Show[]> {
   if (!hasSupabaseEnv()) {
     return shows;
   }
 
   const supabase = await getSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("shows")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [showsResponse, confirmedDatesResponse] = await Promise.all([
+    supabase.from("shows").select("*").order("created_at", { ascending: false }),
+    supabase
+      .from("opportunities")
+      .select("show_id,performance_date")
+      .eq("stage", "Confirme")
+      .not("show_id", "is", null)
+      .not("performance_date", "is", null),
+  ]);
+  const { data, error } = showsResponse;
 
   if (error || !data) {
     return [];
@@ -76,7 +89,12 @@ export async function getShows(): Promise<Show[]> {
     title: show.title,
     discipline: show.discipline,
     status: show.status,
-    nextDate: show.next_date ?? "",
+    nextDate: getNextConfirmedDate(
+      show.next_date ?? "",
+      (confirmedDatesResponse.data ?? [])
+        .filter((deal) => deal.show_id === show.id)
+        .map((deal) => deal.performance_date ?? ""),
+    ),
     budget: show.budget ?? 0,
     detailedBudgetEnabled:
       "detailed_budget_enabled" in show ? Boolean(show.detailed_budget_enabled) : false,
@@ -266,6 +284,13 @@ export async function getShowById(showId: string): Promise<{
           showTitle: deal.shows?.title ?? resolvedShow.title,
           createdAt: deal.created_at,
         }));
+
+  resolvedShow.nextDate = getNextConfirmedDate(
+    resolvedShow.nextDate,
+    resolvedOpportunities
+      .filter((deal) => deal.stage === "Confirme")
+      .map((deal) => deal.performanceDate),
+  );
 
   const opportunityIds = resolvedOpportunities.map((deal) => deal.id);
   const reminderQuery = supabase

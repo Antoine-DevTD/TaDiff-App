@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, FileSpreadsheet, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { importContacts } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,8 @@ const emptyMapping: ColumnMapping = {
   tags: "",
 };
 
-export function ContactImportPanel() {
+export function ContactImportPanel({ contactType }: { contactType: "person" | "venue" }) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -89,7 +91,8 @@ export function ContactImportPanel() {
   const headers = rows[0] ?? [];
   const bodyRows = rows.slice(1);
   const previewRows = bodyRows.slice(0, 3);
-  const contacts = rows.length > 1 ? mapRowsToContacts(bodyRows, mapping) : [];
+  const contacts = rows.length > 1 ? mapRowsToContacts(bodyRows, mapping, contactType) : [];
+  const itemLabel = contactType === "venue" ? "lieu" : "personne";
 
   async function handleFile(file: File) {
     setMessage(null);
@@ -176,6 +179,7 @@ export function ContactImportPanel() {
         setRows([]);
         setMapping(emptyMapping);
         setFileName("");
+        router.refresh();
       }
     });
   }
@@ -199,8 +203,8 @@ export function ContactImportPanel() {
         open={open}
         onClose={() => setOpen(false)}
         eyebrow="Carnet de contacts"
-        title="Importer des contacts"
-        description="Chargez un export Excel, CSV ou TSV, puis associez les colonnes a TaDiff avant import."
+        title={contactType === "venue" ? "Importer des lieux" : "Importer des personnes"}
+        description={`Chargez un export Excel, CSV ou TSV, puis associez les colonnes a TaDiff avant d'importer chaque ${itemLabel}.`}
         className="max-w-4xl"
       >
         <div className="space-y-5">
@@ -221,7 +225,7 @@ export function ContactImportPanel() {
               <FileSpreadsheet className="h-4 w-4" aria-hidden />
               Choisir un fichier
             </Button>
-            <Button type="button" variant="ghost" className="gap-2" onClick={downloadCsvExample}>
+            <Button type="button" variant="ghost" className="gap-2" onClick={() => downloadCsvExample(contactType)}>
               <Download className="h-4 w-4" aria-hidden />
               Exemple CSV
             </Button>
@@ -252,7 +256,7 @@ export function ContactImportPanel() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                {contactFields.map((field) => (
+                {contactFields.filter((field) => field.key !== "contactType").map((field) => (
                   <label key={field.key} className="text-sm font-medium">
                     {field.label}
                     {field.required ? <span className="text-danger"> *</span> : null}
@@ -301,7 +305,7 @@ export function ContactImportPanel() {
 
               <Button type="button" className="gap-2" onClick={runImport} disabled={isPending}>
                 <Upload className="h-4 w-4" aria-hidden />
-                {isPending ? "Import en cours..." : `Importer ${contacts.length} contact(s)`}
+                {isPending ? "Import en cours..." : `Importer ${contacts.length} ${contactType === "venue" ? "lieu(x)" : "personne(s)"}`}
               </Button>
               {isPending && importProgress.total > 0 ? (
                 <div aria-live="polite" className="space-y-2">
@@ -445,14 +449,18 @@ function autoMapColumns(headers: SheetRow): ColumnMapping {
   };
 }
 
-function mapRowsToContacts(rows: SheetRow[], mapping: ColumnMapping): ContactFormValues[] {
+function mapRowsToContacts(
+  rows: SheetRow[],
+  mapping: ColumnMapping,
+  forcedContactType: ContactFormValues["contactType"],
+): ContactFormValues[] {
   const contacts: ContactFormValues[] = [];
 
   for (const row of rows) {
     const name = getMappedCell(row, mapping.name);
     const email = getMappedCell(row, mapping.email);
     const organization = getMappedCell(row, mapping.organization);
-    const contactType = normalizeContactType(getMappedCell(row, mapping.contactType));
+    const contactType = forcedContactType;
 
     if (!name && !email) {
       continue;
@@ -480,14 +488,6 @@ function mapRowsToContacts(rows: SheetRow[], mapping: ColumnMapping): ContactFor
   }
 
   return contacts;
-}
-
-function normalizeContactType(value: string): ContactFormValues["contactType"] {
-  const normalized = normalizeHeader(value);
-  if (["lieu", "venue", "theatre", "salle", "festival"].some((word) => normalized.includes(word))) {
-    return "venue";
-  }
-  return "person";
 }
 
 function parseOptionalNumber(value: string) {
@@ -550,18 +550,22 @@ function splitTags(value: string) {
     .slice(0, 12);
 }
 
-function downloadCsvExample() {
-  const content = [
-    "type,nom,email,telephone,structure,role,adresse,code postal,ville,departement,region,web,jauge,latitude,longitude,statut,tags",
-    "personne,Mina Laurent,mina@example.com,0612345678,Scene nationale,Programmatrice,,,La Rochelle,,,,,,,Prospect,Theatre;Grand plateau",
-    "lieu,Theatre municipal,contact@theatre.fr,0546000000,,,,12 rue du Theatre,17000,La Rochelle,Charente-Maritime,Nouvelle-Aquitaine,https://theatre.example,450,46.1603,-1.1511,En discussion,Theatre",
-  ].join("\n");
+function downloadCsvExample(contactType: "person" | "venue") {
+  const content = contactType === "venue"
+    ? [
+        "nom,email,telephone,adresse,code postal,ville,departement,region,web,jauge,statut,tags",
+        "Theatre municipal,contact@theatre.fr,0546000000,12 rue du Theatre,17000,La Rochelle,Charente-Maritime,Nouvelle-Aquitaine,https://theatre.example,450,En discussion,Theatre",
+      ].join("\n")
+    : [
+        "nom,email,telephone,structure,role,ville,statut,tags",
+        "Mina Laurent,mina@example.com,0612345678,Scene nationale,Programmatrice,La Rochelle,Prospect,Theatre;Grand plateau",
+      ].join("\n");
   const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "contacts-tadiff-exemple.csv";
+  link.download = contactType === "venue" ? "lieux-tadiff-exemple.csv" : "personnes-tadiff-exemple.csv";
   link.click();
   URL.revokeObjectURL(url);
 }

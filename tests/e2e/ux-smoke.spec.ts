@@ -233,8 +233,8 @@ test.describe("cockpit en mode demonstration", () => {
     await page.getByRole("button", { name: "Ouvrir la subvention" }).click();
 
     await expect(page).toHaveURL(/\/subventions\?focus=/);
-    await expect(page.getByRole("heading", { name: "Les aides, spectacle par spectacle" })).toBeVisible();
-    await expect(page.locator('[id^="grant-"].ring-2')).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Les prochains dossiers à faire avancer" })).toBeVisible();
+    await expect(page.getByText("Dossier actif", { exact: true })).toBeVisible();
   });
 
   test("ouvre une action deja rattachee depuis la fiche spectacle", async ({ page }) => {
@@ -323,6 +323,8 @@ test.describe("cockpit en mode demonstration", () => {
     await dialog.getByLabel("Part revenant à la compagnie").fill("50");
     await expect(dialog.getByText("5 000 EUR", { exact: true })).toBeVisible();
     await dialog.getByLabel("Un minimum garanti est prévu").check();
+    await dialog.getByLabel("Montant du minimum garanti").fill("450");
+    await expect.poll(() => dialog.getByLabel("Montant du minimum garanti").evaluate((element: HTMLInputElement) => element.validity.valid)).toBe(true);
     await dialog.getByLabel("Montant du minimum garanti").fill("6000");
     await expect(dialog.getByText("6 000 EUR", { exact: true })).toBeVisible();
     await dialog.getByText("Location", { exact: true }).click();
@@ -347,6 +349,9 @@ test.describe("cockpit en mode demonstration", () => {
   test("permet d'ajouter une date depuis la carte pointillee", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/pipeline");
+
+    await expect(page.getByRole("heading", { name: "Faire circuler vos spectacles" })).toBeVisible();
+    await expect(page.getByText("Kanban", { exact: true })).toHaveCount(0);
 
     await page.getByRole("main").getByRole("button", { name: "Ajouter une diffusion" }).click();
     await expect(page.getByRole("dialog", { name: "Ajouter une diffusion" })).toBeVisible();
@@ -426,6 +431,46 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(dialog.locator(".email-editor .tiptap")).toContainText("Bonjour toutes et tous");
   });
 
+  test("localise un lieu sans demander de coordonnees techniques", async ({ page }) => {
+    await page.route("**/api/geocoding/address?**", async (route) => {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          suggestions: [{
+            id: "chatelet",
+            label: "1 Place du Chatelet 75001 Paris",
+            address: "1 Place du Chatelet",
+            postalCode: "75001",
+            city: "Paris",
+            department: "Paris",
+            region: "Ile-de-France",
+            latitude: 48.857614,
+            longitude: 2.346758,
+          }],
+        }),
+      });
+    });
+
+    await page.goto("/contacts");
+    await page.getByRole("banner").getByRole("button", { name: "Ajouter" }).click();
+    const createDialog = page.getByRole("dialog", { name: "Nouveau contact" });
+    await createDialog.getByRole("button", { name: "Un lieu" }).click();
+    await expect(createDialog.getByLabel("Latitude")).toHaveCount(0);
+    await expect(createDialog.getByLabel("Longitude")).toHaveCount(0);
+
+    await createDialog.getByRole("combobox", { name: "Rechercher une adresse" }).fill("1 place chatelet");
+    await createDialog.getByRole("option", { name: /1 Place du Chatelet/ }).click();
+    await expect(createDialog.getByLabel("Code postal")).toHaveValue("75001");
+    await expect(createDialog.getByLabel("Ville")).toHaveValue("Paris");
+    await expect(createDialog.getByText(/Adresse localis/)).toBeVisible();
+    await expect(createDialog.locator('input[name="latitude"]')).toHaveValue("48.857614");
+    await page.keyboard.press("Escape");
+
+    await page.getByRole("tab", { name: /Lieux/ }).click();
+    await page.getByRole("button", { name: "Importer" }).click();
+    await expect(page.getByRole("dialog", { name: "Importer des lieux" })).toBeVisible();
+  });
+
   test("attribue une action a plusieurs contacts", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/contacts");
@@ -491,10 +536,9 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/subventions");
 
-    const requirementList = page.locator("details").filter({ hasText: /pieces demandees/ }).first();
-    await requirementList.locator("summary").click();
-    await expect(requirementList.getByText("RIB", { exact: true })).toBeVisible();
-    await expect(requirementList.getByText("Statuts", { exact: true })).toBeVisible();
-    await expect(requirementList.getByText("Document compagnie", { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Pièces demandées" })).toBeVisible();
+    await expect(page.getByText("RIB", { exact: true })).toBeVisible();
+    await expect(page.getByText("Statuts", { exact: true })).toBeVisible();
+    await expect(page.getByText("Document compagnie", { exact: true }).first()).toBeVisible();
   });
 });
