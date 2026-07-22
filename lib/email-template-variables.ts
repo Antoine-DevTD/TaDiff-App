@@ -22,18 +22,19 @@ export const emailVariables: EmailVariable[] = [
 
 export type EmailTemplateContext = {
   contact: Contact;
+  recipientCount?: number;
   show?: Show;
 };
 
-export function getEmailVariableValues({ contact, show }: EmailTemplateContext) {
+export function getEmailVariableValues({ contact, recipientCount = 1, show }: EmailTemplateContext) {
   const names = contact.name.trim().split(/\s+/);
   const firstName = names[0] || contact.name;
   const lastName = names.slice(1).join(" ") || contact.name;
 
   return {
-    "@prenom_contact": firstName,
-    "@nom_contact": lastName,
-    "@structure": contact.organization || "votre structure",
+    "@prenom_contact": recipientCount > 1 ? "toutes et tous" : firstName,
+    "@nom_contact": recipientCount > 1 ? "" : lastName,
+    "@structure": recipientCount > 1 ? "vos structures" : contact.organization || "votre structure",
     "@titre_spectacle": show?.title || "notre spectacle",
     "@logline": show?.logline?.trim() || "",
     "@synopsis": show?.emailPitch?.trim() || "",

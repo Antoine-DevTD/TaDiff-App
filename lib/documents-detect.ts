@@ -83,3 +83,36 @@ export async function extractPdfFirstPageText(file: File): Promise<string> {
     return "";
   }
 }
+
+/**
+ * Extrait plusieurs pages d'un PDF deja stocke, apres une action explicite de
+ * l'utilisateur. La limite evite d'envoyer un dossier entier inutilement a l'IA.
+ */
+export async function extractPdfUrlText(url: string, maxCharacters = 15_000): Promise<string> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return "";
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("pdf") && !url.toLocaleLowerCase().includes(".pdf")) return "";
+
+    const pdfjs = await import("pdfjs-dist");
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      "pdfjs-dist/build/pdf.worker.min.mjs",
+      import.meta.url,
+    ).toString();
+    const document = await pdfjs.getDocument({ data: await response.arrayBuffer() }).promise;
+    const pages: string[] = [];
+
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      const page = await document.getPage(pageNumber);
+      const content = await page.getTextContent();
+      pages.push(content.items.map((item) => ("str" in item ? item.str : "")).join(" "));
+      if (pages.join("\n").length >= maxCharacters) break;
+    }
+
+    void document.cleanup();
+    return pages.join("\n").replace(/\s+/g, " ").trim().slice(0, maxCharacters);
+  } catch {
+    return "";
+  }
+}

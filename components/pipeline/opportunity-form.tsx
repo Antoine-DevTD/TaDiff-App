@@ -53,6 +53,7 @@ export function OpportunityForm({
   const [contactMode, setContactMode] = useState<"existing" | "new">("existing");
   const [hasMinimumGuarantee, setHasMinimumGuarantee] = useState(false);
   const [newContact, setNewContact] = useState({
+    contactType: "person" as const,
     city: "",
     email: "",
     name: "",

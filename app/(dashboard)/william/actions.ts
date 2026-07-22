@@ -9,6 +9,7 @@ const emailDraftSchema = z.object({
   organization: z.string().trim().max(200),
   showTitle: z.string().trim().max(200),
   currentBody: z.string().trim().max(12_000),
+  instruction: z.string().trim().min(3).max(2_000),
   attachmentLabels: z.array(z.string().trim().max(100)).max(12),
 });
 
@@ -26,12 +27,13 @@ export async function askWilliamAction(question: string) {
 export async function draftWilliamEmailAction(input: z.input<typeof emailDraftSchema>) {
   const parsed = emailDraftSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Les informations du brouillon sont invalides." };
-  const { contactName, organization, showTitle, currentBody, attachmentLabels } = parsed.data;
+  const { contactName, organization, showTitle, currentBody, instruction, attachmentLabels } = parsed.data;
   const prompt = [
     "Redige le corps d'un email professionnel de diffusion pour une compagnie de spectacle vivant.",
     `Destinataire : ${contactName}${organization ? `, ${organization}` : ""}.`,
     showTitle ? `Spectacle : ${showTitle}.` : "Aucun spectacle n'est rattache au message.",
     attachmentLabels.length ? `Pieces qui seront jointes : ${attachmentLabels.join(", ")}. Mentionne-les naturellement.` : "Aucune piece jointe selectionnee.",
+    `Demande de l'utilisateur : ${instruction}`,
     "Ameliore le brouillon ci-dessous avec un ton humain, precis et chaleureux. N'invente aucune information absente.",
     "Retourne uniquement le corps du message, sans objet, sans Markdown et sans commentaire.",
     "Brouillon actuel :",

@@ -143,21 +143,15 @@ function ShowPlayingCard({
         className="block overflow-hidden rounded-md border border-border bg-panel shadow-sm outline-none transition-[box-shadow,border-color] duration-200 hover:border-accent/45 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
         href={`/shows/${show.id}`}
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-ink">
-          {posterUrl ? (
+        {posterUrl ? (
+          <div className="relative aspect-[4/3] overflow-hidden">
             <div
               aria-hidden="true"
               className="absolute inset-0 bg-cover bg-center transition-transform duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"
               style={{ backgroundImage: `url(${posterUrl})` }}
             />
-          ) : (
-            <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(145deg,#15213a_0%,#0b1220_65%,#2455d9_150%)]">
-              <div className="absolute inset-5 border border-white/15" />
-              <div className="absolute inset-x-9 top-10 h-px bg-white/20" />
-              <div className="absolute inset-x-9 bottom-10 h-px bg-white/20" />
-            </div>
-          )}
-        </div>
+          </div>
+        ) : null}
 
         <div className="p-4">
           <h2 className="line-clamp-2 min-h-6 text-lg font-semibold leading-6 text-foreground">

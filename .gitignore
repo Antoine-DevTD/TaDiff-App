@@ -30,3 +30,17 @@ pnpm-debug.log*
 # playwright
 /playwright-report/
 /test-results/
+
+# local agent packages and workspace files
+/.codex/
+/TaDiff.code-workspace
+
+# private source material kept outside version control
+/01 - Contrat/
+/02 - Ressources/
+
+# generated documents, previews and temporary renders
+/output/
+/tmp/
+/docs/presentations/reunion-interfaces-2026-07-20/previews/
+*.tsbuildinfo

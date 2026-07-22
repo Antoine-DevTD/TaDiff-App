@@ -34,6 +34,26 @@ test.describe("landing beta", () => {
   });
 });
 
+test.describe("parcours webinaire", () => {
+  test("rejoue la bienvenue sans rouvrir la creation de compte", async ({ page }) => {
+    await page.goto("/signup");
+    await expect(page.getByRole("heading", { name: "Creation de compte suspendue" })).toBeVisible();
+
+    for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
+      await page.setViewportSize(viewport);
+      await page.goto("/welcome?replay=1");
+      await expect(page.getByRole("heading", { level: 1, name: "Bienvenue, je suis William." })).toBeVisible();
+      const stage = page.locator("[data-william-stage]");
+      const canvas = stage.locator("canvas");
+      await expect(canvas).toBeVisible();
+      await expect.poll(async () => canvas.evaluate((element) =>
+        (element as HTMLCanvasElement).toDataURL("image/png").length,
+      )).toBeGreaterThan(5_000);
+      await expectNoHorizontalOverflow(page);
+    }
+  });
+});
+
 test.describe("cockpit en mode demonstration", () => {
   test("affiche les rubriques principales et la priorite du jour sur desktop", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -49,14 +69,14 @@ test.describe("cockpit en mode demonstration", () => {
 
     await page.getByRole("button", { name: "Ouvrir William" }).click();
     const william = page.getByRole("region", { name: "Assistant William" });
-    await expect(william.getByText("Votre copilote TaDiff", { exact: true })).toBeVisible();
-    await expect(william.getByRole("link", { name: /Ajouter un spectacle/ })).toBeVisible();
-    await expect(william.getByRole("button", { name: "Visite guidee" })).toBeVisible();
+    await expect(william.getByText("Vos spectacles et votre compagnie en contexte", { exact: true })).toBeVisible();
+    await expect(william.getByText("Priorité suggérée", { exact: true })).toBeVisible();
+    await expect(william.getByRole("button", { name: /Visite guidée/ })).toHaveCount(0);
     const compactBox = await william.boundingBox();
     await william.getByRole("button", { name: "Agrandir William" }).click();
     const expandedBox = await william.boundingBox();
     expect(expandedBox?.width).toBeGreaterThan(compactBox?.width ?? 0);
-    await expect(william.getByRole("button", { name: "Reduire William" })).toBeVisible();
+    await expect(william.getByRole("button", { name: "Réduire William" })).toBeVisible();
   });
 
   test("ajoute puis termine une action sans actualiser la page", async ({ page }) => {
@@ -71,7 +91,19 @@ test.describe("cockpit en mode demonstration", () => {
 
     await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Marquer Verifier le dossier du webinaire comme fait" }).click();
+    const completionDialog = page.getByRole("dialog", { name: "Bravo ! Sur quoi cette action a-t-elle débouché ?" });
+    await expect(completionDialog).toBeVisible();
+    await completionDialog.getByRole("button", { name: "Ça avance" }).click();
+    await completionDialog.getByLabel(/Petit compte rendu/).fill("Le dossier est prêt, envoi prévu demain.");
+    await completionDialog.getByRole("button", { name: "Enregistrer le résultat" }).click();
     await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Terminées (1)" }).click();
+    await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toBeVisible();
+    await expect(page.getByText("Le dossier est prêt, envoi prévu demain.", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Rouvrir Verifier le dossier du webinaire" }).click();
+    await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "À faire" }).click();
+    await expect(page.getByText("Verifier le dossier du webinaire", { exact: true })).toBeVisible();
   });
 
   test("donne acces aux rubriques secondaires depuis la navigation mobile", async ({ page }) => {
@@ -91,6 +123,7 @@ test.describe("cockpit en mode demonstration", () => {
     await page.goto("/shows/show-1");
 
     await expect(page.getByRole("heading", { level: 2, name: "Les lignes de fuite" })).toBeVisible();
+    await expect(page.getByText("Affiche spectacle", { exact: true })).toHaveCount(0);
     const backToShows = page.getByRole("link", { name: "Tous les spectacles" });
     await expect(backToShows).toBeVisible();
     await page.getByRole("link", { name: "Dossier", exact: true }).click();
@@ -124,10 +157,25 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await expectNoHorizontalOverflow(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.getByRole("link", { name: "Presentation", exact: true }).click();
+    const presentationTab = page.getByRole("link", { name: "Presentation", exact: true });
+    await presentationTab.click();
     await expect(page).toHaveURL(/tab=presentation/);
+    await expect(presentationTab).toHaveAttribute("aria-current", "page");
+    await expect.poll(async () => presentationTab.evaluate((element) => {
+      const style = window.getComputedStyle(element);
+      return [style.borderLeftWidth, style.borderRightWidth];
+    })).toEqual(["0px", "0px"]);
     await expect(page.getByRole("heading", { name: "Donner de la matiere aux emails" })).toBeVisible();
-    await expect(page.getByLabel("Logline")).toHaveValue(/fratrie/);
+    const logline = page.getByLabel("Logline");
+    await expect(logline).toHaveValue(/fratrie/);
+    await expect(page.getByLabel(/^Synopsis/)).toBeVisible();
+    await expect(page.getByLabel(/^Note d'intention/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Écrire avec William" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Me poser des questions/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Lire les PDF choisis/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Enregistrer la presentation/i })).toHaveCount(0);
+    await logline.fill("Une nouvelle logline sauvegardee automatiquement.");
+    await expect(page.getByRole("status")).toHaveText("Enregistré");
     await backToShows.click();
     await expect(page).toHaveURL(/\/shows$/);
     await expect(page.getByRole("link", { name: "Ouvrir Les lignes de fuite" })).toBeVisible();
@@ -247,10 +295,10 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/campaigns");
 
-    await expect(page.getByRole("heading", { name: "Preparer un email maintenant" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Préparer un email maintenant" })).toBeVisible();
     await expect(page.getByLabel("Contact", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Spectacle", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("Modele d'email", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Modèle d'email", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Objet", { exact: true }).first()).toHaveValue(/notre spectacle/);
     await expect(page.getByRole("button", { name: "Ouvrir ma messagerie" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Gmail" })).toBeEnabled();
@@ -262,10 +310,10 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByLabel("Dossier artistique")).toBeEnabled();
     await expect(page.getByLabel("Texte de la piece")).toBeDisabled();
     await page.getByLabel("Dossier artistique").check();
-    await expect(messageField).toContainText(/pieces jointes.*dossier artistique/i);
-    await expect(page.getByRole("button", { name: "Telecharger les pieces" })).toBeVisible();
+    await expect(messageField).toContainText(/pièces jointes.*dossier artistique/i);
+    await expect(page.getByRole("button", { name: "Télécharger les pièces" })).toBeVisible();
     await page.getByRole("button", { name: "Gmail" }).click();
-    const attachmentDialog = page.getByRole("dialog", { name: "Preparer les fichiers avant le brouillon" });
+    const attachmentDialog = page.getByRole("dialog", { name: "Préparer les fichiers avant le brouillon" });
     await expect(attachmentDialog).toBeVisible();
     await expect(attachmentDialog).toContainText(/ne peuvent pas ajouter automatiquement/);
     await page.keyboard.press("Escape");
@@ -279,16 +327,76 @@ test.describe("cockpit en mode demonstration", () => {
     await page.goto("/contacts");
 
     await page.getByRole("button", { name: "Preparer un email" }).first().click();
-    const dialog = page.getByRole("dialog", { name: /Preparer un email pour/ });
+    const dialog = page.getByRole("dialog", { name: /Préparer un email pour/ });
     await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel("Contact", { exact: true })).toHaveValue("contact-1");
+    await expect(dialog.getByLabel("Modèle d'email", { exact: true })).toBeVisible();
     await dialog.getByLabel("Spectacle", { exact: true }).selectOption("show-1");
     await expect(dialog.getByLabel("Objet", { exact: true })).toHaveValue(/Les lignes de fuite/);
     await expect(dialog.locator(".email-editor .tiptap")).toContainText(/fratrie/);
-    await expect(dialog.getByText("4/4", { exact: true })).toBeVisible();
-    await dialog.getByRole("button", { name: "Pieces et William" }).click();
-    await expect(page).toHaveURL(/\/campaigns\?contactId=contact-1&showId=show-1/);
-    await expect(page.getByLabel("Contact", { exact: true })).toHaveValue("contact-1");
-    await expect(page.getByLabel("Spectacle", { exact: true })).toHaveValue("show-1");
+    await expect(dialog.getByLabel("Dossier artistique")).toBeEnabled();
+    await dialog.getByRole("button", { name: "Demander à William" }).click();
+    await expect(dialog.getByRole("region", { name: "Comment William doit-il retravailler ce mail ?" })).toBeVisible();
+    await expect(dialog.getByText(/Entrée pour envoyer/)).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Gmail" })).toBeEnabled();
+  });
+
+  test("separe les personnes et les lieux puis prepare un email groupe", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/contacts");
+
+    await expect(page.getByRole("tab", { name: /Personnes/ })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByText("Mina Laurent", { exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: /Lieux/ }).click();
+    await expect(page.getByText("Scene nationale du Littoral", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Mina Laurent", { exact: true })).toBeVisible();
+
+    await page.getByRole("tab", { name: /Personnes/ }).click();
+    await page.getByLabel("Sélectionner Mina Laurent").check();
+    await page.getByLabel("Sélectionner Arthur Klein").check();
+    await page.getByRole("button", { name: "Écrire (2)" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Préparer un email pour 2 contacts" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('input[value="2 destinataires en copie cachée"]')).toBeVisible();
+    await expect(dialog.locator(".email-editor .tiptap")).toContainText("Bonjour toutes et tous");
+  });
+
+  test("attribue une action a plusieurs contacts", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/contacts");
+
+    await page.getByLabel("Sélectionner Mina Laurent").check();
+    await page.getByLabel("Sélectionner Arthur Klein").check();
+    await page.getByRole("button", { name: "Créer une action" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Que faut-il faire ?" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("2 contacts selectionnes", { exact: true })).toBeVisible();
+    await expect(dialog.getByLabel("Action", { exact: true })).toHaveValue("Appeler @contact");
+    await dialog.getByRole("button", { name: "Ajouter l'action" }).click();
+    await expect(dialog).toBeHidden();
+  });
+
+  test("protege la suppression groupee par un maintien de trois secondes", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/contacts");
+
+    await page.getByLabel("Sélectionner Mina Laurent").check();
+    await page.getByLabel("Sélectionner Arthur Klein").check();
+    await page.getByRole("button", { name: "Supprimer", exact: true }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Supprimer les contacts selectionnes ?" });
+    const holdButton = dialog.getByRole("button", { name: "Maintenir 3 secondes pour supprimer 2 contacts" });
+    await expect(dialog).toBeVisible();
+    await holdButton.focus();
+    await page.keyboard.down("Space");
+    await page.waitForTimeout(3_150);
+    await page.keyboard.up("Space");
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText("Mina Laurent", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Arthur Klein", { exact: true })).toHaveCount(0);
   });
 
   test("garde la navigation fixe pendant le scroll des parametres", async ({ page }) => {

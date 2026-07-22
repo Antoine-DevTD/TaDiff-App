@@ -3,12 +3,13 @@
 import { CalendarDays, FileText, Mail, Phone, Plus, ReceiptText, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { createReminder } from "@/app/(dashboard)/actions";
+import { createReminder, createRemindersForContacts } from "@/app/(dashboard)/actions";
 import { askWilliamAction } from "@/app/(dashboard)/william/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { WilliamRequestPanel } from "@/components/william/william-request-panel";
 import { cn } from "@/lib/utils";
 import type { Contact, Reminder, Show } from "@/types";
 
@@ -30,30 +31,43 @@ const actionPresets: Array<{
 export function ReminderForm({
   contacts,
   initialContactId,
+  initialContactIds,
   initialShowId,
   onClose,
   onCreated,
+  onCreatedMany,
   open,
   shows,
 }: {
   contacts: Contact[];
   initialContactId?: string;
+  initialContactIds?: string[];
   initialShowId?: string;
   onClose: () => void;
   onCreated?: (reminder: Reminder) => void;
+  onCreatedMany?: (reminders: Reminder[]) => void;
   open: boolean;
   shows: Show[];
 }) {
   const router = useRouter();
+  const startingContactIds = initialContactIds?.length ? initialContactIds : initialContactId ? [initialContactId] : [];
+  const groupedContacts = contacts.filter((contact) => startingContactIds.includes(contact.id));
+  const grouped = groupedContacts.length > 1;
   const startingShowId = initialShowId || shows[0]?.id || "";
-  const startingContact = contacts.find((contact) => contact.id === initialContactId);
+  const startingContact = groupedContacts[0];
   const [showId, setShowId] = useState(startingShowId);
-  const [actionType, setActionType] = useState<ActionType | "">(initialContactId ? "call" : "");
-  const [contactId, setContactId] = useState(initialContactId || "");
-  const [title, setTitle] = useState(() => initialContactId ? buildActionTitle("call", shows.find((show) => show.id === startingShowId), startingContact) : "");
+  const [actionType, setActionType] = useState<ActionType | "">(startingContactIds.length ? "call" : "");
+  const [contactId, setContactId] = useState(grouped ? "" : startingContact?.id || "");
+  const [title, setTitle] = useState(() => grouped
+    ? buildGroupedActionTitle("call")
+    : startingContact
+      ? buildActionTitle("call", shows.find((show) => show.id === startingShowId), startingContact)
+      : "");
   const [dueDate, setDueDate] = useState(() => dateAfterDays(1));
   const [urgent, setUrgent] = useState(false);
   const [message, setMessage] = useState("");
+  const [williamOpen, setWilliamOpen] = useState(false);
+  const [williamRequest, setWilliamRequest] = useState("Propose la prochaine action la plus utile et la plus rapide à réaliser.");
   const [isPending, startTransition] = useTransition();
   const [isWilliamPending, startWilliamTransition] = useTransition();
 
@@ -73,14 +87,14 @@ export function ReminderForm({
     setShowId(nextShowId);
     if (actionType) {
       const nextShow = shows.find((show) => show.id === nextShowId);
-      setTitle(buildActionTitle(actionType, nextShow, selectedContact));
+      setTitle(grouped ? buildGroupedActionTitle(actionType) : buildActionTitle(actionType, nextShow, selectedContact));
     }
   }
 
   function chooseAction(nextType: ActionType) {
     setActionType(nextType);
     if (nextType !== "call" && nextType !== "email") setContactId("");
-    setTitle(buildActionTitle(nextType, selectedShow, selectedContact));
+    setTitle(grouped ? buildGroupedActionTitle(nextType) : buildActionTitle(nextType, selectedShow, selectedContact));
   }
 
   function chooseContact(nextContactId: string) {
@@ -93,18 +107,22 @@ export function ReminderForm({
     if (!canSubmit || !actionType || !selectedShow) return;
     setMessage("");
     startTransition(async () => {
-      const result = await createReminder({
+      const values = {
         actionType,
-        contactId: contactId || undefined,
+        contactId: grouped ? undefined : contactId || undefined,
         dueDate,
         priority: urgent ? "high" : "normal",
         relatedTo: selectedShow.title,
         showId,
         title: title.trim(),
-      });
+      } as const;
+      const result = grouped
+        ? await createRemindersForContacts(groupedContacts.map((contact) => contact.id), values)
+        : await createReminder(values);
       setMessage(result.message);
       if (result.ok) {
         if (result.reminder) onCreated?.(result.reminder);
+        if (result.reminders) onCreatedMany?.(result.reminders);
         router.refresh();
         onClose();
       }
@@ -122,6 +140,7 @@ export function ReminderForm({
         selectedShow.logline ? `Presentation : ${selectedShow.logline}.` : "",
         selectedContact ? `Contact concerne : ${selectedContact.name}, ${selectedContact.organization}.` : "",
         actionType ? `Type d'action envisage : ${actionType}.` : "",
+        `Demande de l'utilisateur : ${williamRequest}`,
         "Reponds uniquement par le libelle de l'action, en francais, sans guillemets ni explication, en 12 mots maximum.",
       ].filter(Boolean).join("\n"));
       if (!result.ok) {
@@ -129,13 +148,16 @@ export function ReminderForm({
         return;
       }
       setTitle(result.answer.text.replace(/^[\s"'*-]+|[\s"']+$/g, "").split("\n")[0]);
+      setWilliamOpen(false);
     });
   }
 
   return (
     <Dialog
       className="max-w-4xl"
-      description="Trois choix suffisent. Vous pourrez toujours ajuster le libelle avant d'ajouter l'action."
+      description={grouped
+        ? `Une action distincte sera creee pour chacun des ${groupedContacts.length} contacts selectionnes.`
+        : "Trois choix suffisent. Vous pourrez toujours ajuster le libelle avant d'ajouter l'action."}
       eyebrow="Nouvelle action"
       open={open}
       title="Que faut-il faire ?"
@@ -195,7 +217,12 @@ export function ReminderForm({
               );
             })}
           </div>
-          {contactUseful ? (
+          {contactUseful && grouped ? (
+            <div className="mt-4 rounded-md border border-border bg-panel-strong/45 p-3">
+              <p className="text-sm font-semibold">{groupedContacts.length} contacts selectionnes</p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted">{groupedContacts.map((contact) => contact.name).join(", ")}</p>
+            </div>
+          ) : contactUseful ? (
             <label className="mt-4 block text-sm font-medium">
               Contact <span className="font-normal text-muted">(facultatif)</span>
               <Select className="mt-2" value={contactId} onChange={(event) => chooseContact(event.target.value)}>
@@ -204,16 +231,32 @@ export function ReminderForm({
               </Select>
             </label>
           ) : null}
-          <label className="mt-4 block text-sm font-medium" htmlFor="reminder-title">
-            <span className="flex flex-wrap items-center justify-between gap-2">
-              <span>Action</span>
-              <button className="inline-flex min-h-9 items-center gap-2 rounded-md px-3 text-xs font-medium text-accent transition hover:bg-accent/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" disabled={!selectedShow || isWilliamPending} type="button" onClick={askWilliamForSuggestion}>
+          <div className="mt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-sm font-medium" htmlFor="reminder-title">Action</label>
+              <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-border bg-panel px-3 text-xs font-medium text-accent transition hover:border-accent/50 hover:bg-accent/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" disabled={!selectedShow || isWilliamPending} type="button" onClick={() => setWilliamOpen((value) => !value)}>
                 <span className="grid h-5 w-5 place-items-center rounded bg-ink text-[10px] font-semibold text-white">T</span>
-                {isWilliamPending ? "William cherche..." : "Suggestion William"}
+                Demander à William
               </button>
-            </span>
+            </div>
+            <div className="mt-3">
+              <WilliamRequestPanel
+                actionLabel="Proposer une action"
+                context={[selectedShow?.title ?? "Spectacle à choisir", grouped ? `${groupedContacts.length} contacts` : selectedContact?.name ?? "Sans contact", actionType ? actionPresets.find((preset) => preset.id === actionType)?.label ?? actionType : "Type à choisir"]}
+                description="William s'appuie sur le spectacle et le contact choisis pour proposer une action courte."
+                open={williamOpen}
+                pending={isWilliamPending}
+                placeholder="Ex. Propose une action pour relancer ce lieu cette semaine."
+                title="Que doit chercher William ?"
+                value={williamRequest}
+                onCancel={() => setWilliamOpen(false)}
+                onChange={setWilliamRequest}
+                onSubmit={askWilliamForSuggestion}
+              />
+            </div>
             <Input id="reminder-title" className="mt-2" placeholder="Decrivez l'action en quelques mots" value={title} onChange={(event) => setTitle(event.target.value)} />
-          </label>
+            {grouped ? <p className="mt-2 text-xs text-muted"><code>@contact</code> sera remplace par le nom de chaque personne ou lieu.</p> : null}
+          </div>
         </ComposerSection>
 
         <ComposerSection number="3" title="Pour quand ?">
@@ -274,4 +317,13 @@ function buildActionTitle(type: ActionType, show?: Show, contact?: Contact) {
   if (type === "quote") return `Preparer un devis pour ${showTitle}`;
   if (type === "administration") return `Mettre a jour le dossier de ${showTitle}`;
   return "";
+}
+
+function buildGroupedActionTitle(type: ActionType) {
+  if (type === "call") return "Appeler @contact";
+  if (type === "email") return "Envoyer un email a @contact";
+  if (type === "document") return "Envoyer le dossier a @contact";
+  if (type === "quote") return "Preparer un devis pour @contact";
+  if (type === "administration") return "Mettre a jour le suivi de @contact";
+  return "Faire avancer @contact";
 }

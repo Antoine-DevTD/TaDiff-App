@@ -10,6 +10,8 @@ type AskWilliamInput = {
   question: string;
   requestKind?: string;
   maxOutputTokens?: number;
+  additionalContext?: string;
+  additionalInstructions?: string;
 };
 
 export type WilliamAnswer = {
@@ -49,10 +51,14 @@ export async function askWilliam(input: AskWilliamInput): Promise<WilliamAnswer>
   const documentaryContext = formatRagContext(sources);
   const context = [
     operationalContext,
+    input.additionalContext ? `[CONTEXTE AUTORISE POUR CETTE DEMANDE]\n${input.additionalContext}` : "",
     "[SOURCES DOCUMENTAIRES]",
     documentaryContext || "Aucune source documentaire necessaire ou pertinente pour cette question.",
-  ].join("\n\n");
-  const systemPrompt = buildWilliamSystemPrompt(settings.system_prompt, question);
+  ].filter(Boolean).join("\n\n");
+  const systemPrompt = [
+    buildWilliamSystemPrompt(settings.system_prompt, question),
+    input.additionalInstructions?.trim(),
+  ].filter(Boolean).join("\n");
   const maxOutputTokens = Math.min(Math.max(input.maxOutputTokens ?? 900, 100), 2_000);
   const reservationBudget = estimateReservationTokens(systemPrompt, question, context, maxOutputTokens);
   const { data: reservationId, error: reservationError } = await supabase.rpc("reserve_my_ai_tokens", {
@@ -121,6 +127,8 @@ function buildWilliamSystemPrompt(basePrompt: string, question: string) {
     "Ton perimetre couvre TaDiff, le spectacle vivant et les sujets directement utiles a la gestion d'une compagnie : diffusion, production, administration, contrats, finances, aides, mecenat, communication et calendrier.",
     "Si la demande est clairement hors de ce perimetre, ne tente pas d'y repondre. Reponds exactement : \"Ca s'eloigne un peu du theatre, non ? Je peux en revanche vous aider sur TaDiff, votre compagnie ou vos spectacles.\"",
     "N'invente aucune donnee manquante. Distingue clairement ce qui est constate, ce qui est conseille et ce qui reste a renseigner.",
+    "L'historique recent des actions sert a reconnaitre les avancees et a reperer les blocages. Appuie-toi sur les resultats notes par l'utilisateur sans les exagerer.",
+    "Si une action a ete reportee plusieurs fois, signale le fait avec tact et pose une question ouverte. N'attribue jamais une peur, une intention ou un etat psychologique comme un fait.",
     "Quand tu proposes une action, indique le chemin TaDiff fourni dans le contexte. Reste concret, bref et adapte a une compagnie de spectacle vivant.",
     planningQuestion
       ? "La question demande un plan d'action. Donne au maximum 3 priorites classees. Pour chacune : action immediate, raison factuelle et chemin TaDiff. Termine par une seule premiere etape faisable maintenant."

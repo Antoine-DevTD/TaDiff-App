@@ -78,6 +78,8 @@ export async function getShows(): Promise<Show[]> {
     detailedBudgetEnabled:
       "detailed_budget_enabled" in show ? Boolean(show.detailed_budget_enabled) : false,
     logline: "logline" in show ? show.logline ?? "" : "",
+    synopsisText: "synopsis_text" in show ? show.synopsis_text ?? "" : "",
+    intentionNoteText: "intention_note_text" in show ? show.intention_note_text ?? "" : "",
     themes: "themes" in show ? show.themes ?? [] : [],
     targetAudience: "target_audience" in show ? show.target_audience ?? "" : "",
     emailPitch: "email_pitch" in show ? show.email_pitch ?? "" : "",
@@ -158,6 +160,8 @@ export async function getShowById(showId: string): Promise<{
     detailedBudgetEnabled:
       "detailed_budget_enabled" in show ? Boolean(show.detailed_budget_enabled) : false,
     logline: "logline" in show ? show.logline ?? "" : "",
+    synopsisText: "synopsis_text" in show ? show.synopsis_text ?? "" : "",
+    intentionNoteText: "intention_note_text" in show ? show.intention_note_text ?? "" : "",
     themes: "themes" in show ? show.themes ?? [] : [],
     targetAudience: "target_audience" in show ? show.target_audience ?? "" : "",
     emailPitch: "email_pitch" in show ? show.email_pitch ?? "" : "",
@@ -249,7 +253,12 @@ export async function getShowById(showId: string): Promise<{
 }
 
 function isContactOptionalColumnError(error: { message?: string } | null) {
-  return Boolean(error?.message?.includes("tags") || error?.message?.includes("phone"));
+  return Boolean(
+    error?.message?.includes("tags") ||
+    error?.message?.includes("phone") ||
+    error?.message?.includes("contact_type") ||
+    error?.message?.includes("venue_id"),
+  );
 }
 
 export async function getContacts(): Promise<Contact[]> {
@@ -260,7 +269,7 @@ export async function getContacts(): Promise<Contact[]> {
   const supabase = await getSupabaseServerClient();
   const query = supabase
     .from("contacts")
-    .select("id,name,organization,role,email,phone,city,status,tags")
+    .select("id,name,organization,role,email,phone,city,status,tags,contact_type,venue_id")
     .order("created_at", { ascending: false });
 
   let { data, error } = await query;
@@ -270,7 +279,7 @@ export async function getContacts(): Promise<Contact[]> {
       .from("contacts")
       .select("id,name,organization,role,email,city,status")
       .order("created_at", { ascending: false });
-    data = fallback.data?.map((contact) => ({ ...contact, phone: "", tags: [] })) ?? null;
+    data = fallback.data?.map((contact) => ({ ...contact, phone: "", tags: [], contact_type: "person" as const, venue_id: null })) ?? null;
     error = fallback.error;
   }
 
@@ -280,6 +289,8 @@ export async function getContacts(): Promise<Contact[]> {
 
   return data.map((contact) => ({
     id: contact.id,
+    contactType: "contact_type" in contact && contact.contact_type === "venue" ? "venue" : "person",
+    venueId: "venue_id" in contact ? contact.venue_id ?? "" : "",
     name: contact.name,
     organization: contact.organization,
     role: contact.role ?? "",
@@ -322,7 +333,7 @@ export async function getContactById(contactId: string): Promise<{
   const [contactResult, opportunityResult] = await Promise.all([
     supabase
       .from("contacts")
-      .select("id,name,organization,role,email,phone,city,status,tags")
+      .select("id,name,organization,role,email,phone,city,status,tags,contact_type,venue_id")
       .eq("id", contactId)
       .maybeSingle(),
     supabase
@@ -342,7 +353,7 @@ export async function getContactById(contactId: string): Promise<{
       .select("id,name,organization,role,email,city,status")
       .eq("id", contactId)
       .maybeSingle();
-    contact = fallback.data ? { ...fallback.data, phone: "", tags: [] } : null;
+    contact = fallback.data ? { ...fallback.data, phone: "", tags: [], contact_type: "person" as const, venue_id: null } : null;
     contactError = fallback.error;
   }
 
@@ -352,6 +363,8 @@ export async function getContactById(contactId: string): Promise<{
 
   const resolvedContact: Contact = {
     id: contact.id,
+    contactType: "contact_type" in contact && contact.contact_type === "venue" ? "venue" : "person",
+    venueId: "venue_id" in contact ? contact.venue_id ?? "" : "",
     name: contact.name,
     organization: contact.organization,
     role: contact.role ?? "",
@@ -558,17 +571,35 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
   }));
 }
 
-export async function getReminders(): Promise<Reminder[]> {
+export async function getReminders({ includeCompleted = false }: { includeCompleted?: boolean } = {}): Promise<Reminder[]> {
   if (!hasSupabaseEnv()) {
-    return reminders;
+    return includeCompleted ? reminders : reminders.filter((reminder) => !reminder.done);
   }
 
   const supabase = await getSupabaseServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("reminders")
-    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type")
-    .eq("done", false)
+    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at,completion_outcome,completion_note")
     .order("due_date", { ascending: true });
+
+  if (!includeCompleted) query = query.eq("done", false);
+
+  let { data, error } = await query;
+
+  if (error?.message.includes("completion_") || error?.message.includes("schema cache")) {
+    let fallbackQuery = supabase
+      .from("reminders")
+      .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at")
+      .order("due_date", { ascending: true });
+    if (!includeCompleted) fallbackQuery = fallbackQuery.eq("done", false);
+    const fallback = await fallbackQuery;
+    data = fallback.data?.map((reminder) => ({
+      ...reminder,
+      completion_outcome: null,
+      completion_note: null,
+    })) ?? null;
+    error = fallback.error;
+  }
 
   if (error || !data) {
     return [];
@@ -584,6 +615,9 @@ export async function getReminders(): Promise<Reminder[]> {
     showId: reminder.show_id ?? undefined,
     contactId: reminder.contact_id ?? undefined,
     actionType: reminder.action_type,
+    completedAt: reminder.completed_at ?? undefined,
+    completionOutcome: reminder.completion_outcome ?? undefined,
+    completionNote: reminder.completion_note ?? undefined,
   }));
 }
 

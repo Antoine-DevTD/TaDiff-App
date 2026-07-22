@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { deleteShowDocument } from "@/app/(dashboard)/actions";
+import { DestructiveActionDialog } from "@/components/ui/destructive-action-dialog";
 import { cn } from "@/lib/utils";
 
 export function ShowDocumentDeleteButton({
@@ -14,56 +15,32 @@ export function ShowDocumentDeleteButton({
   documentId: string;
 }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  function onDelete() {
-    if (!confirming) {
-      setConfirming(true);
-      return;
-    }
-
-    startTransition(async () => {
-      setError(null);
-      const result = await deleteShowDocument(documentId);
-
-      if (!result.ok) {
-        setError(result.message);
-        setConfirming(false);
-        return;
-      }
-
-      router.refresh();
-    });
-  }
+  const [open, setOpen] = useState(false);
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <>
       <button
-        aria-label={confirming ? "Confirmer la suppression" : "Supprimer le document"}
+        aria-label="Supprimer le document"
         className={cn(
-          "text-sm font-medium text-danger/80 transition hover:text-danger disabled:opacity-50",
+          "text-sm font-medium text-danger/80 transition hover:text-danger",
           compact && "inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-danger/10",
-          confirming && compact && "bg-danger/10 text-danger",
         )}
-        disabled={isPending}
-        title={confirming ? "Cliquer à nouveau pour confirmer" : "Supprimer le document"}
+        title="Supprimer le document"
         type="button"
-        onClick={onDelete}
-        onBlur={() => setConfirming(false)}
+        onClick={() => setOpen(true)}
       >
-        {compact ? (
-          <Trash2 aria-hidden="true" className="h-4 w-4" />
-        ) : isPending ? (
-          "Suppression..."
-        ) : confirming ? (
-          "Confirmer la suppression"
-        ) : (
-          "Supprimer"
-        )}
+        {compact ? <Trash2 aria-hidden="true" className="h-4 w-4" /> : "Supprimer"}
       </button>
-      {error ? <span className="text-xs text-danger">{error}</span> : null}
-    </span>
+      <DestructiveActionDialog
+        action={deleteShowDocument.bind(null, documentId)}
+        description="Ce fichier et ses versions vont etre retires du dossier du spectacle."
+        holdLabel="Maintenir 3 secondes pour supprimer le document"
+        open={open}
+        title="Supprimer ce document ?"
+        warning="Cette suppression est definitive. Verifiez qu'aucune version de ce document ne doit etre conservee."
+        onClose={() => setOpen(false)}
+        onSuccess={() => router.refresh()}
+      />
+    </>
   );
 }

@@ -12,6 +12,7 @@ type CompanyContext = {
   signals: Array<{ level: "urgent" | "attention" | "info"; label: string; route: string }>;
   shows: Array<Record<string, unknown>>;
   openActions: Array<Record<string, unknown>>;
+  recentCompletedActions: Array<Record<string, unknown>>;
   diffusion: Array<Record<string, unknown>>;
   grants: Array<Record<string, unknown>>;
   patronage: Array<Record<string, unknown>>;
@@ -27,12 +28,15 @@ export async function buildCompanyOperationalContext(
 ) {
   const today = new Date().toISOString().slice(0, 10);
   const inThirtyDays = addDays(today, 30);
+  const ninetyDaysAgo = addDays(today, -90);
 
   const [
     companyResult,
     showsResult,
     documentsResult,
     remindersResult,
+    completedRemindersResult,
+    reminderEventsResult,
     opportunitiesResult,
     grantsResult,
     patronageResult,
@@ -46,7 +50,7 @@ export async function buildCompanyOperationalContext(
     supabase.from("companies").select("name,city,discipline,description").eq("id", companyId).maybeSingle(),
     supabase
       .from("shows")
-      .select("id,title,discipline,status,next_date,budget,logline,themes,target_audience,email_pitch,poster_url")
+      .select("id,title,discipline,status,next_date,budget,logline,synopsis_text,intention_note_text,themes,target_audience,email_pitch,poster_url")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false })
       .limit(20),
@@ -62,6 +66,21 @@ export async function buildCompanyOperationalContext(
       .eq("done", false)
       .order("due_date", { ascending: true })
       .limit(30),
+    supabase
+      .from("reminders")
+      .select("id,title,due_date,related_to,show_id,contact_id,action_type,completed_at,completion_outcome,completion_note")
+      .eq("company_id", companyId)
+      .eq("done", true)
+      .gte("completed_at", `${ninetyDaysAgo}T00:00:00Z`)
+      .order("completed_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("reminder_events")
+      .select("reminder_id,reminder_title,event_type,note,metadata,created_at")
+      .eq("company_id", companyId)
+      .gte("created_at", `${ninetyDaysAgo}T00:00:00Z`)
+      .order("created_at", { ascending: false })
+      .limit(100),
     supabase
       .from("opportunities")
       .select("id,title,stage,value,exploitation_mode,performance_date,next_action,next_follow_up_at,show_id,contact_id")
@@ -137,6 +156,8 @@ export async function buildCompanyOperationalContext(
   const shows = rows(showsResult, "spectacles");
   const documents = rows(documentsResult, "documents des spectacles");
   const reminders = rows(remindersResult, "actions");
+  const completedReminders = rows(completedRemindersResult, "actions terminees");
+  const reminderEvents = rows(reminderEventsResult, "historique des actions");
   const opportunities = rows(opportunitiesResult, "diffusion");
   const grants = rows(grantsResult, "subventions");
   const patronage = rows(patronageResult, "mecenat");
@@ -148,6 +169,11 @@ export async function buildCompanyOperationalContext(
   const showNames = new Map(shows.map((show) => [show.id, show.title]));
   const contactNames = new Map(contacts.map((contact) => [contact.id, `${contact.name} - ${contact.organization}`]));
   const opportunityNames = new Map(opportunities.map((opportunity) => [opportunity.id, opportunity.title]));
+  const rescheduleCounts = reminderEvents.reduce((counts, event) => {
+    if (event.event_type !== "rescheduled") return counts;
+    counts.set(event.reminder_id, (counts.get(event.reminder_id) ?? 0) + 1);
+    return counts;
+  }, new Map<string, number>());
 
   const showSummaries = shows.map((show) => {
     const showDocuments = documents.filter((document) => document.show_id === show.id);
@@ -161,7 +187,13 @@ export async function buildCompanyOperationalContext(
       status: show.status,
       nextRepresentation: show.next_date,
       budget: show.budget,
-      presentationReady: Boolean(show.logline && show.email_pitch),
+      presentationReady: Boolean(show.logline && show.synopsis_text && show.intention_note_text && show.email_pitch),
+      missingPresentationFields: [
+        !show.logline ? "logline" : null,
+        !show.synopsis_text ? "synopsis" : null,
+        !show.intention_note_text ? "note d'intention" : null,
+        !show.email_pitch ? "presentation de diffusion" : null,
+      ].filter(Boolean),
       missingEssentialDocuments: missingDocuments,
       route: `/shows/${show.id}`,
     };
@@ -175,6 +207,19 @@ export async function buildCompanyOperationalContext(
     relatedTo: reminder.related_to,
     diffusion: reminder.opportunity_id ? opportunityNames.get(reminder.opportunity_id) ?? null : null,
     contact: reminder.contact_id ? contactNames.get(reminder.contact_id) ?? null : null,
+    rescheduleCountLast90Days: rescheduleCounts.get(reminder.id) ?? 0,
+    route: "/reminders",
+  }));
+
+  const recentCompletedActions = completedReminders.map((reminder) => ({
+    title: reminder.title,
+    show: reminder.show_id ? showNames.get(reminder.show_id) ?? null : null,
+    contact: reminder.contact_id ? contactNames.get(reminder.contact_id) ?? null : null,
+    actionType: reminder.action_type,
+    completedAt: reminder.completed_at,
+    outcome: reminder.completion_outcome,
+    userNote: reminder.completion_note,
+    rescheduleCountLast90Days: rescheduleCounts.get(reminder.id) ?? 0,
     route: "/reminders",
   }));
 
@@ -196,12 +241,16 @@ export async function buildCompanyOperationalContext(
   const overdueActions = openActions.filter((action) => action.overdue).length;
   const overdueFollowUps = diffusion.filter((opportunity) => opportunity.followUpOverdue).length;
   const incompleteShows = showSummaries.filter((show) => show.missingEssentialDocuments.length > 0).length;
+  const incompletePresentations = showSummaries.filter((show) => !show.presentationReady).length;
   const urgentGrants = grants.filter((grant) => grant.deadline >= today && grant.deadline <= addDays(today, 14)).length;
+  const repeatedlyRescheduledActions = Array.from(rescheduleCounts.values()).filter((count) => count >= 2).length;
 
   if (overdueActions) signals.push({ level: "urgent", label: `${overdueActions} action(s) en retard`, route: "/reminders" });
   if (overdueFollowUps) signals.push({ level: "urgent", label: `${overdueFollowUps} suivi(s) de diffusion en retard`, route: "/pipeline" });
   if (urgentGrants) signals.push({ level: "attention", label: `${urgentGrants} aide(s) arrivent a echeance sous 14 jours`, route: "/subventions" });
   if (incompleteShows) signals.push({ level: "attention", label: `${incompleteShows} spectacle(s) ont un dossier incomplet`, route: "/shows" });
+  if (incompletePresentations) signals.push({ level: "info", label: `${incompletePresentations} spectacle(s) ont une presentation a completer avec William`, route: "/shows" });
+  if (repeatedlyRescheduledActions) signals.push({ level: "attention", label: `${repeatedlyRescheduledActions} action(s) ont ete reportees plusieurs fois en 90 jours`, route: "/reminders" });
   if (!treasuryResult.data) signals.push({ level: "attention", label: "Solde de tresorerie non renseigne", route: "/finances" });
   if (!shows.length) signals.push({ level: "info", label: "Aucun spectacle cree", route: "/shows?create=1" });
   if (!signals.length) signals.push({ level: "info", label: "Aucune urgence detectee dans les donnees renseignees", route: "/dashboard" });
@@ -219,6 +268,7 @@ export async function buildCompanyOperationalContext(
     signals,
     shows: showSummaries,
     openActions,
+    recentCompletedActions,
     diffusion,
     grants: grants.map((grant) => ({
       title: grant.title,

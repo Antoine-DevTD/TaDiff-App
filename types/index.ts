@@ -54,6 +54,8 @@ export type Show = {
   budget: number;
   detailedBudgetEnabled?: boolean;
   logline?: string;
+  synopsisText?: string;
+  intentionNoteText?: string;
   themes?: string[];
   targetAudience?: string;
   emailPitch?: string;
@@ -119,6 +121,8 @@ export type ShowWorkDocument = {
 
 export type Contact = {
   id: string;
+  contactType: "person" | "venue";
+  venueId: string;
   name: string;
   organization: string;
   role: string;
@@ -212,6 +216,9 @@ export type Reminder = {
   showId?: string;
   contactId?: string;
   actionType?: "call" | "email" | "document" | "quote" | "administration" | "other";
+  completedAt?: string;
+  completionOutcome?: "positive" | "follow_up" | "no_answer" | "negative" | "other";
+  completionNote?: string;
 };
 
 export type CostProfile = {

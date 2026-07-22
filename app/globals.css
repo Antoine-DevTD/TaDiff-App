@@ -145,6 +145,48 @@ html[data-theatre-theme="regie"] {
   animation: william-halo 2.4s ease-out infinite;
 }
 
+@keyframes destructive-particle {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.45);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--burst-x), var(--burst-y)) scale(1.15);
+  }
+}
+
+.destructive-burst {
+  pointer-events: none;
+  position: absolute;
+  inset: 50%;
+}
+
+.destructive-burst > span {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: destructive-particle 420ms ease-out forwards;
+}
+
+.destructive-burst > span:nth-child(1) { --burst-x: 58px; --burst-y: 0; }
+.destructive-burst > span:nth-child(2) { --burst-x: 42px; --burst-y: 34px; }
+.destructive-burst > span:nth-child(3) { --burst-x: 0; --burst-y: 46px; }
+.destructive-burst > span:nth-child(4) { --burst-x: -42px; --burst-y: 34px; }
+.destructive-burst > span:nth-child(5) { --burst-x: -58px; --burst-y: 0; }
+.destructive-burst > span:nth-child(6) { --burst-x: -42px; --burst-y: -34px; }
+.destructive-burst > span:nth-child(7) { --burst-x: 0; --burst-y: -46px; }
+.destructive-burst > span:nth-child(8) { --burst-x: 42px; --burst-y: -34px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .destructive-burst > span {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .william-bubble-button {
     animation: none;

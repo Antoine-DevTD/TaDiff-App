@@ -53,6 +53,64 @@ export type Database = {
         };
         Relationships: [];
       };
+      william_conversations: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          show_id: string;
+          objective: "logline" | "synopsis" | "intention" | "email_pitch";
+          mode: "interview" | "documents";
+          source_context: string;
+          status: "active" | "archived";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id: string;
+          show_id: string;
+          objective: "logline" | "synopsis" | "intention" | "email_pitch";
+          mode: "interview" | "documents";
+          source_context?: string;
+          status?: "active" | "archived";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          objective?: "logline" | "synopsis" | "intention" | "email_pitch";
+          mode?: "interview" | "documents";
+          source_context?: string;
+          status?: "active" | "archived";
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      william_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          company_id: string;
+          user_id: string | null;
+          role: "user" | "assistant";
+          content: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          company_id: string;
+          user_id?: string | null;
+          role: "user" | "assistant";
+          content: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
       companies: {
         Row: {
           id: string;
@@ -255,6 +313,8 @@ export type Database = {
           budget: number | null;
           detailed_budget_enabled: boolean;
           logline: string | null;
+          synopsis_text: string | null;
+          intention_note_text: string | null;
           themes: string[];
           target_audience: string | null;
           email_pitch: string | null;
@@ -273,6 +333,8 @@ export type Database = {
           budget?: number | null;
           detailed_budget_enabled?: boolean;
           logline?: string | null;
+          synopsis_text?: string | null;
+          intention_note_text?: string | null;
           themes?: string[];
           target_audience?: string | null;
           email_pitch?: string | null;
@@ -289,6 +351,8 @@ export type Database = {
           budget?: number | null;
           detailed_budget_enabled?: boolean;
           logline?: string | null;
+          synopsis_text?: string | null;
+          intention_note_text?: string | null;
           themes?: string[];
           target_audience?: string | null;
           email_pitch?: string | null;
@@ -382,6 +446,8 @@ export type Database = {
         Row: {
           id: string;
           company_id: string;
+          contact_type: "person" | "venue";
+          venue_id: string | null;
           name: string;
           organization: string;
           role: string | null;
@@ -395,6 +461,8 @@ export type Database = {
         Insert: {
           id?: string;
           company_id: string;
+          contact_type?: "person" | "venue";
+          venue_id?: string | null;
           name: string;
           organization: string;
           role?: string | null;
@@ -407,6 +475,8 @@ export type Database = {
         };
         Update: {
           name?: string;
+          contact_type?: "person" | "venue";
+          venue_id?: string | null;
           organization?: string;
           role?: string | null;
           email?: string | null;
@@ -422,6 +492,13 @@ export type Database = {
             columns: ["company_id"];
             isOneToOne: false;
             referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contacts_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
             referencedColumns: ["id"];
           },
         ];
@@ -538,6 +615,8 @@ export type Database = {
           priority: "low" | "normal" | "high";
           done: boolean;
           completed_at: string | null;
+          completion_outcome: "positive" | "follow_up" | "no_answer" | "negative" | "other" | null;
+          completion_note: string | null;
           created_at: string;
         };
         Insert: {
@@ -553,6 +632,8 @@ export type Database = {
           priority?: "low" | "normal" | "high";
           done?: boolean;
           completed_at?: string | null;
+          completion_outcome?: "positive" | "follow_up" | "no_answer" | "negative" | "other" | null;
+          completion_note?: string | null;
           created_at?: string;
         };
         Update: {
@@ -566,6 +647,8 @@ export type Database = {
           priority?: "low" | "normal" | "high";
           done?: boolean;
           completed_at?: string | null;
+          completion_outcome?: "positive" | "follow_up" | "no_answer" | "negative" | "other" | null;
+          completion_note?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -595,6 +678,54 @@ export type Database = {
             columns: ["show_id"];
             isOneToOne: false;
             referencedRelation: "shows";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reminder_events: {
+        Row: {
+          id: string;
+          company_id: string;
+          reminder_id: string;
+          user_id: string | null;
+          show_id: string | null;
+          contact_id: string | null;
+          reminder_title: string;
+          event_type: "created" | "completed" | "reopened" | "rescheduled";
+          note: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          reminder_id: string;
+          user_id?: string | null;
+          show_id?: string | null;
+          contact_id?: string | null;
+          reminder_title: string;
+          event_type: "created" | "completed" | "reopened" | "rescheduled";
+          note?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          note?: string | null;
+          metadata?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reminder_events_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reminder_events_reminder_id_fkey";
+            columns: ["reminder_id"];
+            isOneToOne: false;
+            referencedRelation: "reminders";
             referencedColumns: ["id"];
           },
         ];

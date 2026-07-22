@@ -13,6 +13,8 @@ import { contactSchema, type ContactFormValues } from "@/lib/validation/contact"
 import type { Contact } from "@/types";
 
 const defaultValues: ContactFormValues = {
+  contactType: "person",
+  venueId: "",
   name: "",
   organization: "",
   role: "",
@@ -21,6 +23,9 @@ const defaultValues: ContactFormValues = {
   city: "",
   status: "Prospect",
   tags: [],
+  directorName: "",
+  directorEmail: "",
+  directorPhone: "",
 };
 
 export function ContactForm({
@@ -46,6 +51,8 @@ export function ContactForm({
     defaultValues: contact
       ? {
           name: contact.name,
+          contactType: contact.contactType,
+          venueId: contact.venueId,
           organization: contact.organization,
           role: contact.role || "",
           email: contact.email || "",
@@ -53,11 +60,15 @@ export function ContactForm({
           city: contact.city || "",
           status: contact.status,
           tags: contact.tags ?? [],
+          directorName: "",
+          directorEmail: "",
+          directorPhone: "",
         }
       : defaultValues,
   });
   // eslint-disable-next-line react-hooks/incompatible-library
   const tags = watch("tags") ?? [];
+  const contactType = watch("contactType");
 
   function onSubmit(values: ContactFormValues) {
     startTransition(async () => {
@@ -89,32 +100,57 @@ export function ContactForm({
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Nom" error={errors.name?.message}>
-          <Input placeholder="Mina Laurent" {...register("name")} />
-        </Field>
-        <Field label="Structure" error={errors.organization?.message}>
-          <Input placeholder="Scene nationale" {...register("organization")} />
-        </Field>
+      <div className="grid grid-cols-2 rounded-md border border-border bg-panel-strong p-1" aria-label="Type de fiche">
+        <button
+          className={`min-h-10 rounded px-3 text-sm font-medium transition ${contactType === "person" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"}`}
+          type="button"
+          onClick={() => setValue("contactType", "person", { shouldDirty: true })}
+        >
+          Une personne
+        </button>
+        <button
+          className={`min-h-10 rounded px-3 text-sm font-medium transition ${contactType === "venue" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"}`}
+          type="button"
+          onClick={() => setValue("contactType", "venue", { shouldDirty: true })}
+        >
+          Un lieu
+        </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Role" error={errors.role?.message}>
-          <Input placeholder="Programmatrice" {...register("role")} />
+        <Field label={contactType === "venue" ? "Nom du lieu" : "Nom"} error={errors.name?.message}>
+          <Input placeholder={contactType === "venue" ? "Théâtre municipal" : "Mina Laurent"} {...register("name")} />
         </Field>
+        {contactType === "person" ? <Field label="Structure" error={errors.organization?.message}><Input placeholder="Scène nationale" {...register("organization")} /></Field> : <Field label="Ville" error={errors.city?.message}><Input placeholder="La Rochelle" {...register("city")} /></Field>}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {contactType === "person" ? <Field label="Rôle" error={errors.role?.message}><Input placeholder="Programmatrice" {...register("role")} /></Field> : null}
         <Field label="Email" error={errors.email?.message}>
           <Input type="email" placeholder="contact@scene.fr" {...register("email")} />
         </Field>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Telephone" error={errors.phone?.message}>
+        <Field label="Téléphone" error={errors.phone?.message}>
           <Input type="tel" placeholder="06 12 34 56 78" {...register("phone")} />
         </Field>
-        <Field label="Ville" error={errors.city?.message}>
+        {contactType === "person" ? <Field label="Ville" error={errors.city?.message}>
           <Input placeholder="La Rochelle" {...register("city")} />
-        </Field>
+        </Field> : null}
       </div>
+
+      {contactType === "venue" && !contact ? (
+        <section className="rounded-md border border-border bg-panel-strong/45 p-4">
+          <h4 className="font-semibold">Direction du lieu <span className="font-normal text-muted">(facultatif)</span></h4>
+          <p className="mt-1 text-xs leading-5 text-muted">Si vous la renseignez, cette personne sera aussi créée dans l&apos;onglet Personnes et reliée à ce lieu.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Nom de la direction" error={errors.directorName?.message}><Input placeholder="Camille Martin" {...register("directorName")} /></Field>
+            <Field label="Email" error={errors.directorEmail?.message}><Input type="email" placeholder="direction@theatre.fr" {...register("directorEmail")} /></Field>
+          </div>
+          <div className="mt-4 max-w-sm"><Field label="Téléphone" error={errors.directorPhone?.message}><Input type="tel" {...register("directorPhone")} /></Field></div>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Statut" error={errors.status?.message}>
@@ -152,7 +188,7 @@ export function ContactForm({
           disabled={isSubmitting || isPending}
           onClick={() => setSubmitMode("close")}
         >
-          {contact ? "Enregistrer les modifications" : "Creer le contact"}
+          {contact ? "Enregistrer les modifications" : contactType === "venue" ? "Créer le lieu" : "Créer le contact"}
         </Button>
         {!contact ? (
           <Button

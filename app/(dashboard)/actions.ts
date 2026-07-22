@@ -64,8 +64,10 @@ import {
 } from "@/lib/validation/finance";
 import {
   opportunitySchema,
+  reminderCompletionSchema,
   reminderSchema,
   type OpportunityFormInput,
+  type ReminderCompletionInput,
   type ReminderFormInput,
 } from "@/lib/validation/pipeline";
 import { showSchema, type ShowFormInput } from "@/lib/validation/show";
@@ -91,6 +93,7 @@ type ActionResult = {
   ok: boolean;
   message: string;
   reminder?: Reminder;
+  reminders?: Reminder[];
 };
 
 export async function saveEmailTemplate(
@@ -564,6 +567,8 @@ export async function updateShowEmailProfile(
     .from("shows")
     .update({
       logline: parsed.data.logline?.trim() || null,
+      synopsis_text: parsed.data.synopsisText?.trim() || null,
+      intention_note_text: parsed.data.intentionNoteText?.trim() || null,
       themes: parsed.data.themes.map((theme) => theme.trim()).filter(Boolean),
       target_audience: parsed.data.targetAudience?.trim() || null,
       email_pitch: parsed.data.emailPitch?.trim() || null,
@@ -575,7 +580,7 @@ export async function updateShowEmailProfile(
     return {
       ok: false,
       message: migrationMissing
-        ? "Appliquez la migration 035_show_email_profiles.sql avant d'enregistrer."
+        ? "Appliquez les migrations 035 et 051 avant d'enregistrer."
         : error.message,
     };
   }
@@ -788,10 +793,29 @@ export async function updateContact(
   }
 
   const supabase = await getSupabaseServerClient();
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  if (parsed.data.venueId) {
+    const { data: venue } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("id", parsed.data.venueId)
+      .eq("company_id", workspace.companyId)
+      .eq("contact_type", "venue")
+      .maybeSingle();
+    if (!venue) return { ok: false, message: "Le lieu selectionne n'appartient pas a cette compagnie." };
+  }
+
   const payload = {
+    contact_type: parsed.data.contactType,
+    venue_id: parsed.data.contactType === "person" ? parsed.data.venueId || null : null,
     name: parsed.data.name,
-    organization: parsed.data.organization,
-    role: parsed.data.role || null,
+    organization: parsed.data.contactType === "venue" ? parsed.data.name : parsed.data.organization,
+    role: parsed.data.contactType === "venue" ? "Lieu" : parsed.data.role || null,
     email: parsed.data.email || null,
     phone: parsed.data.phone || null,
     city: parsed.data.city || null,
@@ -799,6 +823,10 @@ export async function updateContact(
     tags: normalizeContactTags(parsed.data.tags),
   };
   let { error } = await supabase.from("contacts").update(payload).eq("id", contactId);
+
+  if (isContactKindSchemaCacheError(error)) {
+    return { ok: false, message: "Appliquez la migration 049 avant de modifier une personne ou un lieu." };
+  }
 
   if (isContactTagsSchemaCacheError(error)) {
     const fallbackPayload = {
@@ -842,9 +870,29 @@ function isContactTagsSchemaCacheError(error: { message?: string } | null) {
   return Boolean(error?.message?.includes("tags") || error?.message?.includes("phone"));
 }
 
+function isContactKindSchemaCacheError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("contact_type") || error?.message?.includes("venue_id"));
+}
+
 export async function deleteContact(contactId: string): Promise<ActionResult> {
+  const result = await deleteContacts([contactId]);
+  return result.ok
+    ? { ...result, message: "Contact supprime, dates et actions detachees." }
+    : result;
+}
+
+export async function deleteContacts(contactIds: string[]): Promise<ActionResult> {
+  const uniqueContactIds = Array.from(new Set(contactIds.filter(Boolean)));
+
+  if (uniqueContactIds.length === 0 || uniqueContactIds.length > 500) {
+    return { ok: false, message: "Selection de contacts invalide." };
+  }
+
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : contact supprime." };
+    return {
+      ok: true,
+      message: `Mode demo : ${uniqueContactIds.length} contact(s) supprime(s).`,
+    };
   }
 
   const accessError = await requireWriteAccess();
@@ -853,11 +901,40 @@ export async function deleteContact(contactId: string): Promise<ActionResult> {
     return { ok: false, message: accessError };
   }
 
+  const workspace = await getOrCreateWorkspace();
+
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase.from("contacts").delete().eq("id", contactId);
+  const { data: existingContacts, error: lookupError } = await supabase
+    .from("contacts")
+    .select("id,name")
+    .eq("company_id", workspace.companyId)
+    .in("id", uniqueContactIds);
+
+  if (lookupError) {
+    return { ok: false, message: lookupError.message };
+  }
+
+  if (!existingContacts || existingContacts.length !== uniqueContactIds.length) {
+    return { ok: false, message: "Un contact est introuvable ou n'appartient pas a cette compagnie." };
+  }
+
+  const { data: deletedContacts, error } = await supabase
+    .from("contacts")
+    .delete()
+    .eq("company_id", workspace.companyId)
+    .in("id", uniqueContactIds)
+    .select("id");
 
   if (error) {
     return { ok: false, message: error.message };
+  }
+
+  if (!deletedContacts || deletedContacts.length !== uniqueContactIds.length) {
+    return { ok: false, message: "Tous les contacts n'ont pas pu etre supprimes." };
   }
 
   revalidatePath("/contacts");
@@ -865,9 +942,13 @@ export async function deleteContact(contactId: string): Promise<ActionResult> {
   revalidatePath("/reminders");
   revalidatePath("/dashboard");
 
-  await logActivity("a supprime un contact", "contact");
+  await logActivity(
+    uniqueContactIds.length > 1 ? "a supprime des contacts" : "a supprime un contact",
+    "contact",
+    existingContacts.map((contact) => contact.name).slice(0, 5).join(", "),
+  );
 
-  return { ok: true, message: "Contact supprime, dates et actions detachees." };
+  return { ok: true, message: `${uniqueContactIds.length} contact(s) supprime(s).` };
 }
 
 export async function updateFixedCost(
@@ -1760,18 +1841,48 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
   }
 
   const supabase = await getSupabaseServerClient();
+  let resolvedVenueId = parsed.data.venueId || "";
+
+  if (parsed.data.contactType === "person" && !resolvedVenueId && parsed.data.organization) {
+    const { data: matchingVenue } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("company_id", workspace.companyId)
+      .eq("contact_type", "venue")
+      .ilike("name", parsed.data.organization.trim())
+      .maybeSingle();
+    resolvedVenueId = matchingVenue?.id ?? "";
+  }
+
+  if (resolvedVenueId) {
+    const { data: venue } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("id", resolvedVenueId)
+      .eq("company_id", workspace.companyId)
+      .eq("contact_type", "venue")
+      .maybeSingle();
+    if (!venue) return { ok: false, message: "Le lieu selectionne n'appartient pas a cette compagnie." };
+  }
+
   const payload = {
     company_id: workspace.companyId,
+    contact_type: parsed.data.contactType,
+    venue_id: parsed.data.contactType === "person" ? resolvedVenueId || null : null,
     name: parsed.data.name,
-    organization: parsed.data.organization,
-    role: parsed.data.role || null,
+    organization: parsed.data.contactType === "venue" ? parsed.data.name : parsed.data.organization,
+    role: parsed.data.contactType === "venue" ? "Lieu" : parsed.data.role || null,
     email: parsed.data.email || null,
     phone: parsed.data.phone || null,
     city: parsed.data.city || null,
     status: parsed.data.status,
     tags: normalizeContactTags(parsed.data.tags),
   };
-  let { error } = await supabase.from("contacts").insert(payload);
+  let { data: createdContact, error } = await supabase.from("contacts").insert(payload).select("id").single();
+
+  if (isContactKindSchemaCacheError(error)) {
+    return { ok: false, message: "Appliquez la migration 049 avant de creer une personne ou un lieu." };
+  }
 
   if (isContactTagsSchemaCacheError(error)) {
     const fallbackPayload = {
@@ -1783,12 +1894,34 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
       city: payload.city,
       status: payload.status,
     };
-    const retry = await supabase.from("contacts").insert(fallbackPayload);
+    const retry = await supabase.from("contacts").insert(fallbackPayload).select("id").single();
+    createdContact = retry.data;
     error = retry.error;
   }
 
   if (error) {
     return { ok: false, message: error.message };
+  }
+
+  if (parsed.data.contactType === "venue" && parsed.data.directorName?.trim() && createdContact?.id) {
+    const { error: directorError } = await supabase.from("contacts").insert({
+      company_id: workspace.companyId,
+      contact_type: "person",
+      venue_id: createdContact.id,
+      name: parsed.data.directorName.trim(),
+      organization: parsed.data.name,
+      role: "Direction",
+      email: parsed.data.directorEmail || null,
+      phone: parsed.data.directorPhone || null,
+      city: parsed.data.city || null,
+      status: parsed.data.status,
+      tags: ["Direction"],
+    });
+
+    if (directorError) {
+      await supabase.from("contacts").delete().eq("id", createdContact.id);
+      return { ok: false, message: `Le lieu n'a pas ete cree : ${directorError.message}` };
+    }
   }
 
   revalidatePath("/contacts");
@@ -3439,9 +3572,154 @@ export async function updateReminder(
   return { ok: true, message: "Action mise a jour." };
 }
 
-export async function completeReminder(reminderId: string): Promise<ActionResult> {
+export async function createRemindersForContacts(
+  contactIds: string[],
+  values: ReminderFormInput,
+): Promise<ActionResult> {
+  const parsed = reminderSchema.safeParse(values);
+  const uniqueContactIds = Array.from(new Set(contactIds.filter(Boolean)));
+
+  if (!parsed.success || !parsed.data.showId) {
+    return { ok: false, message: "Le spectacle, l'action et la date sont requis." };
+  }
+
+  if (uniqueContactIds.length < 2 || uniqueContactIds.length > 200) {
+    return { ok: false, message: "Selectionnez entre 2 et 200 contacts." };
+  }
+
+  const parsedData = parsed.data;
+
+  function reminderTitle(contactName: string) {
+    return parsedData.title.includes("@contact")
+      ? parsedData.title.replaceAll("@contact", contactName)
+      : `${parsedData.title} - ${contactName}`;
+  }
+
   if (!hasSupabaseEnv()) {
-    return { ok: true, message: "Mode demo : action terminee." };
+    return {
+      ok: true,
+      message: `Mode demo : ${uniqueContactIds.length} actions ajoutees.`,
+      reminders: uniqueContactIds.map((contactId, index) => ({
+        id: `demo-group-${Date.now()}-${index}`,
+        label: reminderTitle(`contact ${index + 1}`),
+        dueDate: parsed.data.dueDate,
+        relatedTo: parsed.data.relatedTo ?? "",
+        done: false,
+        priority: parsed.data.priority,
+        showId: parsed.data.showId,
+        contactId,
+        actionType: parsed.data.actionType ?? "other",
+      })),
+    };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const [{ data: contactRows, error: contactsError }, { data: showRow, error: showError }] = await Promise.all([
+    supabase
+      .from("contacts")
+      .select("id,name")
+      .eq("company_id", workspace.companyId)
+      .in("id", uniqueContactIds),
+    supabase
+      .from("shows")
+      .select("id,title")
+      .eq("company_id", workspace.companyId)
+      .eq("id", parsed.data.showId)
+      .maybeSingle(),
+  ]);
+
+  if (contactsError || showError) {
+    return { ok: false, message: contactsError?.message ?? showError?.message ?? "Verification impossible." };
+  }
+
+  if (!contactRows || contactRows.length !== uniqueContactIds.length) {
+    return { ok: false, message: "Un contact est introuvable ou n'appartient pas a cette compagnie." };
+  }
+
+  if (!showRow) {
+    return { ok: false, message: "Ce spectacle n'appartient pas a cette compagnie." };
+  }
+
+  const { data: createdRows, error } = await supabase
+    .from("reminders")
+    .insert(contactRows.map((contact) => ({
+      company_id: workspace.companyId,
+      title: reminderTitle(contact.name),
+      due_date: parsed.data.dueDate,
+      related_to: showRow.title,
+      priority: parsed.data.priority,
+      contact_id: contact.id,
+      show_id: showRow.id,
+      action_type: parsed.data.actionType ?? "other",
+    })))
+    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type");
+
+  if (error || !createdRows || createdRows.length !== contactRows.length) {
+    return { ok: false, message: error?.message ?? "Les actions n'ont pas toutes ete creees." };
+  }
+
+  const createdReminders: Reminder[] = createdRows.map((reminder) => ({
+    id: reminder.id,
+    label: reminder.title,
+    dueDate: reminder.due_date,
+    relatedTo: reminder.related_to ?? "",
+    done: reminder.done,
+    priority: reminder.priority,
+    showId: reminder.show_id ?? undefined,
+    contactId: reminder.contact_id ?? undefined,
+    actionType: reminder.action_type,
+  }));
+
+  revalidatePath("/reminders");
+  revalidatePath("/contacts");
+  revalidatePath("/dashboard");
+
+  await logActivity(
+    "a cree des actions groupees",
+    "action",
+    `${createdReminders.length} contact(s) - ${showRow.title}`,
+  );
+
+  return {
+    ok: true,
+    message: `${createdReminders.length} actions creees.`,
+    reminders: createdReminders,
+  };
+}
+
+export async function completeReminder(
+  reminderId: string,
+  values: ReminderCompletionInput = {},
+): Promise<ActionResult> {
+  const parsed = reminderCompletionSchema.safeParse(values);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Le compte rendu est invalide." };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return {
+      ok: true,
+      message: "Mode demo : action terminee.",
+      reminder: {
+        id: reminderId,
+        label: "Action terminee",
+        dueDate: new Date().toISOString().slice(0, 10),
+        relatedTo: "",
+        done: true,
+        priority: "normal",
+        completedAt: new Date().toISOString(),
+        completionOutcome: parsed.data.outcome,
+        completionNote: parsed.data.note,
+      },
+    };
   }
 
   const accessError = await requireWriteAccess();
@@ -3457,17 +3735,28 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
   }
 
   const supabase = await getSupabaseServerClient();
+  const completedAt = new Date().toISOString();
   const { data: completedReminder, error } = await supabase
     .from("reminders")
-    .update({ done: true, completed_at: new Date().toISOString() })
+    .update({
+      done: true,
+      completed_at: completedAt,
+      completion_outcome: parsed.data.outcome ?? null,
+      completion_note: parsed.data.note?.trim() || null,
+    })
     .eq("id", reminderId)
     .eq("company_id", workspace.companyId)
     .eq("done", false)
-    .select("id")
+    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at,completion_outcome,completion_note")
     .maybeSingle();
 
   if (error) {
-    return { ok: false, message: error.message };
+    return {
+      ok: false,
+      message: error.message.includes("completion_") || error.message.includes("reminder_events")
+        ? "Appliquez la migration 050_reminder_completion_history.sql avant de terminer une action."
+        : error.message,
+    };
   }
 
   if (!completedReminder) {
@@ -3479,5 +3768,75 @@ export async function completeReminder(reminderId: string): Promise<ActionResult
 
   await logActivity("a termine une action", "action");
 
-  return { ok: true, message: "Action terminee." };
+  return {
+    ok: true,
+    message: "Action terminee.",
+    reminder: mapReminderRow(completedReminder),
+  };
+}
+
+export async function reopenReminder(reminderId: string): Promise<ActionResult> {
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : action rouverte." };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+
+  const supabase = await getSupabaseServerClient();
+  const { data: reopenedReminder, error } = await supabase
+    .from("reminders")
+    .update({
+      done: false,
+      completed_at: null,
+      completion_outcome: null,
+      completion_note: null,
+    })
+    .eq("id", reminderId)
+    .eq("company_id", workspace.companyId)
+    .eq("done", true)
+    .select("id,title,due_date,related_to,done,priority,show_id,contact_id,action_type,completed_at,completion_outcome,completion_note")
+    .maybeSingle();
+
+  if (error) return { ok: false, message: error.message };
+  if (!reopenedReminder) return { ok: false, message: "Action introuvable ou deja ouverte." };
+
+  revalidatePath("/reminders");
+  revalidatePath("/dashboard");
+  await logActivity("a rouvert une action", "action", reopenedReminder.title);
+
+  return { ok: true, message: "Action rouverte.", reminder: mapReminderRow(reopenedReminder) };
+}
+
+function mapReminderRow(reminder: {
+  id: string;
+  title: string;
+  due_date: string;
+  related_to: string | null;
+  done: boolean;
+  priority: "low" | "normal" | "high";
+  show_id: string | null;
+  contact_id: string | null;
+  action_type: Reminder["actionType"];
+  completed_at: string | null;
+  completion_outcome: Reminder["completionOutcome"] | null;
+  completion_note: string | null;
+}): Reminder {
+  return {
+    id: reminder.id,
+    label: reminder.title,
+    dueDate: reminder.due_date,
+    relatedTo: reminder.related_to ?? "",
+    done: reminder.done,
+    priority: reminder.priority,
+    showId: reminder.show_id ?? undefined,
+    contactId: reminder.contact_id ?? undefined,
+    actionType: reminder.action_type,
+    completedAt: reminder.completed_at ?? undefined,
+    completionOutcome: reminder.completion_outcome ?? undefined,
+    completionNote: reminder.completion_note ?? undefined,
+  };
 }

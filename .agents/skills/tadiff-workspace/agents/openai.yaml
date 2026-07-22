@@ -1,0 +1,4 @@
+interface:
+  display_name: "TaDiff Workspace"
+  short_description: "Contexte et coordination du projet TaDiff"
+  default_prompt: "Use $tadiff-workspace to reprendre une tache TaDiff avec le contexte minimal utile."

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowUpDown,
   BellPlus,
+  Building2,
   ChevronsLeft,
   ChevronsRight,
   Mail,
@@ -14,6 +14,7 @@ import {
   PinOff,
   Search,
   Tags,
+  Trash2,
   UserRound,
   Users,
   X,
@@ -28,12 +29,15 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { deleteContacts } from "@/app/(dashboard)/actions";
 import { ContactEmailAssistant } from "@/components/contacts/contact-email-assistant";
+import { ReminderForm } from "@/components/reminders/reminder-form";
+import { DestructiveActionDialog } from "@/components/ui/destructive-action-dialog";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ContactForm } from "@/components/forms/contact-form";
 import { cn } from "@/lib/utils";
-import type { Contact, EmailTemplate, Show } from "@/types";
+import type { Contact, EmailTemplate, Show, ShowDocument } from "@/types";
 
 type ContactFilter = {
   label: string;
@@ -42,7 +46,7 @@ type ContactFilter = {
   kind: "all" | "role" | "tag";
 };
 
-type ContactAction = "edit" | "reminder" | "email";
+type ContactAction = "delete" | "edit" | "reminder" | "email";
 
 type ContactContextMenu = {
   contact: Contact;
@@ -50,15 +54,19 @@ type ContactContextMenu = {
   y: number;
 } | null;
 
-export function ContactsTable({ contacts, shows, templates }: { contacts: Contact[]; shows: Show[]; templates: EmailTemplate[] }) {
-  const router = useRouter();
+export function ContactsTable({ contacts, documents, shows, templates }: { contacts: Contact[]; documents: ShowDocument[]; shows: Show[]; templates: EmailTemplate[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState("");
   const [railLocked, setRailLocked] = useState(false);
   const [railHovered, setRailHovered] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [emailContact, setEmailContact] = useState<Contact | null>(null);
+  const [emailContacts, setEmailContacts] = useState<Contact[]>([]);
+  const [reminderContacts, setReminderContacts] = useState<Contact[]>([]);
+  const [contactsToDelete, setContactsToDelete] = useState<Contact[]>([]);
+  const [removedContactIds, setRemovedContactIds] = useState<string[]>([]);
+  const [contactTab, setContactTab] = useState<"person" | "venue">("person");
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [contextMenu, setContextMenu] = useState<ContactContextMenu>(null);
   const [activeFilter, setActiveFilter] = useState<ContactFilter>({
     label: "Tous les contacts",
@@ -67,8 +75,9 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
     kind: "all",
   });
 
-  const filters = useMemo(() => buildFilters(contacts), [contacts]);
-  const columns = buildContactColumns({ onAction: handleContactAction });
+  const activeContacts = useMemo(() => contacts.filter((contact) => !removedContactIds.includes(contact.id)), [contacts, removedContactIds]);
+  const tabContacts = useMemo(() => activeContacts.filter((contact) => contact.contactType === contactTab), [activeContacts, contactTab]);
+  const filters = useMemo(() => buildFilters(tabContacts), [tabContacts]);
   const activeFilterExists = filters.some(
     (filter) => filter.kind === activeFilter.kind && filter.value === activeFilter.value,
   );
@@ -77,7 +86,7 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
   const filteredContacts = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
-    return contacts.filter((contact) => {
+    return tabContacts.filter((contact) => {
       const matchesFilter =
         resolvedFilter.kind === "all" ||
         (resolvedFilter.kind === "role" && contact.role === resolvedFilter.value) ||
@@ -100,7 +109,21 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
         .toLowerCase()
         .includes(normalizedSearch);
     });
-  }, [contacts, resolvedFilter, search]);
+  }, [resolvedFilter, search, tabContacts]);
+  const allVisibleSelected = filteredContacts.length > 0 && filteredContacts.every((contact) => selectedContactIds.includes(contact.id));
+  const selectedContacts = activeContacts.filter((contact) => selectedContactIds.includes(contact.id));
+  const selectedEmailContacts = selectedContacts.filter((contact) => contact.email);
+  const columns = buildContactColumns({
+    allContacts: activeContacts,
+    allVisibleSelected,
+    contactTab,
+    onAction: handleContactAction,
+    onToggleAll: () => setSelectedContactIds((current) => allVisibleSelected
+      ? current.filter((id) => !filteredContacts.some((contact) => contact.id === id))
+      : Array.from(new Set([...current, ...filteredContacts.map((contact) => contact.id)]))),
+    onToggleSelection: (contact) => setSelectedContactIds((current) => current.includes(contact.id) ? current.filter((id) => id !== contact.id) : [...current, contact.id]),
+    selectedContactIds,
+  });
 
   // TanStack Table intentionally returns function-rich instances.
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -127,11 +150,16 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
     }
 
     if (action === "email") {
-      setEmailContact(contact);
+      setEmailContacts([contact]);
       return;
     }
 
-    router.push(`/reminders?contactId=${encodeURIComponent(contact.id)}`);
+    if (action === "delete") {
+      setContactsToDelete([contact]);
+      return;
+    }
+
+    setReminderContacts([contact]);
   }
 
   return (
@@ -151,6 +179,32 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
         />
 
         <section className="min-w-0 flex-1">
+          <div className="flex items-center gap-1 border-b border-border bg-panel px-4 pt-3" role="tablist" aria-label="Type de contacts">
+            <ContactTab
+              active={contactTab === "person"}
+              count={activeContacts.filter((contact) => contact.contactType === "person").length}
+              icon={UserRound}
+              label="Personnes"
+              onClick={() => {
+                const peopleCount = activeContacts.filter((contact) => contact.contactType === "person").length;
+                setContactTab("person");
+                setSelectedContactIds([]);
+                setActiveFilter({ label: "Toutes les personnes", value: "all", count: peopleCount, kind: "all" });
+              }}
+            />
+            <ContactTab
+              active={contactTab === "venue"}
+              count={activeContacts.filter((contact) => contact.contactType === "venue").length}
+              icon={Building2}
+              label="Lieux"
+              onClick={() => {
+                const venueCount = activeContacts.filter((contact) => contact.contactType === "venue").length;
+                setContactTab("venue");
+                setSelectedContactIds([]);
+                setActiveFilter({ label: "Tous les lieux", value: "all", count: venueCount, kind: "all" });
+              }}
+            />
+          </div>
           <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -166,15 +220,34 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
                 <p className="text-xs text-muted">{filteredContacts.length} contact(s)</p>
               </div>
             </div>
-            <label className="relative block w-full sm:max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-              <Input
-                className="pl-9"
-                placeholder="Rechercher..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-            </label>
+            <div className="flex w-full flex-col gap-2 sm:max-w-4xl sm:flex-row sm:justify-end">
+              {selectedContacts.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1 rounded-md border border-accent/20 bg-accent/5 p-1">
+                  <span className="px-2 text-xs font-semibold text-accent">{selectedContacts.length} sélectionné{selectedContacts.length > 1 ? "s" : ""}</span>
+                  <SelectionAction icon={BellPlus} label="Créer une action" onClick={() => setReminderContacts(selectedContacts)} />
+                  <SelectionAction
+                    disabled={selectedEmailContacts.length === 0}
+                    icon={Mail}
+                    label={`Écrire${selectedEmailContacts.length ? ` (${selectedEmailContacts.length})` : ""}`}
+                    onClick={() => setEmailContacts(selectedEmailContacts)}
+                  />
+                  <SelectionAction danger icon={Trash2} label="Supprimer" onClick={() => setContactsToDelete(selectedContacts)} />
+                  <button
+                    aria-label="Annuler la sélection"
+                    className="grid h-9 w-9 place-items-center rounded-md text-muted transition hover:bg-panel hover:text-foreground"
+                    title="Annuler la sélection"
+                    type="button"
+                    onClick={() => setSelectedContactIds([])}
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                  </button>
+                </div>
+              ) : null}
+              <label className="relative block min-w-0 flex-1 sm:max-w-xs">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <Input className="pl-9" placeholder="Rechercher..." value={search} onChange={(event) => setSearch(event.target.value)} />
+              </label>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -281,22 +354,138 @@ export function ContactsTable({ contacts, shows, templates }: { contacts: Contac
       </Dialog>
 
       <ContactEmailAssistant
-        contact={emailContact}
+        selectedContacts={emailContacts}
+        contacts={activeContacts}
+        documents={documents}
         shows={shows}
         templates={templates}
-        open={Boolean(emailContact)}
-        onClose={() => setEmailContact(null)}
+        open={emailContacts.length > 0}
+        onClose={() => setEmailContacts([])}
+      />
+
+      <ReminderForm
+        key={reminderContacts.map((contact) => contact.id).join("-") || "closed"}
+        contacts={activeContacts}
+        initialContactIds={reminderContacts.map((contact) => contact.id)}
+        open={reminderContacts.length > 0}
+        shows={shows}
+        onClose={() => setReminderContacts([])}
+      />
+
+      <DestructiveActionDialog
+        action={() => deleteContacts(contactsToDelete.map((contact) => contact.id))}
+        description={contactsToDelete.length > 1
+          ? `${contactsToDelete.length} contacts vont etre retires du carnet.`
+          : `${contactsToDelete[0]?.name ?? "Ce contact"} va etre retire du carnet.`}
+        holdLabel={contactsToDelete.length > 1
+          ? `Maintenir 3 secondes pour supprimer ${contactsToDelete.length} contacts`
+          : "Maintenir 3 secondes pour supprimer ce contact"}
+        open={contactsToDelete.length > 0}
+        title={contactsToDelete.length > 1 ? "Supprimer les contacts selectionnes ?" : "Supprimer ce contact ?"}
+        warning={contactsToDelete.some((contact) => contact.contactType === "venue")
+          ? "Les actions et dates resteront conservees mais seront detachees. Les personnes rattachees aux lieux resteront dans le carnet."
+          : "Les actions et dates resteront conservees mais ne seront plus rattachees a ces contacts."}
+        onClose={() => setContactsToDelete([])}
+        onSuccess={() => {
+          const deletedIds = contactsToDelete.map((contact) => contact.id);
+          setRemovedContactIds((current) => Array.from(new Set([...current, ...deletedIds])));
+          setSelectedContactIds((current) => current.filter((id) => !deletedIds.includes(id)));
+        }}
       />
     </div>
   );
 }
 
-function buildContactColumns({
-  onAction,
+function SelectionAction({
+  danger = false,
+  disabled = false,
+  icon: Icon,
+  label,
+  onClick,
 }: {
+  danger?: boolean;
+  disabled?: boolean;
+  icon: typeof Mail;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={cn(
+        "inline-flex min-h-9 items-center gap-2 rounded-md px-3 text-xs font-semibold transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-40",
+        danger ? "text-danger" : "text-foreground",
+      )}
+      disabled={disabled}
+      type="button"
+      onClick={onClick}
+    >
+      <Icon className="h-4 w-4" aria-hidden />
+      {label}
+    </button>
+  );
+}
+
+function ContactTab({ active, count, icon: Icon, label, onClick }: { active: boolean; count: number; icon: typeof UserRound; label: string; onClick: () => void }) {
+  return (
+    <button
+      aria-selected={active}
+      className={cn(
+        "relative inline-flex min-h-11 items-center gap-2 px-4 text-sm font-medium transition",
+        active ? "text-accent after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-accent" : "text-muted hover:text-foreground",
+      )}
+      role="tab"
+      type="button"
+      onClick={onClick}
+    >
+      <Icon className="h-4 w-4" aria-hidden />
+      {label}
+      <span className="rounded-full bg-panel-strong px-2 py-0.5 text-xs">{count}</span>
+    </button>
+  );
+}
+
+function buildContactColumns({
+  allContacts,
+  allVisibleSelected,
+  contactTab,
+  onAction,
+  onToggleAll,
+  onToggleSelection,
+  selectedContactIds,
+}: {
+  allContacts: Contact[];
+  allVisibleSelected: boolean;
+  contactTab: "person" | "venue";
   onAction: (action: ContactAction, contact: Contact) => void;
+  onToggleAll: () => void;
+  onToggleSelection: (contact: Contact) => void;
+  selectedContactIds: string[];
 }): ColumnDef<Contact>[] {
   return [
+    {
+      id: "selection",
+      header: () => (
+        <input
+          aria-label="Sélectionner tous les contacts visibles"
+          checked={allVisibleSelected}
+          className="h-4 w-4 accent-[var(--color-accent)]"
+          type="checkbox"
+          onChange={onToggleAll}
+        />
+      ),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <input
+          aria-label={`Sélectionner ${row.original.name}`}
+          checked={selectedContactIds.includes(row.original.id)}
+          className="h-4 w-4 accent-[var(--color-accent)]"
+          title="Ajouter aux actions groupees"
+          type="checkbox"
+          onClick={(event) => event.stopPropagation()}
+          onChange={() => onToggleSelection(row.original)}
+        />
+      ),
+    },
     {
       accessorKey: "name",
       header: ({ column }) => <SortableHeader label="Nom" onClick={() => column.toggleSorting()} />,
@@ -308,9 +497,12 @@ function buildContactColumns({
     },
     {
       accessorKey: "organization",
-      header: ({ column }) => (
-        <SortableHeader label="Structure" onClick={() => column.toggleSorting()} />
-      ),
+      header: ({ column }) => <SortableHeader label={contactTab === "venue" ? "Direction" : "Structure"} onClick={() => column.toggleSorting()} />,
+      cell: ({ row }) => {
+        if (contactTab !== "venue") return row.original.organization;
+        const directors = allContacts.filter((contact) => contact.venueId === row.original.id);
+        return directors.length ? directors.map((contact) => contact.name).join(", ") : <span className="text-xs text-muted">À renseigner</span>;
+      },
     },
     {
       accessorKey: "role",
@@ -382,6 +574,14 @@ function buildContactColumns({
             label="Modifier"
             onAction={onAction}
           />
+          <ContactRowAction
+            action="delete"
+            contact={row.original}
+            danger
+            icon={Trash2}
+            label="Supprimer"
+            onAction={onAction}
+          />
         </div>
       ),
     },
@@ -391,12 +591,14 @@ function buildContactColumns({
 function ContactRowAction({
   action,
   contact,
+  danger = false,
   icon: Icon,
   label,
   onAction,
 }: {
   action: ContactAction;
   contact: Contact;
+  danger?: boolean;
   icon: typeof Pencil;
   label: string;
   onAction: (action: ContactAction, contact: Contact) => void;
@@ -404,7 +606,10 @@ function ContactRowAction({
   return (
     <button
       type="button"
-      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted transition-colors hover:bg-accent/10 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      className={cn(
+        "inline-flex h-9 w-9 items-center justify-center rounded-md text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
+        danger ? "hover:bg-danger/10 hover:text-danger" : "hover:bg-accent/10 hover:text-accent",
+      )}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -450,16 +655,20 @@ function ContactContextMenu({
         onClick={() => onAction("reminder", contact)}
       />
       <ContextAction icon={Mail} label="Preparer un email" onClick={() => onAction("email", contact)} />
+      <div className="my-1 border-t border-border" />
+      <ContextAction danger icon={Trash2} label="Supprimer" onClick={() => onAction("delete", contact)} />
     </div>
   );
 }
 
 function ContextAction({
+  danger = false,
   disabled = false,
   icon: Icon,
   label,
   onClick,
 }: {
+  danger?: boolean;
   disabled?: boolean;
   icon: typeof Pencil;
   label: string;
@@ -468,7 +677,10 @@ function ContextAction({
   return (
     <button
       type="button"
-      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-foreground transition hover:bg-accent/10 hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+      className={cn(
+        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition disabled:cursor-not-allowed disabled:opacity-50",
+        danger ? "text-danger hover:bg-danger/10" : "text-foreground hover:bg-accent/10 hover:text-accent",
+      )}
       disabled={disabled}
       onClick={onClick}
     >

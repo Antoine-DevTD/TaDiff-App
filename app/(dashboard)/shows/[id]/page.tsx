@@ -119,7 +119,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
             href={`/shows/${show.id}?tab=${tab.id}`}
             aria-current={activeTab === tab.id ? "page" : undefined}
             className={cn(
-              "relative shrink-0 px-4 py-3 text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
+              "relative shrink-0 px-4 py-3 text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:bg-accent/10 focus-visible:text-foreground focus-visible:outline-none",
               "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-200",
               activeTab === tab.id && "text-accent after:scale-x-100",
             )}
@@ -142,7 +142,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
         />
       ) : null}
 
-      {activeTab === "presentation" ? <ShowEmailProfileForm show={show} /> : null}
+      {activeTab === "presentation" ? <ShowEmailProfileForm documents={documents} show={show} /> : null}
 
       {activeTab === "workspace" ? (
         <Card className="p-5">
@@ -152,7 +152,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
 
       {activeTab === "files" ? (
         <Card>
-          <div className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
+          <div className={cn("grid gap-6", posterUrl && "xl:grid-cols-[0.72fr_1.28fr]")}>
             <div className="space-y-4">
               <ShowPoster posterUrl={posterUrl} show={show} />
               {documentReadiness.missingCount > 0 ? (
@@ -267,7 +267,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
                         <p className="font-medium">{formatCurrency(deal.value)}</p>
                         <p className="text-xs text-muted">{deal.probability}% estime</p>
                       </div>
-                      <Badge tone="info">{deal.stage}</Badge>
+                      <Badge tone={getOpportunityStageTone(deal.stage)}>{deal.stage}</Badge>
                     </div>
                   </Link>
                 ))
@@ -340,7 +340,7 @@ function OverviewTab({
   weightedRevenue: number;
 }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+    <div className={cn("grid gap-6", posterUrl && "xl:grid-cols-[0.8fr_1.2fr]")}>
       <ShowPoster posterUrl={posterUrl} show={show} />
       <div className="space-y-6">
         <section className="grid border-y border-border sm:grid-cols-2 sm:divide-x sm:divide-border">
@@ -402,8 +402,10 @@ function ReadinessPanel({ missingCount, percent }: { missingCount: number; perce
 }
 
 function ShowPoster({ posterUrl, show }: { posterUrl: string; show: Show }) {
+  if (!posterUrl) return null;
+
   return (
-    <div className="flex aspect-[4/3] items-end bg-ink bg-cover bg-center p-5 text-white" style={posterUrl ? { backgroundImage: `url(${posterUrl})` } : undefined}>
+    <div className="flex aspect-[4/3] items-end bg-cover bg-center p-5 text-white" style={{ backgroundImage: `url(${posterUrl})` }}>
       <div className="w-full bg-ink/80 p-4 backdrop-blur-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Affiche spectacle</p>
         <p className="mt-2 text-xl font-semibold">{show.title}</p>
@@ -411,6 +413,13 @@ function ShowPoster({ posterUrl, show }: { posterUrl: string; show: Show }) {
       </div>
     </div>
   );
+}
+
+function getOpportunityStageTone(stage: string) {
+  if (stage === "Confirme") return "success" as const;
+  if (stage === "Relance prevue") return "warning" as const;
+  if (stage === "Perdu") return "danger" as const;
+  return "info" as const;
 }
 
 function ActionPanel({ href, text }: { href: string; text: string }) {

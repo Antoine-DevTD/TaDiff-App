@@ -37,7 +37,13 @@ export const reminderSchema = z.object({
   actionType: z.enum(["call", "email", "document", "quote", "administration", "other"]).optional(),
 });
 
+export const reminderCompletionSchema = z.object({
+  outcome: z.enum(["positive", "follow_up", "no_answer", "negative", "other"]).optional(),
+  note: z.string().trim().max(2_000, "Le compte rendu est trop long").optional(),
+});
+
 export type OpportunityFormInput = z.input<typeof opportunitySchema>;
 export type OpportunityFormValues = z.infer<typeof opportunitySchema>;
 export type ReminderFormInput = z.input<typeof reminderSchema>;
 export type ReminderFormValues = z.infer<typeof reminderSchema>;
+export type ReminderCompletionInput = z.input<typeof reminderCompletionSchema>;

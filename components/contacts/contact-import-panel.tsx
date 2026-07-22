@@ -422,6 +422,7 @@ function mapRowsToContacts(rows: SheetRow[], mapping: ColumnMapping): ContactFor
     }
 
     contacts.push({
+      contactType: "person",
       name: name || email,
       organization: organization || "A renseigner",
       role: getMappedCell(row, mapping.role),

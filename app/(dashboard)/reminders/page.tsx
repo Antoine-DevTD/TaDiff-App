@@ -4,7 +4,7 @@ import { getContacts, getReminders, getShowDocuments, getShows } from "@/lib/sup
 
 export default async function RemindersPage({ searchParams }: { searchParams: Promise<{ contactId?: string }> }) {
   const { contactId } = await searchParams;
-  const [reminders, shows, contacts, documents] = await Promise.all([getReminders(), getShows(), getContacts(), getShowDocuments()]);
+  const [reminders, shows, contacts, documents] = await Promise.all([getReminders({ includeCompleted: true }), getShows(), getContacts(), getShowDocuments()]);
   const showsWithPosters = shows.map((show) => ({ ...show, posterUrl: resolveShowPosterUrl(show, documents.filter((document) => document.showId === show.id)) }));
 
   return (
