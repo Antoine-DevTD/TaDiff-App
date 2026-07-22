@@ -1,4 +1,5 @@
 import { hasSupabaseEnv } from "@/lib/env";
+import { cache } from "react";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { BillingStatus } from "@/lib/supabase/access";
 import { fallbackLegalInformation, mergeLegalInformation, type LegalInformation } from "@/lib/legal";
@@ -201,7 +202,7 @@ export async function isSuperAdmin(): Promise<boolean> {
   return data === true;
 }
 
-export async function getPlatformAdminAccess(): Promise<PlatformAdminAccess> {
+export const getPlatformAdminAccess = cache(async function getPlatformAdminAccess(): Promise<PlatformAdminAccess> {
   if (!hasSupabaseEnv()) return { isSuperAdmin: false, permissions: [] };
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase.rpc("get_my_platform_permissions");
@@ -211,7 +212,7 @@ export async function getPlatformAdminAccess(): Promise<PlatformAdminAccess> {
     isSuperAdmin: row.is_super_admin,
     permissions: (row.permissions ?? []).filter((permission): permission is PlatformPermission => platformPermissionValues.includes(permission as PlatformPermission)),
   };
-}
+});
 
 export async function hasPlatformPermission(permission: PlatformPermission) {
   const access = await getPlatformAdminAccess();

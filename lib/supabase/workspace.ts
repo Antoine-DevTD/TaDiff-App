@@ -1,11 +1,12 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { getSupabaseServerClient, getSupabaseServerUser } from "@/lib/supabase/server";
 
-export async function getOrCreateWorkspace() {
+export const getOrCreateWorkspace = cache(async function getOrCreateWorkspace() {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getSupabaseServerUser();
 
   if (userError || !user) {
     return { error: "Vous devez etre connecte.", companyId: null };
@@ -25,13 +26,13 @@ export async function getOrCreateWorkspace() {
   }
 
   return { error: null, companyId };
-}
+});
 
-export async function getWorkspaceLabel() {
+export const getWorkspaceLabel = cache(async function getWorkspaceLabel() {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSupabaseServerUser();
 
   if (!user) {
     return "Compagnie demo";
@@ -54,4 +55,4 @@ export async function getWorkspaceLabel() {
     .maybeSingle();
 
   return company?.name ?? "Compagnie";
-}
+});

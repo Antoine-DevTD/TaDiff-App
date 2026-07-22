@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { tourStateChangeEvent, tourStorageKey } from "@/components/tour/guided-tour";
-import { feedbackKinds, type FeedbackFormValues } from "@/lib/validation/feedback";
+import { feedbackKinds, type FeedbackFormValues } from "@/lib/feedback";
 
 const kindLabels: Record<(typeof feedbackKinds)[number], { label: string; hint: string }> = {
   bug: { label: "Un bug", hint: "Quelque chose ne fonctionne pas" },

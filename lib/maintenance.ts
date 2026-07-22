@@ -14,7 +14,7 @@ export function isMaintenanceModeEnabled() {
 type MaintenanceCache = { value: boolean; expiresAt: number };
 
 let maintenanceCache: MaintenanceCache | null = null;
-const MAINTENANCE_CACHE_TTL_MS = 5000;
+const MAINTENANCE_CACHE_TTL_MS = 30_000;
 
 async function fetchMaintenanceModeFromDb(): Promise<boolean> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

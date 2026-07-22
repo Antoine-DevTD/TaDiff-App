@@ -1,7 +1,7 @@
 import { z } from "zod";
+import { feedbackKinds, feedbackStatuses } from "@/lib/feedback";
 
-export const feedbackKinds = ["bug", "idee", "avis"] as const;
-export const feedbackStatuses = ["nouveau", "en_cours", "traite"] as const;
+export { feedbackKinds, feedbackStatuses } from "@/lib/feedback";
 
 export const feedbackSchema = z.object({
   kind: z.enum(feedbackKinds),

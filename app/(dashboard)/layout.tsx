@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { AccessTracker } from "@/components/audit/access-tracker";
 import { Sidebar } from "@/components/layout/sidebar";
-import { FeedbackWidget } from "@/components/feedback/feedback-widget";
-import { GuidedTour } from "@/components/tour/guided-tour";
+import { DeferredDashboardTools } from "@/components/layout/deferred-dashboard-tools";
 import { WilliamAssistant } from "@/components/william/william-assistant";
 import { ThemeApplier } from "@/components/theme/theme-applier";
 import { Topbar } from "@/components/layout/topbar";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getPlatformAdminAccess } from "@/lib/supabase/admin";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServerUser } from "@/lib/supabase/server";
 import { getWorkspaceLabel } from "@/lib/supabase/workspace";
 
 export default async function DashboardLayout({
@@ -20,18 +20,20 @@ export default async function DashboardLayout({
   let superAdmin = false;
 
   if (hasSupabaseEnv()) {
-    const supabase = await getSupabaseServerClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await getSupabaseServerUser();
 
     if (!user) {
       redirect("/login");
     }
 
-    const platformAccess = await getPlatformAdminAccess();
+    const [platformAccess, resolvedWorkspaceLabel] = await Promise.all([
+      getPlatformAdminAccess(),
+      getWorkspaceLabel(),
+    ]);
     superAdmin = platformAccess.isSuperAdmin || platformAccess.permissions.length > 0;
-    workspaceLabel = superAdmin ? "Console interne" : await getWorkspaceLabel();
+    workspaceLabel = superAdmin ? "Console interne" : resolvedWorkspaceLabel;
   }
 
   return (
@@ -54,12 +56,13 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
-      {superAdmin ? null : <GuidedTour />}
-      {superAdmin ? null : <WilliamAssistant />}
-      <AccessTracker />
+      {superAdmin ? null : <DeferredDashboardTools />}
       {superAdmin ? null : (
-        <FeedbackWidget triggerClassName="fixed bottom-7 right-24 z-40 hidden items-center gap-2 rounded-full border border-border bg-panel px-4 py-2.5 text-sm font-medium shadow-lg shadow-ink/10 transition hover:bg-panel-strong sm:inline-flex print:hidden" />
+        <Suspense fallback={null}>
+          <WilliamAssistant />
+        </Suspense>
       )}
+      <AccessTracker />
     </div>
   );
 }

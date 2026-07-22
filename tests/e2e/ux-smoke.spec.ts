@@ -220,7 +220,7 @@ test.describe("cockpit en mode demonstration", () => {
     await dialog.getByRole("button", { name: "Ajouter à l'agenda" }).click();
 
     await expect(dialog).toBeHidden();
-    await expect(page.getByText("Rendez-vous technique test", { exact: true })).toBeVisible();
+    await expect(page.getByText("Rendez-vous technique test", { exact: true }).first()).toBeVisible();
   });
 
   test("ouvre une action deja rattachee depuis la fiche spectacle", async ({ page }) => {

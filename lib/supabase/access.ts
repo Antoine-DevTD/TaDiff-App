@@ -1,5 +1,6 @@
 import { hasSupabaseEnv } from "@/lib/env";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { getSupabaseServerClient, getSupabaseServerUser } from "@/lib/supabase/server";
 
 export type CompanyRole = "owner" | "admin" | "member" | "readonly";
 export type BillingStatus = "trial" | "active" | "comped" | "past_due" | "cancelled";
@@ -44,7 +45,7 @@ export function computeHasAccess(
  * Lit le role de l'utilisateur courant et le statut billing de sa compagnie.
  * En mode demo (pas d'env Supabase), tout est ouvert.
  */
-export async function getWorkspaceAccess(): Promise<WorkspaceAccess> {
+export const getWorkspaceAccess = cache(async function getWorkspaceAccess(): Promise<WorkspaceAccess> {
   if (!hasSupabaseEnv()) {
     return demoAccess;
   }
@@ -52,7 +53,7 @@ export async function getWorkspaceAccess(): Promise<WorkspaceAccess> {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSupabaseServerUser();
 
   if (!user) {
     return {
@@ -113,7 +114,7 @@ export async function getWorkspaceAccess(): Promise<WorkspaceAccess> {
     canManage: profile.role === "owner" || profile.role === "admin",
     error: null,
   };
-}
+});
 
 /**
  * Garde pour toute mutation : refuse le role readonly et les compagnies

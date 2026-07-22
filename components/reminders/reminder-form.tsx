@@ -4,7 +4,7 @@ import { CalendarDays, FileText, Mail, Phone, Plus, ReceiptText, Settings2 } fro
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { createReminder, createRemindersForContacts } from "@/app/(dashboard)/actions";
-import { askWilliamAction } from "@/app/(dashboard)/william/actions";
+import { askWilliamAction } from "@/app/(dashboard)/william/assistant-action";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";

@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useEffect, useState, useTransition } from "react";
 import { LogOut, Plus, Settings } from "lucide-react";
-import { ShowForm } from "@/components/forms/show-form";
-import { Dialog } from "@/components/ui/dialog";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { signOutAction } from "@/app/auth/sign-out/actions";
 import { TadiffMark } from "@/components/brand/tadiff-mark";
 
+const AccountShowDialog = dynamic(
+  () => import("@/components/layout/account-show-dialog").then((module) => module.AccountShowDialog),
+  { ssr: false },
+);
+
 export function AccountMenu() {
-  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [isSigningOut, startSignOut] = useTransition();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -20,14 +23,6 @@ export function AccountMenu() {
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
   }, [menuOpen]);
-
-  async function signOut() {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      await getSupabaseBrowserClient().auth.signOut();
-    }
-    router.push("/login");
-    router.refresh();
-  }
 
   return (
     <div className="relative" onClick={(event) => event.stopPropagation()}>
@@ -66,7 +61,8 @@ export function AccountMenu() {
           </button>
           <button
             type="button"
-            onClick={signOut}
+            disabled={isSigningOut}
+            onClick={() => startSignOut(() => signOutAction())}
             className="flex w-full items-center gap-2 border-t border-border px-4 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
           >
             <LogOut className="h-4 w-4" aria-hidden />
@@ -75,15 +71,7 @@ export function AccountMenu() {
         </div>
       ) : null}
 
-      <Dialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        eyebrow="Catalogue"
-        title="Nouveau spectacle"
-        description="Ajoutez une creation au catalogue des spectacles."
-      >
-        <ShowForm onSuccess={() => setCreateOpen(false)} />
-      </Dialog>
+      {createOpen ? <AccountShowDialog onClose={() => setCreateOpen(false)} /> : null}
     </div>
   );
 }

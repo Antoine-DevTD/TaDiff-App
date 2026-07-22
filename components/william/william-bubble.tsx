@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, useTransition } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { ChevronDown, Maximize2, Minimize2, Send, X } from "lucide-react";
-import { askWilliamAction } from "@/app/(dashboard)/william/actions";
+import { askWilliamAction } from "@/app/(dashboard)/william/assistant-action";
 import { TadiffMark } from "@/components/brand/tadiff-mark";
 import { cn } from "@/lib/utils";
 import type { WilliamTip } from "@/lib/william";
+
+const WilliamMarkdown = dynamic(
+  () => import("@/components/william/william-markdown").then((module) => module.WilliamMarkdown),
+  {
+    loading: () => <span className="whitespace-pre-wrap">William prépare sa réponse...</span>,
+    ssr: false,
+  },
+);
 
 const toneDot: Record<WilliamTip["tone"], string> = {
   danger: "bg-danger",
@@ -238,23 +245,5 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
         {!open && urgentCount > 0 ? <span aria-label={`${urgentCount} priorité${urgentCount > 1 ? "s" : ""}`} className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[11px] font-bold text-white ring-2 ring-panel">{urgentCount}</span> : null}
       </button>
     </div>
-  );
-}
-
-function WilliamMarkdown({ children }: { children: string }) {
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        a: ({ children: linkChildren, href }) => <a className="font-medium text-accent underline underline-offset-2" href={href} rel="noreferrer" target="_blank">{linkChildren}</a>,
-        li: ({ children: itemChildren }) => <li className="ml-4 pl-1">{itemChildren}</li>,
-        ol: ({ children: listChildren }) => <ol className="my-2 list-decimal space-y-1">{listChildren}</ol>,
-        p: ({ children: paragraphChildren }) => <p className="my-2 first:mt-0 last:mb-0">{paragraphChildren}</p>,
-        strong: ({ children: strongChildren }) => <strong className="font-semibold text-foreground">{strongChildren}</strong>,
-        ul: ({ children: listChildren }) => <ul className="my-2 list-disc space-y-1">{listChildren}</ul>,
-      }}
-    >
-      {children}
-    </ReactMarkdown>
   );
 }

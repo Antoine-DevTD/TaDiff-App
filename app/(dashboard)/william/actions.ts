@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { askWilliam } from "@/lib/ai/governed";
 
-const questionSchema = z.string().trim().min(3).max(12_000);
 const emailDraftSchema = z.object({
   contactName: z.string().trim().min(1).max(200),
   organization: z.string().trim().max(200),
@@ -12,17 +11,6 @@ const emailDraftSchema = z.object({
   instruction: z.string().trim().min(3).max(2_000),
   attachmentLabels: z.array(z.string().trim().max(100)).max(12),
 });
-
-export async function askWilliamAction(question: string) {
-  const parsed = questionSchema.safeParse(question);
-  if (!parsed.success) return { ok: false as const, message: "Votre question doit contenir entre 3 et 12 000 caracteres." };
-  try {
-    const answer = await askWilliam({ question: parsed.data, requestKind: "assistant" });
-    return { ok: true as const, answer };
-  } catch (error) {
-    return { ok: false as const, message: error instanceof Error ? error.message : "William est indisponible." };
-  }
-}
 
 export async function draftWilliamEmailAction(input: z.input<typeof emailDraftSchema>) {
   const parsed = emailDraftSchema.safeParse(input);
