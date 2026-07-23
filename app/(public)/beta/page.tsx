@@ -5,16 +5,16 @@ import { betaReservedSeatLimit } from "@/lib/beta";
 import { getBetaSignupStats } from "@/lib/supabase/queries";
 
 const betaBenefits = [
-  "Cockpit tresorerie et prochaines actions",
+  "Cockpit trésorerie et prochaines actions",
   "Spectacles, affiches et dossiers de depot",
-  "Radar subventions et pieces manquantes",
+  "Radar subventions et pièces manquantes",
   "Carnet de contacts avec actions recommandees",
 ];
 
 const betaSteps = [
   "On configure votre compagnie avec vous",
   "Vous testez sur vos vrais spectacles",
-  "On fait un point au milieu de la beta",
+  "On fait un point au milieu de la bêta",
   "On priorise les ameliorations avant lancement",
 ];
 
@@ -28,7 +28,7 @@ export default async function BetaPage() {
       <section className="border-b border-border bg-ink text-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[0.92fr_0.78fr] lg:px-8 lg:py-16">
           <div className="flex flex-col justify-center">
-            <Badge className="w-fit bg-white/10 text-white">Beta compagnies</Badge>
+            <Badge className="w-fit bg-white/10 text-white">Bêta compagnies</Badge>
             {isLastSeat ? (
               <Badge className="mt-3 w-fit bg-warning text-ink">Derniere place disponible</Badge>
             ) : null}
@@ -39,13 +39,13 @@ export default async function BetaPage() {
               {betaReservedSeatLimit} compagnies pour tester le cockpit avant le lancement.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">
-              La beta TaDiff demarre le 6 aout 2026 a 19,99 EUR. Les {betaReservedSeatLimit} premieres
-              compagnies gardent un accompagnement prioritaire pendant la periode de test.
+              La bêta TaDiff demarre le 6 aout 2026 a 19,99 EUR. Les {betaReservedSeatLimit} premières
+              compagnies gardent un accompagnement prioritaire pendant la période de test.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <HeroMetric label="Places beta" value={betaReservedSeatLimit.toString()} />
+              <HeroMetric label="Places bêta" value={betaReservedSeatLimit.toString()} />
               <HeroMetric
-                label="Deja reservees"
+                label="Déjà réservées"
                 value={stats.reservedCount.toString()}
               />
               <HeroMetric
@@ -59,13 +59,13 @@ export default async function BetaPage() {
             <div className="mb-5">
               <p className="text-lg font-semibold">
                 {isLastSeat
-                  ? "Reserver la derniere place beta"
+                  ? "Réserver la dernière place bêta"
                   : isFull
                     ? "Rejoindre la liste d'attente"
-                    : "Reserver une place beta"}
+                    : "Réserver une place bêta"}
               </p>
               <p className="mt-2 text-sm text-muted">
-                Les {betaReservedSeatLimit} premieres places sont reservees. Au-dela, les compagnies passent sur
+                Les {betaReservedSeatLimit} premières places sont reservees. Au-dela, les compagnies passent sur
                 liste d&apos;attente prioritaire.
               </p>
             </div>

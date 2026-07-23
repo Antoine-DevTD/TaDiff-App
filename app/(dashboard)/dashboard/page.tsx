@@ -177,7 +177,7 @@ function buildTheatreActions({
     actions.push({
       detail: lateReminder.relatedTo || "Action sans contexte",
       href: "/reminders",
-      label: "Action a faire",
+      label: "Action à faire",
       title: lateReminder.label,
       tone: "danger",
     });
@@ -292,28 +292,28 @@ export default async function DashboardPage() {
   const onboardingSteps: OnboardingStep[] = [
     {
       id: "show",
-      label: "Creer le premier spectacle",
+      label: "Créer le premier spectacle",
       detail: "Titre, discipline, budget, affiche : le dossier central de la compagnie.",
       href: "/shows?create=1",
       done: shows.length > 0,
     },
     {
       id: "documents",
-      label: "Completer le dossier indispensable",
-      detail: "Dossier artistique, note, synopsis, texte et fiche technique pour vendre et deposer.",
+      label: "Compléter le dossier indispensable",
+      detail: "Dossier artistique, note, synopsis, texte et fiche technique pour vendre et déposer.",
       href: firstShowId ? `/shows/${firstShowId}` : "/shows",
       done: documents.length > 0,
     },
     {
       id: "contacts",
       label: "Remplir le carnet de contacts",
-      detail: "Equipe, lieux, partenaires et tags pour retrouver vite les bons contacts.",
+      detail: "Équipe, lieux, partenaires et tags pour retrouver vite les bons contacts.",
       href: "/contacts",
       done: contacts.length > 0,
     },
     {
       id: "opportunity",
-      label: "Ajouter une premiere date possible",
+      label: "Ajouter une première date possible",
       detail: "Un contact, un spectacle, une date de jeu et une prochaine action.",
       href: "/pipeline",
       done: pipelineDeals.length > 0,
@@ -327,8 +327,8 @@ export default async function DashboardPage() {
     },
     {
       id: "finances",
-      label: "Poser les bases financieres",
-      detail: "Frais fixes et tresorerie permettent de calculer la marge de securite.",
+      label: "Poser les bases financières",
+      detail: "Frais fixes et trésorerie permettent de calculer la marge de sécurité.",
       href: "/finances",
       done: fixedCosts.length > 0 && treasury !== null,
     },
@@ -364,7 +364,7 @@ export default async function DashboardPage() {
                   }
                 />
                 <p className="mt-3 max-w-2xl text-sm text-muted">
-                  Tresorerie, dates, dossiers et echeances reunis dans une seule lecture.
+                  Trésorerie, dates, dossiers et échéances réunis dans une seule lecture.
                 </p>
               </div>
               <Badge tone={cashPilot.status}>{getToneLabel(cashPilot.status)}</Badge>
@@ -374,24 +374,28 @@ export default async function DashboardPage() {
           <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-4">
             <PulseMetric
               detail={`${cashPilot.runwayDays} jours de marge`}
-              label="Tresorerie"
+              href="/finances"
+              label="Trésorerie"
               tone={cashPilot.status}
               value={formatCurrency(cashPilot.currentCash)}
             />
             <PulseMetric
               detail={`${activeDeals.length} date(s) active(s)`}
+              href="/pipeline"
               label="Dates en cours"
               tone={salesTone}
               value={formatCurrency(cashPilot.weightedPipeline)}
             />
             <PulseMetric
               detail={`${documentMissingCount} pièce(s) manquante(s)`}
-              label="Dossiers prets"
+              href="/documents"
+              label="Dossiers prêts"
               tone={productionTone}
               value={`${Math.max(0, activeShows.length - showReadiness.filter((item) => item.readiness.missingCount > 0).length)}/${activeShows.length}`}
             />
             <PulseMetric
               detail={`${overdueReminderCount} retard - ${urgentGrantCount} deadline(s)`}
+              href="/reminders"
               label="Urgences"
               tone={agendaTone}
               value={agendaTone === "success" ? "Calme" : getToneLabel(agendaTone)}
@@ -429,7 +433,7 @@ export default async function DashboardPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                A faire maintenant
+                À faire maintenant
               </p>
               <DashboardSectionTitle
                 className="text-2xl"
@@ -437,11 +441,11 @@ export default async function DashboardPage() {
                 title={mainAction?.title ?? "Rien ne bloque aujourd'hui."}
               />
             </div>
-            {mainAction ? <Badge tone={mainAction.tone}>{mainAction.label}</Badge> : <Badge tone="success">A jour</Badge>}
+            {mainAction ? <Badge tone={mainAction.tone}>{mainAction.label}</Badge> : <Badge tone="success">À jour</Badge>}
           </div>
           <p className="text-sm text-muted">
             {mainAction?.detail ??
-              "Le cockpit restera clair tant que les actions, dossiers et encaissements restent a jour."}
+              "Le cockpit restera clair tant que les actions, dossiers et encaissements restent à jour."}
           </p>
           <div className="flex flex-wrap gap-3">
             {mainAction ? (
@@ -452,7 +456,7 @@ export default async function DashboardPage() {
             <ButtonLink href="/calendar" variant="secondary">
               Voir l&apos;agenda
             </ButtonLink>
-            <TourLauncher label="Visite guidee" />
+            <TourLauncher label="Visite guidée" />
           </div>
         </Card>
       </section>
@@ -461,7 +465,7 @@ export default async function DashboardPage() {
         <Card className="theme-cockpit-roadmap space-y-4 p-5" data-tour="cockpit-plan">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              A faire ensuite
+              À faire ensuite
             </p>
             <DashboardSectionTitle
               className="text-2xl"
@@ -566,10 +570,10 @@ export default async function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Aujourd&apos;hui
               </p>
-              <DashboardSectionTitle className="text-xl" href="/reminders" title="Actions et echeances" />
+              <DashboardSectionTitle className="text-xl" href="/reminders" title="Actions et échéances" />
             </div>
             <ButtonLink href="/reminders" variant="secondary">
-              A faire
+              À faire
             </ButtonLink>
           </div>
 
@@ -609,17 +613,22 @@ export default async function DashboardPage() {
 
 function PulseMetric({
   detail,
+  href,
   label,
   tone,
   value,
 }: {
   detail: string;
+  href: string;
   label: string;
   tone: Tone;
   value: string;
 }) {
   return (
-    <div className="border-t border-border p-4 md:border-r xl:border-t-0">
+    <Link
+      className="group border-t border-border p-4 outline-none transition hover:bg-panel-strong/65 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent md:border-r xl:border-t-0"
+      href={href}
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
         <span
@@ -635,9 +644,12 @@ function PulseMetric({
           ].join(" ")}
         />
       </div>
-      <p className="mt-3 text-xl font-semibold">{value}</p>
+      <p className="mt-3 text-xl font-semibold transition group-hover:text-accent">{value}</p>
       <p className="mt-1 text-xs text-muted">{detail}</p>
-    </div>
+      <span className="mt-3 block text-xs font-medium text-accent opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+        Ouvrir
+      </span>
+    </Link>
   );
 }
 

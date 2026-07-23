@@ -13,7 +13,7 @@ export function LegalPage({ eyebrow, title, introduction, children }: {
           <p className="text-sm font-semibold text-accent">{eyebrow}</p>
           <h1 className="mt-3 text-4xl font-semibold text-foreground sm:text-5xl">{title}</h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-muted">{introduction}</p>
-          <p className="mt-4 text-sm text-muted">Derniere mise a jour : 15 juillet 2026</p>
+          <p className="mt-4 text-sm text-muted">Derniere mise à jour : 15 juillet 2026</p>
         </header>
         <div className="mt-10 space-y-10">{children}</div>
       </div>

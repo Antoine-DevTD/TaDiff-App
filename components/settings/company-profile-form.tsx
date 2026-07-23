@@ -78,7 +78,7 @@ export function CompanyProfileForm({
           <Field label="Email de contact" error={errors.email?.message}>
             <Input type="email" placeholder="contact@compagnie.fr" {...register("email")} />
           </Field>
-          <Field label="Telephone" error={errors.phone?.message}>
+          <Field label="Téléphone" error={errors.phone?.message}>
             <Input placeholder="06 12 34 56 78" {...register("phone")} />
           </Field>
         </div>

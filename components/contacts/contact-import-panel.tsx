@@ -7,7 +7,7 @@ import { importContacts } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
-import type { ContactFormValues } from "@/lib/validation/contact";
+import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
 
 type ImportMessage = {
   ok: boolean;
@@ -15,6 +15,11 @@ type ImportMessage = {
 };
 
 type SheetRow = string[];
+
+type RejectedRow = {
+  line: number;
+  reason: string;
+};
 
 type ContactField =
   | "contactType"
@@ -41,9 +46,9 @@ const contactFields: { key: ContactField; label: string; required?: boolean }[] 
   { key: "contactType", label: "Type de fiche" },
   { key: "name", label: "Nom", required: true },
   { key: "organization", label: "Structure" },
-  { key: "role", label: "Role" },
+  { key: "role", label: "Rôle" },
   { key: "email", label: "Email" },
-  { key: "phone", label: "Telephone" },
+  { key: "phone", label: "Téléphone" },
   { key: "city", label: "Ville" },
   { key: "address", label: "Adresse" },
   { key: "postalCode", label: "Code postal" },
@@ -54,7 +59,7 @@ const contactFields: { key: ContactField; label: string; required?: boolean }[] 
   { key: "latitude", label: "Latitude" },
   { key: "longitude", label: "Longitude" },
   { key: "status", label: "Statut" },
-  { key: "tags", label: "Tags / categories" },
+  { key: "tags", label: "Tags / catégories" },
 ];
 
 const emptyMapping: ColumnMapping = {
@@ -87,11 +92,16 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
   const [mapping, setMapping] = useState<ColumnMapping>(emptyMapping);
   const [message, setMessage] = useState<ImportMessage | null>(null);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+  const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 });
 
   const headers = rows[0] ?? [];
   const bodyRows = rows.slice(1);
   const previewRows = bodyRows.slice(0, 3);
-  const contacts = rows.length > 1 ? mapRowsToContacts(bodyRows, mapping, contactType) : [];
+  const mappedRows = rows.length > 1
+    ? mapRowsToContacts(bodyRows, mapping, contactType)
+    : { contacts: [], rejectedRows: [] };
+  const contacts = mappedRows.contacts;
+  const rejectedRows = mappedRows.rejectedRows;
   const itemLabel = contactType === "venue" ? "lieu" : "personne";
 
   async function handleFile(file: File) {
@@ -113,7 +123,7 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
         setMapping(emptyMapping);
         setMessage({
           ok: false,
-          text: "Ce fichier depasse 10 000 contacts. Decoupez-le en plusieurs imports pour garder un controle fiable.",
+          text: "Ce fichier dépasse 10 000 contacts. Découpez-le en plusieurs imports pour garder un contrôle fiable.",
         });
         return;
       }
@@ -140,13 +150,17 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
     }
 
     startTransition(async () => {
+      const geocoding = contactType === "venue"
+        ? await geocodeImportedVenues(contacts, (current, total) => setGeocodingProgress({ current, total }))
+        : { contacts, positioned: 0, unresolved: 0 };
+      const contactsToImport = geocoding.contacts;
       const batchSize = 300;
       const batches = Array.from(
-        { length: Math.ceil(contacts.length / batchSize) },
-        (_, index) => contacts.slice(index * batchSize, (index + 1) * batchSize),
+        { length: Math.ceil(contactsToImport.length / batchSize) },
+        (_, index) => contactsToImport.slice(index * batchSize, (index + 1) * batchSize),
       );
       let imported = 0;
-      let skipped = bodyRows.length - contacts.length;
+      let skipped = rejectedRows.length;
 
       setImportProgress({ current: 0, total: batches.length });
 
@@ -169,16 +183,23 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
 
       setMessage({
         ok: true,
-        text:
-          skipped > 0
-            ? `${imported} contact(s) importe(s), ${skipped} ligne(s) ignoree(s).`
-            : `${imported} contact(s) importe(s).`,
+        text: [
+          `${imported} ${contactType === "venue" ? "lieu(x) importé(s)" : "contact(s) importé(s)"}.`,
+          skipped > 0 ? `${skipped} ligne(s) ignorée(s).` : "",
+          contactType === "venue" && geocoding.positioned > 0
+            ? `${geocoding.positioned} lieu(x) positionné(s) automatiquement.`
+            : "",
+          contactType === "venue" && geocoding.unresolved > 0
+            ? `${geocoding.unresolved} lieu(x) restent sans position faute d'adresse suffisamment précise.`
+            : "",
+        ].filter(Boolean).join(" "),
       });
 
       if (imported > 0) {
         setRows([]);
         setMapping(emptyMapping);
         setFileName("");
+        setGeocodingProgress({ current: 0, total: 0 });
         router.refresh();
       }
     });
@@ -204,15 +225,20 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
         onClose={() => setOpen(false)}
         eyebrow="Carnet de contacts"
         title={contactType === "venue" ? "Importer des lieux" : "Importer des personnes"}
-        description={`Chargez un export Excel, CSV ou TSV, puis associez les colonnes a TaDiff avant d'importer chaque ${itemLabel}.`}
+        description={`Chargez un export Excel, CSV ou TSV, puis associez les colonnes à TaDiff avant d'importer chaque ${itemLabel}.`}
         className="max-w-4xl"
       >
         <div className="space-y-5">
           <div className="rounded-md border border-border bg-panel-strong/45 p-4">
-            <p className="text-sm font-semibold">Fichiers acceptes</p>
+            <p className="text-sm font-semibold">Fichiers acceptés</p>
             <p className="mt-1 text-sm text-muted">
-              .xlsx, .csv, .tsv, .txt. Les 3 premieres lignes servent a verifier le mapping.
+              .xlsx, .csv, .tsv, .txt. Les 3 premières lignes servent à vérifier le mapping.
             </p>
+            {contactType === "venue" ? (
+              <p className="mt-2 text-sm text-muted">
+                Adresse, code postal et ville suffisent : TaDiff positionnera automatiquement les lieux sur la carte.
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -251,12 +277,29 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
               <div>
                 <p className="text-sm font-semibold">{fileName}</p>
                 <p className="mt-1 text-sm text-muted">
-                  {contacts.length} contact(s) detecte(s) sur {bodyRows.length} ligne(s).
+                  {contacts.length} {contactType === "venue" ? "lieu(x) détecté(s)" : "contact(s) détecté(s)"} sur {bodyRows.length} ligne(s).
                 </p>
+                {rejectedRows.length > 0 ? (
+                  <div className="mt-3 rounded-md border border-warning/35 bg-warning/10 p-3 text-sm">
+                    <p className="font-medium text-warning">
+                      {rejectedRows.length} ligne(s) ne seront pas importées
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs text-muted">
+                      {rejectedRows.slice(0, 5).map((row) => (
+                        <li key={`${row.line}-${row.reason}`}>Ligne {row.line} : {row.reason}</li>
+                      ))}
+                    </ul>
+                    {rejectedRows.length > 5 ? (
+                      <p className="mt-2 text-xs text-muted">Et {rejectedRows.length - 5} autre(s) ligne(s).</p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                {contactFields.filter((field) => field.key !== "contactType").map((field) => (
+                {contactFields
+                  .filter((field) => !["contactType", "latitude", "longitude"].includes(field.key))
+                  .map((field) => (
                   <label key={field.key} className="text-sm font-medium">
                     {field.label}
                     {field.required ? <span className="text-danger"> *</span> : null}
@@ -275,7 +318,7 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
                       ))}
                     </Select>
                   </label>
-                ))}
+                  ))}
               </div>
 
               <div className="overflow-x-auto rounded-md border border-border">
@@ -307,6 +350,11 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
                 <Upload className="h-4 w-4" aria-hidden />
                 {isPending ? "Import en cours..." : `Importer ${contacts.length} ${contactType === "venue" ? "lieu(x)" : "personne(s)"}`}
               </Button>
+              {isPending && geocodingProgress.total > 0 && geocodingProgress.current < geocodingProgress.total ? (
+                <p className="text-xs text-muted" aria-live="polite">
+                  Positionnement des lieux : {geocodingProgress.current}/{geocodingProgress.total}
+                </p>
+              ) : null}
               {isPending && importProgress.total > 0 ? (
                 <div aria-live="polite" className="space-y-2">
                   <div className="h-2 overflow-hidden rounded-full bg-border/70">
@@ -423,7 +471,17 @@ function autoMapColumns(headers: SheetRow): ColumnMapping {
 
   return {
     contactType: findIndexValue(normalizedHeaders, ["type", "type de fiche", "type de lieu", "categorie"]),
-    name: findIndexValue(normalizedHeaders, ["nom", "name", "contact", "prenom nom"]),
+    name: findIndexValue(normalizedHeaders, [
+      "nom",
+      "name",
+      "contact",
+      "prenom nom",
+      "nom du lieu",
+      "nom lieu",
+      "etablissement",
+      "nom de l etablissement",
+      "raison sociale",
+    ]),
     organization: findIndexValue(normalizedHeaders, [
       "structure",
       "organisation",
@@ -453,41 +511,139 @@ function mapRowsToContacts(
   rows: SheetRow[],
   mapping: ColumnMapping,
   forcedContactType: ContactFormValues["contactType"],
-): ContactFormValues[] {
+): { contacts: ContactFormValues[]; rejectedRows: RejectedRow[] } {
   const contacts: ContactFormValues[] = [];
+  const rejectedRows: RejectedRow[] = [];
 
-  for (const row of rows) {
+  for (const [index, row] of rows.entries()) {
     const name = getMappedCell(row, mapping.name);
     const email = getMappedCell(row, mapping.email);
     const organization = getMappedCell(row, mapping.organization);
     const contactType = forcedContactType;
 
-    if (!name && !email) {
+    if ((contactType === "venue" && !name) || (contactType === "person" && !name && !email)) {
+      rejectedRows.push({
+        line: index + 2,
+        reason: contactType === "venue" ? "nom du lieu absent ou colonne non associée" : "nom et email absents",
+      });
       continue;
     }
 
-    contacts.push({
+    const candidate = {
       contactType,
       name: name || email,
-      organization: contactType === "venue" ? name || organization : organization || "A renseigner",
+      organization: contactType === "venue" ? name || organization : organization || "À renseigner",
       role: getMappedCell(row, mapping.role),
-      email,
+      email: normalizeEmail(email),
       phone: getMappedCell(row, mapping.phone),
       city: getMappedCell(row, mapping.city),
       address: getMappedCell(row, mapping.address),
       postalCode: getMappedCell(row, mapping.postalCode),
       department: getMappedCell(row, mapping.department),
       region: getMappedCell(row, mapping.region),
-      website: getMappedCell(row, mapping.website),
+      website: normalizeWebsite(getMappedCell(row, mapping.website)),
       capacity: parseOptionalNumber(getMappedCell(row, mapping.capacity)),
       latitude: parseOptionalNumber(getMappedCell(row, mapping.latitude)),
       longitude: parseOptionalNumber(getMappedCell(row, mapping.longitude)),
       status: normalizeStatus(getMappedCell(row, mapping.status)),
       tags: splitTags(getMappedCell(row, mapping.tags)),
-    });
+    } satisfies ContactFormValues;
+    const parsed = contactSchema.safeParse(candidate);
+
+    if (!parsed.success) {
+      rejectedRows.push({
+        line: index + 2,
+        reason: parsed.error.issues.map((issue) => issue.message).join(", "),
+      });
+      continue;
+    }
+
+    contacts.push(parsed.data);
   }
 
-  return contacts;
+  return { contacts, rejectedRows };
+}
+
+function normalizeEmail(value: string) {
+  const normalized = value.trim().replace(/^mailto:/i, "").replace(/\s+/g, "");
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized : "";
+}
+
+function normalizeWebsite(value: string) {
+  const normalized = value.trim();
+  if (!normalized || /^https?:\/\//i.test(normalized)) return normalized;
+  return `https://${normalized}`;
+}
+
+async function geocodeImportedVenues(
+  contacts: ContactFormValues[],
+  onProgress: (current: number, total: number) => void,
+) {
+  const resolved = [...contacts];
+  const pendingIndexes = resolved.flatMap((contact, index) => {
+    const query = [contact.address, contact.postalCode, contact.city].filter(Boolean).join(" ").trim();
+    return contact.contactType === "venue" && !contact.latitude && !contact.longitude && query.length >= 3
+      ? [index]
+      : [];
+  });
+  let cursor = 0;
+  let completed = 0;
+  let positioned = 0;
+
+  onProgress(0, pendingIndexes.length);
+
+  async function worker() {
+    while (cursor < pendingIndexes.length) {
+      const pendingIndex = pendingIndexes[cursor];
+      cursor += 1;
+      const contact = resolved[pendingIndex];
+      const query = [contact.address, contact.postalCode, contact.city].filter(Boolean).join(" ");
+
+      try {
+        const response = await fetch(`/api/geocoding/address?q=${encodeURIComponent(query)}`, {
+          headers: { Accept: "application/json" },
+        });
+        const payload = await response.json() as {
+          suggestions?: Array<{
+            city: string;
+            department: string;
+            latitude: number;
+            longitude: number;
+            postalCode: string;
+            region: string;
+          }>;
+        };
+        const suggestion = response.ok ? payload.suggestions?.[0] : null;
+
+        if (suggestion) {
+          resolved[pendingIndex] = {
+            ...contact,
+            city: contact.city || suggestion.city,
+            department: contact.department || suggestion.department,
+            latitude: String(suggestion.latitude),
+            longitude: String(suggestion.longitude),
+            postalCode: contact.postalCode || suggestion.postalCode,
+            region: contact.region || suggestion.region,
+          };
+          positioned += 1;
+        }
+      } catch {
+        // L'import reste possible : le lieu sera simplement absent de la carte.
+      } finally {
+        completed += 1;
+        onProgress(completed, pendingIndexes.length);
+        await new Promise((resolve) => window.setTimeout(resolve, 150));
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(5, pendingIndexes.length) }, () => worker()));
+
+  return {
+    contacts: resolved,
+    positioned,
+    unresolved: pendingIndexes.length - positioned,
+  };
 }
 
 function parseOptionalNumber(value: string) {
@@ -519,7 +675,12 @@ function normalizeHeader(value: string) {
 }
 
 function findIndexValue(headers: string[], aliases: string[]) {
-  const index = headers.findIndex((header) => aliases.includes(header));
+  const exactIndex = headers.findIndex((header) => aliases.includes(header));
+  if (exactIndex >= 0) return String(exactIndex);
+
+  const index = headers.findIndex((header) =>
+    aliases.some((alias) => alias.length >= 4 && (header.includes(alias) || alias.includes(header))),
+  );
   return index >= 0 ? String(index) : "";
 }
 
@@ -553,11 +714,11 @@ function splitTags(value: string) {
 function downloadCsvExample(contactType: "person" | "venue") {
   const content = contactType === "venue"
     ? [
-        "nom,email,telephone,adresse,code postal,ville,departement,region,web,jauge,statut,tags",
+        "nom,email,téléphone,adresse,code postal,ville,département,région,web,jauge,statut,tags",
         "Theatre municipal,contact@theatre.fr,0546000000,12 rue du Theatre,17000,La Rochelle,Charente-Maritime,Nouvelle-Aquitaine,https://theatre.example,450,En discussion,Theatre",
       ].join("\n")
     : [
-        "nom,email,telephone,structure,role,ville,statut,tags",
+        "nom,email,téléphone,structure,rôle,ville,statut,tags",
         "Mina Laurent,mina@example.com,0612345678,Scene nationale,Programmatrice,La Rochelle,Prospect,Theatre;Grand plateau",
       ].join("\n");
   const blob = new Blob([content], { type: "text/csv;charset=utf-8" });

@@ -14,9 +14,9 @@ const columns = [
   {
     title: "Compagnie",
     links: [
-      { label: "Reserver la beta", href: "/beta" },
+      { label: "Réserver la bêta", href: "/beta" },
       { label: "Se connecter", href: "/login" },
-      { label: "Beta 19,99 EUR / mois", href: "/beta" },
+      { label: "Bêta 19,99 EUR / mois", href: "/beta" },
     ],
   },
   {
@@ -27,7 +27,7 @@ const columns = [
       { label: "Confidentialite", href: "/confidentialite" },
       { label: "Annexe RGPD", href: "/annexe-rgpd" },
       { label: "Cookies", href: "/cookies" },
-      { label: "Mentions legales", href: "/mentions-legales" },
+      { label: "Mentions légales", href: "/mentions-legales" },
     ],
   },
 ];
@@ -44,14 +44,14 @@ export function PublicFooter() {
             </div>
             <p className="mt-4 max-w-xs text-sm text-muted">
               Le cockpit de pilotage des compagnies de spectacle vivant : dates,
-              subventions, tresorerie et dossiers au meme endroit.
+              subventions, trésorerie et dossiers au même endroit.
             </p>
             <Link
               href="/beta"
               data-analytics="beta_footer"
               className="mt-5 inline-flex min-h-10 items-center rounded-md bg-accent px-4 text-sm font-semibold !text-white transition hover:bg-accent-strong"
             >
-              Reserver la beta
+              Réserver la bêta
             </Link>
           </div>
 
@@ -74,7 +74,7 @@ export function PublicFooter() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted sm:flex-row">
-          <p>© {new Date().getFullYear()} TaDiff. Tous droits reserves.</p>
+          <p>© {new Date().getFullYear()} TaDiff. Tous droits réservés.</p>
           <p>Fait pour le spectacle vivant.</p>
         </div>
       </div>

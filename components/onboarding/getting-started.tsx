@@ -27,13 +27,13 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
             <h2 className="mt-2 text-xl font-semibold">
               {nextStep
                 ? `Prochaine etape : ${nextStep.label.toLowerCase()}`
-                : "Votre cockpit est pret."}
+                : "Votre cockpit est prêt."}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              {doneCount}/{steps.length} etapes terminees. Une seule action suffit pour continuer.
+              {doneCount}/{steps.length} étapes terminées. Une seule action suffit pour continuer.
             </p>
           </div>
-          <TourLauncher label="Visite guidee (3 min)" />
+          <TourLauncher label="Visite guidée (3 min)" />
         </div>
 
         <div className="h-2 overflow-hidden rounded-full bg-border">
@@ -55,7 +55,7 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
           >
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="info">A faire maintenant</Badge>
+                <Badge tone="info">À faire maintenant</Badge>
                 <p className="font-semibold">{nextStep.label}</p>
               </div>
               <p className="mt-2 text-sm text-muted">{nextStep.detail}</p>
@@ -66,7 +66,7 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
           </Link>
         ) : (
           <div className="rounded-lg border border-success/30 bg-success/10 p-4">
-            <Badge tone="success">Cockpit pret</Badge>
+            <Badge tone="success">Cockpit prêt</Badge>
             <p className="mt-2 text-sm text-muted">
               Les bases de votre espace sont renseignees. Vous pouvez les modifier a tout moment.
             </p>
@@ -77,7 +77,7 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
       <details className="group border-t border-border">
         <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium transition hover:bg-panel-strong/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">
           <span className="flex items-center justify-between gap-3">
-            Voir toutes les etapes
+            Voir toutes les étapes
             <span aria-hidden="true" className="text-muted transition group-open:rotate-180">
               ↓
             </span>
@@ -97,7 +97,7 @@ export function GettingStarted({ steps }: { steps: OnboardingStep[] }) {
                 <div className="flex items-start justify-between gap-3">
                   <p className="font-medium">{step.label}</p>
                   <Badge tone={step.done ? "success" : "neutral"}>
-                    {step.done ? "Fait" : "A faire"}
+                    {step.done ? "Fait" : "À faire"}
                   </Badge>
                 </div>
                 <p className="mt-0.5 text-sm text-muted">{step.detail}</p>

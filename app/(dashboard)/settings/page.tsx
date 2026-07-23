@@ -98,10 +98,10 @@ export default async function SettingsPage() {
           <div>
             <p className="text-base font-semibold">Parcours du webinaire</p>
             <p className="mt-1 text-sm text-muted">
-              Rejouez l&apos;accueil de première connexion et relancez la visite guidée sans supprimer les données de démonstration.
+              Rejouez le parcours depuis l&apos;inscription, puis relancez l&apos;accueil de William et la visite guidée sans supprimer les données de démonstration.
             </p>
           </div>
-          <ButtonLink href="/welcome?replay=1">Rejouer la première connexion</ButtonLink>
+          <ButtonLink href="/demo-signup">Relancer la démonstration complète</ButtonLink>
         </Card>
       ) : null}
 

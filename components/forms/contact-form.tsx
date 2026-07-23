@@ -268,7 +268,7 @@ export function ContactForm({
             disabled={isSubmitting || isPending}
             onClick={() => setSubmitMode("another")}
           >
-            Creer et ajouter un autre
+            Créer et ajouter un autre
           </Button>
         ) : null}
       </div>

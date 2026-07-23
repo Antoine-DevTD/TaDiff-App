@@ -34,7 +34,7 @@ type ShowDetailPageProps = {
 
 const baseShowTabs: Array<{ id: ShowTab; label: string }> = [
   { id: "overview", label: "Vue d'ensemble" },
-  { id: "presentation", label: "Presentation" },
+  { id: "presentation", label: "Présentation" },
   { id: "files", label: "Dossier" },
   { id: "workspace", label: "Documents de travail" },
   { id: "dates", label: "Dates" },
@@ -199,7 +199,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
               <section className="border-t border-border pt-6">
                 <CardHeader>
                   <CardTitle>Documents facultatifs</CardTitle>
-                  <CardDescription>Devis, budget et autres pieces propres a ce spectacle.</CardDescription>
+                  <CardDescription>Devis, budget et autres pièces propres a ce spectacle.</CardDescription>
                 </CardHeader>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {optionalShowDocumentTypes.map((type) => {
@@ -229,9 +229,9 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
 
               <section className="border-t border-border pt-6">
                 <CardHeader>
-                  <CardTitle>Deposer plusieurs fichiers</CardTitle>
+                  <CardTitle>Déposer plusieurs fichiers</CardTitle>
                   <CardDescription>
-                    Glissez toutes les pieces du spectacle. TaDiff propose leur type avant de les ajouter au dossier.
+                    Glissez toutes les pièces du spectacle. TaDiff propose leur type avant de les ajouter au dossier.
                   </CardDescription>
                 </CardHeader>
                 <DocumentDropzone showId={show.id} showTitle={show.title} />
@@ -261,7 +261,7 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
                     <div>
                       <p className="text-sm font-medium">{deal.title}</p>
                       <p className="mt-1 text-xs text-muted">{deal.contactName} - {deal.contactOrganization || deal.venue}</p>
-                      <p className="mt-1 text-xs text-muted">Representation : {deal.performanceDate ? new Date(deal.performanceDate).toLocaleDateString("fr-FR") : "date a caler"}</p>
+                      <p className="mt-1 text-xs text-muted">Représentation : {deal.performanceDate ? new Date(deal.performanceDate).toLocaleDateString("fr-FR") : "date à caler"}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right text-sm">
@@ -331,7 +331,7 @@ function OverviewTab({
       <ShowPoster posterUrl={posterUrl} show={show} />
       <div className="space-y-6">
         <section className="grid border-y border-border sm:grid-cols-2 sm:divide-x sm:divide-border">
-          <OverviewMetric label="Prochaine representation" value={nextDate ? new Date(nextDate).toLocaleDateString("fr-FR") : "A planifier"} />
+          <OverviewMetric label="Prochaine représentation" value={nextDate ? new Date(nextDate).toLocaleDateString("fr-FR") : "À planifier"} />
           <OverviewMetric label="Chiffre d'affaires pondere" value={formatCurrency(weightedRevenue)} />
           <OverviewMetric label="Dates en discussion" value={`${opportunityCount}`} />
           <OverviewMetric label="Actions ouvertes" value={`${reminderCount}`} />
@@ -382,7 +382,7 @@ function ReadinessPanel({ missingCount, percent }: { missingCount: number; perce
         <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
       </div>
       <p className="mt-3 text-sm text-muted">
-        {missingCount === 0 ? "Le dossier est pret pour un depot." : `${missingCount} piece(s) indispensable(s) restent a completer.`}
+        {missingCount === 0 ? "Le dossier est prêt pour un dépôt." : `${missingCount} pièce(s) indispensable(s) restent à compléter.`}
       </p>
     </div>
   );

@@ -9,10 +9,10 @@ export async function PublicHeader() {
   const stats = await getBetaSignupStats();
   const betaMessage =
     stats.remainingReservedSeats === 0
-      ? "Beta complete : liste d'attente ouverte"
+      ? "Bêta complète : liste d'attente ouverte"
       : stats.remainingReservedSeats === 1
-        ? "Derniere place beta disponible a 19,99 EUR / mois"
-        : `Beta de lancement : ${betaReservedSeatLimit} places a 19,99 EUR / mois`;
+        ? "Dernière place bêta disponible à 19,99 EUR / mois"
+        : `Bêta de lancement : ${betaReservedSeatLimit} places à 19,99 EUR / mois`;
   return (
     <>
       <div className="beta-band sticky top-0 z-30 border-b border-white/15 text-white shadow-lg shadow-ink/10">
@@ -33,8 +33,8 @@ export async function PublicHeader() {
               "Liste d'attente"
             ) : (
               <>
-                <span className="sm:hidden">Reserver</span>
-                <span className="hidden sm:inline">Reserver ma place</span>
+                <span className="sm:hidden">Réserver</span>
+                <span className="hidden sm:inline">Réserver ma place</span>
               </>
             )}
           </Link>

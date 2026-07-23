@@ -6,7 +6,7 @@ export function TreasuryChart({ snapshots }: { snapshots: TreasurySnapshot[] }) 
   if (snapshots.length < 2) {
     return (
       <div className="rounded-lg border border-dashed border-border bg-panel-strong/35 p-6 text-center text-sm text-muted">
-        Saisissez au moins deux soldes pour visualiser la courbe de tresorerie.
+        Saisissez au moins deux soldes pour visualiser la courbe de trésorerie.
       </div>
     );
   }
@@ -60,7 +60,7 @@ export function TreasuryChart({ snapshots }: { snapshots: TreasurySnapshot[] }) 
           className="h-48 w-full min-w-[32rem]"
           preserveAspectRatio="none"
           role="img"
-          aria-label="Courbe de tresorerie"
+          aria-label="Courbe de trésorerie"
         >
           <defs>
             <linearGradient id="treasury-fill" x1="0" x2="0" y1="0" y2="1">

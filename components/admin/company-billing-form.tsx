@@ -62,7 +62,7 @@ export function CompanyBillingForm({ company }: { company: AdminCompany }) {
         type="button"
         onClick={() => setOpen((value) => !value)}
       >
-        {open ? "Fermer" : "Gerer le billing"}
+        {open ? "Fermer" : "Gérer le billing"}
       </button>
 
       {open ? (
@@ -81,7 +81,7 @@ export function CompanyBillingForm({ company }: { company: AdminCompany }) {
               </Select>
             </Field>
             <Field label="Code plan" error={errors.planCode?.message}>
-              <Input placeholder="beta" {...register("planCode")} />
+              <Input placeholder="bêta" {...register("planCode")} />
             </Field>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">

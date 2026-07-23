@@ -69,13 +69,13 @@ export function ShowEmailProfileForm({ documents, show }: { documents: ShowDocum
   return (
     <section aria-labelledby="show-presentation-title" className="grid gap-8 xl:grid-cols-[0.72fr_1.28fr]">
       <div className="max-w-xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Presentation diffusion</p>
-        <h3 id="show-presentation-title" className="mt-2 text-2xl font-semibold">Donner de la matiere aux emails</h3>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Présentation diffusion</p>
+        <h3 id="show-presentation-title" className="mt-2 text-2xl font-semibold">Donner de la matière aux emails</h3>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Ces informations servent a preparer des messages plus personnels. Elles restent modifiables avant chaque envoi.
+          Ces informations servent a préparer des messages plus personnels. Elles restent modifiables avant chaque envoi.
         </p>
         <div className="mt-6 border-l-2 border-accent/35 pl-4 text-sm leading-6 text-muted">
-          Commencez par la logline et trois thematiques. Le reste peut etre complete plus tard.
+          Commencez par la logline et trois thématiques. Le reste peut être complété plus tard.
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export function ShowEmailProfileForm({ documents, show }: { documents: ShowDocum
 
         <label className="block text-sm font-medium">
           Ce qui rend le projet singulier
-          <span className="mt-1 block text-xs font-normal text-muted">Deux ou trois phrases sur la forme, l&apos;equipe ou la rencontre avec le public.</span>
+          <span className="mt-1 block text-xs font-normal text-muted">Deux ou trois phrases sur la forme, l&apos;équipe ou la rencontre avec le public.</span>
           <Textarea className="mt-2 min-h-32" maxLength={1200} value={emailPitch} onChange={(event) => setEmailPitch(event.target.value)} />
         </label>
 

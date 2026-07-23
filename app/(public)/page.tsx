@@ -19,26 +19,26 @@ import { getBetaSignupStats } from "@/lib/supabase/queries";
 import { betaReservedSeatLimit } from "@/lib/beta";
 
 const problems = [
-  "Une date signee sans savoir si elle sera rentable.",
-  "Une relance ou une echeance oubliee dans un fichier.",
-  "Un dossier bloque parce qu'une piece manque au dernier moment.",
+  "Une date signée sans savoir si elle sera rentable.",
+  "Une relance ou une échéance oubliée dans un fichier.",
+  "Un dossier bloqué parce qu'une pièce manque au dernier moment.",
 ];
 
 const outcomes = [
   {
     icon: CalendarClock,
     title: "Savoir quoi faire aujourd'hui",
-    detail: "TaDiff rassemble les actions, dates et echeances dans un ordre clair.",
+    detail: "TaDiff rassemble les actions, dates et échéances dans un ordre clair.",
   },
   {
     icon: WalletCards,
-    title: "Verifier avant de signer",
-    detail: "Marge, frais fixes et tresorerie restent visibles avant chaque engagement.",
+    title: "Vérifier avant de signer",
+    detail: "Marge, frais fixes et trésorerie restent visibles avant chaque engagement.",
   },
   {
     icon: FolderCheck,
-    title: "Deposer un dossier complet",
-    detail: "Les pieces indispensables sont classees par spectacle et reutilisables.",
+    title: "Déposer un dossier complet",
+    detail: "Les pièces indispensables sont classées par spectacle et réutilisables.",
   },
 ];
 
@@ -46,12 +46,12 @@ const steps = [
   {
     number: "1",
     title: "Ajoutez votre spectacle",
-    detail: "Affiche, budget, equipe et documents trouvent leur place dans un dossier unique.",
+    detail: "Affiche, budget, équipe et documents trouvent leur place dans un dossier unique.",
   },
   {
     number: "2",
     title: "Faites avancer vos dates",
-    detail: "Programmateurs, prochaines actions, emails et representations restent relies.",
+    detail: "Programmateurs, prochaines actions, emails et représentations restent reliés.",
   },
   {
     number: "3",
@@ -66,7 +66,7 @@ export default async function LandingPage() {
   const betaLabel = betaFull
     ? `Les ${betaReservedSeatLimit} places sont attribuees. La liste d'attente reste ouverte.`
     : betaStats.remainingReservedSeats === 1
-      ? "Derniere place disponible pour la beta."
+      ? "Derniere place disponible pour la bêta."
       : `${betaStats.remainingReservedSeats} places disponibles sur ${betaReservedSeatLimit}.`;
 
   return (
@@ -79,12 +79,12 @@ export default async function LandingPage() {
               Le cockpit de votre compagnie.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-muted text-pretty">
-              Spectacles, dates, dossiers et tresorerie reunis dans un outil qui vous indique ce
+              Spectacles, dates, dossiers et trésorerie réunis dans un outil qui vous indique ce
               qui demande votre attention, sans jargon de gestion.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <ButtonLink href="/beta" data-analytics="beta_hero" className="gap-2">
-                {betaFull ? "Rejoindre la liste d'attente" : "Reserver ma place beta"}
+                {betaFull ? "Rejoindre la liste d'attente" : "Réserver ma place bêta"}
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </ButtonLink>
               <Link
@@ -110,9 +110,9 @@ export default async function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Le point de depart</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Le point de départ</p>
               <h2 id="problems-title" className="mt-3 text-3xl font-semibold text-balance">
-                Une compagnie ne devrait pas fermer pour une information arrivee trop tard.
+                Une compagnie ne devrait pas fermer pour une information arrivée trop tard.
               </h2>
             </div>
             <div className="divide-y divide-white/15 border-y border-white/15">
@@ -137,8 +137,8 @@ export default async function LandingPage() {
               Une lecture simple de toute la compagnie.
             </h2>
             <p className="mt-4 max-w-2xl text-muted text-pretty">
-              Chaque information est reliee a une decision : relancer, completer, encaisser ou
-              preparer la prochaine representation.
+              Chaque information est reliée à une décision : relancer, compléter, encaisser ou
+              préparer la prochaine représentation.
             </p>
           </Reveal>
 
@@ -155,9 +155,9 @@ export default async function LandingPage() {
           <div className="mt-14 grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
             <div className="lg:sticky lg:top-40">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Premier parcours</p>
-              <h2 className="mt-3 text-3xl font-semibold text-balance">De l&apos;affiche a la date signee.</h2>
+              <h2 className="mt-3 text-3xl font-semibold text-balance">De l&apos;affiche à la date signée.</h2>
               <p className="mt-4 text-muted">
-                Trois etapes suffisent pour que le cockpit commence a vous guider.
+                Trois étapes suffisent pour que le cockpit commence à vous guider.
               </p>
             </div>
             <div className="divide-y divide-border border-y border-border">
@@ -179,12 +179,12 @@ export default async function LandingPage() {
 
       <section id="demonstration" className="mx-auto max-w-5xl scroll-mt-36 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <Badge tone="info">Demonstration personnalisee</Badge>
+          <Badge tone="info">Démonstration personnalisee</Badge>
           <h2 className="mt-4 text-3xl font-semibold text-balance sm:text-4xl">
             Que devrait vous montrer TaDiff en premier ?
           </h2>
           <p className="mt-4 text-muted">
-            Repondez a trois questions et obtenez un exemple adapte a votre situation.
+            Répondez à trois questions et obtenez un exemple adapté à votre situation.
           </p>
         </Reveal>
         <Reveal className="mt-8" delay={100}>
@@ -195,12 +195,12 @@ export default async function LandingPage() {
       <section className="beta-band border-y border-white/15 text-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">Beta accompagnee</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">Bêta accompagnée</p>
             <h2 className="mt-3 text-3xl font-semibold text-balance">
               {betaReservedSeatLimit} compagnies pour construire la bonne version.
             </h2>
             <p className="mt-3 max-w-2xl text-white/80">
-              Acces a 19,99 EUR / mois pendant la beta, retours reguliers et accompagnement
+              Accès à 19,99 EUR / mois pendant la bêta, retours réguliers et accompagnement
               prioritaire. {betaLabel}
             </p>
           </div>
@@ -210,7 +210,7 @@ export default async function LandingPage() {
             data-analytics="beta_midpage"
             className="gap-2 border-white bg-white shadow-lg shadow-ink/15 hover:bg-white/90"
           >
-            {betaFull ? "Liste d'attente" : "Reserver ma place"}
+            {betaFull ? "Liste d'attente" : "Réserver ma place"}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </ButtonLink>
         </div>
@@ -231,10 +231,10 @@ export default async function LandingPage() {
             </h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {[
-                "Vos donnees restent separees de celles des autres compagnies.",
+                "Vos données restent séparées de celles des autres compagnies.",
                 "Vous pouvez exporter vos informations et vos documents.",
-                "Les fonctions encore en preparation sont annoncees clairement.",
-                "La beta sert a adapter le produit a vos usages reels.",
+                "Les fonctions encore en préparation sont annoncées clairement.",
+                "La bêta sert à adapter le produit à vos usages réels.",
               ].map((item) => (
                 <p key={item} className="flex gap-3 text-sm leading-6 text-white/75">
                   <Check className="mt-1 h-4 w-4 shrink-0 text-white" aria-hidden />
@@ -244,8 +244,8 @@ export default async function LandingPage() {
             </div>
           </div>
           <div className="border-t border-white/15 pt-8 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-            <p className="text-sm text-white/65">Pret a voir le cockpit avec vos propres spectacles ?</p>
-            <p className="mt-3 text-2xl font-semibold">19,99 EUR / mois pendant la beta.</p>
+            <p className="text-sm text-white/65">Prêt à voir le cockpit avec vos propres spectacles ?</p>
+            <p className="mt-3 text-2xl font-semibold">19,99 EUR / mois pendant la bêta.</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col">
               <ButtonLink
                 href="/beta"
@@ -253,11 +253,11 @@ export default async function LandingPage() {
                 data-analytics="beta_final"
                 className="gap-2 border-white bg-white shadow-lg shadow-black/15 hover:bg-white/90"
               >
-                {betaFull ? "Rejoindre la liste d'attente" : "Reserver ma place beta"}
+                {betaFull ? "Rejoindre la liste d'attente" : "Réserver ma place bêta"}
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </ButtonLink>
               <ButtonLink href="/login" variant="ghost" data-analytics="login_final" className="border border-white/20 !text-white hover:bg-white/10">
-                J&apos;ai deja un compte
+                J&apos;ai déjà un compte
               </ButtonLink>
             </div>
           </div>
@@ -279,16 +279,16 @@ function CockpitPreview() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <PreviewMetric label="Tresorerie" value="Sous controle" />
-        <PreviewMetric label="Dossier prioritaire" value="2 pieces" />
+        <PreviewMetric label="Trésorerie" value="Sous contrôle" />
+        <PreviewMetric label="Dossier prioritaire" value="2 pièces" />
         <PreviewMetric label="Prochaine date" value="28 juillet" />
       </div>
 
       <div className="mt-4 border border-border bg-panel">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
-            <p className="text-sm font-semibold">A faire maintenant</p>
-            <p className="text-xs text-muted">Les actions classees par priorite</p>
+            <p className="text-sm font-semibold">À faire maintenant</p>
+            <p className="text-xs text-muted">Les actions classées par priorité</p>
           </div>
           <Badge tone="warning">1 urgence</Badge>
         </div>
@@ -310,7 +310,7 @@ function CockpitPreview() {
 
       <div className="mt-4 flex items-center gap-2 border-t border-border pt-4 text-xs text-muted">
         <MailCheck className="h-4 w-4 text-accent" aria-hidden />
-        Le prochain email est pret a etre relu.
+        Le prochain email est prêt à être relu.
       </div>
     </div>
   );

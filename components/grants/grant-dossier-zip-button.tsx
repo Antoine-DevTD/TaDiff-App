@@ -34,14 +34,14 @@ export function GrantDossierZipButton({ state }: { state: GrantDossierState }) {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setMessage("Dossier prepare.");
+      setMessage("Dossier préparé.");
     });
   }
 
   return (
     <div className="space-y-2">
       <Button type="button" variant="secondary" onClick={downloadZip} disabled={isPending}>
-        {isPending ? "Preparation..." : "Telecharger le dossier .zip"}
+        {isPending ? "Preparation..." : "Télécharger le dossier .zip"}
       </Button>
       {message ? <p className="text-xs text-success">{message}</p> : null}
     </div>
@@ -87,18 +87,18 @@ async function buildGrantZip(state: GrantDossierState) {
 
 function buildReadme(state: GrantDossierState) {
   return [
-    "Dossier prepare par TaDiff",
+    "Dossier préparé par TaDiff",
     "",
     `Subvention : ${state.grant.title}`,
     `Organisme : ${state.grant.funder}`,
     `Deadline : ${new Date(state.grant.deadline).toLocaleDateString("fr-FR")}`,
-    `Spectacle : ${state.show?.title ?? "Non associe"}`,
+    `Spectacle : ${state.show?.title ?? "Non associé"}`,
     "",
-    `Pieces pretes : ${state.readyCount}/${state.totalCount}`,
-    `Pieces a revoir : ${state.updateCount}`,
-    `Pieces manquantes : ${state.missingCount}`,
+    `Pièces prêtes : ${state.readyCount}/${state.totalCount}`,
+    `Pièces à revoir : ${state.updateCount}`,
+    `Pièces manquantes : ${state.missingCount}`,
     "",
-    "Ce zip est une preparation de depot. Verifier les formulaires officiels avant envoi.",
+    "Ce zip est une preparation de depot. Vérifier les formulaires officiels avant envoi.",
   ].join("\n");
 }
 
@@ -135,11 +135,11 @@ function buildPlaceholder(requirement: GrantDossierState["requirements"][number]
     `Statut : ${requirement.status}`,
     "",
     requirement.document
-      ? `Document reference : ${requirement.document.title}`
+      ? `Document de référence : ${requirement.document.title}`
       : "Document non encore ajoute dans TaDiff.",
     requirement.document?.notes ? `Note : ${requirement.document.notes}` : "",
     "",
-    "Action : ajouter ou mettre a jour cette piece avant le depot.",
+    "Action : ajouter ou mettre à jour cette pièce avant le depot.",
   ]
     .filter(Boolean)
     .join("\n");

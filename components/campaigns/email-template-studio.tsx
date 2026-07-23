@@ -57,7 +57,7 @@ export function EmailTemplateStudio({ contacts, shows, templates }: { contacts: 
 
   function createTemplate() {
     setSelectedId("new");
-    setName("Nouveau modele");
+    setName("Nouveau modèle");
     setMessageType("first-touch");
     setSubject("@titre_spectacle - @structure");
     setBody({ type: "doc", content: [] });
@@ -108,7 +108,7 @@ export function EmailTemplateStudio({ contacts, shows, templates }: { contacts: 
           <h2 id="email-template-title" className="mt-1 text-xl font-semibold">Modeles d&apos;emails</h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" onClick={createTemplate}><Plus className="mr-2 h-4 w-4" />Nouveau modele</Button>
+          <Button type="button" variant="secondary" onClick={createTemplate}><Plus className="mr-2 h-4 w-4" />Nouveau modèle</Button>
           <Button disabled={!selectedId} type="button" variant="secondary" onClick={duplicateTemplate}><CopyPlus className="mr-2 h-4 w-4" />Dupliquer</Button>
         </div>
       </div>
@@ -128,7 +128,7 @@ export function EmailTemplateStudio({ contacts, shows, templates }: { contacts: 
 
         <div className="min-w-0 p-5">
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-            <label className="block text-sm font-medium">Nom du modele<Input className="mt-2" value={name} onChange={(event) => setName(event.target.value)} /></label>
+            <label className="block text-sm font-medium">Nom du modèle<Input className="mt-2" value={name} onChange={(event) => setName(event.target.value)} /></label>
             <label className="block text-sm font-medium">Usage<Select className="mt-2" value={messageType} onChange={(event) => setMessageType(event.target.value as ContactEmailTemplate)}><option value="first-touch">Premier contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select></label>
           </div>
 

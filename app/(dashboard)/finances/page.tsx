@@ -231,7 +231,7 @@ export default async function FinancesPage() {
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
               <span>
                 <span className="block font-semibold">Prix, devis et encaissements</span>
-                <span className="mt-1 block text-sm font-normal text-muted">Verifier le prix minimum d&apos;une date et les montants restant a encaisser.</span>
+                <span className="mt-1 block text-sm font-normal text-muted">Vérifier le prix minimum d&apos;une date et les montants restant a encaisser.</span>
               </span>
               <span className="text-sm font-medium text-accent group-open:hidden">Afficher</span>
               <span className="hidden text-sm font-medium text-accent group-open:inline">Masquer</span>
@@ -241,7 +241,7 @@ export default async function FinancesPage() {
               <div>
                 <p className="text-base font-semibold">Prix minimum par date</p>
                 <p className="mt-1 text-sm text-muted">
-                  Les frais fixes sont ajoutes au point mort pour eviter de vendre a perte.
+                  Les frais fixes sont ajoutes au point mort pour éviter de vendre a perte.
                 </p>
               </div>
               <div className="space-y-3">
@@ -310,7 +310,7 @@ export default async function FinancesPage() {
           <details className="group border border-border bg-panel">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
               <span>
-                <span className="block font-semibold">Priorites d&apos;encaissement</span>
+                <span className="block font-semibold">Priorités d&apos;encaissement</span>
                 <span className="mt-1 block text-sm font-normal text-muted">Les dates et dossiers qui demandent une action financiere.</span>
               </span>
               <span className="text-sm font-medium text-accent group-open:hidden">Afficher</span>
@@ -330,7 +330,7 @@ export default async function FinancesPage() {
               <p className="text-sm text-muted">
                 {focusDeal
                   ? `${focusDeal.contactName} - ${focusDeal.showTitle} - ${focusDeal.nextAction || "Action a definir"}`
-                  : "Les prochains lots permettront de suivre acomptes, soldes et echeances reelles."}
+                  : "Les prochains lots permettront de suivre acomptes, soldes et échéances reelles."}
               </p>
               {focusDeal ? (
                 <div className="grid gap-3 md:grid-cols-4">
@@ -342,7 +342,7 @@ export default async function FinancesPage() {
                     value={
                       focusDeal.nextFollowUpAt
                         ? new Date(focusDeal.nextFollowUpAt).toLocaleDateString("fr-FR")
-                        : "A planifier"
+                        : "À planifier"
                     }
                   />
                 </div>
@@ -351,9 +351,9 @@ export default async function FinancesPage() {
 
             <Card className="space-y-4 p-5">
               <div>
-                <p className="text-base font-semibold">Priorites cash</p>
+                <p className="text-base font-semibold">Priorités cash</p>
                 <p className="mt-1 text-sm text-muted">
-                  Les dossiers qui meritent une attention financiere immediate.
+                  Les dossiers qui meritent une attention financiere immédiate.
                 </p>
               </div>
               {cashFocus.length === 0 ? (
@@ -382,7 +382,7 @@ export default async function FinancesPage() {
                         <FinanceCell label="Pondere" value={formatCurrency(weighted)} />
                         <FinanceCell
                           label="Action"
-                          value={dueDate ? new Date(dueDate).toLocaleDateString("fr-FR") : "A planifier"}
+                          value={dueDate ? new Date(dueDate).toLocaleDateString("fr-FR") : "À planifier"}
                         />
                       </div>
                     </Link>

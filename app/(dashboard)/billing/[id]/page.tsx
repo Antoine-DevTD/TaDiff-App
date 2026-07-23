@@ -69,13 +69,13 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
             <p className="text-xs uppercase tracking-[0.16em] text-muted">Destinataire</p>
             <p className="mt-2 text-lg font-semibold">{quote.organization}</p>
             <p className="mt-2 text-sm text-muted">
-              Informations completes a renseigner avant envoi final.
+              Informations complètes à renseigner avant envoi final.
             </p>
           </div>
           <div className="grid gap-3 sm:text-right">
             <InfoLine label="Date emission" value={issueDate} />
-            <InfoLine label="Echeance" value={dueDate} />
-            <InfoLine label="Reference" value={quote.id.slice(0, 8).toUpperCase()} />
+            <InfoLine label="Échéance" value={dueDate} />
+            <InfoLine label="Référence" value={quote.id.slice(0, 8).toUpperCase()} />
           </div>
         </section>
 
@@ -109,8 +109,8 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
         <section className="rounded-lg border border-border bg-panel-strong/45 p-5 text-sm text-muted">
           <p className="font-medium text-foreground">Conditions</p>
           <p className="mt-2">
-            Devis valable 30 jours, sous reserve de disponibilite de l equipe artistique et
-            technique. Les frais specifiques d accueil, transport ou hebergement restent a confirmer
+            Devis valable 30 jours, sous réserve de disponibilite de l équipe artistique et
+            technique. Les frais specifiques d accueil, transport ou hébergement restent a confirmer
             si non inclus dans la proposition.
           </p>
         </section>
@@ -125,7 +125,7 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
         <div>
           <p className="text-base font-semibold">Modifier le devis</p>
           <p className="mt-1 text-sm text-muted">
-            Statut, montants et echeance alimentent la facturation, la tresorerie et le cockpit.
+            Statut, montants et échéance alimentent la facturation, la trésorerie et le cockpit.
           </p>
         </div>
         <QuoteEditForm quote={quote} />

@@ -17,7 +17,7 @@ test.describe("landing beta", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Le cockpit de votre compagnie." }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /Reserver ma place beta/i }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Réserver ma place bêta/i }).first()).toBeVisible();
     await expect(page.getByText("Exemple de cockpit", { exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
@@ -29,19 +29,24 @@ test.describe("landing beta", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Le cockpit de votre compagnie." }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /Reserver/i }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Réserver/i }).first()).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 });
 
 test.describe("parcours webinaire", () => {
-  test("rejoue la bienvenue sans rouvrir la creation de compte", async ({ page }) => {
+  test("simule l'inscription sans rouvrir la creation publique de compte", async ({ page }) => {
     await page.goto("/signup");
     await expect(page.getByRole("heading", { name: "Creation de compte suspendue" })).toBeVisible();
 
     for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
       await page.setViewportSize(viewport);
-      await page.goto("/welcome?replay=1");
+      await page.goto("/demo-signup");
+      await expect(page.getByRole("heading", { name: "Créons votre espace compagnie." })).toBeVisible();
+      await expect(page.getByLabel("Adresse email")).toHaveValue("demo_webinaire@yopmail.com");
+      await page.getByRole("button", { name: "Créer mon espace" }).click();
+      await expect(page.getByRole("heading", { name: "Bienvenue dans TaDiff" })).toBeVisible();
+      await page.waitForURL(/welcome\?replay=1&fromSignup=1/);
       await expect(page.getByRole("heading", { level: 1, name: "Bienvenue, je suis William." })).toBeVisible();
       const stage = page.locator("[data-william-stage]");
       const canvas = stage.locator("canvas");
@@ -63,7 +68,15 @@ test.describe("cockpit en mode demonstration", () => {
     for (const label of ["Aujourd'hui", "Spectacles", "Contacts", "Diffuser", "Agenda", "Finances", "Dossiers"]) {
       await expect(navigation.getByRole("link", { name: new RegExp(`^${label}`) })).toBeVisible();
     }
-    await expect(page.getByText("A faire maintenant", { exact: true })).toBeVisible();
+    await expect(page.getByText("À faire maintenant", { exact: true })).toBeVisible();
+    for (const [label, href] of [
+      ["Trésorerie", "/finances"],
+      ["Dates en cours", "/pipeline"],
+      ["Dossiers prêts", "/documents"],
+      ["Urgences", "/reminders"],
+    ] as const) {
+      await expect(page.getByRole("link", { name: new RegExp(label) })).toHaveAttribute("href", href);
+    }
     const cockpitOrder = await page.locator('[data-tour="cockpit-pulse"], [data-tour="cockpit-priorite"]').evaluateAll((elements) => elements.map((element) => element.getAttribute("data-tour")));
     expect(cockpitOrder).toEqual(["cockpit-pulse", "cockpit-priorite"]);
 
@@ -129,7 +142,13 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByText("Affiche spectacle", { exact: true })).toHaveCount(0);
     const backToShows = page.getByRole("link", { name: "Tous les spectacles" });
     await expect(backToShows).toBeVisible();
-    await page.getByRole("link", { name: "Dossier", exact: true }).click();
+    const dossierTab = page.getByRole("navigation", { name: "Rubriques du spectacle" })
+      .getByRole("link", { name: "Dossier", exact: true });
+    await expect(dossierTab).toHaveAttribute("href", /tab=files/);
+    await Promise.all([
+      page.waitForURL(/tab=files/),
+      dossierTab.click(),
+    ]);
     await expect(page).toHaveURL(/tab=files/);
     await expect(page.getByRole("heading", { name: "Pièces indispensables" })).toBeVisible();
     await expect(page.getByText("RIB", { exact: true })).toHaveCount(0);
@@ -150,7 +169,7 @@ test.describe("cockpit en mode demonstration", () => {
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog", { name: "Remplacer Dossier artistique ?" })).toBeHidden();
 
-    await expect(page.getByRole("heading", { name: "Deposer plusieurs fichiers" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Déposer plusieurs fichiers" })).toBeVisible();
     await page.locator('input[type="file"][multiple]').setInputFiles({
       name: "fiche-technique-tournee.pdf",
       mimeType: "application/pdf",
@@ -160,7 +179,7 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await expectNoHorizontalOverflow(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    const presentationTab = page.getByRole("link", { name: "Presentation", exact: true });
+    const presentationTab = page.getByRole("link", { name: "Présentation", exact: true });
     await presentationTab.click();
     await expect(page).toHaveURL(/tab=presentation/);
     await expect(presentationTab).toHaveAttribute("aria-current", "page");
@@ -168,7 +187,7 @@ test.describe("cockpit en mode demonstration", () => {
       const style = window.getComputedStyle(element);
       return [style.borderLeftWidth, style.borderRightWidth];
     })).toEqual(["0px", "0px"]);
-    await expect(page.getByRole("heading", { name: "Donner de la matiere aux emails" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Donner de la matière aux emails" })).toBeVisible();
     const logline = page.getByLabel("Logline");
     await expect(logline).toHaveValue(/fratrie/);
     await expect(page.getByLabel(/^Synopsis/)).toBeVisible();
@@ -357,6 +376,29 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("dialog", { name: "Ajouter une diffusion" })).toBeVisible();
   });
 
+  test("selectionne explicitement les jours joues d'une exploitation", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/pipeline");
+
+    await page.getByRole("button", { name: "Ajouter une exploitation" }).click();
+    const dialog = page.getByRole("dialog", { name: "Ajouter des représentations" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Jours joués", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("1 représentation(s) sélectionnée(s)")).toBeVisible();
+    await dialog.getByLabel("Fin de période").fill("2026-08-31");
+    await dialog.getByRole("button", { name: "Jeu", exact: true }).click();
+    await expect(dialog.getByText(/représentation\(s\) sélectionnée\(s\)/)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  });
+
+  test("masque les documents du sous-menu dossiers et aligne le mécénat sur les aides", async ({ page }) => {
+    await page.goto("/mecenat");
+    await expect(page.getByRole("heading", { name: "Les partenariats à faire avancer" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Documents", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "À faire avancer" })).toBeVisible();
+  });
+
   test("prepare un brouillon email pour n'importe quel contact", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/campaigns");
@@ -385,14 +427,14 @@ test.describe("cockpit en mode demonstration", () => {
     await page.keyboard.press("Escape");
     await expect(attachmentDialog).toBeHidden();
     await expect(page.getByRole("heading", { name: "Modeles d'emails" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Nouveau modele" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nouveau modèle" })).toBeVisible();
   });
 
   test("contextualise un email directement depuis un contact", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/contacts");
 
-    await page.getByRole("button", { name: "Preparer un email" }).first().click();
+    await page.getByRole("button", { name: "Préparer un email" }).first().click();
     const dialog = page.getByRole("dialog", { name: /Préparer un email pour/ });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByLabel("Contact", { exact: true })).toHaveValue("contact-1");
@@ -468,7 +510,21 @@ test.describe("cockpit en mode demonstration", () => {
 
     await page.getByRole("tab", { name: /Lieux/ }).click();
     await page.getByRole("button", { name: "Importer" }).click();
-    await expect(page.getByRole("dialog", { name: "Importer des lieux" })).toBeVisible();
+    const importDialog = page.getByRole("dialog", { name: "Importer des lieux" });
+    await expect(importDialog).toBeVisible();
+    await importDialog.locator('input[type="file"]').setInputFiles({
+      name: "lieux.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from([
+        "Nom du lieu;Adresse;Code postal;Ville;Site web",
+        "Théâtre du Port;2 quai du Port;17000;La Rochelle;theatre-port.example",
+        "Salle des Fêtes;5 rue Centrale;44000;Nantes;https://salle-fetes.example",
+      ].join("\n")),
+    });
+    await expect(importDialog.getByText(/2 lieu\(x\) détecté\(s\) sur 2 ligne\(s\)/)).toBeVisible();
+    await expect(importDialog.getByRole("button", { name: "Importer 2 lieu(x)" })).toBeVisible();
+    await importDialog.getByRole("button", { name: "Importer 2 lieu(x)" }).click();
+    await expect(importDialog.getByText(/2 lieu\(x\) importé\(s\).*2 lieu\(x\) positionné\(s\)/)).toBeVisible();
   });
 
   test("attribue une action a plusieurs contacts", async ({ page }) => {
@@ -477,7 +533,7 @@ test.describe("cockpit en mode demonstration", () => {
 
     await page.getByLabel("Sélectionner Mina Laurent").check();
     await page.getByLabel("Sélectionner Arthur Klein").check();
-    await page.getByRole("button", { name: "Créer une action" }).click();
+    await page.getByRole("button", { name: "Créer une action", exact: true }).click();
 
     const dialog = page.getByRole("dialog", { name: "Que faut-il faire ?" });
     await expect(dialog).toBeVisible();
@@ -498,9 +554,14 @@ test.describe("cockpit en mode demonstration", () => {
     const dialog = page.getByRole("dialog", { name: "Supprimer les contacts selectionnes ?" });
     const holdButton = dialog.getByRole("button", { name: "Maintenir 3 secondes pour supprimer 2 contacts" });
     await expect(dialog).toBeVisible();
+    const initialSize = await holdButton.boundingBox();
     await holdButton.focus();
     await page.keyboard.down("Space");
-    await page.waitForTimeout(3_150);
+    await page.waitForTimeout(1_000);
+    const holdingSize = await holdButton.boundingBox();
+    expect(holdingSize?.width).toBe(initialSize?.width);
+    expect(holdingSize?.height).toBe(initialSize?.height);
+    await page.waitForTimeout(2_150);
     await page.keyboard.up("Space");
 
     await expect(dialog).toBeHidden();

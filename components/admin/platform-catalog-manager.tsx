@@ -23,7 +23,7 @@ export function PlatformCatalogManager({ grants, patronage }: { grants: AdminGra
     <div className="space-y-4">
       <div className="flex w-fit rounded-md border border-border bg-panel p-1">
         <Button type="button" variant={kind === "grants" ? "primary" : "ghost"} onClick={() => setKind("grants")}>Subventions</Button>
-        <Button type="button" variant={kind === "patronage" ? "primary" : "ghost"} onClick={() => setKind("patronage")}>Mecenat</Button>
+        <Button type="button" variant={kind === "patronage" ? "primary" : "ghost"} onClick={() => setKind("patronage")}>Mécénat</Button>
       </div>
       {kind === "grants" ? <GrantCatalog grants={grants} /> : <PatronageCatalog items={patronage} />}
     </div>
@@ -63,9 +63,9 @@ function GrantCatalog({ grants }: { grants: AdminGrantCatalogItem[] }) {
           <Field label="Date limite"><Input type="date" value={draft.deadline} onChange={(event) => update("deadline", event.target.value)} /></Field>
           <Field label="Montant maximal"><Input min="0" type="number" value={draft.amountMax} onChange={(event) => update("amountMax", Number(event.target.value))} /></Field>
           <Field label="Themes, separes par des virgules"><Input value={draft.themes.join(", ")} onChange={(event) => update("themes", splitList(event.target.value))} /></Field>
-          <Field label="Pieces demandees, separees par des virgules"><Input value={draft.requirements.join(", ")} onChange={(event) => update("requirements", splitList(event.target.value))} /></Field>
+          <Field label="Pièces demandées, séparées par des virgules"><Input value={draft.requirements.join(", ")} onChange={(event) => update("requirements", splitList(event.target.value))} /></Field>
           <Field label="Source officielle"><Input type="url" value={draft.sourceUrl} onChange={(event) => update("sourceUrl", event.target.value)} /></Field>
-          <Field label="Verifie le"><Input type="date" value={draft.lastVerifiedAt} onChange={(event) => update("lastVerifiedAt", event.target.value)} /></Field>
+          <Field label="Vérifié le"><Input type="date" value={draft.lastVerifiedAt} onChange={(event) => update("lastVerifiedAt", event.target.value)} /></Field>
           <div className="md:col-span-2"><Field label="Eligibilite"><Textarea value={draft.eligibility} onChange={(event) => update("eligibility", event.target.value)} /></Field></div>
         </div>
         <ActiveToggle active={draft.active} onChange={(active) => update("active", active)} />
@@ -100,15 +100,15 @@ function PatronageCatalog({ items }: { items: AdminPatronageCatalogItem[] }) {
   };
 
   return (
-    <CatalogLayout title="Catalogue du mecenat" description="Referentiel des fondations, appels et programmes a proposer aux compagnies." onNew={() => edit()}>
+    <CatalogLayout title="Catalogue du mécénat" description="Référentiel des fondations, appels et programmes à proposer aux compagnies." onNew={() => edit()}>
       <CatalogForm title={editing ? `Modifier ${editing.programName}` : "Ajouter un programme"} onSave={save} pending={isPending} message={message}>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Organisation"><Input value={draft.organizationName} onChange={(event) => update("organizationName", event.target.value)} /></Field>
           <Field label="Programme"><Input value={draft.programName} onChange={(event) => update("programName", event.target.value)} /></Field>
           <Field label="Themes"><Input value={draft.themes.join(", ")} onChange={(event) => update("themes", splitList(event.target.value))} /></Field>
           <Field label="Territoires"><Input value={draft.territories.join(", ")} onChange={(event) => update("territories", splitList(event.target.value))} /></Field>
-          <Field label="Prochaine echeance"><Input type="date" value={draft.nextDeadline} onChange={(event) => update("nextDeadline", event.target.value)} /></Field>
-          <Field label="Verifie le"><Input type="date" value={draft.lastVerifiedAt} onChange={(event) => update("lastVerifiedAt", event.target.value)} /></Field>
+          <Field label="Prochaine échéance"><Input type="date" value={draft.nextDeadline} onChange={(event) => update("nextDeadline", event.target.value)} /></Field>
+          <Field label="Vérifié le"><Input type="date" value={draft.lastVerifiedAt} onChange={(event) => update("lastVerifiedAt", event.target.value)} /></Field>
           <Field label="Montant minimal"><Input min="0" type="number" value={draft.amountMin} onChange={(event) => update("amountMin", Number(event.target.value))} /></Field>
           <Field label="Montant maximal"><Input min="0" type="number" value={draft.amountMax} onChange={(event) => update("amountMax", Number(event.target.value))} /></Field>
           <div className="md:col-span-2"><Field label="Eligibilite"><Textarea value={draft.eligibility} onChange={(event) => update("eligibility", event.target.value)} /></Field></div>
@@ -117,7 +117,7 @@ function PatronageCatalog({ items }: { items: AdminPatronageCatalogItem[] }) {
         </div>
         <ActiveToggle active={draft.active} onChange={(active) => update("active", active)} />
       </CatalogForm>
-      <CatalogList count={items.length} empty="Aucun programme de mecenat dans le catalogue.">
+      <CatalogList count={items.length} empty="Aucun programme de mécénat dans le catalogue.">
         {items.map((item) => <CatalogRow key={item.id} title={item.programName} subtitle={`${item.organizationName}${item.nextDeadline ? ` · ${new Date(item.nextDeadline).toLocaleDateString("fr-FR")}` : ""}`} active={item.active} url={item.sourceUrl} onEdit={() => edit(item)} onDelete={() => remove(item)} />)}
       </CatalogList>
     </CatalogLayout>

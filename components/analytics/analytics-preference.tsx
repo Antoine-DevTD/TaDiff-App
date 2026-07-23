@@ -21,7 +21,7 @@ export function AnalyticsPreference() {
         Mesure d&apos;audience : {enabled ? "autorisee" : "refusee"}
       </p>
       <p className="mt-1 text-xs leading-5 text-muted">
-        Ce choix reste enregistre dans ce navigateur. Le refus supprime immediatement
+        Ce choix reste enregistre dans ce navigateur. Le refus supprimé immediatement
         l&apos;identifiant de session local.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">

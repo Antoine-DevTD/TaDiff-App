@@ -33,10 +33,10 @@ export function DemoCompanyPanel() {
   return (
     <Card className="space-y-4 p-5">
       <div>
-        <p className="text-base font-semibold">Compagnie de demonstration</p>
+        <p className="text-base font-semibold">Compagnie de démonstration</p>
         <p className="mt-1 text-sm text-muted">
           Installe la Compagnie de l&apos;Estran : 3 spectacles, 8 contacts, dates possibles,
-          actions, frais fixes, tresorerie, documents, devis et subventions, avec des echeances
+          actions, frais fixes, trésorerie, documents, devis et subventions, avec des échéances
           calees sur aujourd&apos;hui. Uniquement sur un espace vierge.
         </p>
       </div>
@@ -46,7 +46,7 @@ export function DemoCompanyPanel() {
             ? "Installation..."
             : confirming
               ? "Confirmer l'installation"
-              : "Installer la compagnie de demonstration"}
+              : "Installer la compagnie de démonstration"}
         </Button>
         {message ? (
           <p className={message.ok ? "text-sm text-success" : "text-sm text-danger"}>

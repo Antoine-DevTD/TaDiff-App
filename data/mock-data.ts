@@ -32,7 +32,7 @@ export const shows: Show[] = [
   {
     id: "show-1",
     title: "Les lignes de fuite",
-    discipline: "Theatre contemporain",
+    discipline: "Théâtre contemporain",
     status: "En diffusion",
     nextDate: "2026-09-18",
     budget: 12500,
@@ -40,8 +40,8 @@ export const shows: Show[] = [
     logline: "Une fratrie tente de reconstruire son histoire tandis que le paysage autour d'elle disparait.",
     themes: ["Memoire", "Transmission", "Territoire"],
     targetAudience: "Tout public a partir de 12 ans, scenes pluridisciplinaires et lieux de proximite.",
-    emailPitch: "Une forme legere qui place le recit et les interpretes au premier plan, pensee pour aller a la rencontre de publics varies.",
-    notes: "Version legere en tournee. Dossier diffusion et fiche technique a tenir a jour.",
+    emailPitch: "Une forme légère qui place le recit et les interpretes au premier plan, pensee pour aller a la rencontre de publics varies.",
+    notes: "Version légère en tournee. Dossier diffusion et fiche technique à tenir à jour.",
     posterUrl: "",
     costProfile: {
       ...defaultCostProfile,
@@ -59,10 +59,10 @@ export const shows: Show[] = [
     nextDate: "2026-11-04",
     budget: 18400,
     detailedBudgetEnabled: false,
-    logline: "Deux corps et une voix traversent ce qui demeure apres l'incendie.",
+    logline: "Deux corps et une voix traversent ce qui demeure après l'incendie.",
     themes: ["Reconstruction", "Corps", "Musique"],
     targetAudience: "Tout public, plateaux equipes et festivals danse-musique.",
-    emailPitch: "Un projet de creation qui fait dialoguer mouvement et musique live dans une forme adaptable.",
+    emailPitch: "Un projet de création qui fait dialoguer mouvement et musique live dans une forme adaptable.",
     notes: "Montage coproduction en cours. Besoins lumiere et residence a confirmer.",
     posterUrl: "",
     costProfile: {
@@ -84,7 +84,7 @@ export const shows: Show[] = [
     logline: "Un cabinet ambulant ouvre les portes des songes oublies des enfants.",
     themes: ["Imaginaire", "Enfance", "Reve"],
     targetAudience: "Jeune public a partir de 7 ans et programmation scolaire.",
-    emailPitch: "Une proposition accessible et visuelle, concue pour prolonger la representation avec les enfants.",
+    emailPitch: "Une proposition accessible et visuelle, concue pour prolonger la représentation avec les enfants.",
     notes: "Projet en pause, relance possible sur la prochaine saison scolaire.",
     posterUrl: "",
     costProfile: {
@@ -98,7 +98,7 @@ export const shows: Show[] = [
 ];
 
 export const showBudgetItems: ShowBudgetItem[] = [
-  { id: "budget-1", showId: "show-1", kind: "expense", category: "creation", label: "Répétitions rémunérées", amount: 3600, scope: "creation", sortOrder: 0 },
+  { id: "budget-1", showId: "show-1", kind: "expense", category: "création", label: "Répétitions rémunérées", amount: 3600, scope: "creation", sortOrder: 0 },
   { id: "budget-2", showId: "show-1", kind: "expense", category: "artistic", label: "Équipe artistique", amount: 4200, scope: "creation", sortOrder: 1 },
   { id: "budget-3", showId: "show-1", kind: "expense", category: "scenography", label: "Décor et costumes", amount: 1900, scope: "creation", sortOrder: 2 },
   { id: "budget-4", showId: "show-1", kind: "expense", category: "technical", label: "Création lumière et régie", amount: 1300, scope: "creation", sortOrder: 3 },
@@ -142,7 +142,7 @@ export const showDocuments: ShowDocument[] = [
   {
     id: "doc-4",
     showId: "show-2",
-    title: "Note d'intention creation",
+    title: "Note d'intention création",
     documentType: "Note d'intention",
     status: "Pret",
     fileUrl: "",
@@ -196,20 +196,20 @@ export const contacts: Contact[] = [
     phone: "06 12 34 56 02",
     city: "Metz",
     status: "Prospect",
-    tags: ["Festival", "Creation"],
+    tags: ["Festival", "Création"],
   },
   {
     id: "contact-3",
     contactType: "person",
     venueId: "venue-3",
     name: "Sofia Moreau",
-    organization: "Theatre du Nord",
-    role: "Chargee de diffusion",
+    organization: "Théâtre du Nord",
+    role: "Chargée de diffusion",
     email: "sofia@theatredunord.fr",
     phone: "06 12 34 56 03",
     city: "Lille",
     status: "Partenaire",
-    tags: ["Theatre", "Partenaire"],
+    tags: ["Théâtre", "Partenaire"],
   },
   {
     id: "venue-1",
@@ -251,14 +251,14 @@ export const contacts: Contact[] = [
     latitude: 49.1193,
     longitude: 6.1757,
     status: "Prospect",
-    tags: ["Festival", "Creation"],
+    tags: ["Festival", "Création"],
   },
   {
     id: "venue-3",
     contactType: "venue",
     venueId: "",
-    name: "Theatre du Nord",
-    organization: "Theatre du Nord",
+    name: "Théâtre du Nord",
+    organization: "Théâtre du Nord",
     role: "Lieu",
     email: "contact@theatredunord.fr",
     phone: "03 20 00 00 03",
@@ -272,7 +272,7 @@ export const contacts: Contact[] = [
     latitude: 50.6292,
     longitude: 3.0573,
     status: "Partenaire",
-    tags: ["Theatre", "Partenaire"],
+    tags: ["Théâtre", "Partenaire"],
   },
 ];
 
@@ -309,7 +309,7 @@ export const pipelineDeals: PipelineDeal[] = [
     title: "Serie scolaire",
     contactId: "contact-2",
     showId: "show-3",
-    venue: "Theatre municipal",
+    venue: "Théâtre municipal",
     stage: "Contacte",
     value: 5400,
     probability: 35,
@@ -320,7 +320,7 @@ export const pipelineDeals: PipelineDeal[] = [
     minimumGuarantee: 3500,
     venueRental: 0,
     performanceDate: "2026-11-07",
-    nextAction: "Relancer apres lecture du dossier",
+    nextAction: "Relancer après lecture du dossier",
     nextFollowUpAt: "2026-06-28",
     lostReason: "",
     contactName: "Arthur Klein",
@@ -333,7 +333,7 @@ export const pipelineDeals: PipelineDeal[] = [
   },
   {
     id: "deal-3",
-    title: "Coproduction creation",
+    title: "Coproduction création",
     contactId: "contact-3",
     showId: "show-2",
     venue: "Scene nationale",
@@ -351,7 +351,7 @@ export const pipelineDeals: PipelineDeal[] = [
     nextFollowUpAt: "2026-07-08",
     lostReason: "",
     contactName: "Sofia Moreau",
-    contactOrganization: "Theatre du Nord",
+    contactOrganization: "Théâtre du Nord",
     contactEmail: "sofia@theatredunord.fr",
     showTitle: "Cendres claires",
     createdAt: "2026-06-18",
@@ -363,7 +363,7 @@ export const pipelineDeals: PipelineDeal[] = [
 export const reminders: Reminder[] = [
   {
     id: "reminder-1",
-    label: "Relancer Mina apres envoi du dossier",
+    label: "Relancer Mina après envoi du dossier",
     dueDate: "2026-06-24",
     relatedTo: "Les lignes de fuite",
     done: false,
@@ -371,15 +371,15 @@ export const reminders: Reminder[] = [
   },
   {
     id: "reminder-2",
-    label: "Preparer devis serie scolaire",
+    label: "Préparer devis série scolaire",
     dueDate: "2026-06-28",
-    relatedTo: "Theatre municipal",
+    relatedTo: "Théâtre municipal",
     done: false,
     priority: "normal",
   },
   {
     id: "reminder-3",
-    label: "Mettre a jour le dossier de production",
+    label: "Mettre à jour le dossier de production",
     dueDate: "2026-07-02",
     relatedTo: "Cendres claires",
     done: false,
@@ -391,16 +391,16 @@ export const dashboardStats = [
   { label: "Spectacles actifs", value: "3", detail: "2 en diffusion" },
   { label: "Prospects ouverts", value: "42", detail: "+8 ce mois" },
   { label: "Relances a venir", value: "11", detail: "4 cette semaine" },
-  { label: "CA previsionnel", value: "48 900 EUR", detail: "Dates qualifiees" },
+  { label: "CA prévisionnel", value: "48 900 EUR", detail: "Dates qualifiees" },
 ];
 
 export const commercialPacks: CommercialPack[] = [
   {
     id: "pack-school",
     name: "Pack scolaire",
-    description: "Representation, mediation et atelier pour transformer une cession en action culturelle.",
+    description: "Représentation, mediation et atelier pour transformer une cession en action culturelle.",
     multiplier: 1.25,
-    includes: ["Representation", "Atelier scolaire", "Dossier pedagogique", "Rencontre equipe"],
+    includes: ["Représentation", "Atelier scolaire", "Dossier pédagogique", "Rencontre équipe"],
     recommendedFor: "Salles municipales, colleges, scenes jeune public",
   },
   {
@@ -409,7 +409,7 @@ export const commercialPacks: CommercialPack[] = [
     description: "Argumentaire, elements visuels et relance dediee pour une date a visibilite forte.",
     multiplier: 1.15,
     includes: ["Kit presse", "Captation courte", "Relance journalistes", "Bilan impact"],
-    recommendedFor: "Festivals, premieres, tournees de lancement",
+    recommendedFor: "Festivals, premières, tournées de lancement",
   },
   {
     id: "pack-residency",
@@ -417,7 +417,7 @@ export const commercialPacks: CommercialPack[] = [
     description: "Offre renforcee pour vendre un temps long avec repetition ouverte et restitution.",
     multiplier: 1.45,
     includes: ["Residence", "Bord plateau", "Action territoriale", "Restitution"],
-    recommendedFor: "Festivals, scenes conventionnees, lieux de creation",
+    recommendedFor: "Festivals, scenes conventionnees, lieux de création",
   },
   {
     id: "pack-patronage",
@@ -432,7 +432,7 @@ export const commercialPacks: CommercialPack[] = [
 export const grantOpportunities: GrantOpportunity[] = [
   {
     id: "grant-1",
-    title: "Aide a la creation",
+    title: "Aide a la création",
     funder: "DRAC Ile-de-France",
     territory: "Ile-de-France",
     discipline: "Theatre",
@@ -449,10 +449,10 @@ export const grantOpportunities: GrantOpportunity[] = [
       "RIB",
       "Statuts",
     ],
-    eligibility: "Equipe artistique professionnelle avec projet de creation identifie.",
+    eligibility: "Équipe artistique professionnelle avec projet de création identifie.",
     sourceUrl:
       "https://www.culture.gouv.fr/catalogue-des-demarches-et-subventions/subvention/aide-au-projet-ou-au-fonctionnement-spectacle-vivant-et-arts-visuels",
-    themes: ["Creation", "Theatre", "DRAC"],
+    themes: ["Création", "Theatre", "DRAC"],
   },
   {
     id: "grant-2",
@@ -571,7 +571,7 @@ export const billingPlans: BillingPlan[] = [
     name: "Pro",
     monthlyPrice: 99,
     annualPrice: 79,
-    description: "Pour les compagnies avec plusieurs spectacles et une equipe de diffusion.",
+    description: "Pour les compagnies avec plusieurs spectacles et une équipe de diffusion.",
     features: ["3 spectacles actifs", "2 000 contacts diffusion", "Mecenat", "1 000 emails / mois", "Export FEC"],
     current: true,
   },
@@ -607,7 +607,7 @@ export const betaSignups: BetaSignup[] = [
     phone: "",
     city: "Lyon",
     discipline: "Danse",
-    mainNeed: "Comprendre la tresorerie par spectacle avant les signatures.",
+    mainNeed: "Comprendre la trésorerie par spectacle avant les signatures.",
     status: "reserved",
     position: 2,
     createdAt: "2026-07-03",
@@ -656,7 +656,7 @@ export const quoteItems: QuoteItem[] = [
     id: "quote-3",
     number: "DEV-2026-003",
     dealId: "deal-3",
-    title: "Coproduction creation",
+    title: "Coproduction création",
     organization: "Theatre du Nord",
     amount: 15000,
     depositDue: 4500,
@@ -669,7 +669,7 @@ export const quoteItems: QuoteItem[] = [
 export const fixedCosts: FixedCost[] = [
   {
     id: "fixed-1",
-    label: "Assurance responsabilite civile",
+    label: "Assurance responsabilité civile",
     category: "Assurance",
     amount: 1180,
     frequency: "Annuel",
@@ -710,7 +710,7 @@ export const fixedCosts: FixedCost[] = [
     amount: 360,
     frequency: "Annuel",
     nextDueDate: "2026-10-05",
-    notes: "Outils admin, creation et communication.",
+    notes: "Outils admin, création et communication.",
   },
 ];
 
@@ -718,5 +718,5 @@ export const treasurySnapshot: TreasurySnapshot = {
   id: "treasury-demo",
   balance: 18400,
   recordedOn: "2026-07-01",
-  note: "Solde de demonstration.",
+  note: "Solde de démonstration.",
 };

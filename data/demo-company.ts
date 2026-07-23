@@ -107,13 +107,13 @@ export const demoShows: DemoShow[] = [
   {
     key: "villes",
     title: "Les Villes invisibles",
-    discipline: "Theatre",
+    discipline: "Théâtre",
     status: "En diffusion",
     nextDateInDays: 18,
     budget: 42000,
     posterUrl: "https://picsum.photos/seed/tadiff-villes/800/1000",
     notes:
-      "Adaptation de Calvino pour 4 interpretes. Jauge 400, duree 1h25, decors legers, tournee possible en salle et en exterieur.",
+      "Adaptation de Calvino pour 4 interpretes. Jauge 400, duree 1h25, décors legers, tournee possible en salle et en exterieur.",
   },
   {
     key: "freres",
@@ -124,7 +124,7 @@ export const demoShows: DemoShow[] = [
     budget: 28000,
     posterUrl: "https://picsum.photos/seed/tadiff-freres/800/1000",
     notes:
-      "Creation 2026-2027, des 7 ans. Residence prevue a l'automne, sortie de creation visee pour janvier. Deux interpretes et un musicien.",
+      "Création 2026-2027, des 7 ans. Residence prevue a l'automne, sortie de création visee pour janvier. Deux interpretes et un musicien.",
   },
   {
     key: "cabaret",
@@ -135,7 +135,7 @@ export const demoShows: DemoShow[] = [
     budget: 15000,
     posterUrl: "https://picsum.photos/seed/tadiff-cabaret/800/1000",
     notes:
-      "Forme legere en trio, ideale pour les saisons d'ete et les evenements de collectivites. Fiche technique reduite.",
+      "Forme légère en trio, ideale pour les saisons d'ete et les evenements de collectivites. Fiche technique reduite.",
   },
 ];
 
@@ -149,7 +149,7 @@ export const demoContacts: DemoContact[] = [
     phone: "06 21 45 10 01",
     city: "Nantes",
     status: "En discussion",
-    tags: ["Theatre", "Grande salle"],
+    tags: ["Théâtre", "Grande salle"],
   },
   {
     key: "stnazaire",
@@ -165,8 +165,8 @@ export const demoContacts: DemoContact[] = [
   {
     key: "reze",
     name: "Sophie Aubert",
-    organization: "Theatre municipal de Reze",
-    role: "Chargee de programmation",
+    organization: "Théâtre municipal de Rezé",
+    role: "Chargée de programmation",
     email: "s.aubert@reze-demo.fr",
     phone: "06 21 45 10 03",
     city: "Reze",
@@ -176,7 +176,7 @@ export const demoContacts: DemoContact[] = [
   {
     key: "aurillac",
     name: "Julien Roche",
-    organization: "Festival international de theatre de rue",
+    organization: "Festival international de théâtre de rue",
     role: "Programmateur",
     email: "j.roche@festival-demo.fr",
     phone: "06 21 45 10 04",
@@ -210,7 +210,7 @@ export const demoContacts: DemoContact[] = [
     key: "paperie",
     name: "Lisa Moreau",
     organization: "La Paperie - CNAREP",
-    role: "Chargee de production",
+    role: "Chargée de production",
     email: "l.moreau@paperie-demo.fr",
     phone: "06 21 45 10 07",
     city: "Angers",
@@ -220,13 +220,13 @@ export const demoContacts: DemoContact[] = [
   {
     key: "mecene",
     name: "Thomas Vidal",
-    organization: "Fondation Ouest Mecenat",
-    role: "Delegue general",
+    organization: "Fondation Ouest Mécénat",
+    role: "Délégué général",
     email: "t.vidal@fondation-demo.fr",
     phone: "06 21 45 10 08",
     city: "Nantes",
     status: "Prospect",
-    tags: ["Mecenat", "Fondation"],
+    tags: ["Mécénat", "Fondation"],
   },
 ];
 
@@ -250,7 +250,7 @@ export const demoOpportunities: DemoOpportunity[] = [
     value: 3200,
     probability: 55,
     performanceInDays: 42,
-    nextAction: "Relancer apres le comite du budget",
+    nextAction: "Relancer après le comité du budget",
     nextFollowUpInDays: -3,
   },
   {
@@ -324,7 +324,7 @@ export const demoReminders: DemoReminder[] = [
     priority: "high",
   },
   {
-    title: "Preparer le contrat de cession pour Reze",
+    title: "Préparer le contrat de cession pour Rezé",
     dueInDays: 2,
     relatedTo: "Les Villes invisibles - Reze - 2 dates",
     priority: "normal",
@@ -345,7 +345,7 @@ export const demoReminders: DemoReminder[] = [
 
 export const demoFixedCosts: DemoFixedCost[] = [
   {
-    label: "Assurance responsabilite civile",
+    label: "Assurance responsabilité civile",
     category: "Assurance",
     amount: 1180,
     frequency: "Annuel",
@@ -369,12 +369,12 @@ export const demoFixedCosts: DemoFixedCost[] = [
     notes: "Paie des intermittents + cloture annuelle.",
   },
   {
-    label: "Local de stockage decors",
+    label: "Local de stockage décors",
     category: "Stockage",
     amount: 145,
     frequency: "Mensuel",
     nextDueInDays: 8,
-    notes: "Box 20 m2, decors des Villes invisibles.",
+    notes: "Box 20 m2, décors des Villes invisibles.",
   },
   {
     label: "Studio de repetition",
@@ -396,21 +396,21 @@ export const demoFixedCosts: DemoFixedCost[] = [
 
 export const demoTreasury = {
   balance: 14250,
-  note: "Solde apres paie de juin et acompte Le Grand T.",
+  note: "Solde après paie de juin et acompte Le Grand T.",
 };
 
 export const demoDocuments: DemoDocument[] = [
   { showKey: "villes", title: "Affiche 2026", documentType: "Affiche", status: "Pret", notes: "Version HD imprimeur." },
-  { showKey: "villes", title: "Dossier artistique v4", documentType: "Dossier artistique", status: "Pret", notes: "Relu par toute l'equipe." },
+  { showKey: "villes", title: "Dossier artistique v4", documentType: "Dossier artistique", status: "Pret", notes: "Relu par toute l'équipe." },
   { showKey: "villes", title: "Note d'intention", documentType: "Note d'intention", status: "Pret", notes: "" },
   { showKey: "villes", title: "Synopsis", documentType: "Synopsis", status: "Pret", notes: "" },
-  { showKey: "villes", title: "Budget previsionnel 26/27", documentType: "Budget", status: "A mettre a jour", notes: "Integrer les 2 dates de Reze confirmees." },
+  { showKey: "villes", title: "Budget prévisionnel 26/27", documentType: "Budget", status: "A mettre a jour", notes: "Intégrer les 2 dates de Reze confirmées." },
   { showKey: "villes", title: "Fiche technique", documentType: "Fiche technique", status: "Pret", notes: "Version salle + version exterieur." },
   { showKey: "villes", title: "RIB compagnie", documentType: "RIB", status: "Pret", notes: "" },
-  { showKey: "villes", title: "Statuts association", documentType: "Statuts", status: "Pret", notes: "Statuts a jour AG 2025." },
-  { showKey: "freres", title: "Dossier de creation", documentType: "Dossier artistique", status: "Pret", notes: "Version travail pour les residences." },
+  { showKey: "villes", title: "Statuts association", documentType: "Statuts", status: "Pret", notes: "Statuts à jour AG 2025." },
+  { showKey: "freres", title: "Dossier de création", documentType: "Dossier artistique", status: "Pret", notes: "Version travail pour les residences." },
   { showKey: "freres", title: "Note d'intention", documentType: "Note d'intention", status: "Pret", notes: "" },
-  { showKey: "freres", title: "Budget de creation", documentType: "Budget", status: "A mettre a jour", notes: "En attente des devis decors." },
+  { showKey: "freres", title: "Budget de création", documentType: "Budget", status: "A mettre a jour", notes: "En attente des devis décors." },
   { showKey: "cabaret", title: "Affiche ete", documentType: "Affiche", status: "Pret", notes: "" },
   { showKey: "cabaret", title: "Fiche technique trio", documentType: "Fiche technique", status: "Pret", notes: "Autonome en son pour l'exterieur." },
 ];
@@ -420,7 +420,7 @@ export const demoQuotes: DemoQuote[] = [
     number: "DEV-2026-001",
     opportunityTitle: "Les Villes invisibles - Reze - 2 dates",
     title: "Les Villes invisibles - Reze - 2 representations",
-    organization: "Theatre municipal de Reze",
+    organization: "Théâtre municipal de Rezé",
     amount: 8400,
     depositDue: 2520,
     balanceDue: 5880,
@@ -470,7 +470,7 @@ export const demoGrants: DemoGrant[] = [
     status: "En montage",
     showKey: "villes",
     requirements: [...standardGrantPieces, "Fiche technique"],
-    eligibility: "Dossier en cours : il manque le budget a jour avant depot.",
+    eligibility: "Dossier en cours : il manque le budget à jour avant depot.",
     sourceUrl:
       "https://www.culture.gouv.fr/catalogue-des-demarches-et-subventions/subvention/aide-au-projet-ou-au-fonctionnement-spectacle-vivant-et-arts-visuels",
   },
@@ -484,11 +484,11 @@ export const demoGrants: DemoGrant[] = [
     status: "A surveiller",
     showKey: "cabaret",
     requirements: standardGrantPieces,
-    eligibility: "Campagne annuelle, verifier la date d'ouverture du guichet.",
+    eligibility: "Campagne annuelle, vérifier la date d'ouverture du guichet.",
     sourceUrl: "https://metropole.nantes.fr/subventions",
   },
   {
-    title: "Aide a la creation jeune public",
+    title: "Aide a la création jeune public",
     funder: "Adami",
     territory: "France",
     discipline: "Jeune public",
@@ -526,11 +526,11 @@ type DemoPatronageDeal = {
 
 export const demoPatronageDeals: DemoPatronageDeal[] = [
   {
-    companyName: "Fondation Ouest Mecenat",
+    companyName: "Fondation Ouest Mécénat",
     contactName: "Thomas Vidal",
     amount: 8000,
     status: "Negociation",
-    nextAction: "Envoyer la convention de mecenat avec contreparties",
+    nextAction: "Envoyer la convention de mécénat avec contreparties",
     nextFollowUpInDays: 5,
   },
   {

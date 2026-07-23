@@ -25,7 +25,7 @@ export function GrantImportButton() {
   return (
     <div className="space-y-2">
       <Button disabled={isPending} type="button" variant="secondary" onClick={onClick}>
-        {isPending ? "Import..." : "Importer 10 dispositifs de reference"}
+        {isPending ? "Import..." : "Importer 10 dispositifs de référence"}
       </Button>
       {message ? (
         <p className={message.ok ? "text-xs text-success" : "text-xs text-danger"}>

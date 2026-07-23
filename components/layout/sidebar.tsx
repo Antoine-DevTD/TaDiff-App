@@ -14,7 +14,7 @@ const adminNavItems = [
   {
     href: "/admin",
     label: "Supervision",
-    summary: "Compagnies, facturation, beta et retours",
+    summary: "Compagnies, facturation, bêta et retours",
     initials: "SU",
   },
 ];
@@ -119,7 +119,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
             )}
           >
             <Settings className="h-4 w-4" aria-hidden />
-            Parametres
+            Paramètres
           </Link>
           <SignOutButton />
         </div>
@@ -220,8 +220,8 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
               >
                 <Settings className="h-5 w-5 text-accent" aria-hidden />
                 <span>
-                  <span className="block text-sm font-semibold">Parametres</span>
-                  <span className="block text-xs text-muted">Compte et donnees</span>
+                  <span className="block text-sm font-semibold">Paramètres</span>
+                  <span className="block text-xs text-muted">Compte et données</span>
                 </span>
               </Link>
             </div>

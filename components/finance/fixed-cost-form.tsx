@@ -75,7 +75,7 @@ export function FixedCostForm({
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
       <Field label="Libelle" error={errors.label?.message}>
-        <Input placeholder="Assurance responsabilite civile" {...register("label")} />
+        <Input placeholder="Assurance responsabilité civile" {...register("label")} />
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -110,7 +110,7 @@ export function FixedCostForm({
         <Field label="Montant" error={errors.amount?.message}>
           <Input min="0" step="1" type="number" {...register("amount")} />
         </Field>
-        <Field label="Prochaine echeance" error={errors.nextDueDate?.message}>
+        <Field label="Prochaine échéance" error={errors.nextDueDate?.message}>
           <Input type="date" {...register("nextDueDate")} />
         </Field>
       </div>

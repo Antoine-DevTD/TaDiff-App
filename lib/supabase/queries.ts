@@ -618,6 +618,7 @@ export async function getExploitations(): Promise<Exploitation[]> {
       id: performance.id,
       performanceDate: performance.performance_date,
       performanceTime: performance.performance_time ?? "",
+      status: performance.status ?? "programmee",
       capacity: performance.capacity,
       paidTickets: performance.paid_tickets,
       complimentaryTickets: performance.complimentary_tickets,

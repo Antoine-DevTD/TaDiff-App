@@ -33,29 +33,29 @@ type DocumentPack = {
 
 function getStatusMeta(status: DocumentPackStatus) {
   if (status === "ready") {
-    return { label: "Pret", tone: "success" as const };
+    return { label: "Prêt", tone: "success" as const };
   }
 
   if (status === "to-update") {
-    return { label: "A mettre a jour", tone: "warning" as const };
+    return { label: "À mettre à jour", tone: "warning" as const };
   }
 
-  return { label: "A construire", tone: "neutral" as const };
+  return { label: "À construire", tone: "neutral" as const };
 }
 
 function resolveContractState(showId: string, deals: PipelineDeal[]) {
   const relatedDeals = deals.filter((deal) => deal.showId === showId);
 
   if (relatedDeals.some((deal) => deal.stage === "Confirme")) {
-    return "Contrat signe";
+    return "Contrat signé";
   }
 
   if (relatedDeals.some((deal) => deal.stage === "Negociation")) {
-    return "Contrat a valider";
+    return "Contrat à valider";
   }
 
   if (relatedDeals.some((deal) => deal.stage === "Relance prevue")) {
-    return "Contrat a preparer";
+    return "Contrat a préparer";
   }
 
   return "Pas de contrat actif";
@@ -107,9 +107,9 @@ function buildDocumentPacks({
         missingCount: readiness.missingCount,
         note:
           packStatus === "ready"
-            ? "Le dossier de base est pret pour un depot ou un envoi programmeur."
+            ? "Le dossier de base est prêt pour un dépôt ou un envoi programmeur."
             : packStatus === "to-update"
-              ? "Des pieces existent deja, mais le dossier n est pas encore complet."
+              ? "Des pièces existent déjà, mais le dossier n'est pas encore complet."
               : "Commencer par ajouter affiche, dossier artistique, note, budget et fiche technique.",
       };
     })
@@ -178,7 +178,7 @@ export default async function DocumentsPage() {
       {packs.length === 0 ? (
         <EmptyState
           title="Aucun dossier documentaire"
-          description="Ajoutez d abord un spectacle. Les besoins documentaires remonteront ensuite ici."
+          description="Ajoutez d'abord un spectacle. Les besoins documentaires remonteront ensuite ici."
           actionHref="/shows?create=1"
           actionLabel="Ajouter un spectacle"
         />
@@ -186,9 +186,9 @@ export default async function DocumentsPage() {
         <>
           <section className="grid gap-4 md:grid-cols-4">
             <MetricCard label="Dossiers" value={packs.length.toString()} detail="Spectacles suivis" />
-            <MetricCard label="A construire" value={buildCount.toString()} detail="Base documentaire a creer" />
-            <MetricCard label="A mettre a jour" value={updateCount.toString()} detail="Versions a recaler" />
-            <MetricCard label="Prets" value={readyCount.toString()} detail="Dossiers stabilises" />
+            <MetricCard label="À construire" value={buildCount.toString()} detail="Base documentaire à créer" />
+            <MetricCard label="À mettre à jour" value={updateCount.toString()} detail="Versions à recaler" />
+            <MetricCard label="Prêts" value={readyCount.toString()} detail="Dossiers stabilisés" />
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -218,18 +218,18 @@ export default async function DocumentsPage() {
                     value={
                       focusPack.nextDate
                         ? new Date(focusPack.nextDate).toLocaleDateString("fr-FR")
-                        : "A planifier"
+                        : "À planifier"
                     }
                   />
                   <InfoCard label="Actions" value={focusPack.remindersCount.toString()} />
-                  <InfoCard label="Pieces" value={`${focusPack.readinessPercent}% pret`} />
+                  <InfoCard label="Pièces" value={`${focusPack.readinessPercent}% prêt`} />
                 </div>
               ) : null}
             </Card>
 
             <Card className="space-y-4 p-5">
               <div>
-                <p className="text-base font-semibold">Acces rapides</p>
+                <p className="text-base font-semibold">Accès rapides</p>
                 <p className="mt-1 text-sm text-muted">
                   Le documentaire suit encore les autres modules. Les fichiers viendront ensuite.
                 </p>
@@ -238,17 +238,17 @@ export default async function DocumentsPage() {
                 <QuickLink
                   href="/shows"
                   title="Ouvrir les spectacles"
-                  detail="Mettre a jour le contexte des dates possibles et les notes de production."
+                  detail="Mettre à jour le contexte des dates possibles et les notes de production."
                 />
                 <QuickLink
                   href="/contracts"
                   title="Ouvrir les contrats"
-                  detail="Verifier le statut contractuel avant de figer une version."
+                  detail="Vérifier le statut contractuel avant de figer une version."
                 />
                 <QuickLink
                   href="/reminders"
                   title="Ouvrir les actions"
-                  detail="Voir les rappels qui impliquent une mise a jour documentaire."
+                  detail="Voir les rappels qui impliquent une mise à jour documentaire."
                 />
               </div>
             </Card>
@@ -256,18 +256,18 @@ export default async function DocumentsPage() {
 
           <section className="grid gap-6 xl:grid-cols-3">
             <DocumentColumn
-              title="A construire"
-              description="Dossiers a creer ou structurer."
+              title="À construire"
+              description="Dossiers à créer ou structurer."
               items={packs.filter((pack) => pack.packStatus === "to-build")}
             />
             <DocumentColumn
-              title="A mettre a jour"
+              title="À mettre à jour"
               description="Versions encore en mouvement."
               items={packs.filter((pack) => pack.packStatus === "to-update")}
             />
             <DocumentColumn
-              title="Prets"
-              description="Dossiers stabilises pour archivage ou envoi."
+              title="Prêts"
+              description="Dossiers stabilisés pour archivage ou envoi."
               items={packs.filter((pack) => pack.packStatus === "ready")}
             />
           </section>
@@ -339,13 +339,13 @@ function DocumentColumn({
                     <p className="mt-1 font-medium">
                       {item.nextDate
                         ? new Date(item.nextDate).toLocaleDateString("fr-FR")
-                        : "A planifier"}
+                        : "À planifier"}
                     </p>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-muted">
                   <p>{item.pipelineCount} date(s) liee(s)</p>
-                  <p>{item.missingCount} piece(s) manquante(s)</p>
+                  <p>{item.missingCount} pièce(s) manquante(s)</p>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
                   <div className="h-full rounded-full bg-accent" style={{ width: `${item.readinessPercent}%` }} />

@@ -18,7 +18,7 @@ export function AiAccessManager({ accounts }: { accounts: AdminAiAccount[] }) {
       <div className="flex items-start gap-3">
         <UserRoundCheck className="mt-0.5 h-5 w-5 text-accent" />
         <div>
-          <h3 className="text-xl font-semibold">Comptes autorises</h3>
+          <h3 className="text-xl font-semibold">Comptes autorisés</h3>
           <p className="mt-1 text-sm text-muted">Activez William par compagnie, puis uniquement pour les membres qui participent au rodage.</p>
         </div>
       </div>

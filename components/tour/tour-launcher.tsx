@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { tourStartEvent } from "@/components/tour/guided-tour";
 
 export function TourLauncher({
-  label = "Lancer la visite guidee",
+  label = "Lancer la visite guidée",
   variant = "secondary",
 }: {
   label?: string;

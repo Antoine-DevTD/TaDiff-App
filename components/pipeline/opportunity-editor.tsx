@@ -85,7 +85,7 @@ export function OpportunityEditor({
         title: draft.title,
         contactId: draft.contactId,
         showId: draft.showId,
-        venue: selectedContact?.organization ?? "Structure a renseigner",
+        venue: selectedContact?.organization ?? "Structure à renseigner",
         stage: draft.stage,
         value: revenue,
         probability: Number(draft.probability) || 0,
@@ -99,7 +99,7 @@ export function OpportunityEditor({
         nextAction: draft.nextAction || "Prochaine action a definir",
         nextFollowUpAt: draft.nextFollowUpAt,
         lostReason: draft.stage === "Perdu" ? draft.lostReason : "",
-        contactName: selectedContact?.name ?? "Contact a renseigner",
+        contactName: selectedContact?.name ?? "Contact à renseigner",
         contactOrganization: selectedContact?.organization ?? "",
         showTitle: selectedShow?.title ?? "Spectacle a associer",
       },
@@ -123,7 +123,7 @@ export function OpportunityEditor({
   }
 
   return (
-    <div className="mt-3 space-y-2 rounded-md border border-border bg-panel-strong/55 p-3">
+    <div className="space-y-3">
       <Input
         aria-label="Titre de la diffusion"
         className="min-h-9 text-xs"
@@ -239,7 +239,7 @@ export function OpportunityEditor({
         <Textarea
           aria-label="Raison de perte"
           className="min-h-16 text-xs"
-          placeholder="Ex : budget trop eleve, mauvais timing, programmation complete..."
+          placeholder="Ex : budget trop élevé, mauvais timing, programmation complète..."
           value={draft.lostReason}
           onChange={(event) =>
             setDraft((current) => ({ ...current, lostReason: event.target.value }))

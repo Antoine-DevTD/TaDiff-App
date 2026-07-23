@@ -33,11 +33,11 @@ export function ShowDocumentDeleteButton({
       </button>
       <DestructiveActionDialog
         action={deleteShowDocument.bind(null, documentId)}
-        description="Ce fichier et ses versions vont etre retires du dossier du spectacle."
+        description="Ce fichier et ses versions vont être retires du dossier du spectacle."
         holdLabel="Maintenir 3 secondes pour supprimer le document"
         open={open}
         title="Supprimer ce document ?"
-        warning="Cette suppression est definitive. Verifiez qu'aucune version de ce document ne doit etre conservee."
+        warning="Cette suppression est definitive. Verifiez qu'aucune version de ce document ne doit être conservee."
         onClose={() => setOpen(false)}
         onSuccess={() => router.refresh()}
       />

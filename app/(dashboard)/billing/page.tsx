@@ -48,9 +48,9 @@ export default async function BillingPage() {
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="space-y-4 p-5">
           <div>
-            <p className="text-base font-semibold">Devis et echeances</p>
+            <p className="text-base font-semibold">Devis et échéances</p>
             <p className="mt-1 text-sm text-muted">
-              Les devis sont rattaches aux dates possibles et alimentent acomptes, soldes et priorites cash.
+              Les devis sont rattachés aux dates possibles et alimentent acomptes, soldes et priorités cash.
             </p>
           </div>
           <div className="space-y-3">
@@ -74,7 +74,7 @@ export default async function BillingPage() {
                   <InfoCell label="Frais fixes" value={formatCurrency(fixedCostShare)} />
                 </div>
                 <p className="mt-3 text-xs text-muted">
-                  Echeance {new Date(quote.dueDate).toLocaleDateString("fr-FR")}
+                  Échéance {new Date(quote.dueDate).toLocaleDateString("fr-FR")}
                 </p>
               </Link>
             ))}
@@ -87,20 +87,20 @@ export default async function BillingPage() {
               <div>
                 <p className="text-base font-semibold">Stripe</p>
                 <p className="mt-1 text-sm text-muted">
-                  Checkout est branche en mode test. Le webhook met a jour le statut compagnie
+                  Checkout est branche en mode test. Le webhook met à jour le statut compagnie
                   quand Stripe confirme ou refuse le paiement.
                 </p>
               </div>
               <Badge className="shrink-0" tone={stripeReady && betaPriceReady ? "success" : "warning"}>
-                {stripeReady && betaPriceReady ? "Mode test pret" : "Configuration incomplete"}
+                {stripeReady && betaPriceReady ? "Mode test prêt" : "Configuration incomplete"}
               </Badge>
             </div>
             <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="font-medium">Beta pilote</p>
+                  <p className="font-medium">Bêta pilote</p>
                   <p className="mt-1 text-sm text-muted">
-                    Abonnement test a 19,99 EUR / mois pour les {betaReservedSeatLimit} compagnies de la beta.
+                    Abonnement test a 19,99 EUR / mois pour les {betaReservedSeatLimit} compagnies de la bêta.
                   </p>
                 </div>
                 <p className="shrink-0 text-sm font-semibold">19,99 EUR</p>

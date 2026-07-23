@@ -54,7 +54,7 @@ export function TreasuryBalanceForm({
           <Input step="1" type="number" {...register("balance")} />
         </Field>
         <Field label="Note (optionnel)" error={errors.note?.message}>
-          <Input placeholder="Apres paiement des salaires..." {...register("note")} />
+          <Input placeholder="Après paiement des salaires..." {...register("note")} />
         </Field>
       </div>
 
@@ -71,7 +71,7 @@ export function TreasuryBalanceForm({
       ) : null}
 
       <Button type="submit" disabled={isSubmitting || isPending}>
-        Mettre a jour le solde
+        Mettre à jour le solde
       </Button>
     </form>
   );

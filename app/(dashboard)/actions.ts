@@ -328,7 +328,7 @@ export async function createExploitation(values: {
   exploitationMode: "cession" | "corealisation" | "location" | "other";
   startDate: string; endDate: string; cessionFeePerPerformance: number;
   companySharePercent: number; minimumGuarantee: number; venueRentalTotal: number;
-  fixedCostsTotal: number;
+  fixedCostsTotal: number; performanceDates: string[];
 }): Promise<ActionResult> {
   if (!values.showId || !values.title.trim() || !values.startDate || !values.endDate) {
     return { ok: false, message: "Spectacle, titre et periode sont requis." };
@@ -338,13 +338,14 @@ export async function createExploitation(values: {
   if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end < start) {
     return { ok: false, message: "La periode d'exploitation est invalide." };
   }
-  const dayCount = Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-  if (dayCount > 60) {
-    return { ok: false, message: "Une serie est limitee a 60 representations. Creez plusieurs exploitations pour une periode plus longue." };
+  const dates = Array.from(new Set(values.performanceDates))
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= values.startDate && date <= values.endDate)
+    .sort();
+  if (dates.length === 0) {
+    return { ok: false, message: "Choisissez au moins une representation dans la periode." };
   }
-  const dates: string[] = [];
-  for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
-    dates.push(cursor.toISOString().slice(0, 10));
+  if (dates.length > 60) {
+    return { ok: false, message: "Une serie est limitee a 60 representations. Creez plusieurs exploitations pour une periode plus longue." };
   }
   if (!hasSupabaseEnv()) return { ok: false, message: "Une base Supabase est requise." };
   const accessError = await requireWriteAccess();
@@ -407,6 +408,25 @@ export async function updateExploitationPerformance(performanceId: string, value
   revalidatePath("/pipeline");
   revalidatePath("/finances");
   return { ok: true, message: "Billetterie mise a jour." };
+}
+
+export async function setExploitationPerformanceStatus(
+  performanceId: string,
+  status: "programmee" | "annulee",
+): Promise<ActionResult> {
+  if (!performanceId) return { ok: false, message: "Representation introuvable." };
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase
+    .from("exploitation_performances")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", performanceId);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/pipeline");
+  revalidatePath("/finances");
+  revalidatePath("/calendar");
+  return { ok: true, message: status === "annulee" ? "Representation annulee." : "Representation retablie." };
 }
 
 export async function createShow(values: ShowFormInput): Promise<ActionResult> {

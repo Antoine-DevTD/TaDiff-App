@@ -696,9 +696,9 @@ export type Database = {
         Relationships: [];
       };
       exploitation_performances: {
-        Row: { id: string; company_id: string; exploitation_id: string; performance_date: string; performance_time: string | null; capacity: number; paid_tickets: number; complimentary_tickets: number; gross_box_office: number; ticketing_fees: number; variable_costs: number; sacd_declared: boolean; notes: string | null; created_at: string; updated_at: string };
-        Insert: { id?: string; company_id: string; exploitation_id: string; performance_date: string; performance_time?: string | null; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; created_at?: string; updated_at?: string };
-        Update: { performance_date?: string; performance_time?: string | null; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; updated_at?: string };
+        Row: { id: string; company_id: string; exploitation_id: string; performance_date: string; performance_time: string | null; status: "programmee" | "annulee"; capacity: number; paid_tickets: number; complimentary_tickets: number; gross_box_office: number; ticketing_fees: number; variable_costs: number; sacd_declared: boolean; notes: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; exploitation_id: string; performance_date: string; performance_time?: string | null; status?: "programmee" | "annulee"; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; created_at?: string; updated_at?: string };
+        Update: { performance_date?: string; performance_time?: string | null; status?: "programmee" | "annulee"; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; updated_at?: string };
         Relationships: [];
       };
       reminders: {

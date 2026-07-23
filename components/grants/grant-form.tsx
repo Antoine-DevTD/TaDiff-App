@@ -66,7 +66,7 @@ export function GrantForm({ shows, onSuccess }: { shows: Show[]; onSuccess?: () 
           <Input placeholder="Aide a la creation" {...register("title")} />
         </Field>
         <Field label="Organisme" error={errors.funder?.message}>
-          <Input placeholder="DRAC, Region, Adami..." {...register("funder")} />
+          <Input placeholder="DRAC, Région, Adami..." {...register("funder")} />
         </Field>
       </div>
 
@@ -89,7 +89,7 @@ export function GrantForm({ shows, onSuccess }: { shows: Show[]; onSuccess?: () 
             ))}
           </Select>
         </Field>
-        <Field label="Spectacle concerne" error={errors.relatedShowId?.message}>
+        <Field label="Spectacle concerné" error={errors.relatedShowId?.message}>
           <Select {...register("relatedShowId")}>
             <option value="">Aucun pour l instant</option>
             {shows.map((show) => (
@@ -103,14 +103,14 @@ export function GrantForm({ shows, onSuccess }: { shows: Show[]; onSuccess?: () 
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Territoire" error={errors.territory?.message}>
-          <Input placeholder="Region, France, Europe..." {...register("territory")} />
+          <Input placeholder="Région, France, Europe..." {...register("territory")} />
         </Field>
         <Field label="Discipline" error={errors.discipline?.message}>
           <Input placeholder="Theatre, musique, toutes..." {...register("discipline")} />
         </Field>
       </div>
 
-      <Field label="Pieces demandees" error={errors.requirements?.message}>
+      <Field label="Pièces demandées" error={errors.requirements?.message}>
         <div className="grid grid-cols-2 gap-2 rounded-md border border-border bg-panel-strong/35 p-3 sm:grid-cols-3">
           {dossierDocumentTypes.map((type) => (
             <label key={type} className="flex items-center gap-2 text-sm font-normal">

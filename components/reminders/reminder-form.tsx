@@ -23,8 +23,8 @@ const actionPresets: Array<{
   { id: "call", label: "Appeler", icon: Phone },
   { id: "email", label: "Envoyer un email", icon: Mail },
   { id: "document", label: "Envoyer le dossier", icon: FileText },
-  { id: "quote", label: "Preparer un devis", icon: ReceiptText },
-  { id: "administration", label: "Mettre a jour", icon: Settings2 },
+  { id: "quote", label: "Préparer un devis", icon: ReceiptText },
+  { id: "administration", label: "Mettre à jour", icon: Settings2 },
   { id: "other", label: "Autre", icon: Plus },
 ];
 
@@ -137,11 +137,11 @@ export function ReminderForm({
         "Propose une seule prochaine action concrete et courte pour faire avancer ce spectacle.",
         `Spectacle : ${selectedShow.title}.`,
         selectedShow.status ? `Statut : ${selectedShow.status}.` : "",
-        selectedShow.logline ? `Presentation : ${selectedShow.logline}.` : "",
+        selectedShow.logline ? `Présentation : ${selectedShow.logline}.` : "",
         selectedContact ? `Contact concerne : ${selectedContact.name}, ${selectedContact.organization}.` : "",
         actionType ? `Type d'action envisage : ${actionType}.` : "",
         `Demande de l'utilisateur : ${williamRequest}`,
-        "Reponds uniquement par le libelle de l'action, en francais, sans guillemets ni explication, en 12 mots maximum.",
+        "Reponds uniquement par le libelle de l'action, en français, sans guillemets ni explication, en 12 mots maximum.",
       ].filter(Boolean).join("\n"));
       if (!result.ok) {
         setMessage(result.message);
@@ -314,8 +314,8 @@ function buildActionTitle(type: ActionType, show?: Show, contact?: Contact) {
   if (type === "call") return `Appeler ${person}`;
   if (type === "email") return `Envoyer un email a ${person}`;
   if (type === "document") return `Envoyer le dossier de ${showTitle}`;
-  if (type === "quote") return `Preparer un devis pour ${showTitle}`;
-  if (type === "administration") return `Mettre a jour le dossier de ${showTitle}`;
+  if (type === "quote") return `Préparer un devis pour ${showTitle}`;
+  if (type === "administration") return `Mettre à jour le dossier de ${showTitle}`;
   return "";
 }
 
@@ -323,7 +323,7 @@ function buildGroupedActionTitle(type: ActionType) {
   if (type === "call") return "Appeler @contact";
   if (type === "email") return "Envoyer un email a @contact";
   if (type === "document") return "Envoyer le dossier a @contact";
-  if (type === "quote") return "Preparer un devis pour @contact";
-  if (type === "administration") return "Mettre a jour le suivi de @contact";
+  if (type === "quote") return "Préparer un devis pour @contact";
+  if (type === "administration") return "Mettre à jour le suivi de @contact";
   return "Faire avancer @contact";
 }

@@ -36,8 +36,8 @@ export function WorkspaceExportPanel({ backup }: WorkspaceExportPanelProps) {
       <div>
         <p className="text-base font-semibold">Sauvegarde</p>
         <p className="mt-1 text-sm text-muted">
-          Export JSON des donnees visibles du workspace : spectacles, contacts, dates, actions,
-          devis, subventions, mecenat et campagnes.
+          Export JSON des données visibles du workspace : spectacles, contacts, dates, actions,
+          devis, subventions, mécénat et campagnes.
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -45,7 +45,7 @@ export function WorkspaceExportPanel({ backup }: WorkspaceExportPanelProps) {
           Exporter une sauvegarde
         </Button>
         <Button type="button" variant="secondary" disabled>
-          Import a securiser
+          Import à sécuriser
         </Button>
       </div>
       {message ? <p className="text-sm text-success">{message}</p> : null}

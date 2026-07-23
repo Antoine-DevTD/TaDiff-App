@@ -67,11 +67,11 @@ export function PlatformEmailTemplateStudio({ templates }: { templates: AdminPla
     <section className="overflow-hidden rounded-lg border border-border bg-panel">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-5">
         <div><h3 className="text-xl font-semibold">Modeles proposes a toutes les compagnies</h3><p className="mt-1 text-sm text-muted">Les compagnies pourront les utiliser tels quels ou enregistrer leur propre copie.</p></div>
-        <Button type="button" variant="secondary" onClick={() => load()}><Plus className="mr-2 h-4 w-4" />Nouveau modele</Button>
+        <Button type="button" variant="secondary" onClick={() => load()}><Plus className="mr-2 h-4 w-4" />Nouveau modèle</Button>
       </header>
       <div className="grid lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="border-b border-border bg-panel-strong/45 p-3 lg:border-b-0 lg:border-r">
-          {templates.length === 0 ? <p className="p-3 text-sm text-muted">Aucun modele global.</p> : templates.map((template) => (
+          {templates.length === 0 ? <p className="p-3 text-sm text-muted">Aucun modèle global.</p> : templates.map((template) => (
             <button key={template.id} className={`mb-1 flex w-full items-center justify-between rounded-md px-3 py-3 text-left text-sm ${selectedId === template.id ? "bg-accent text-white" : "hover:bg-panel"}`} type="button" onClick={() => load(template)}>
               <span className="truncate font-medium">{template.name}</span>{!template.active ? <Badge>Masque</Badge> : null}
             </button>
@@ -86,7 +86,7 @@ export function PlatformEmailTemplateStudio({ templates }: { templates: AdminPla
           <div className="flex flex-wrap gap-1.5">{emailVariables.slice(0, 8).map((variable) => <button key={variable.token} className="rounded-full border border-border px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent" type="button" onClick={() => setSubject((current) => `${current} ${variable.token}`)}>{variable.token}</button>)}</div>
           <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">Corps du message</p><Button type="button" variant="secondary" onClick={() => setPreview((current) => !current)}>{preview ? <FilePenLine className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{preview ? "Editer" : "Apercu brut"}</Button></div>
           <RichEmailEditor key={`${selectedId ?? "new"}-${preview}`} content={body} editable={!preview} showVariables={!preview} onChange={(nextBody) => setBody(nextBody)} />
-          <label className="flex items-center gap-2 text-sm"><input checked={active} type="checkbox" onChange={(event) => setActive(event.target.checked)} />Proposer ce modele aux compagnies</label>
+          <label className="flex items-center gap-2 text-sm"><input checked={active} type="checkbox" onChange={(event) => setActive(event.target.checked)} />Proposer ce modèle aux compagnies</label>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4"><div className="flex items-center gap-3"><Button disabled={!selectedId || isPending} type="button" variant="ghost" onClick={remove}><Trash2 className="mr-2 h-4 w-4" />Supprimer</Button><p className="text-sm text-muted" role="status">{message}</p></div><Button disabled={isPending} type="button" onClick={save}><Save className="mr-2 h-4 w-4" />Enregistrer</Button></div>
         </div>
       </div>

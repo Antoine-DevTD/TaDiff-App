@@ -71,9 +71,9 @@ export function FeedbackWidget({ triggerClassName }: { triggerClassName?: string
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        eyebrow="Beta TaDiff"
+        eyebrow="Bêta TaDiff"
         title="Donner un retour"
-        description="Bug, idee ou avis : votre retour arrive directement a l'equipe TaDiff."
+        description="Bug, idee ou avis : votre retour arrive directement a l'équipe TaDiff."
         className="max-w-xl"
       >
         <form className="space-y-4" onSubmit={onSubmit}>

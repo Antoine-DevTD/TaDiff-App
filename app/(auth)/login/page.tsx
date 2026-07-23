@@ -13,7 +13,7 @@ export default function LoginPage() {
       <p className="mt-6 text-center text-sm text-muted">
         Pas encore de compte ?{" "}
         <Link href="/beta" className="font-medium text-accent">
-          Rejoindre la beta
+          Rejoindre la bêta
         </Link>
       </p>
       <p className="mt-2 text-center text-sm text-muted">

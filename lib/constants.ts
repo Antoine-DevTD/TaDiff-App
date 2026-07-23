@@ -41,7 +41,7 @@ export const dashboardSections: DashboardSection[] = [
     id: "contacts",
     href: "/contacts",
     label: "Contacts",
-    summary: "Equipe, lieux et partenaires",
+    summary: "Équipe, lieux et partenaires",
   },
   {
     id: "distribution",
@@ -53,7 +53,7 @@ export const dashboardSections: DashboardSection[] = [
     id: "calendar",
     href: "/calendar",
     label: "Agenda",
-    summary: "Dates et echeances",
+    summary: "Dates et échéances",
   },
   {
     id: "finances",
@@ -65,7 +65,7 @@ export const dashboardSections: DashboardSection[] = [
     id: "files",
     href: "/subventions",
     label: "Dossiers",
-    summary: "Aides, contrats et pieces",
+    summary: "Aides, contrats et pièces",
   },
 ];
 
@@ -110,7 +110,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     section: "calendar",
     href: "/calendar",
     label: "Agenda",
-    summary: "Dates, echeances et frais",
+    summary: "Dates, échéances et frais",
   },
   {
     section: "finances",
@@ -122,19 +122,13 @@ export const dashboardNavItems: DashboardNavItem[] = [
     section: "files",
     href: "/subventions",
     label: "Subventions",
-    summary: "Dossiers et echeances",
+    summary: "Dossiers et échéances",
   },
   {
     section: "files",
     href: "/mecenat",
     label: "Mecenat",
     summary: "Entreprises et contreparties",
-  },
-  {
-    section: "files",
-    href: "/documents",
-    label: "Documents",
-    summary: "Pieces pretes et manquantes",
   },
   {
     section: "files",
@@ -146,7 +140,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     section: "files",
     href: "/settings",
     label: "Parametres",
-    summary: "Compte et donnees",
+    summary: "Compte et données",
   },
   {
     section: "files",

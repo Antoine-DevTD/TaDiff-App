@@ -55,10 +55,10 @@ function buildContracts(deals: PipelineDeal[], shows: Show[]): ContractItem[] {
         href: `/shows/${deal.showId}`,
         note:
           status === "signed"
-            ? "Accord confirme. Le contrat peut etre archive et rattache au dossier."
+            ? "Accord confirme. Le contrat peut être archive et rattache au dossier."
             : status === "review"
               ? "Conditions a verrouiller avant envoi final."
-              : "Preparer un premier contrat ou une proposition formelle.",
+              : "Préparer un premier contrat ou une proposition formelle.",
       };
     })
     .sort((a, b) => {
@@ -70,14 +70,14 @@ function buildContracts(deals: PipelineDeal[], shows: Show[]): ContractItem[] {
 
 function getStatusMeta(status: ContractStatus) {
   if (status === "signed") {
-    return { label: "Signe", tone: "success" as const };
+    return { label: "Signé", tone: "success" as const };
   }
 
   if (status === "review") {
-    return { label: "A valider", tone: "warning" as const };
+    return { label: "À valider", tone: "warning" as const };
   }
 
-  return { label: "A preparer", tone: "neutral" as const };
+  return { label: "À préparer", tone: "neutral" as const };
 }
 
 export default async function ContractsPage() {
@@ -92,28 +92,28 @@ export default async function ContractsPage() {
     <div className="space-y-6">
       {contracts.length === 0 ? (
         <EmptyState
-          title="Aucun contrat a suivre"
-          description="Des qu une date possible entre en action avancee, negociation ou confirmation, elle remonte ici."
+          title="Aucun contrat à suivre"
+          description="Dès qu'une date possible entre en action avancée, négociation ou confirmation, elle remonte ici."
           actionHref="/pipeline"
-          actionLabel="Voir les dates a vendre"
+          actionLabel="Voir les dates à vendre"
         />
       ) : (
         <>
           <section className="grid gap-4 md:grid-cols-4">
             <MetricCard
-              label="A preparer"
+              label="À préparer"
               value={draftContracts.length.toString()}
-              detail="Contrats a monter"
+              detail="Contrats à monter"
             />
             <MetricCard
-              label="A valider"
+              label="À valider"
               value={reviewContracts.length.toString()}
               detail="Conditions en cours"
             />
             <MetricCard
-              label="Signes"
+              label="Signés"
               value={signedContracts.length.toString()}
-              detail="Accords confirmes"
+              detail="Accords confirmés"
             />
             <MetricCard
               label="Volume"
@@ -149,7 +149,7 @@ export default async function ContractsPage() {
                     value={
                       focusContract.nextDate
                         ? new Date(focusContract.nextDate).toLocaleDateString("fr-FR")
-                        : "A planifier"
+                        : "À planifier"
                     }
                   />
                   <InfoCard
@@ -162,7 +162,7 @@ export default async function ContractsPage() {
 
             <Card className="space-y-4 p-5">
               <div>
-                <p className="text-base font-semibold">Acces rapides</p>
+                <p className="text-base font-semibold">Accès rapides</p>
                 <p className="mt-1 text-sm text-muted">
                   Le contrat reste pilote depuis les modules qui portent la relation et la date.
                 </p>
@@ -170,18 +170,18 @@ export default async function ContractsPage() {
               <div className="grid gap-3">
                 <QuickLink
                   href="/pipeline"
-                  title="Voir les dates a vendre"
-                  detail="Faire avancer la negociation et ajuster la probabilite."
+                  title="Voir les dates à vendre"
+                  detail="Faire avancer la négociation et ajuster la probabilité."
                 />
                 <QuickLink
                   href="/shows"
-                  title="Verifier les spectacles"
+                  title="Vérifier les spectacles"
                   detail="Controler date, budget et contexte de vente."
                 />
                 <QuickLink
                   href="/documents"
                   title="Ouvrir les documents"
-                  detail="Preparer le futur rattachement des PDF et versions."
+                  detail="Préparer le futur rattachement des PDF et versions."
                 />
               </div>
             </Card>
@@ -189,18 +189,18 @@ export default async function ContractsPage() {
 
           <section className="grid gap-6 xl:grid-cols-3">
             <ContractColumn
-              title="A preparer"
-              description="Les contrats a monter prochainement."
+              title="À préparer"
+              description="Les contrats à monter prochainement."
               items={draftContracts}
             />
             <ContractColumn
-              title="A valider"
+              title="À valider"
               description="Les dossiers en attente de retour ou d arbitrage."
               items={reviewContracts}
             />
             <ContractColumn
-              title="Signes"
-              description="Les accords deja confirmes."
+              title="Signés"
+              description="Les accords déjà confirmés."
               items={signedContracts}
             />
           </section>
@@ -259,7 +259,7 @@ function ContractColumn({
                     <p className="mt-1 font-medium">
                       {item.nextDate
                         ? new Date(item.nextDate).toLocaleDateString("fr-FR")
-                        : "A planifier"}
+                        : "À planifier"}
                     </p>
                   </div>
                   <div>

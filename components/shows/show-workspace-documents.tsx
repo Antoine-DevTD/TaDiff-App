@@ -78,7 +78,7 @@ export function ShowWorkspaceDocuments({
         ))}
         <div className="flex gap-2 pt-2">
           <Input aria-label="Nom du nouveau dossier" placeholder="Nouveau dossier" value={folderName} onChange={(event) => setFolderName(event.target.value)} />
-          <Button aria-label="Creer le dossier" className="h-10 min-h-10 w-10 px-0" disabled={isPending || !folderName.trim()} onClick={createFolder} type="button"><FolderPlus className="h-4 w-4" /></Button>
+          <Button aria-label="Créer le dossier" className="h-10 min-h-10 w-10 px-0" disabled={isPending || !folderName.trim()} onClick={createFolder} type="button"><FolderPlus className="h-4 w-4" /></Button>
         </div>
       </aside>
       <section className="space-y-3">
@@ -94,7 +94,7 @@ export function ShowWorkspaceDocuments({
         </div>
         {visibleDocuments.length === 0 ? (
           <button className="flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border text-sm text-muted hover:border-accent/50 hover:text-foreground" onClick={() => uploadRef.current?.click()} type="button">
-            <FileUp className="h-5 w-5" /> Deposer le premier fichier ici
+            <FileUp className="h-5 w-5" /> Déposer le premier fichier ici
           </button>
         ) : visibleDocuments.map((document) => (
           <div key={document.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-2 py-3">
@@ -103,7 +103,7 @@ export function ShowWorkspaceDocuments({
               <p className="mt-1 flex items-center gap-2 text-xs text-muted"><History className="h-3.5 w-3.5" /> Version {document.versionNumber} - {Math.max(1, Math.round(document.fileSize / 1024))} Ko</p>
             </div>
             <div className="flex items-center gap-1">
-              <a className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-panel-strong" href={document.fileUrl} title="Telecharger"><Download className="h-4 w-4" /></a>
+              <a className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-panel-strong" href={document.fileUrl} title="Télécharger"><Download className="h-4 w-4" /></a>
               <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md hover:bg-panel-strong" title="Ajouter une nouvelle version">
                 <FileUp className="h-4 w-4" /><input className="hidden" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) startTransition(() => uploadFile(file, document)); event.target.value = ""; }} />
               </label>

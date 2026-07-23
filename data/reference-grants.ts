@@ -64,10 +64,10 @@ export const referenceGrants: ReferenceGrant[] = [
     amount: 10000,
     requirements: [...standardPieces, "Synopsis"],
     eligibility:
-      "Date indicative : chaque DRAC publie son propre calendrier, a verifier aupres de votre region.",
+      "Date indicative : chaque DRAC publie son propre calendrier, a vérifier aupres de votre region.",
     sourceUrl:
       "https://www.culture.gouv.fr/catalogue-des-demarches-et-subventions/subvention/aide-au-projet-ou-au-fonctionnement-spectacle-vivant-et-arts-visuels",
-    themes: ["Creation", "Fonctionnement", "DRAC"],
+    themes: ["Création", "Fonctionnement", "DRAC"],
   },
   {
     title: "Aides aux structures employant des artistes",
@@ -78,7 +78,7 @@ export const referenceGrants: ReferenceGrant[] = [
     amount: 20000,
     requirements: [...standardPieces],
     eligibility:
-      "Plafond mentionne de 20 000 EUR selon dispositif, aide simplifiee possible. Date indicative : verifier le calendrier des commissions.",
+      "Plafond mentionne de 20 000 EUR selon dispositif, aide simplifiee possible. Date indicative : vérifier le calendrier des commissions.",
     sourceUrl: "https://www.adami.fr/suis-porteurde-projet/les-aides/",
     themes: ["Emploi artistique", "Production"],
   },
@@ -91,12 +91,12 @@ export const referenceGrants: ReferenceGrant[] = [
     amount: 8000,
     requirements: [...standardPieces, "Fiche technique"],
     eligibility:
-      "Date indicative : les depots suivent le calendrier des commissions SPEDIDAM, a verifier sur leur page officielle.",
+      "Date indicative : les depots suivent le calendrier des commissions SPEDIDAM, a vérifier sur leur page officielle.",
     sourceUrl: "https://www.spedidam.fr/aides-aux-projets/calendrier-des-commissions/",
-    themes: ["Creation", "Diffusion", "Emploi"],
+    themes: ["Création", "Diffusion", "Emploi"],
   },
   {
-    title: "Aide a la creation de textes dramatiques",
+    title: "Aide a la création de textes dramatiques",
     funder: "SACD - Beaumarchais",
     territory: "France",
     discipline: "Theatre, ecriture",
@@ -104,9 +104,9 @@ export const referenceGrants: ReferenceGrant[] = [
     amount: 5000,
     requirements: ["Texte", "Note d'intention", "Dossier artistique", "RIB"],
     eligibility:
-      "Date indicative : l'association Beaumarchais-SACD fonctionne par sessions, calendrier a verifier.",
+      "Date indicative : l'association Beaumarchais-SACD fonctionne par sessions, calendrier a vérifier.",
     sourceUrl: "https://beaumarchais.asso.fr/",
-    themes: ["Ecriture", "Creation", "Theatre"],
+    themes: ["Ecriture", "Création", "Theatre"],
   },
   {
     title: "Aide a la diffusion regionale",
@@ -143,7 +143,7 @@ export const referenceGrants: ReferenceGrant[] = [
     amount: 7000,
     requirements: [...standardPieces, "Fiche technique"],
     eligibility:
-      "Date indicative : les appels varient selon les programmes (tournees, residences, saisons croisees), a verifier par programme.",
+      "Date indicative : les appels varient selon les programmes (tournées, residences, saisons croisees), a vérifier par programme.",
     sourceUrl: "https://www.institutfrancais.com/fr/offres",
     themes: ["International", "Tournee"],
   },

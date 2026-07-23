@@ -13,7 +13,7 @@ export function InvitationResponse({
 }) {
   const [response, setResponse] = useState(initialResponse);
   const [message, setMessage] = useState(
-    initialResponse ? "Votre reponse a deja ete enregistree. Vous pouvez la modifier." : "",
+    initialResponse ? "Votre réponse a déjà été enregistrée. Vous pouvez la modifier." : "",
   );
   const [isPending, startTransition] = useTransition();
 

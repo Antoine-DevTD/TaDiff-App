@@ -70,7 +70,7 @@ export function QuoteEditForm({ quote }: { quote: QuoteItem }) {
             ))}
           </Select>
         </Field>
-        <Field label="Echeance" error={errors.dueDate?.message}>
+        <Field label="Échéance" error={errors.dueDate?.message}>
           <Input type="date" {...register("dueDate")} />
         </Field>
       </div>

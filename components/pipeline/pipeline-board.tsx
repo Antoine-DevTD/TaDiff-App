@@ -30,6 +30,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Dialog } from "@/components/ui/dialog";
 import {
   getExploitationModeLabel,
   getPipelineRecommendation,
@@ -449,9 +450,16 @@ function DiffusionFocus({ contacts, confirmedPerformances, deal, disabled, onDel
           </section>
         ) : null}
 
-        {editing ? (
+        <Dialog
+          className="max-w-2xl"
+          description="Modifiez les conditions, la date ou la prochaine étape sans quitter le dossier."
+          eyebrow="Diffusion"
+          open={editing}
+          title={`Modifier ${deal.showTitle}`}
+          onClose={() => setEditing(false)}
+        >
           <OpportunityEditor contacts={contacts} deal={deal} shows={shows} onCancel={() => setEditing(false)} onDelete={onDelete} onSaved={(updated, resultMessage) => { onUpdate(updated); setEditing(false); setMessage(resultMessage); }} />
-        ) : null}
+        </Dialog>
 
         <div className="flex flex-wrap gap-2 border-t border-border pt-4">
           <Button className="gap-2" variant="secondary" type="button" onClick={() => setEditing((value) => !value)}><Pencil className="h-4 w-4" /> Modifier</Button>

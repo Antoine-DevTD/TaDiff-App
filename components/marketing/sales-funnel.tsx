@@ -13,9 +13,9 @@ type Question = {
 const questions: Question[] = [
   {
     id: "stage",
-    label: "Ou en est votre spectacle ?",
+    label: "Où en est votre spectacle ?",
     options: [
-      { value: "creation", label: "En creation" },
+      { value: "creation", label: "En création" },
       { value: "diffusion", label: "En diffusion" },
       { value: "both", label: "Plusieurs spectacles" },
     ],
@@ -24,8 +24,8 @@ const questions: Question[] = [
     id: "dates",
     label: "Combien de dates visez-vous cette saison ?",
     options: [
-      { value: "few", label: "1 a 5 dates" },
-      { value: "some", label: "6 a 15 dates" },
+      { value: "few", label: "1 à 5 dates" },
+      { value: "some", label: "6 à 15 dates" },
       { value: "many", label: "Plus de 15 dates" },
     ],
   },
@@ -35,8 +35,8 @@ const questions: Question[] = [
     options: [
       { value: "sales", label: "Actions et contacts" },
       { value: "grants", label: "Subventions et dossiers" },
-      { value: "money", label: "Devis et tresorerie" },
-      { value: "all", label: "Un peu tout a la fois" },
+      { value: "money", label: "Devis et trésorerie" },
+      { value: "all", label: "Un peu tout à la fois" },
     ],
   },
 ];
@@ -47,15 +47,15 @@ const painRecommendations: Record<string, { title: string; detail: string }[]> =
     { title: "Cockpit du jour", detail: "Ce qu'il faut faire aujourd'hui, sans rien oublier." },
   ],
   grants: [
-    { title: "Radar subventions", detail: "Deadlines, montants et pieces manquantes par dossier." },
-    { title: "Documents de compagnie", detail: "RIB, statuts, licence : televerses une fois, prets partout." },
+    { title: "Radar subventions", detail: "Deadlines, montants et pièces manquantes par dossier." },
+    { title: "Documents de compagnie", detail: "RIB, statuts, licence : téléversés une fois, prêts partout." },
   ],
   money: [
     { title: "Calculateur de rentabilite", detail: "Point mort et marge avant de signer une date." },
-    { title: "Tresorerie", detail: "Solde, projection et date de risque en un coup d'oeil." },
+    { title: "Trésorerie", detail: "Solde, projection et date de risque en un coup d'oeil." },
   ],
   all: [
-    { title: "Cockpit complet", detail: "Dates, dossiers, tresorerie et echeances au meme endroit." },
+    { title: "Cockpit complet", detail: "Dates, dossiers, trésorerie et échéances au même endroit." },
     { title: "William, ton copilote", detail: "Il te dit quoi faire en priorite, sans IA opaque." },
   ],
 };
@@ -108,7 +108,7 @@ export function SalesFunnel() {
             href="/beta"
             className="inline-flex min-h-11 items-center rounded-md bg-accent px-5 text-sm font-semibold !text-white transition hover:bg-accent-strong"
           >
-            Reserver ma place beta
+            Réserver ma place bêta
           </Link>
           <button
             type="button"

@@ -58,7 +58,7 @@ export function WelcomeOnboarding({
 
   function goNext() {
     if (!canGoNext) {
-      setMessage("William a besoin de cette information pour preparer l'espace.");
+      setMessage("William a besoin de cette information pour préparer l'espace.");
       return;
     }
 
@@ -70,7 +70,7 @@ export function WelcomeOnboarding({
     if (!canGoNext) return;
 
     startTransition(async () => {
-      setMessage("William prepare votre espace...");
+      setMessage("William prépare votre espace...");
       const result = await completeWelcomeOnboarding(values);
 
       if (!result.ok) {
@@ -102,8 +102,8 @@ export function WelcomeOnboarding({
                 Bienvenue, je suis William.
               </h1>
               <p className="mt-4 max-w-xl text-lg text-muted">
-                Ravi d&apos;etre en votre compagnie. Je vais preparer votre espace, puis vous guider
-                dans les premieres actions utiles.
+                Ravi d&apos;être en votre compagnie. Je vais préparer votre espace, puis vous guider
+                dans les premières actions utiles.
               </p>
             </div>
 
@@ -185,7 +185,7 @@ function StepContent({
       <WelcomePane
         icon={UserRound}
         title="Comment dois-je vous appeler ?"
-        body="Ce nom servira dans l'espace equipe et dans les traces d'activite."
+        body="Ce nom servira dans l'espace équipe et dans les tracés d'activité."
       >
         <Input
           autoFocus
@@ -203,7 +203,7 @@ function StepContent({
       <WelcomePane
         icon={Building2}
         title="Quelle compagnie pilotez-vous ?"
-        body="William utilise ce nom pour creer le bon espace et libeller le cockpit."
+        body="William utilise ce nom pour créer le bon espace et libeller le cockpit."
       >
         <Input
           autoFocus
@@ -220,7 +220,7 @@ function StepContent({
     return (
       <WelcomePane
         icon={ImageIcon}
-        title="Avez-vous deja un logo ?"
+        title="Avez-vous déjà un logo ?"
         body="Optionnel pour commencer. Vous pourrez aussi l'ajouter plus tard dans les reglages."
       >
         <Input
@@ -238,7 +238,7 @@ function StepContent({
       <WelcomePane
         icon={Theater}
         title="Avez-vous un spectacle a ajouter ?"
-        body="La premiere action conseillee sera de creer ou completer votre premier dossier spectacle."
+        body="La première action conseillee sera de créer ou compléter votre premier dossier spectacle."
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <ChoiceButton
@@ -263,7 +263,7 @@ function StepContent({
       body="Quelques informations suffisent pour que le cockpit soit comprehensible des le premier ecran."
     >
       <div className="rounded-lg border border-border bg-panel-strong/65 p-4 text-sm text-muted">
-        On va rester simple : votre nom, votre compagnie, puis la visite guidee.
+        On va rester simple : votre nom, votre compagnie, puis la visite guidée.
       </div>
     </WelcomePane>
   );

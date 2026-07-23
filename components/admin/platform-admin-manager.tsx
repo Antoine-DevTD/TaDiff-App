@@ -13,13 +13,13 @@ import { platformPermissionValues, type PlatformPermission } from "@/lib/platfor
 
 const labels: Record<PlatformPermission, string> = {
   view_companies: "Voir les compagnies",
-  view_beta: "Voir les inscriptions beta",
-  view_access: "Voir les acces authentifies",
+  view_beta: "Voir les inscriptions bêta",
+  view_access: "Voir les accès authentifies",
   manage_feedback: "Traiter les retours",
   view_audience: "Voir l'audience publique",
-  manage_legal: "Modifier les informations legales",
-  manage_catalogs: "Gerer les catalogues",
-  manage_email_templates: "Gerer les modeles d'emails",
+  manage_legal: "Modifier les informations légales",
+  manage_catalogs: "Gérer les catalogues",
+  manage_email_templates: "Gérer les modeles d'emails",
   manage_ai: "Configurer William et son corpus",
 };
 
@@ -68,7 +68,7 @@ export function PlatformAdminManager({
       <div>
         <h3 className="font-semibold">Administrateurs delegues</h3>
         <p className="mt-1 text-sm text-muted">
-          Donnez seulement les acces utiles. La facturation, les comptes offerts, les fondateurs et la maintenance restent reserves au super-admin.
+          Donnez seulement les accès utiles. La facturation, les comptes offerts, les fondateurs et la maintenance restent réservés au super-admin.
         </p>
       </div>
       {candidates.length === 0 ? (

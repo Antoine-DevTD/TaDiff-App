@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s | TaDiff",
   },
   description:
-    "Une web app SaaS pour piloter dates, rentabilite, subventions, mecenat, devis et finances des compagnies.",
+    "Une web app SaaS pour piloter dates, rentabilité, subventions, mécénat, devis et finances des compagnies.",
   applicationName: "TaDiff",
   manifest: "/manifest.json",
   icons: {

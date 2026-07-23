@@ -214,7 +214,7 @@ export function GuidedTour() {
     return (
       <div className="fixed bottom-4 right-4 z-50 w-72 rounded-lg border border-border bg-panel p-4 shadow-lg shadow-ink/20">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-          William - visite guidee
+          William - visite guidée
         </p>
         <p className="mt-2 text-sm">La visite est en pause sur une autre page.</p>
         <div className="mt-3 flex items-center gap-3">
@@ -273,7 +273,7 @@ export function GuidedTour() {
       }}
     >
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-        William - visite guidee - {state.step + 1}/{total}
+        William - visite guidée - {state.step + 1}/{total}
       </p>
       <p className="mt-2 text-lg font-semibold">{step.title}</p>
       <p className="mt-2 text-sm text-muted">{step.body}</p>

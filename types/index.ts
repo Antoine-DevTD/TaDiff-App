@@ -216,6 +216,7 @@ export type ExploitationPerformance = {
   id: string; performanceDate: string; performanceTime: string; capacity: number;
   paidTickets: number; complimentaryTickets: number; grossBoxOffice: number;
   ticketingFees: number; variableCosts: number; sacdDeclared: boolean;
+  status: "programmee" | "annulee";
 };
 
 export type Exploitation = {

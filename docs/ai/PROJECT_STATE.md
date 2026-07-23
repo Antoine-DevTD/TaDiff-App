@@ -1,6 +1,6 @@
 # Etat court du projet
 
-Derniere verification : 22 juillet 2026.
+Derniere verification : 23 juillet 2026.
 
 ## Socle
 
@@ -12,6 +12,7 @@ Derniere verification : 22 juillet 2026.
 ## Parcours deja presents
 
 - Landing, reservation beta, authentification et recuperation de mot de passe.
+- Le compte du webinaire dispose d'une inscription simulée protégée sur `/demo-signup`, suivie de la préparation animée de l'espace puis du replay de l'accueil William. Elle ne crée aucun utilisateur et ne rouvre pas les inscriptions publiques.
 - Cockpit, spectacles, documents, contacts, diffusion, agenda, finances, dossiers et administration.
 - Import de contacts, donnees de demonstration, visite guidee et premiers flux William.
 - Analytics publics limites et journal d'acces superadmin.
@@ -26,8 +27,13 @@ Derniere verification : 22 juillet 2026.
 - L'onglet Presentation propose un atelier William persistant par spectacle pour travailler logline, synopsis, note d'intention et presentation de diffusion. Il peut mener un entretien ou lire uniquement les extraits PDF explicitement autorises, puis proposer un brouillon que l'utilisateur choisit d'appliquer.
 - Le budget spectacle detaille couvre equipe et repetitions chargees, depenses de creation ou par representation, financements, cession, partage de billetterie, location, droits, prix de cession conseille, public minimum et courbe de rentabilite.
 - Le carnet de lieux propose une vue carte avec points colores par avancement, fiche rapide et creation d'action. La recherche d'adresse via la Base Adresse Nationale remplit la ville, le code postal et les coordonnees sans exposer latitude/longitude. Les imports Personnes et Lieux sont contextualises dans chaque onglet.
+- L'import de lieux reconnait les variantes de colonnes comme `Nom du lieu`, explique les lignes rejetees et geocode automatiquement les adresses avant enregistrement. Les coordonnees presentes dans un fichier restent acceptees sans etre demandees dans l'interface.
+- Les quatre indicateurs de la vue d'ensemble du cockpit ouvrent directement leur rubrique : tresorerie, diffusion, dossiers et actions urgentes.
 - L'agenda propose une grille plus lisible et un panneau de detail persistant. Une subvention selectionnee ouvre son dossier en surbrillance.
 - Les subventions utilisent le même langage visuel que les actions : vues par urgence et avancement, liste groupée par spectacle, dossier actif et pièces attendues directement manipulables.
+- Le mécénat reprend ce langage visuel avec des vues par avancement, une liste de partenaires et une fiche active. L'entrée Documents est temporairement masquée du sous-menu Dossiers, sans supprimer les fichiers ni la route.
+- Une exploitation accepte une sélection explicite des jours joués dans une période. La billetterie s'enregistre automatiquement et une représentation peut être annulée puis rétablie sans perdre son historique.
+- La modification d'une diffusion s'ouvre dans une fenêtre dédiée au lieu d'allonger la fiche active. Les montants, dont le minimum garanti, acceptent les centimes et les valeurs non arrondies.
 - La prochaine représentation d'un spectacle est dérivée des diffusions confirmées lorsqu'une date de jeu est renseignée. Les montants de diffusion, dont le minimum garanti, acceptent les valeurs non arrondies à la centaine.
 
 ## Etat technique a confirmer avant livraison
@@ -43,10 +49,11 @@ Derniere verification : 22 juillet 2026.
 - Les migrations `049` a `051` ont ete appliquees dans Supabase le 22 juillet 2026, selon confirmation utilisateur. Elles couvrent personnes/lieux, historique des actions et ateliers de redaction William.
 - La migration `054_theatre_budget_model.sql` ajoute les hypotheses du budget theatre et doit etre appliquee avant de persister ce nouvel editeur.
 - La migration `055_venue_map_coordinates.sql` ajoute les adresses, jauges et coordonnees necessaires a la carte des lieux. Elle doit etre appliquee avant d'enregistrer ces champs dans Supabase.
+- La migration `056_exploitation_performance_status.sql` ajoute le statut individuel programmee/annulee des representations. Elle doit etre appliquee avant d'utiliser l'annulation depuis Diffuser.
 
 ## Qualite
 
-- Dernier passage connu le 22 juillet 2026 : lint, TypeScript, build et 24 parcours Playwright passes, dont le replay webinaire, la diffusion focalisée, les subventions par dossier et le rendu 3D desktop/mobile.
+- Dernier passage connu le 23 juillet 2026 : lint, TypeScript, build et 26 parcours Playwright passés, dont la sélection des jours d'exploitation, le maintien de suppression stable, le nouveau mécénat, le replay webinaire et le géocodage des lieux importés.
 - Relancer les controles apres toute modification ; ce statut n'est pas une garantie sur un worktree plus recent.
 
 Pour la vision, le planning et le backlog complet, consulter `docs/product/product-plan.md`. Pour les contraintes d'implementation, consulter `docs/engineering/implementation-reference.md`.

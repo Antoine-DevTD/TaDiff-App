@@ -17,7 +17,7 @@ export default function PricingPage() {
           Simple, transparent, sans mauvaise surprise.
         </h1>
         <p className="mt-4 text-muted">
-          Les plans reprennent la grille cible de TaDiff. En mode test, Stripe peut deja
+          Les plans reprennent la grille cible de TaDiff. En mode test, Stripe peut déjà
           encaisser un abonnement et synchroniser le statut compagnie.
         </p>
       </div>
@@ -48,14 +48,14 @@ export default function PricingPage() {
             </ul>
             {isStripePlanCode(plan.id) && stripeReady && hasStripePrice(plan.id) ? (
               <StripeCheckoutForm className="mt-6 w-full" planCode={plan.id}>
-                {plan.id === "studio" ? "Contacter l'equipe" : "Commencer"}
+                {plan.id === "studio" ? "Contacter l'équipe" : "Commencer"}
               </StripeCheckoutForm>
             ) : (
               <ButtonLink
                 href="/beta"
                 className="mt-6 w-full"
               >
-                {plan.id === "studio" ? "Contacter l'equipe" : "Rejoindre la beta"}
+                {plan.id === "studio" ? "Contacter l'équipe" : "Rejoindre la bêta"}
               </ButtonLink>
             )}
           </Card>
@@ -63,11 +63,11 @@ export default function PricingPage() {
       </div>
 
       <Card className="mt-8 p-5">
-        <p className="font-semibold">Paiement et donnees</p>
+        <p className="font-semibold">Paiement et données</p>
         <p className="mt-2 text-sm text-muted">
-          Paiement Stripe Checkout, abonnement resiliable, donnees hebergees en Europe et export
+          Paiement Stripe Checkout, abonnement résiliable, données hébergées en Europe et export
           FEC prevu pour la passerelle comptable. Si Stripe n&apos;est pas configure, les boutons
-          renvoient vers la liste beta.
+          renvoient vers la liste bêta.
         </p>
       </Card>
     </main>

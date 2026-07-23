@@ -42,7 +42,7 @@ export function AiConfigurationPanel({ documents, readiness, settings }: { docum
     <div className="space-y-5">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.6fr)]">
         <Card className="space-y-5 p-5">
-          <div><h3 className="text-xl font-semibold">Configuration de William</h3><p className="mt-1 text-sm text-muted">Le fournisseur conversationnel et le moteur d&apos;embeddings peuvent etre differents.</p></div>
+          <div><h3 className="text-xl font-semibold">Configuration de William</h3><p className="mt-1 text-sm text-muted">Le fournisseur conversationnel et le moteur d&apos;embeddings peuvent être differents.</p></div>
           <label className="flex items-center gap-2 text-sm font-medium"><input checked={config.enabled} type="checkbox" onChange={(event) => setConfig((current) => ({ ...current, enabled: event.target.checked }))} />Autoriser William lorsque la cle du fournisseur est disponible</label>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Fournisseur conversationnel"><Select value={config.provider} onChange={(event) => { const provider = event.target.value as AdminAiSettings["provider"]; setConfig((current) => ({ ...current, provider, model: defaultModelByProvider[provider] })); }}><option value="mistral">Mistral AI</option><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic / Claude</option></Select></Field>
@@ -62,7 +62,7 @@ export function AiConfigurationPanel({ documents, readiness, settings }: { docum
           <Readiness label="DEEPSEEK_API_KEY" ready={readiness.deepseek} />
           <Readiness label="ANTHROPIC_API_KEY" ready={readiness.anthropic} />
           <Readiness label="MISTRAL_API_KEY" ready={readiness.mistral} />
-          <p className="rounded-md border border-border bg-panel-strong/40 p-3 text-xs text-muted">Apres ajout d&apos;une cle dans Vercel, un redeploiement reste necessaire pour que le serveur la lise.</p>
+          <p className="rounded-md border border-border bg-panel-strong/40 p-3 text-xs text-muted">Après ajout d&apos;une clé dans Vercel, un redéploiement reste nécessaire pour que le serveur la lise.</p>
         </Card>
       </div>
 

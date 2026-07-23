@@ -6,7 +6,7 @@ type PlannedFeatureKind = "feature" | "demo-data";
 
 const kindLabels: Record<PlannedFeatureKind, string> = {
   feature: "Fonction prevue - non branchee dans cette version",
-  "demo-data": "Donnees de demonstration",
+  "demo-data": "Données de démonstration",
 };
 
 export function PlannedFeatureBadge({

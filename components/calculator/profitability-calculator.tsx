@@ -93,7 +93,7 @@ export function ProfitabilityCalculator({ compact = false }: { compact?: boolean
 
         <div className="grid gap-3 md:grid-cols-2">
           <NumberField label="Prix de cession" value={state.salePrice} onChange={(value) => updateField("salePrice", value)} />
-          <NumberField label="Nb representations" value={state.performanceCount} onChange={(value) => updateField("performanceCount", value)} />
+          <NumberField label="Nb représentations" value={state.performanceCount} onChange={(value) => updateField("performanceCount", value)} />
           <NumberField label="Distance km" value={state.distanceKm} onChange={(value) => updateField("distanceKm", value)} />
           <NumberField label="Nuits hotel" value={state.hotelNights} onChange={(value) => updateField("hotelNights", value)} />
           <NumberField label="Recettes ateliers" value={state.workshopRevenue} onChange={(value) => updateField("workshopRevenue", value)} />

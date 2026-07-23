@@ -134,7 +134,7 @@ export function GrantRequirementSlot({
             {isUploading
               ? "Envoi en cours..."
               : requirement.document?.title ||
-                (canUpload ? "Cliquer ou deposer le fichier" : "Associer un spectacle pour ajouter")}
+                (canUpload ? "Cliquer ou déposer le fichier" : "Associer un spectacle pour ajouter")}
           </span>
           <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
             {companyDocument ? "Document compagnie" : "Document spectacle"}

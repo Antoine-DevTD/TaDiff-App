@@ -75,7 +75,7 @@ export function BetaSignupForm() {
         <Field label="Email" error={errors.email?.message}>
           <Input placeholder="vous@compagnie.fr" type="email" {...register("email")} />
         </Field>
-        <Field label="Telephone" error={errors.phone?.message}>
+        <Field label="Téléphone" error={errors.phone?.message}>
           <Input placeholder="Optionnel" type="tel" {...register("phone")} />
         </Field>
       </div>
@@ -95,7 +95,7 @@ export function BetaSignupForm() {
 
       <Field label="Besoin principal" error={errors.mainNeed?.message}>
         <Textarea
-          placeholder="Exemple : ne plus rater les subventions, mieux suivre la tresorerie, relancer les programmateurs..."
+          placeholder="Exemple : ne plus rater les subventions, mieux suivre la trésorerie, relancer les programmateurs..."
           {...register("mainNeed")}
         />
       </Field>
@@ -112,20 +112,20 @@ export function BetaSignupForm() {
           {state.ok && state.position ? (
             <p className="mt-1">
               Position {state.position} -{" "}
-              {state.status === "reserved" ? "place beta reservee" : "liste d'attente"}
+              {state.status === "reserved" ? "place bêta reservee" : "liste d'attente"}
             </p>
           ) : null}
         </div>
       ) : null}
 
       <Button className="w-full" type="submit" disabled={isSubmitting || isPending}>
-        Reserver ma place beta
+        Réserver ma place bêta
       </Button>
       <p className="text-xs leading-5 text-muted">
-        TaDiff utilise ces informations pour gerer votre demande et vous contacter au sujet
-        de la beta. Vous pouvez exercer vos droits a tout moment. Consultez notre{" "}
+        TaDiff utilise ces informations pour gérer votre demande et vous contacter au sujet
+        de la bêta. Vous pouvez exercer vos droits à tout moment. Consultez notre{" "}
         <Link className="text-accent underline" href="/confidentialite">
-          politique de confidentialite
+          politique de confidentialité
         </Link>
         .
       </p>

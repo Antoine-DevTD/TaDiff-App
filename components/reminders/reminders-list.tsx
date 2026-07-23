@@ -170,7 +170,7 @@ export function RemindersList({ reminders }: { reminders: Reminder[] }) {
                   </div>
                 </label>
                 <label className="block text-sm font-medium">
-                  Echeance
+                  Échéance
                   <div className="mt-2">
                     <Input
                       type="date"

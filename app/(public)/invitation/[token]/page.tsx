@@ -32,13 +32,13 @@ export default async function InvitationPage({
       <Card className="w-full overflow-hidden p-0">
         <div className="border-b border-border bg-accent px-6 py-7 text-white sm:px-8">
           <p className="text-xs uppercase tracking-[0.16em] text-white/75">Invitation</p>
-          <h1 className="mt-3 text-3xl font-semibold">{invitation.show_title ?? "Prochaine representation"}</h1>
+          <h1 className="mt-3 text-3xl font-semibold">{invitation.show_title ?? "Prochaine représentation"}</h1>
           <p className="mt-2 text-sm text-white/85">Proposee par {invitation.company_name}</p>
         </div>
         <div className="space-y-7 p-6 sm:p-8">
           <p className="text-lg leading-8">
             Bonjour {invitation.recipient_name}, la compagnie serait heureuse de vous accueillir
-            lors de cette prochaine representation.
+            lors de cette prochaine représentation.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <InvitationDetail
@@ -58,7 +58,7 @@ export default async function InvitationPage({
           </div>
           <div>
             <h2 className="text-lg font-semibold">Pourrons-nous compter sur votre presence ?</h2>
-            <p className="mt-1 text-sm text-muted">Votre reponse est transmise directement a la compagnie.</p>
+            <p className="mt-1 text-sm text-muted">Votre réponse est transmise directement a la compagnie.</p>
           </div>
           <InvitationResponse initialResponse={invitation.response} token={token} />
         </div>

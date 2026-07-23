@@ -87,7 +87,7 @@ export function HoldToConfirmButton({
     <button
       aria-label={label}
       className={cn(
-        "relative isolate flex min-h-12 w-full select-none items-center justify-center gap-2 overflow-visible rounded-md border border-danger/45 bg-danger/8 px-5 py-3 text-sm font-semibold text-danger outline-none transition focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:w-auto",
+        "relative isolate grid min-h-12 w-full select-none grid-cols-[1rem_minmax(0,1fr)] items-center gap-2 overflow-visible rounded-md border border-danger/45 bg-danger/8 px-5 py-3 text-sm font-semibold text-danger outline-none transition-[color,background-color,border-color,transform] focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         holding && "border-danger bg-danger/12",
         bursting && "scale-95 border-transparent bg-danger text-white",
       )}
@@ -116,7 +116,10 @@ export function HoldToConfirmButton({
         style={{ transform: `scaleX(${progress / 100})` }}
       />
       <Trash2 aria-hidden="true" className={cn("h-4 w-4", holding && "animate-pulse")} />
-      <span>{visibleLabel}</span>
+      <span className="relative block min-w-0 text-center">
+        <span className="invisible block" aria-hidden="true">{label}</span>
+        <span className="absolute inset-0 flex items-center justify-center whitespace-nowrap">{visibleLabel}</span>
+      </span>
       {bursting ? (
         <span aria-hidden="true" className="destructive-burst">
           {Array.from({ length: 8 }, (_, index) => <span key={index} />)}

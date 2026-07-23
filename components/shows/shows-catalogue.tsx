@@ -98,7 +98,7 @@ export function ShowsCatalogue({ items }: { items: ShowCatalogueItem[] }) {
 
       <Dialog
         className="max-w-lg"
-        description="Cette action supprime aussi les documents et fichiers rattaches au spectacle."
+        description="Cette action supprimé aussi les documents et fichiers rattaches au spectacle."
         eyebrow="Catalogue"
         open={Boolean(deletingItem)}
         title={deletingItem ? `Supprimer ${deletingItem.show.title} ?` : "Supprimer le spectacle ?"}
@@ -161,7 +161,7 @@ function ShowPlayingCard({
             <span className="flex min-w-0 items-center gap-2 text-muted">
               <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0 text-accent" />
               <span className="truncate text-foreground">
-                {show.nextDate ? new Date(show.nextDate).toLocaleDateString("fr-FR") : "A planifier"}
+                {show.nextDate ? new Date(show.nextDate).toLocaleDateString("fr-FR") : "À planifier"}
               </span>
             </span>
             <span className="flex min-w-0 items-center justify-end gap-2 text-right text-muted">
@@ -170,7 +170,7 @@ function ShowPlayingCard({
                 className={cn("h-4 w-4 shrink-0", missingCount > 0 ? "text-warning" : "text-success")}
               />
               <span className="truncate text-foreground">
-                {missingCount > 0 ? `${missingCount} piece${missingCount > 1 ? "s" : ""} manquante${missingCount > 1 ? "s" : ""}` : "Dossier pret"}
+                {missingCount > 0 ? `${missingCount} pièce${missingCount > 1 ? "s" : ""} manquante${missingCount > 1 ? "s" : ""}` : "Dossier prêt"}
               </span>
             </span>
           </div>

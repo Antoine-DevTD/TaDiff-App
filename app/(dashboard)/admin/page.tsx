@@ -155,7 +155,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div>
           <p className="text-base font-semibold">Mode maintenance</p>
           <p className="mt-1 text-sm text-muted">
-            Coupe l&apos;acces au site pour tous les visiteurs (bascule immediate, pas de
+            Coupe l&apos;accès au site pour tous les visiteurs (bascule immédiate, pas de
             redeploiement). A utiliser pendant une intervention technique.
           </p>
         </div>
@@ -164,8 +164,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} active(s), ${compedCount} offerte(s)`} />
-        <MetricCard label="MRR beta" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) a 19,99 EUR`} />
-        <MetricCard label="Beta reservee" value={`${reserved.length}/${betaReservedSeatLimit}`} detail="Places confirmees" />
+        <MetricCard label="MRR bêta" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) a 19,99 EUR`} />
+        <MetricCard label="Bêta reservee" value={`${reserved.length}/${betaReservedSeatLimit}`} detail="Places confirmees" />
         <MetricCard label="Liste d'attente" value={waitlist.length.toString()} detail="Compagnies en attente" />
       </section>
 
@@ -184,7 +184,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div>
           <p className="text-base font-semibold">Compagnies</p>
           <p className="mt-1 text-sm text-muted">
-            Statut d&apos;abonnement, volumes et derniere activite. Le billing se gere ici sans
+            Statut d&apos;abonnement, volumes et dernière activité. La facturation se gère ici sans
             passer par le SQL editor.
           </p>
         </div>
@@ -203,15 +203,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       <Card className="space-y-4 p-5">
         <div>
-          <p className="text-base font-semibold">Acces recents</p>
+          <p className="text-base font-semibold">Accès récents</p>
           <p className="mt-1 text-sm text-muted">
-            Connexions et navigation authentifiee. A utiliser pour verifier quel compte accede a
+            Connexions et navigation authentifiee. A utiliser pour vérifier quel compte accede a
             l&apos;application, depuis quelle IP et quel navigateur.
           </p>
         </div>
         {accessEvents.length === 0 ? (
           <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-            Aucun acces journalise pour le moment. Appliquer la migration 021 et verifier
+            Aucun accès journalise pour le moment. Appliquer la migration 021 et vérifier
             `SUPABASE_SERVICE_ROLE_KEY` si la liste reste vide.
           </p>
         ) : (
@@ -225,14 +225,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       <Card className="space-y-4 p-5">
         <div>
-          <p className="text-base font-semibold">Inscriptions beta</p>
+          <p className="text-base font-semibold">Inscriptions bêta</p>
           <p className="mt-1 text-sm text-muted">
             {betaReservedSeatLimit} places reservees puis liste d&apos;attente, dans l&apos;ordre d&apos;arrivee.
           </p>
         </div>
         {betaSignups.length === 0 ? (
           <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-            Aucune inscription beta pour le moment.
+            Aucune inscription bêta pour le moment.
           </p>
         ) : (
           <div className="space-y-2">
@@ -271,14 +271,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 }
 
 const adminTabMeta = {
-  supervision: { title: "Supervision TaDiff", description: "Compagnies, facturation, acces et inscriptions beta." },
+  supervision: { title: "Supervision TaDiff", description: "Compagnies, facturation, accès et inscriptions bêta." },
   retours: { title: "Retours compagnies", description: "Bugs, idees et avis envoyes depuis le cockpit." },
   audience: { title: "Audience publique", description: "Visites, clics et inscriptions sur les pages publiques, sans adresse IP." },
   informations: { title: "Informations publiees", description: "Identite legale, contacts et prix modifiables sans redeploiement." },
-  catalogues: { title: "Catalogues de reference", description: "Subventions et programmes de mecenat proposes aux compagnies et a William." },
+  catalogues: { title: "Catalogues de référence", description: "Subventions et programmes de mécénat proposés aux compagnies et à William." },
   emails: { title: "Bibliotheque d'emails", description: "Modeles globaux personnalisables par les compagnies." },
-  ia: { title: "William IA", description: "Fournisseurs, secrets disponibles et corpus de recherche controle." },
-  administrateurs: { title: "Administrateurs delegues", description: "Acces internes limites, sans droit sur la facturation ni les comptes offerts." },
+  ia: { title: "William IA", description: "Fournisseurs, secrets disponibles et corpus de recherche contrôlé." },
+  administrateurs: { title: "Administrateurs délégués", description: "Accès internes limités, sans droit sur la facturation ni les comptes offerts." },
 } as const;
 
 type AdminTabId = keyof typeof adminTabMeta;
@@ -329,9 +329,9 @@ function AdminFeedbackPanel({
           </p>
         </div>
         {openFeedback > 0 ? (
-          <Badge tone="warning">{openFeedback} a traiter</Badge>
+          <Badge tone="warning">{openFeedback} à traiter</Badge>
         ) : (
-          <Badge tone="success">A jour</Badge>
+          <Badge tone="success">À jour</Badge>
         )}
       </div>
       {feedback.length === 0 ? (
@@ -405,7 +405,7 @@ function CompanyRow({ company, canManageBilling }: { company: AdminCompany; canM
             Creee le {new Date(company.createdAt).toLocaleDateString("fr-FR")} —{" "}
             {company.lastActivity
               ? `derniere activite le ${new Date(company.lastActivity).toLocaleDateString("fr-FR")}`
-              : "aucune activite journalisee"}
+              : "aucune activité journalisee"}
           </p>
           {company.billingNotes ? (
             <p className="mt-2 text-sm text-muted">{company.billingNotes}</p>

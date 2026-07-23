@@ -10,7 +10,7 @@ export default async function ResourcesPage() {
       <div className="max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Boite a outils</p>
         <h2 className="mt-2 text-3xl font-semibold">Ressources utiles</h2>
-        <p className="mt-2 text-sm text-muted">Les organismes et outils de reference pour administrer, produire et diffuser un spectacle.</p>
+        <p className="mt-2 text-sm text-muted">Les organismes et outils de référence pour administrer, produire et diffuser un spectacle.</p>
       </div>
       {categories.map((category) => (
         <section key={category} className="space-y-3">

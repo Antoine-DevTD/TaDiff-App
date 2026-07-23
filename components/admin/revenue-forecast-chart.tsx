@@ -90,7 +90,7 @@ export function RevenueForecastChart({ forecast }: { forecast: RevenueForecast }
         <span>{points[0].label}</span>
         <div className="flex gap-4">
           <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded bg-accent" /> Reel estime
+            <span className="h-0.5 w-4 rounded bg-accent" /> Réel estime
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-0.5 w-4 rounded bg-accent/50" style={{ backgroundImage: "none" }} /> Projection

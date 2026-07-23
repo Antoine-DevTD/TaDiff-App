@@ -45,16 +45,16 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatBlock label="Structure" value={contact.organization} />
-        <StatBlock label="Role" value={contact.role || "A renseigner"} />
-        <StatBlock label="Email" value={contact.email || "A renseigner"} />
-        <StatBlock label="Telephone" value={contact.phone || "A renseigner"} />
+        <StatBlock label="Rôle" value={contact.role || "À renseigner"} />
+        <StatBlock label="Email" value={contact.email || "À renseigner"} />
+        <StatBlock label="Téléphone" value={contact.phone || "À renseigner"} />
         <StatBlock label="CA pondere" value={`${weightedRevenue.toLocaleString("fr-FR")} EUR`} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Dates liees</CardTitle>
+            <CardTitle>Dates liées</CardTitle>
             <CardDescription>Dates possibles associees a ce contact.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
@@ -112,7 +112,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
           <Card>
             <CardHeader>
               <CardTitle>Spectacles concernes</CardTitle>
-              <CardDescription>Creations deja discutees avec ce contact.</CardDescription>
+              <CardDescription>Créations déjà discutées avec ce contact.</CardDescription>
             </CardHeader>
             <div className="space-y-3">
               {shows.length === 0 ? (

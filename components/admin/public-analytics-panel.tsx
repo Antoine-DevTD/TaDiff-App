@@ -25,7 +25,7 @@ export function PublicAnalyticsPanel({
   const topPages = countBy(pageViews, (event) => event.path);
   const topCtas = countBy(clicks, (event) => event.eventName || "cta_inconnu");
   const topSources = countBy(pageViews, (event) =>
-    event.utmSource || event.referrerHost || "Acces direct",
+    event.utmSource || event.referrerHost || "Accès direct",
   );
   const devices = countBy(pageViews, (event) => event.deviceType);
 
@@ -42,12 +42,12 @@ export function PublicAnalyticsPanel({
       {events.length === 0 ? (
         <Card className="border-dashed p-6 text-sm text-muted">
           Aucune donnee publique pour le moment. Appliquez la migration 030, puis ouvrez la
-          landing dans un nouvel onglet pour enregistrer la premiere visite.
+          landing dans un nouvel onglet pour enregistrer la première visite.
         </Card>
       ) : (
         <>
           <section className="grid gap-4 lg:grid-cols-2">
-            <Ranking title="Pages consultees" rows={topPages} empty="Aucune page vue" />
+            <Ranking title="Pages consultées" rows={topPages} empty="Aucune page vue" />
             <Ranking title="Boutons les plus cliques" rows={topCtas} empty="Aucun clic suivi" />
             <Ranking title="Provenance" rows={topSources} empty="Aucune source" />
             <Ranking title="Appareils" rows={devices} empty="Aucun appareil" />
@@ -57,7 +57,7 @@ export function PublicAnalyticsPanel({
             <div>
               <p className="text-base font-semibold">Evenements recents</p>
               <p className="mt-1 text-sm text-muted">
-                Identifiants anonymes limites a une session. Aucune IP ni adresse email n&apos;est
+                Identifiants anonymes limités a une session. Aucune IP ni adresse email n&apos;est
                 collectee ici.
               </p>
             </div>
@@ -146,7 +146,7 @@ function AnalyticsEventRow({ event }: { event: AdminPublicAnalyticsEvent }) {
           {event.path}
           {event.utmSource || event.referrerHost
             ? ` - ${event.utmSource || event.referrerHost}`
-            : " - acces direct"}
+            : " - accès direct"}
           {` - ${formatLabel(event.deviceType)}`}
         </p>
       </div>

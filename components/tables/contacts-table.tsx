@@ -373,7 +373,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
         onClose={() => setEditingContact(null)}
         eyebrow="Carnet de contacts"
         title="Modifier le contact"
-        description="Mettez a jour les coordonnees, le role et les categories."
+        description="Mettez à jour les coordonnees, le rôle et les catégories."
         className="max-w-2xl"
       >
         {editingContact ? (
@@ -411,8 +411,8 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
         open={contactsToDelete.length > 0}
         title={contactsToDelete.length > 1 ? "Supprimer les contacts selectionnes ?" : "Supprimer ce contact ?"}
         warning={contactsToDelete.some((contact) => contact.contactType === "venue")
-          ? "Les actions et dates resteront conservees mais seront detachees. Les personnes rattachees aux lieux resteront dans le carnet."
-          : "Les actions et dates resteront conservees mais ne seront plus rattachees a ces contacts."}
+          ? "Les actions et dates resteront conservées mais seront detachees. Les personnes rattachees aux lieux resteront dans le carnet."
+          : "Les actions et dates resteront conservées mais ne seront plus rattachees a ces contacts."}
         onClose={() => setContactsToDelete([])}
         onSuccess={() => {
           const deletedIds = contactsToDelete.map((contact) => contact.id);
@@ -551,12 +551,12 @@ function buildContactColumns({
     },
     {
       accessorKey: "role",
-      header: ({ column }) => <SortableHeader label="Role" onClick={() => column.toggleSorting()} />,
+      header: ({ column }) => <SortableHeader label="Rôle" onClick={() => column.toggleSorting()} />,
     },
     {
       accessorKey: "phone",
-      header: "Telephone",
-      cell: ({ row }) => row.original.phone || <span className="text-xs text-muted">A renseigner</span>,
+      header: "Téléphone",
+      cell: ({ row }) => row.original.phone || <span className="text-xs text-muted">À renseigner</span>,
     },
     {
       accessorKey: "city",
@@ -602,14 +602,14 @@ function buildContactColumns({
             action="email"
             contact={row.original}
             icon={Mail}
-            label="Preparer un email"
+            label="Préparer un email"
             onAction={onAction}
           />
           <ContactRowAction
             action="reminder"
             contact={row.original}
             icon={BellPlus}
-            label="Creer une action"
+            label="Créer une action"
             onAction={onAction}
           />
           <ContactRowAction
@@ -696,10 +696,10 @@ function ContactContextMenu({
       <ContextAction
         disabled={disabled}
         icon={BellPlus}
-        label="Creer une action"
+        label="Créer une action"
         onClick={() => onAction("reminder", contact)}
       />
-      <ContextAction icon={Mail} label="Preparer un email" onClick={() => onAction("email", contact)} />
+      <ContextAction icon={Mail} label="Préparer un email" onClick={() => onAction("email", contact)} />
       <div className="my-1 border-t border-border" />
       <ContextAction danger icon={Trash2} label="Supprimer" onClick={() => onAction("delete", contact)} />
     </div>
@@ -830,7 +830,7 @@ function FilterRail({
             expanded={expanded}
             filters={tagFilters}
             icon="tag"
-            label="Categories"
+            label="Catégories"
             onSelect={onSelect}
           />
         </div>

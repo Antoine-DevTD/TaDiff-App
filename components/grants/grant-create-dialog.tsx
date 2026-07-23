@@ -20,7 +20,7 @@ export function GrantCreateDialog({ shows }: { shows: Show[] }) {
         onClose={() => setOpen(false)}
         eyebrow="Radar subventions"
         title="Ajouter un dispositif"
-        description="Chaque dispositif suit ses pieces, sa deadline et alimente le calendrier et le cockpit."
+        description="Chaque dispositif suit ses pièces, sa deadline et alimente le calendrier et le cockpit."
       >
         <GrantForm shows={shows} onSuccess={() => setOpen(false)} />
       </Dialog>

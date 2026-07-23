@@ -34,7 +34,7 @@ export default async function EditShowPage({ params }: EditShowPageProps) {
         <CardHeader>
           <CardTitle>Supprimer le spectacle</CardTitle>
           <CardDescription>
-            Les documents lies et leurs fichiers stockes seront supprimes. Les dates possibles
+            Les documents liés et leurs fichiers stockes seront supprimes. Les dates possibles
             et devis existants seront detaches mais conserves.
           </CardDescription>
         </CardHeader>

@@ -8,12 +8,12 @@ export function SignupForm() {
       <div>
         <p className="text-sm font-semibold text-foreground">Creation fermee</p>
         <p className="mt-1 text-sm leading-6 text-muted">
-          Les comptes sont actives manuellement pendant la beta privee pour garder une cohorte
+          Les comptes sont actives manuellement pendant la bêta privee pour garder une cohorte
           courte et accompagnee.
         </p>
       </div>
       <ButtonLink href="/beta" className="w-full">
-        Rejoindre la beta a 19,99 EUR / mois
+        Rejoindre la bêta a 19,99 EUR / mois
       </ButtonLink>
     </div>
   );

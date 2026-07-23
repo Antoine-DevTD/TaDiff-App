@@ -43,7 +43,7 @@ export function ForgotPasswordForm() {
 
     setMessage({
       ok: true,
-      text: "Si un compte existe avec cet email, un lien de reinitialisation vient d'etre envoye.",
+      text: "Si un compte existe avec cet email, un lien de reinitialisation vient d'être envoye.",
     });
   }
 

@@ -24,7 +24,7 @@ export function ContactCreateDialog({
         onClose={() => setOpen(false)}
         eyebrow="Carnet de contacts"
         title="Nouveau contact"
-        description="Ajoutez une structure, son role et ses tags sans quitter le carnet."
+        description="Ajoutez une structure, son rôle et ses tags sans quitter le carnet."
         className="max-w-2xl"
       >
         <ContactForm onSuccess={() => setOpen(false)} />

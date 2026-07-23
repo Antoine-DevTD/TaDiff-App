@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaDiff - Fonctionnalités</title>
+  <style>
+    :root { --ink:#081121; --paper:#eef4ff; --panel:#fff; --blue:#2455dc; --red:#ef3e45; --gold:#e8b44d; --green:#21865e; --line:#c7d5eb; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; min-height:100%; }
+    body { overflow:hidden; background:#020712; color:var(--ink); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    .deck { position:absolute; inset:0; width:min(100vw,calc(100vh * 16 / 9)); height:min(100vh,calc(100vw * 9 / 16)); margin:auto; overflow:hidden; background:var(--paper); box-shadow:0 24px 90px #0009; }
+    .slide { position:absolute; inset:0; display:grid; grid-template-rows:76px 1fr 28px; gap:16px; padding:30px 38px 22px; visibility:hidden; opacity:0; background:linear-gradient(135deg,#f5f8ff,#e7effc); transition:opacity .2s ease; }
+    .slide.active { visibility:visible; opacity:1; }
+    .slide.dark { color:#fff; background:var(--ink); }
+    .head { display:flex; align-items:center; justify-content:space-between; gap:24px; }
+    .head h2 { margin:0; font-size:30px; letter-spacing:0; }
+    .head .mark { display:flex; align-items:center; gap:10px; color:#65738d; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1.3px; }
+    .head img { width:30px; height:30px; }
+    .stage { min-height:0; display:grid; align-items:center; }
+    .frame { position:relative; min-width:0; min-height:0; overflow:hidden; border:1px solid #acbdd9; background:#dce6f5; box-shadow:0 18px 42px #12244724; }
+    .frame img { display:block; width:100%; height:100%; object-fit:cover; object-position:top left; }
+    .single .frame { height:100%; }
+    .pair { grid-template-columns:minmax(0,1.35fr) 74px minmax(0,.75fr); gap:20px; }
+    .pair .frame { height:100%; }
+    .arrow { display:grid; place-items:center; color:var(--red); font-size:54px; font-weight:300; }
+    .callout { position:absolute; z-index:3; border:5px solid var(--red); border-radius:10px; box-shadow:0 0 0 4px #fff9,0 0 34px #ef3e4555; pointer-events:none; }
+    .pulse { animation:pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 50% { box-shadow:0 0 0 8px #fff9,0 0 48px #ef3e4590; } }
+    .foot { display:flex; align-items:center; justify-content:space-between; color:#71809a; font-size:11px; }
+    .foot strong { color:var(--blue); }
+    .title-stage { display:grid; grid-template-columns:1fr 1.05fr; align-items:center; gap:70px; }
+    .title-copy img { width:56px; height:56px; }
+    .title-copy h1 { max-width:650px; margin:28px 0 18px; font-size:62px; line-height:1.02; letter-spacing:0; }
+    .title-copy h1 span { color:#7fa2ff; }
+    .title-copy p { margin:0; color:#b7c5dc; font-size:20px; }
+    .title-shot { height:560px; border:1px solid #354663; box-shadow:25px 25px 0 #132038; }
+    .title-shot img { width:100%; height:100%; object-fit:cover; object-position:top left; }
+    .outcome { position:absolute; z-index:4; display:grid; place-items:center; min-width:118px; min-height:48px; border:2px solid var(--green); border-radius:999px; padding:8px 16px; color:var(--green); background:#fff; font-size:14px; font-weight:800; box-shadow:0 10px 25px #1424442b; }
+    .diagram { position:relative; height:100%; min-height:0; overflow:hidden; border:1px solid #253653; background:radial-gradient(circle at center,#142442 0,#081121 62%); }
+    .diagram svg { position:absolute; inset:0; width:100%; height:100%; }
+    .diagram line { stroke:#5474b5; stroke-width:2; stroke-dasharray:8 7; marker-end:url(#arrowhead); }
+    .node { position:absolute; z-index:2; display:grid; place-items:center; width:170px; min-height:70px; border:1px solid #496083; border-radius:8px; padding:12px; color:#dce7fa; background:#111e34; text-align:center; font-size:15px; font-weight:750; box-shadow:0 12px 30px #0004; }
+    .node.center { left:50%; top:50%; width:230px; min-height:112px; transform:translate(-50%,-50%); border:2px solid #6c92ef; color:#fff; background:#2455dc; font-size:24px; }
+    .node.center small { display:block; margin-top:6px; color:#dbe5ff; font-size:12px; font-weight:600; }
+    .n1{left:5%;top:9%}.n2{left:5%;top:42%}.n3{left:5%;bottom:9%}.n4{left:25%;top:5%}.n5{left:25%;bottom:5%}.n6{right:25%;top:5%}.n7{right:25%;bottom:5%}.n8{right:5%;top:9%}.n9{right:5%;top:42%}.n10{right:5%;bottom:9%}
+    .progress { position:fixed; top:0; left:0; z-index:100; height:4px; background:var(--blue); transition:width .18s ease; }
+    .controls { position:fixed; right:16px; bottom:14px; z-index:100; display:flex; align-items:center; gap:6px; border:1px solid #34445f; padding:5px; background:#07101ee8; }
+    .controls button { width:36px; height:36px; border:0; color:#fff; background:transparent; font:inherit; cursor:pointer; }
+    .controls button:hover { background:#1d2b43; }
+    .counter { min-width:52px; color:#b5c2d8; text-align:center; font-size:12px; }
+    @media print { @page{size:13.333in 7.5in;margin:0} body{overflow:visible;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}.deck{position:static;width:auto;height:auto;overflow:visible;box-shadow:none}.slide{position:relative;display:grid!important;width:13.333in;height:7.5in;break-after:page;visibility:visible!important;opacity:1!important}.controls,.progress{display:none!important} }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <main class="deck">
+    <section class="slide dark active"><div></div><div class="title-stage"><div class="title-copy"><img src="../../../public/icons/tadiff-mark.svg" alt=""><h1>Une compagnie.<br><span>Un seul cockpit.</span></h1><p>TaDiff · démonstration produit</p></div><div class="title-shot"><img src="assets/01-cockpit.png" alt="Cockpit TaDiff"></div></div><footer class="foot"><strong>TaDiff</strong><span>23 juillet 2026</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Le cockpit décide où regarder</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Vue d’ensemble</span></header><div class="stage pair"><div class="frame"><img src="assets/01-cockpit.png" alt="Cockpit"><span class="callout pulse" style="left:16%;top:15%;width:80%;height:30%"></span></div><div class="arrow">→</div><div class="frame"><img src="assets/14-finances.png" alt="Trésorerie"><span class="callout" style="left:1%;top:1%;width:96%;height:31%"></span><span class="outcome" style="right:6%;bottom:8%">Projection</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Situation → décision</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Chaque spectacle devient un dossier vivant</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Spectacles</span></header><div class="stage pair"><div class="frame"><img src="assets/02-spectacles.png" alt="Spectacles"><span class="callout pulse" style="left:2%;top:9%;width:30%;height:70%"></span></div><div class="arrow">→</div><div class="frame"><img src="assets/03-spectacle.png" alt="Fiche spectacle"><span class="callout" style="left:1%;top:23%;width:45%;height:71%"></span></div></div><footer class="foot"><strong>TaDiff</strong><span>Catalogue → pilotage</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Une pièce ajoutée sert partout</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Dossier spectacle</span></header><div class="stage single"><div class="frame"><img src="assets/04-dossier.png" alt="Dossier spectacle"><span class="callout pulse" style="left:51%;top:18%;width:47%;height:48%"></span><span class="outcome" style="right:4%;bottom:8%">Prêt à envoyer</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Importer → classer → réutiliser</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Les actions restent reliées au spectacle</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">À faire</span></header><div class="stage single"><div class="frame"><img src="assets/05-actions.png" alt="Actions"><span class="callout pulse" style="left:1%;top:17%;width:70%;height:22%"></span><span class="outcome" style="right:5%;top:25%">Historique conservé</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Action → résultat → contexte William</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Le carnet prépare le bon message</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Contacts</span></header><div class="stage pair"><div class="frame"><img src="assets/06-contacts.png" alt="Contacts"><span class="callout pulse" style="left:20%;top:18%;width:77%;height:26%"></span></div><div class="arrow">→</div><div class="frame"><img src="assets/15-email.png" alt="Email"><span class="callout" style="left:18%;top:17%;width:79%;height:65%"></span></div></div><footer class="foot"><strong>TaDiff</strong><span>Contact + spectacle → brouillon</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Les lieux deviennent un territoire</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Carte des lieux</span></header><div class="stage single"><div class="frame"><img src="assets/07-lieux-carte.png" alt="Carte des lieux"><span class="callout pulse" style="left:19%;top:18%;width:78%;height:75%"></span><span class="outcome" style="right:4%;top:10%">Action directe</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Adresse → carte → prospection</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>La diffusion montre ce qui avance</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Diffuser</span></header><div class="stage pair"><div class="frame"><img src="assets/08-diffusion.png" alt="Diffusion"><span class="callout pulse" style="left:1%;top:19%;width:98%;height:68%"></span></div><div class="arrow">→</div><div class="frame"><img src="assets/09-diffusion-dialog.png" alt="Nouvelle diffusion"><span class="callout" style="left:18%;top:16%;width:65%;height:69%"></span></div></div><footer class="foot"><strong>TaDiff</strong><span>Contact → accord → prochaine étape</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Une série ne signifie pas jouer tous les jours</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Exploitation</span></header><div class="stage single"><div class="frame"><img src="assets/10-exploitation-dialog.png" alt="Choix des représentations"><span class="callout pulse" style="left:19%;top:24%;width:63%;height:48%"></span><span class="outcome" style="right:5%;top:12%">Jours réellement joués</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Période → jours → billetterie</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Le calendrier relie les échéances</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Agenda</span></header><div class="stage pair"><div class="frame"><img src="assets/11-calendrier.png" alt="Calendrier"><span class="callout pulse" style="left:1%;top:13%;width:67%;height:80%"></span></div><div class="arrow">→</div><div class="frame"><img src="assets/12-subventions.png" alt="Subvention"><span class="callout" style="left:48%;top:17%;width:49%;height:72%"></span></div></div><footer class="foot"><strong>TaDiff</strong><span>Échéance → dossier concerné</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Les aides deviennent des dossiers actionnables</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Subventions</span></header><div class="stage single"><div class="frame"><img src="assets/12-subventions.png" alt="Subventions"><span class="callout pulse" style="left:48%;top:17%;width:49%;height:72%"></span><span class="outcome" style="right:5%;bottom:6%">Dossier ZIP</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Aide → spectacle → pièces</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>Le mécénat suit le même chemin</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Mécénat</span></header><div class="stage single"><div class="frame"><img src="assets/13-mecenat.png" alt="Mécénat"><span class="callout pulse" style="left:1%;top:16%;width:97%;height:72%"></span><span class="outcome" style="right:5%;bottom:7%">Partenaire actif</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Entreprise → contact → montant</span></footer></section>
+
+    <section class="slide"><header class="head"><h2>William lit le cockpit, pas une page vide</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">William</span></header><div class="stage single"><div class="frame"><img src="assets/16-william.png" alt="William"><span class="callout pulse" style="left:75%;top:8%;width:24%;height:83%"></span><span class="outcome" style="left:47%;bottom:7%">Priorité suggérée</span></div></div><footer class="foot"><strong>TaDiff</strong><span>Données compagnie → aide contextualisée</span></footer></section>
+
+    <section class="slide dark"><header class="head"><h2>Tout part du spectacle, tout revient au cockpit</h2><span class="mark"><img src="../../../public/icons/tadiff-mark.svg" alt="">Interconnexion</span></header><div class="stage"><div class="diagram"><svg viewBox="0 0 1200 620" preserveAspectRatio="none"><defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6f91d2"/></marker></defs><line x1="220" y1="90" x2="530" y2="275"/><line x1="220" y1="310" x2="520" y2="310"/><line x1="220" y1="530" x2="530" y2="350"/><line x1="390" y1="80" x2="560" y2="260"/><line x1="390" y1="540" x2="560" y2="365"/><line x1="810" y1="80" x2="650" y2="260"/><line x1="810" y1="540" x2="650" y2="365"/><line x1="990" y1="90" x2="670" y2="275"/><line x1="990" y1="310" x2="680" y2="310"/><line x1="990" y1="530" x2="670" y2="350"/></svg><div class="node center">SPECTACLE<small>source commune</small></div><div class="node n1">Contacts</div><div class="node n2">Lieux</div><div class="node n3">Emails</div><div class="node n4">Actions</div><div class="node n5">Diffusion</div><div class="node n6">Calendrier</div><div class="node n7">Trésorerie</div><div class="node n8">Subventions</div><div class="node n9">Mécénat</div><div class="node n10">William</div></div></div><footer class="foot"><strong>TaDiff</strong><span>Une donnée saisie, plusieurs usages</span></footer></section>
+  </main>
+
+  <div class="controls"><button type="button" id="prev" aria-label="Précédente">←</button><span class="counter" id="counter"></span><button type="button" id="next" aria-label="Suivante">→</button><button type="button" id="fullscreen" aria-label="Plein écran">⛶</button></div>
+  <script>
+    const slides=[...document.querySelectorAll('.slide')]; let current=0;
+    window.show=function(index){current=Math.max(0,Math.min(slides.length-1,index));slides.forEach((slide,i)=>slide.classList.toggle('active',i===current));document.getElementById('counter').textContent=`${current+1} / ${slides.length}`;document.getElementById('progress').style.width=`${((current+1)/slides.length)*100}%`;};
+    document.getElementById('prev').onclick=()=>show(current-1); document.getElementById('next').onclick=()=>show(current+1); document.getElementById('fullscreen').onclick=()=>document.documentElement.requestFullscreen?.();
+    addEventListener('keydown',(event)=>{if(['ArrowRight',' ','PageDown'].includes(event.key)){event.preventDefault();show(current+1)}if(['ArrowLeft','PageUp'].includes(event.key)){event.preventDefault();show(current-1)}if(event.key==='Home')show(0);if(event.key==='End')show(slides.length-1);if(event.key.toLowerCase()==='f')document.documentElement.requestFullscreen?.()}); show(0);
+  </script>
+</body>
+</html>
