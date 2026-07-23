@@ -1,5 +1,6 @@
 "use client";
 
+import { ImagePlus, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { prepareShowPosterUpload } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ export function PosterUploadField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   async function onFile(input: File) {
     setError(null);
@@ -101,12 +103,12 @@ export function PosterUploadField({
   return (
     <div className="space-y-3">
       {value ? (
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={value}
-            alt="Aperçu de l'affiche"
-            className="h-28 w-auto rounded-md border border-border object-cover"
+            alt="Aperçu de l'image"
+            className="h-28 w-28 rounded-md border border-border bg-panel object-contain p-2"
           />
           <div className="space-y-2">
             <Button
@@ -122,20 +124,62 @@ export function PosterUploadField({
               className="block text-xs font-medium text-danger hover:underline"
               onClick={() => onChange("")}
             >
-              Retirer l&apos;affiche
+              Retirer l&apos;image
             </button>
           </div>
         </div>
-      ) : (
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={isUploading}
-          onClick={() => inputRef.current?.click()}
-        >
-          {isUploading ? "Envoi..." : chooseLabel}
-        </Button>
-      )}
+      ) : null}
+
+      <button
+        type="button"
+        disabled={isUploading}
+        onClick={() => inputRef.current?.click()}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+          setIsDragging(true);
+        }}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setIsDragging(false);
+          }
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          const file = event.dataTransfer.files?.[0];
+          if (file) void onFile(file);
+        }}
+        className={
+          isDragging
+            ? "flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-accent bg-accent/10 px-5 py-6 text-center text-accent transition"
+            : "flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-panel-strong/45 px-5 py-6 text-center text-muted transition hover:border-accent/60 hover:bg-accent/5 hover:text-foreground"
+        }
+      >
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-panel shadow-sm">
+          {isUploading ? (
+            <Upload className="h-5 w-5 animate-pulse" aria-hidden />
+          ) : (
+            <ImagePlus className="h-5 w-5" aria-hidden />
+          )}
+        </span>
+        <span className="text-sm font-medium">
+          {isUploading
+            ? "Envoi de l'image..."
+            : value
+              ? "Déposer une nouvelle image"
+              : "Déposer une image ici"}
+        </span>
+        {!isUploading ? (
+          <span className="text-xs">{chooseLabel} ou glissez-déposez un fichier</span>
+        ) : null}
+        <span className="text-xs text-muted">JPG, PNG ou WebP · 8 Mo maximum</span>
+      </button>
 
       <input
         ref={inputRef}

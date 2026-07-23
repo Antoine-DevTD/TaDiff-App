@@ -16,7 +16,13 @@ import {
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
+export function Topbar({
+  companyLogoUrl = "",
+  workspaceLabel,
+}: {
+  companyLogoUrl?: string;
+  workspaceLabel: string;
+}) {
   const pathname = usePathname();
   const activeItem = getDashboardItem(pathname);
   const activeSection = getDashboardSection(pathname);
@@ -60,7 +66,7 @@ export function Topbar({ workspaceLabel }: { workspaceLabel: string }) {
               <span className="sm:hidden">Ajouter</span>
             </Button>
           ) : null}
-          <AccountMenu />
+          <AccountMenu companyLogoUrl={companyLogoUrl} />
         </div>
       </div>
 

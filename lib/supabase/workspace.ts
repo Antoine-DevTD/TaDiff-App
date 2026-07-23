@@ -28,14 +28,14 @@ export const getOrCreateWorkspace = cache(async function getOrCreateWorkspace() 
   return { error: null, companyId };
 });
 
-export const getWorkspaceLabel = cache(async function getWorkspaceLabel() {
+export const getWorkspaceBranding = cache(async function getWorkspaceBranding() {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
   } = await getSupabaseServerUser();
 
   if (!user) {
-    return "Compagnie demo";
+    return { label: "Compagnie demo", logoUrl: "" };
   }
 
   const { data: profile } = await supabase
@@ -45,14 +45,21 @@ export const getWorkspaceLabel = cache(async function getWorkspaceLabel() {
     .maybeSingle();
 
   if (!profile?.company_id) {
-    return "Espace a configurer";
+    return { label: "Espace a configurer", logoUrl: "" };
   }
 
   const { data: company } = await supabase
     .from("companies")
-    .select("name")
+    .select("name,logo_url")
     .eq("id", profile.company_id)
     .maybeSingle();
 
-  return company?.name ?? "Compagnie";
+  return {
+    label: company?.name ?? "Compagnie",
+    logoUrl: company?.logo_url ?? "",
+  };
+});
+
+export const getWorkspaceLabel = cache(async function getWorkspaceLabel() {
+  return (await getWorkspaceBranding()).label;
 });

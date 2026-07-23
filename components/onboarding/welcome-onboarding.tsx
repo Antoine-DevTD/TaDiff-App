@@ -9,6 +9,7 @@ import {
 } from "@/app/welcome/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PosterUploadField } from "@/components/shows/poster-upload-field";
 import { WilliamStage } from "@/components/onboarding/william-stage";
 import { tourStorageKey } from "@/components/tour/guided-tour";
 import { cn } from "@/lib/utils";
@@ -221,13 +222,15 @@ function StepContent({
       <WelcomePane
         icon={ImageIcon}
         title="Avez-vous déjà un logo ?"
-        body="Optionnel pour commencer. Vous pourrez aussi l'ajouter plus tard dans les reglages."
+        body="Optionnel pour commencer. Déposez une image ou choisissez-la sur votre appareil."
       >
-        <Input
-          disabled={pending}
-          placeholder="https://..."
+        <PosterUploadField
+          showId="logo-compagnie"
           value={values.logoUrl ?? ""}
-          onChange={(event) => onChange("logoUrl", event.target.value)}
+          maxDimension={512}
+          chooseLabel="Choisir le logo"
+          emptyHint="Le logo apparaîtra ensuite en haut à droite du cockpit."
+          onChange={(url) => onChange("logoUrl", url)}
         />
       </WelcomePane>
     );

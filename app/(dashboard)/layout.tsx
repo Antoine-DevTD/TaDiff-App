@@ -9,7 +9,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getPlatformAdminAccess } from "@/lib/supabase/admin";
 import { getSupabaseServerUser } from "@/lib/supabase/server";
-import { getWorkspaceLabel } from "@/lib/supabase/workspace";
+import { getWorkspaceBranding } from "@/lib/supabase/workspace";
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +17,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   let workspaceLabel = "Compagnie demo";
+  let companyLogoUrl = "";
   let superAdmin = false;
 
   if (hasSupabaseEnv()) {
@@ -28,12 +29,13 @@ export default async function DashboardLayout({
       redirect("/login");
     }
 
-    const [platformAccess, resolvedWorkspaceLabel] = await Promise.all([
+    const [platformAccess, workspaceBranding] = await Promise.all([
       getPlatformAdminAccess(),
-      getWorkspaceLabel(),
+      getWorkspaceBranding(),
     ]);
     superAdmin = platformAccess.isSuperAdmin || platformAccess.permissions.length > 0;
-    workspaceLabel = superAdmin ? "Console interne" : resolvedWorkspaceLabel;
+    workspaceLabel = superAdmin ? "Console interne" : workspaceBranding.label;
+    companyLogoUrl = superAdmin ? "" : workspaceBranding.logoUrl;
   }
 
   return (
@@ -47,7 +49,7 @@ export default async function DashboardLayout({
       </a>
       <Sidebar variant={superAdmin ? "admin" : "company"} />
       <div className="min-w-0 flex-1">
-        <Topbar workspaceLabel={workspaceLabel} />
+        <Topbar workspaceLabel={workspaceLabel} companyLogoUrl={companyLogoUrl} />
         <main
           id="main-content"
           tabIndex={-1}

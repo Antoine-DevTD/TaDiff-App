@@ -12,7 +12,7 @@ const AccountShowDialog = dynamic(
   { ssr: false },
 );
 
-export function AccountMenu() {
+export function AccountMenu({ companyLogoUrl = "" }: { companyLogoUrl?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [isSigningOut, startSignOut] = useTransition();
@@ -32,7 +32,16 @@ export function AccountMenu() {
         onClick={() => setMenuOpen((value) => !value)}
         className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-border bg-[#1d1d1f] shadow-sm shadow-ink/10 transition hover:scale-[1.03]"
       >
-        <TadiffMark className="h-full w-full rounded-full" />
+        {companyLogoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={companyLogoUrl}
+            alt="Logo de la compagnie"
+            className="h-full w-full bg-white object-contain p-1"
+          />
+        ) : (
+          <TadiffMark className="h-full w-full rounded-full" />
+        )}
       </button>
 
       {menuOpen ? (

@@ -55,6 +55,16 @@ test.describe("parcours webinaire", () => {
         (element as HTMLCanvasElement).toDataURL("image/png").length,
       )).toBeGreaterThan(5_000);
       await expectNoHorizontalOverflow(page);
+
+      await page.getByRole("button", { name: "Continuer" }).click();
+      await page.getByPlaceholder("Prenom Nom").fill("Camille Martin");
+      await page.getByRole("button", { name: "Continuer" }).click();
+      await page.getByRole("button", { name: "Continuer" }).click();
+      await expect(page.getByRole("button", { name: /Déposer une image ici/ })).toBeVisible();
+      await expect(page.locator('input[type="file"]')).toHaveAttribute(
+        "accept",
+        ".png,.jpg,.jpeg,.webp",
+      );
     }
   });
 });
