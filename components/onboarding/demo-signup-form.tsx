@@ -3,7 +3,7 @@
 import { Check, LoaderCircle, LockKeyhole, Mail, Theater, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { resetWebinarDemoShows } from "@/app/welcome/actions";
+import { resetWebinarDemoWorkspace } from "@/app/welcome/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { demoSignupProfileStorageKey } from "@/lib/demo-webinar";
@@ -42,7 +42,7 @@ export function DemoSignupForm() {
     setResetError(null);
     setIsResetting(true);
     const formData = new FormData(event.currentTarget);
-    const reset = await resetWebinarDemoShows();
+    const reset = await resetWebinarDemoWorkspace();
 
     if (!reset.ok) {
       setResetError(reset.message);

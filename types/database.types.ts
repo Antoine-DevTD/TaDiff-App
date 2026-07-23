@@ -1893,6 +1893,10 @@ export type Database = {
         };
         Returns: string;
       };
+      reset_webinar_demo_workspace: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
+      };
       is_company_admin: {
         Args: {
           target_company_id: string;

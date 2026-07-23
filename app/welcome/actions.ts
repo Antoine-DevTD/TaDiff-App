@@ -5,6 +5,11 @@ import { z } from "zod";
 import { hasSupabaseEnv } from "@/lib/env";
 import { demoWebinarEmail } from "@/lib/demo-webinar";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  getConfiguredStorageProvider,
+  removePrivateObject,
+  type StorageProvider,
+} from "@/lib/storage/server";
 
 const welcomeOnboardingSchema = z.object({
   fullName: z.string().trim().min(2, "Indiquez votre nom."),
@@ -22,7 +27,7 @@ export type WelcomeOnboardingResult = {
   nextPath: string;
 };
 
-export async function resetWebinarDemoShows(): Promise<{
+export async function resetWebinarDemoWorkspace(): Promise<{
   ok: boolean;
   message: string;
 }> {
@@ -55,35 +60,55 @@ export async function resetWebinarDemoShows(): Promise<{
     };
   }
 
-  const { data: shows, error: showsError } = await supabase
-    .from("shows")
-    .select("id")
-    .eq("company_id", profile.company_id);
+  const [{ data: showDocuments }, { data: workVersions }, { data: companyDocuments }] =
+    await Promise.all([
+      supabase
+        .from("show_documents")
+        .select("storage_path,storage_provider")
+        .eq("company_id", profile.company_id)
+        .not("storage_path", "is", null),
+      supabase
+        .from("show_work_document_versions")
+        .select("storage_path,storage_provider")
+        .eq("company_id", profile.company_id),
+      supabase
+        .from("company_documents")
+        .select("storage_path,storage_provider")
+        .eq("company_id", profile.company_id)
+        .not("storage_path", "is", null),
+    ]);
 
-  if (showsError) {
-    return { ok: false, message: showsError.message };
-  }
+  const storedObjects = [
+    ...(showDocuments ?? []),
+    ...(workVersions ?? []),
+    ...(companyDocuments ?? []),
+  ].flatMap((item) =>
+    item.storage_path
+      ? [{
+          storagePath: item.storage_path,
+          provider: item.storage_provider as StorageProvider | null,
+        }]
+      : [],
+  );
 
-  for (const show of shows ?? []) {
-    const storagePrefix = `${profile.company_id}/${show.id}`;
-    const { data: storedFiles } = await supabase.storage
-      .from("documents")
-      .list(storagePrefix, { limit: 1000 });
+  await Promise.allSettled(
+    storedObjects.map((item) =>
+      removePrivateObject(
+        item.provider || getConfiguredStorageProvider(),
+        item.storagePath,
+      ),
+    ),
+  );
 
-    if (storedFiles?.length) {
-      await supabase.storage
-        .from("documents")
-        .remove(storedFiles.map((file) => `${storagePrefix}/${file.name}`));
-    }
-  }
+  const { error: resetError } = await supabase.rpc("reset_webinar_demo_workspace");
 
-  const { error: deleteError } = await supabase
-    .from("shows")
-    .delete()
-    .eq("company_id", profile.company_id);
-
-  if (deleteError) {
-    return { ok: false, message: deleteError.message };
+  if (resetError) {
+    return {
+      ok: false,
+      message: resetError.message.includes("schema cache")
+        ? "Appliquez les migrations 057 et 058 avant de relancer la démonstration."
+        : resetError.message,
+    };
   }
 
   revalidatePath("/dashboard");
@@ -97,7 +122,7 @@ export async function resetWebinarDemoShows(): Promise<{
 
   return {
     ok: true,
-    message: `${shows?.length ?? 0} spectacle(s) retiré(s) avant la démonstration.`,
+    message: "L'espace de démonstration a été entièrement remis à zéro.",
   };
 }
 

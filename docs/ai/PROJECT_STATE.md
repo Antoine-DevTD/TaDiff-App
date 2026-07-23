@@ -13,7 +13,7 @@ Derniere verification : 23 juillet 2026.
 
 - Landing, reservation beta, authentification et recuperation de mot de passe.
 - Le compte du webinaire dispose d'une inscription simulée protégée sur `/demo-signup`, suivie de la préparation animée de l'espace puis du replay de l'accueil William. Elle ne crée aucun utilisateur et ne rouvre pas les inscriptions publiques.
-- Le parcours simulé du webinaire repart avec un formulaire vierge, ne réaffiche pas les informations déjà enregistrées et supprime les spectacles du compte webinaire avant l'accueil William.
+- Le parcours simulé du webinaire repart avec un formulaire vierge et remet à zéro les données métier du compte webinaire avant l'accueil William : spectacles, contacts, diffusion, actions, agenda, trésorerie, documents, mécénat, emails et historiques. L'abonnement, le rôle, les crédits William et les journaux de sécurité restent conservés.
 - Welcome accepte le logo de la compagnie par sélection ou glisser-déposer JPG, PNG et WebP, le redimensionne côté navigateur, puis l'affiche dans le menu de compte en haut à droite du cockpit.
 - Cockpit, spectacles, documents, contacts, diffusion, agenda, finances, dossiers et administration.
 - Import de contacts, donnees de demonstration, visite guidee et premiers flux William.
@@ -54,6 +54,7 @@ Derniere verification : 23 juillet 2026.
 - La migration `055_venue_map_coordinates.sql` ajoute les adresses, jauges et coordonnees necessaires a la carte des lieux. Elle doit etre appliquee avant d'enregistrer ces champs dans Supabase.
 - La migration `056_exploitation_performance_status.sql` ajoute le statut individuel programmee/annulee des representations. Elle doit etre appliquee avant d'utiliser l'annulation depuis Diffuser.
 - La migration `057_default_reference_grants.sql` initialise automatiquement les 10 dispositifs de référence à la création ou à la prochaine initialisation d'un espace. Elle doit être appliquée avant de retirer définitivement l'import manuel.
+- La migration `058_reset_webinar_demo_workspace.sql` ajoute la remise à zéro transactionnelle réservée au compte `demo_webinaire`. Elle dépend de la migration `057`.
 
 ## Qualite
 
