@@ -13,6 +13,7 @@ Derniere verification : 23 juillet 2026.
 
 - Landing, reservation beta, authentification et recuperation de mot de passe.
 - Le compte du webinaire dispose d'une inscription simulée protégée sur `/demo-signup`, suivie de la préparation animée de l'espace puis du replay de l'accueil William. Elle ne crée aucun utilisateur et ne rouvre pas les inscriptions publiques.
+- Le parcours simulé du webinaire repart avec un formulaire vierge et ne réaffiche pas les informations déjà enregistrées sur le compte de démonstration.
 - Welcome accepte le logo de la compagnie par sélection ou glisser-déposer JPG, PNG et WebP, le redimensionne côté navigateur, puis l'affiche dans le menu de compte en haut à droite du cockpit.
 - Cockpit, spectacles, documents, contacts, diffusion, agenda, finances, dossiers et administration.
 - Import de contacts, donnees de demonstration, visite guidee et premiers flux William.
@@ -32,6 +33,7 @@ Derniere verification : 23 juillet 2026.
 - Les quatre indicateurs de la vue d'ensemble du cockpit ouvrent directement leur rubrique : tresorerie, diffusion, dossiers et actions urgentes.
 - L'agenda propose une grille plus lisible et un panneau de detail persistant. Une subvention selectionnee ouvre son dossier en surbrillance.
 - Les subventions utilisent le même langage visuel que les actions : vues par urgence et avancement, liste groupée par spectacle, dossier actif et pièces attendues directement manipulables.
+- Les 10 dispositifs de subvention de référence sont ajoutés automatiquement et sans doublon lors de l'initialisation d'un espace compagnie.
 - Le mécénat reprend ce langage visuel avec des vues par avancement, une liste de partenaires et une fiche active. L'entrée Documents est temporairement masquée du sous-menu Dossiers, sans supprimer les fichiers ni la route.
 - Une exploitation accepte une sélection explicite des jours joués dans une période. La billetterie s'enregistre automatiquement et une représentation peut être annulée puis rétablie sans perdre son historique.
 - La modification d'une diffusion s'ouvre dans une fenêtre dédiée au lieu d'allonger la fiche active. Les montants, dont le minimum garanti, acceptent les centimes et les valeurs non arrondies.
@@ -51,6 +53,7 @@ Derniere verification : 23 juillet 2026.
 - La migration `054_theatre_budget_model.sql` ajoute les hypotheses du budget theatre et doit etre appliquee avant de persister ce nouvel editeur.
 - La migration `055_venue_map_coordinates.sql` ajoute les adresses, jauges et coordonnees necessaires a la carte des lieux. Elle doit etre appliquee avant d'enregistrer ces champs dans Supabase.
 - La migration `056_exploitation_performance_status.sql` ajoute le statut individuel programmee/annulee des representations. Elle doit etre appliquee avant d'utiliser l'annulation depuis Diffuser.
+- La migration `057_default_reference_grants.sql` initialise automatiquement les 10 dispositifs de référence à la création ou à la prochaine initialisation d'un espace. Elle doit être appliquée avant de retirer définitivement l'import manuel.
 
 ## Qualite
 

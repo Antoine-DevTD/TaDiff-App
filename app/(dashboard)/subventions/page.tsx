@@ -1,5 +1,4 @@
 import { GrantCreateDialog } from "@/components/grants/grant-create-dialog";
-import { GrantImportButton } from "@/components/grants/grant-import-button";
 import { GrantsWorkspace } from "@/components/grants/grants-workspace";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -40,7 +39,6 @@ export default async function SubventionsPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-end gap-3">
         <GrantCreateDialog shows={shows} />
-        <GrantImportButton />
         <ButtonLink href="/calendar" variant="secondary">Voir les échéances</ButtonLink>
       </div>
 
@@ -54,7 +52,7 @@ export default async function SubventionsPage({
       {grants.length === 0 ? (
         <EmptyState
           title="Aucune aide suivie"
-          description="Importez les dispositifs de référence ou ajoutez une aide à suivre."
+          description="Ajoutez une aide à suivre. Les dispositifs de référence sont préparés automatiquement à la création de l'espace."
         />
       ) : (
         <GrantsWorkspace initialFocusId={focus} shows={shows} states={dossierStates} />

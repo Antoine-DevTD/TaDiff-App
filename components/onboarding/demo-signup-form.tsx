@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { demoWebinarEmail } from "@/lib/demo-webinar";
+import { demoSignupProfileStorageKey } from "@/lib/demo-webinar";
 
 const preparationSteps = [
   "Création de votre espace",
@@ -36,6 +36,14 @@ export function DemoSignupForm() {
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    window.sessionStorage.setItem(
+      demoSignupProfileStorageKey,
+      JSON.stringify({
+        companyName: String(formData.get("companyName") ?? "").trim(),
+        fullName: String(formData.get("fullName") ?? "").trim(),
+      }),
+    );
     setPreparationStep(0);
     setIsCreating(true);
   }
@@ -113,20 +121,20 @@ export function DemoSignupForm() {
 
       <form className="space-y-5" onSubmit={submit}>
         <Field icon={UserRound} label="Prénom et nom">
-          <Input required defaultValue="Camille Martin" autoComplete="name" />
+          <Input required name="fullName" autoComplete="name" />
         </Field>
         <Field icon={Theater} label="Nom de la compagnie">
-          <Input required defaultValue="Compagnie de l'Estran" autoComplete="organization" />
+          <Input required name="companyName" autoComplete="organization" />
         </Field>
         <Field icon={Mail} label="Adresse email">
-          <Input required type="email" defaultValue={demoWebinarEmail} autoComplete="email" />
+          <Input required name="email" type="email" autoComplete="email" />
         </Field>
         <Field icon={LockKeyhole} label="Mot de passe">
           <Input
             required
+            name="password"
             minLength={8}
             type="password"
-            defaultValue="demonstration"
             autoComplete="new-password"
           />
         </Field>
@@ -135,7 +143,6 @@ export function DemoSignupForm() {
           <input
             required
             type="checkbox"
-            defaultChecked
             className="mt-0.5 h-4 w-4 rounded border-border accent-accent"
           />
           <span>J&apos;accepte les conditions d&apos;utilisation et la politique de confidentialité.</span>

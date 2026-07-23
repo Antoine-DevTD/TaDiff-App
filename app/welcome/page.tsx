@@ -7,7 +7,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 export default async function WelcomePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ preview?: string; replay?: string }>;
+  searchParams?: Promise<{ fromSignup?: string; preview?: string; replay?: string }>;
 }) {
   let initialFullName = "";
   let initialCompanyName = "";
@@ -15,6 +15,7 @@ export default async function WelcomePage({
   const params = await searchParams;
   const devPreview = process.env.NODE_ENV !== "production" && params?.preview === "1";
   const replay = params?.replay === "1";
+  const fromSignup = params?.fromSignup === "1";
 
   if (hasSupabaseEnv() && !devPreview) {
     const supabase = await getSupabaseServerClient();
@@ -57,8 +58,14 @@ export default async function WelcomePage({
       initialCompanyName = company?.name ?? initialCompanyName;
       initialLogoUrl = company?.logo_url ?? "";
     }
+
+    if (fromSignup) {
+      initialFullName = "";
+      initialCompanyName = "";
+      initialLogoUrl = "";
+    }
   } else {
-    initialCompanyName = "Compagnie demo";
+    initialCompanyName = fromSignup ? "" : "Compagnie demo";
   }
 
   return (
@@ -66,6 +73,7 @@ export default async function WelcomePage({
       initialCompanyName={initialCompanyName}
       initialFullName={initialFullName}
       initialLogoUrl={initialLogoUrl}
+      fromSignup={fromSignup}
       replay={replay}
     />
   );

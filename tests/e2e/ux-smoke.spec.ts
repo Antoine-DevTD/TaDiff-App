@@ -43,7 +43,14 @@ test.describe("parcours webinaire", () => {
       await page.setViewportSize(viewport);
       await page.goto("/demo-signup");
       await expect(page.getByRole("heading", { name: "Créons votre espace compagnie." })).toBeVisible();
-      await expect(page.getByLabel("Adresse email")).toHaveValue("demo_webinaire@yopmail.com");
+      await expect(page.getByLabel("Prénom et nom")).toHaveValue("");
+      await expect(page.getByLabel("Nom de la compagnie")).toHaveValue("");
+      await expect(page.getByLabel("Adresse email")).toHaveValue("");
+      await page.getByLabel("Prénom et nom").fill("Titouan Laporte");
+      await page.getByLabel("Nom de la compagnie").fill("Compagnie de l'Estran");
+      await page.getByLabel("Adresse email").fill("demo_webinaire@yopmail.com");
+      await page.getByLabel("Mot de passe").fill("demonstration");
+      await page.getByLabel(/J'accepte les conditions/).check();
       await page.getByRole("button", { name: "Créer mon espace" }).click();
       await expect(page.getByRole("heading", { name: "Bienvenue dans TaDiff" })).toBeVisible();
       await page.waitForURL(/welcome\?replay=1&fromSignup=1/);
@@ -57,7 +64,7 @@ test.describe("parcours webinaire", () => {
       await expectNoHorizontalOverflow(page);
 
       await page.getByRole("button", { name: "Continuer" }).click();
-      await page.getByPlaceholder("Prenom Nom").fill("Camille Martin");
+      await expect(page.getByPlaceholder("Prenom Nom")).toHaveValue("Titouan Laporte");
       await page.getByRole("button", { name: "Continuer" }).click();
       await page.getByRole("button", { name: "Continuer" }).click();
       await expect(page.getByRole("button", { name: /Déposer une image ici/ })).toBeVisible();

@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ArrowRight, Building2, ImageIcon, Sparkles, Theater, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   completeWelcomeOnboarding,
   type WelcomeOnboardingValues,
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { PosterUploadField } from "@/components/shows/poster-upload-field";
 import { WilliamStage } from "@/components/onboarding/william-stage";
 import { tourStorageKey } from "@/components/tour/guided-tour";
+import { demoSignupProfileStorageKey } from "@/lib/demo-webinar";
 import { cn } from "@/lib/utils";
 
 type WelcomeStep = "hello" | "person" | "company" | "logo" | "show";
@@ -22,8 +23,10 @@ export function WelcomeOnboarding({
   initialCompanyName,
   initialFullName,
   initialLogoUrl,
+  fromSignup = false,
   replay = false,
 }: {
+  fromSignup?: boolean;
   initialCompanyName: string;
   initialFullName: string;
   initialLogoUrl: string;
@@ -40,6 +43,38 @@ export function WelcomeOnboarding({
     replay,
     showReadiness: "ready",
   });
+
+  useEffect(() => {
+    if (!fromSignup) return;
+
+    const storedProfile = window.sessionStorage.getItem(demoSignupProfileStorageKey);
+    if (!storedProfile) return;
+
+    try {
+      const parsed = JSON.parse(storedProfile) as {
+        companyName?: unknown;
+        fullName?: unknown;
+      };
+      const synchronization = window.setTimeout(() => {
+        setValues((current) => ({
+          ...current,
+          companyName:
+            typeof parsed.companyName === "string" && parsed.companyName.trim()
+              ? parsed.companyName.trim()
+              : current.companyName,
+          fullName:
+            typeof parsed.fullName === "string" && parsed.fullName.trim()
+              ? parsed.fullName.trim()
+              : current.fullName,
+        }));
+      }, 0);
+      window.sessionStorage.removeItem(demoSignupProfileStorageKey);
+      return () => window.clearTimeout(synchronization);
+    } catch {
+      // Une valeur de session invalide ne doit jamais bloquer l'accueil.
+      window.sessionStorage.removeItem(demoSignupProfileStorageKey);
+    }
+  }, [fromSignup]);
 
   const currentStep = steps[stepIndex];
   const progress = Math.round(((stepIndex + 1) / steps.length) * 100);
