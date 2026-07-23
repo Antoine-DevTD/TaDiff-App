@@ -55,6 +55,7 @@ Derniere verification : 23 juillet 2026.
 - La migration `056_exploitation_performance_status.sql` ajoute le statut individuel programmee/annulee des representations. Elle doit etre appliquee avant d'utiliser l'annulation depuis Diffuser.
 - La migration `057_default_reference_grants.sql` initialise automatiquement les 10 dispositifs de référence à la création ou à la prochaine initialisation d'un espace. Elle doit être appliquée avant de retirer définitivement l'import manuel.
 - La migration `058_reset_webinar_demo_workspace.sql` ajoute la remise à zéro transactionnelle réservée au compte `demo_webinaire`. Elle dépend de la migration `057`.
+- La migration `059_repair_webinar_demo_reset.sql` rend cette remise à zéro compatible avec une base où certains modules optionnels, comme `calendar_events`, ne sont pas présents.
 
 ## Qualite
 

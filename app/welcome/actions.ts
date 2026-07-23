@@ -103,10 +103,13 @@ export async function resetWebinarDemoWorkspace(): Promise<{
   const { error: resetError } = await supabase.rpc("reset_webinar_demo_workspace");
 
   if (resetError) {
+    const migrationRequired =
+      resetError.message.includes("schema cache") ||
+      resetError.message.includes("does not exist");
     return {
       ok: false,
-      message: resetError.message.includes("schema cache")
-        ? "Appliquez les migrations 057 et 058 avant de relancer la démonstration."
+      message: migrationRequired
+        ? "Appliquez les migrations 057 à 059 avant de relancer la démonstration."
         : resetError.message,
     };
   }
