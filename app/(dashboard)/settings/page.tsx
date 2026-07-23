@@ -98,7 +98,8 @@ export default async function SettingsPage() {
           <div>
             <p className="text-base font-semibold">Parcours du webinaire</p>
             <p className="mt-1 text-sm text-muted">
-              Rejouez le parcours depuis l&apos;inscription, puis relancez l&apos;accueil de William et la visite guidée sans supprimer les données de démonstration.
+              Rejouez le parcours depuis l&apos;inscription. Les spectacles du compte sont retirés
+              avant de relancer l&apos;accueil de William et la visite guidée.
             </p>
           </div>
           <ButtonLink href="/demo-signup">Relancer la démonstration complète</ButtonLink>

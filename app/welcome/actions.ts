@@ -22,6 +22,85 @@ export type WelcomeOnboardingResult = {
   nextPath: string;
 };
 
+export async function resetWebinarDemoShows(): Promise<{
+  ok: boolean;
+  message: string;
+}> {
+  if (!hasSupabaseEnv() || process.env.TADIFF_E2E_MODE === "playwright-local") {
+    return { ok: true, message: "Espace de démonstration réinitialisé." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || user.email?.toLowerCase() !== demoWebinarEmail) {
+    return {
+      ok: false,
+      message: "La réinitialisation est réservée au compte du webinaire.",
+    };
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError || !profile?.company_id) {
+    return {
+      ok: false,
+      message: profileError?.message ?? "Espace de démonstration introuvable.",
+    };
+  }
+
+  const { data: shows, error: showsError } = await supabase
+    .from("shows")
+    .select("id")
+    .eq("company_id", profile.company_id);
+
+  if (showsError) {
+    return { ok: false, message: showsError.message };
+  }
+
+  for (const show of shows ?? []) {
+    const storagePrefix = `${profile.company_id}/${show.id}`;
+    const { data: storedFiles } = await supabase.storage
+      .from("documents")
+      .list(storagePrefix, { limit: 1000 });
+
+    if (storedFiles?.length) {
+      await supabase.storage
+        .from("documents")
+        .remove(storedFiles.map((file) => `${storagePrefix}/${file.name}`));
+    }
+  }
+
+  const { error: deleteError } = await supabase
+    .from("shows")
+    .delete()
+    .eq("company_id", profile.company_id);
+
+  if (deleteError) {
+    return { ok: false, message: deleteError.message };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/shows");
+  revalidatePath("/pipeline");
+  revalidatePath("/reminders");
+  revalidatePath("/documents");
+  revalidatePath("/subventions");
+  revalidatePath("/calendar");
+  revalidatePath("/finances");
+
+  return {
+    ok: true,
+    message: `${shows?.length ?? 0} spectacle(s) retiré(s) avant la démonstration.`,
+  };
+}
+
 export async function completeWelcomeOnboarding(
   values: WelcomeOnboardingValues,
 ): Promise<WelcomeOnboardingResult> {

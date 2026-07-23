@@ -13,7 +13,7 @@ Derniere verification : 23 juillet 2026.
 
 - Landing, reservation beta, authentification et recuperation de mot de passe.
 - Le compte du webinaire dispose d'une inscription simulée protégée sur `/demo-signup`, suivie de la préparation animée de l'espace puis du replay de l'accueil William. Elle ne crée aucun utilisateur et ne rouvre pas les inscriptions publiques.
-- Le parcours simulé du webinaire repart avec un formulaire vierge et ne réaffiche pas les informations déjà enregistrées sur le compte de démonstration.
+- Le parcours simulé du webinaire repart avec un formulaire vierge, ne réaffiche pas les informations déjà enregistrées et supprime les spectacles du compte webinaire avant l'accueil William.
 - Welcome accepte le logo de la compagnie par sélection ou glisser-déposer JPG, PNG et WebP, le redimensionne côté navigateur, puis l'affiche dans le menu de compte en haut à droite du cockpit.
 - Cockpit, spectacles, documents, contacts, diffusion, agenda, finances, dossiers et administration.
 - Import de contacts, donnees de demonstration, visite guidee et premiers flux William.

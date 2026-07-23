@@ -3,6 +3,7 @@
 import { Check, LoaderCircle, LockKeyhole, Mail, Theater, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { resetWebinarDemoShows } from "@/app/welcome/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { demoSignupProfileStorageKey } from "@/lib/demo-webinar";
@@ -16,7 +17,9 @@ const preparationSteps = [
 export function DemoSignupForm() {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [preparationStep, setPreparationStep] = useState(0);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isCreating) return;
@@ -34,9 +37,19 @@ export function DemoSignupForm() {
     };
   }, [isCreating, router]);
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setResetError(null);
+    setIsResetting(true);
     const formData = new FormData(event.currentTarget);
+    const reset = await resetWebinarDemoShows();
+
+    if (!reset.ok) {
+      setResetError(reset.message);
+      setIsResetting(false);
+      return;
+    }
+
     window.sessionStorage.setItem(
       demoSignupProfileStorageKey,
       JSON.stringify({
@@ -45,6 +58,7 @@ export function DemoSignupForm() {
       }),
     );
     setPreparationStep(0);
+    setIsResetting(false);
     setIsCreating(true);
   }
 
@@ -148,7 +162,15 @@ export function DemoSignupForm() {
           <span>J&apos;accepte les conditions d&apos;utilisation et la politique de confidentialité.</span>
         </label>
 
-        <Button type="submit" className="w-full">Créer mon espace</Button>
+        {resetError ? (
+          <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
+            {resetError}
+          </p>
+        ) : null}
+
+        <Button type="submit" className="w-full" disabled={isResetting}>
+          {isResetting ? "Préparation de l'espace..." : "Créer mon espace"}
+        </Button>
       </form>
     </section>
   );
