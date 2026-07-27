@@ -43,7 +43,7 @@ export function WilliamRequestPanel({
         </div>
         <button
           aria-label="Fermer la demande à William"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted transition hover:bg-panel hover:text-foreground"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-muted transition hover:bg-panel hover:text-foreground"
           type="button"
           onClick={onCancel}
         >

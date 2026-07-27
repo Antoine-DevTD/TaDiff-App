@@ -7,7 +7,11 @@ const eslintConfig = [
   {
     ignores: [
       "node_modules/**",
+      ".agents/**",
+      ".claude/**",
       ".codex/**",
+      ".github/**",
+      ".impeccable/**",
       ".next/**",
       "out/**",
       "build/**",

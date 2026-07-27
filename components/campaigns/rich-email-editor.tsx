@@ -104,7 +104,7 @@ export function RichEmailEditor({
       <EditorContent
         aria-label={editable ? "Corps du message" : "Apercu du message"}
         className={cn(
-          "email-editor min-h-72 px-6 py-5 text-[15px] leading-7 outline-none",
+          "email-editor min-h-72 px-6 py-5 text-sm leading-7 outline-none",
           !editable && "bg-white text-slate-900",
         )}
         editor={editor}
@@ -115,7 +115,7 @@ export function RichEmailEditor({
 
 function ToolbarButton({ children, label, active, disabled, onClick }: { children: ReactNode; label: string; active: boolean; disabled?: boolean; onClick: () => void }) {
   return (
-    <Button aria-label={label} className={cn("h-9 min-h-9 w-9 p-0", active && "bg-accent !text-white")} disabled={disabled} title={label} type="button" variant="ghost" onClick={onClick}>
+    <Button aria-label={label} className={cn("h-11 min-h-11 w-11 p-0", active && "bg-accent !text-white")} disabled={disabled} title={label} type="button" variant="ghost" onClick={onClick}>
       <span className="[&>svg]:h-4 [&>svg]:w-4">{children}</span>
     </Button>
   );

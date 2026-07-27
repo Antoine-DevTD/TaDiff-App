@@ -441,7 +441,7 @@ function VolumeCell({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-md border border-border bg-panel px-2 py-1.5">
       <p className="text-base font-semibold">{value}</p>
-      <p className="text-[11px] text-muted">{label}</p>
+      <p className="text-xs text-muted">{label}</p>
     </div>
   );
 }

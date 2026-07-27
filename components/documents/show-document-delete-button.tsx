@@ -23,7 +23,7 @@ export function ShowDocumentDeleteButton({
         aria-label="Supprimer le document"
         className={cn(
           "text-sm font-medium text-danger/80 transition hover:text-danger",
-          compact && "inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-danger/10",
+          compact && "inline-flex h-11 w-11 items-center justify-center rounded-md hover:bg-danger/10",
         )}
         title="Supprimer le document"
         type="button"

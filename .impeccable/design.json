@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-24T23:56:51+02:00",
+  "title": "Design System: TaDiff",
+  "extensions": {
+    "colorMeta": {
+      "bleu-conduite": {
+        "role": "primary",
+        "displayName": "Bleu de conduite",
+        "canonical": "#1d4ed8",
+        "tonalRamp": [
+          "oklch(22% 0.11 264)",
+          "oklch(31% 0.16 264)",
+          "oklch(40% 0.20 264)",
+          "oklch(49% 0.22 264)",
+          "oklch(59% 0.19 264)",
+          "oklch(72% 0.13 264)",
+          "oklch(85% 0.07 264)",
+          "oklch(95% 0.02 264)"
+        ]
+      },
+      "encre-scene": {
+        "role": "neutral",
+        "displayName": "Encre de scène",
+        "canonical": "#0b1220",
+        "tonalRamp": [
+          "oklch(15% 0.025 260)",
+          "oklch(25% 0.025 260)",
+          "oklch(36% 0.022 260)",
+          "oklch(48% 0.020 260)",
+          "oklch(61% 0.018 260)",
+          "oklch(73% 0.014 260)",
+          "oklch(85% 0.010 260)",
+          "oklch(95% 0.005 260)"
+        ]
+      },
+      "papier-repetition": {
+        "role": "neutral",
+        "displayName": "Papier de répétition",
+        "canonical": "#e8eef7",
+        "tonalRamp": [
+          "oklch(18% 0.025 255)",
+          "oklch(30% 0.025 255)",
+          "oklch(42% 0.023 255)",
+          "oklch(54% 0.020 255)",
+          "oklch(66% 0.018 255)",
+          "oklch(78% 0.015 255)",
+          "oklch(89% 0.012 255)",
+          "oklch(96% 0.009 255)"
+        ]
+      },
+      "validation": {
+        "role": "secondary",
+        "displayName": "Validation",
+        "canonical": "#15803d",
+        "tonalRamp": [
+          "oklch(18% 0.07 150)",
+          "oklch(29% 0.10 150)",
+          "oklch(40% 0.13 150)",
+          "oklch(51% 0.15 150)",
+          "oklch(62% 0.13 150)",
+          "oklch(73% 0.10 150)",
+          "oklch(84% 0.06 150)",
+          "oklch(95% 0.02 150)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Titres de landing uniquement."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Ouvertures de sections publiques et écrans majeurs."
+      },
+      "title": {
+        "displayName": "Titre opérationnel",
+        "purpose": "Pages, fenêtres et blocs de travail."
+      },
+      "body": {
+        "displayName": "Corps",
+        "purpose": "Formulaires, listes et données."
+      },
+      "label": {
+        "displayName": "Repère",
+        "purpose": "Sourcils, catégories et micro-labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "repos-leger",
+        "value": "0 1px 3px rgb(11 18 32 / 0.10), 0 1px 2px -1px rgb(11 18 32 / 0.10)",
+        "purpose": "Carte, bouton ou contrôle posé sur le papier."
+      },
+      {
+        "name": "surelevation-fonctionnelle",
+        "value": "0 20px 25px -5px rgb(11 18 32 / 0.14), 0 8px 10px -6px rgb(11 18 32 / 0.10)",
+        "purpose": "Sidebar, menu ou fenêtre temporaire."
+      }
+    ],
+    "motion": [
+      {
+        "name": "etat-standard",
+        "value": "200ms ease",
+        "purpose": "Survol, sélection et changement d'état."
+      },
+      {
+        "name": "william-halo",
+        "value": "2400ms ease-out infinite",
+        "purpose": "Signal ponctuel de disponibilité de William, désactivé avec prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Commande principale d'un écran ou d'une fenêtre.",
+      "html": "<button class=\"ds-btn-primary\">Enregistrer</button>",
+      "css": ".ds-btn-primary { min-height: 40px; border: 0; border-radius: 6px; padding: 8px 16px; background: var(--color-accent, #1d4ed8); color: #fff; font: 500 14px/1.5 Inter, sans-serif; box-shadow: 0 1px 3px rgb(11 18 32 / .10); transition: background 200ms ease; } .ds-btn-primary:hover { background: var(--color-accent-strong, #1e40af); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-accent, #1d4ed8); outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton secondaire",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Commande complémentaire sans concurrencer l'action principale.",
+      "html": "<button class=\"ds-btn-secondary\">Voir les détails</button>",
+      "css": ".ds-btn-secondary { min-height: 40px; border: 1px solid var(--color-border, #c3d2ea); border-radius: 6px; padding: 8px 16px; background: var(--color-panel, #fff); color: var(--color-foreground, #0f172a); font: 500 14px/1.5 Inter, sans-serif; transition: background 200ms ease; } .ds-btn-secondary:hover { background: var(--color-panel-strong, #eef2f9); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-accent, #1d4ed8); outline-offset: 2px; }"
+    },
+    {
+      "name": "Champ de saisie",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Saisie stable et lisible pour les flux opérationnels.",
+      "html": "<label class=\"ds-field-label\">Nom du spectacle<input class=\"ds-field\" placeholder=\"Saisir un nom\"></label>",
+      "css": ".ds-field-label { display: grid; gap: 6px; color: var(--color-foreground, #0f172a); font: 600 13px/1.4 Inter, sans-serif; } .ds-field { min-height: 44px; width: 100%; border: 1px solid var(--color-border, #c3d2ea); border-radius: 6px; padding: 0 12px; background: var(--color-panel, #fff); color: var(--color-foreground, #0f172a); font: 500 14px/1.5 Inter, sans-serif; outline: none; transition: border-color 200ms ease, box-shadow 200ms ease; } .ds-field:focus { border-color: var(--color-accent, #1d4ed8); box-shadow: 0 0 0 3px rgb(29 78 216 / .15); }"
+    },
+    {
+      "name": "Carte de travail",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Conteneur pour un objet ou un outil réellement encadré.",
+      "html": "<article class=\"ds-card\"><p class=\"ds-card-kicker\">PROCHAINE ACTION</p><h3>Envoyer le dossier artistique</h3><p>À faire avant vendredi.</p></article>",
+      "css": ".ds-card { border: 1px solid var(--color-border, #c3d2ea); border-radius: 8px; padding: 20px; background: var(--color-panel, #fff); color: var(--color-foreground, #0f172a); box-shadow: 0 1px 3px rgb(11 18 32 / .10); font-family: Inter, sans-serif; } .ds-card h3 { margin: 8px 0 0; font-size: 16px; line-height: 1.35; } .ds-card p { margin: 8px 0 0; color: var(--color-muted, #4f5a6b); font-size: 14px; } .ds-card .ds-card-kicker { margin: 0; color: var(--color-muted, #4f5a6b); font-size: 11px; font-weight: 600; letter-spacing: .16em; } .ds-card:hover { border-color: var(--color-accent, #1d4ed8); } .ds-card:focus-within { outline: 2px solid var(--color-accent, #1d4ed8); outline-offset: 2px; }"
+    },
+    {
+      "name": "Badge de validation",
+      "kind": "chip",
+      "description": "Statut court et stable, distinct d'une action.",
+      "html": "<span class=\"ds-badge-success\">Prêt</span>",
+      "css": ".ds-badge-success { display: inline-flex; align-items: center; border-radius: 9999px; padding: 4px 10px; background: rgb(21 128 61 / .10); color: var(--color-success, #15803d); font: 500 12px/1.3 Inter, sans-serif; }"
+    },
+    {
+      "name": "Navigation active",
+      "kind": "nav",
+      "description": "Destination courante de la sidebar compagnie.",
+      "html": "<a class=\"ds-nav-active\" href=\"#\"><span class=\"ds-nav-icon\" aria-hidden=\"true\">✓</span><span><strong>Aujourd'hui</strong><small>Priorités et actions</small></span></a>",
+      "css": ".ds-nav-active { position: relative; display: flex; min-height: 56px; align-items: center; gap: 12px; overflow: hidden; border: 1px solid rgb(255 255 255 / .15); border-radius: 6px; padding: 10px 12px; background: rgb(255 255 255 / .16); color: #fff; font-family: Inter, sans-serif; text-decoration: none; } .ds-nav-active::before { content: ''; position: absolute; inset-block: 0; left: 0; width: 4px; background: #fff; } .ds-nav-active strong { display: block; font-size: 14px; } .ds-nav-active small { display: block; margin-top: 2px; color: rgb(255 255 255 / .58); font-size: 11px; } .ds-nav-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 6px; background: #fff; color: var(--color-ink, #0b1220); } .ds-nav-active:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Fenêtre de travail",
+      "kind": "custom",
+      "description": "Dialogue structuré pour une tâche qui suspend momentanément le cockpit.",
+      "html": "<section class=\"ds-dialog\" role=\"dialog\" aria-labelledby=\"ds-dialog-title\"><header><p>DIFFUSION</p><h2 id=\"ds-dialog-title\">Ajouter une diffusion</h2></header><div class=\"ds-dialog-body\">Reliez un spectacle à un lieu.</div></section>",
+      "css": ".ds-dialog { width: min(720px, 100%); overflow: hidden; border: 1px solid var(--color-border, #c3d2ea); border-radius: 8px; background: var(--color-panel, #fff); color: var(--color-foreground, #0f172a); box-shadow: 0 20px 25px -5px rgb(11 18 32 / .14); font-family: Inter, sans-serif; } .ds-dialog header { border-bottom: 1px solid var(--color-border, #c3d2ea); padding: 16px 20px; } .ds-dialog header p { margin: 0; color: var(--color-muted, #4f5a6b); font-size: 11px; font-weight: 600; letter-spacing: .16em; } .ds-dialog h2 { margin: 4px 0 0; font-size: 20px; line-height: 1.3; } .ds-dialog-body { padding: 20px; color: var(--color-muted, #4f5a6b); font-size: 14px; } .ds-dialog:focus-within { outline: 2px solid var(--color-accent, #1d4ed8); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le carnet de production éclairé",
+    "overview": "TaDiff transforme la densité administrative d'une compagnie en un espace de travail clair, ordonné et humain. L'interface évoque un carnet de production tenu avec soin : un papier légèrement bleuté, une encre sombre, des lignes fines pour structurer et un bleu de conduite réservé aux décisions et aux états actifs.\n\nLe cockpit privilégie la précision et la lecture rapide. Les surfaces sont sobres, les composants sont compacts sans être étroits et la hiérarchie vient d'abord de l'alignement, de la typographie et des séparations. La personnalité culturelle apparaît dans les détails de scène, les affiches, le vocabulaire et les interactions de William, jamais dans une décoration qui gêne le travail.",
+    "keyCharacteristics": [
+      "Clarté d'un carnet de travail bien tenu.",
+      "Contraste net entre papier, encre et bleu d'action.",
+      "Densité utile, avec une action principale immédiatement repérable.",
+      "Détails théâtraux discrets plutôt qu'habillage spectaculaire.",
+      "États, risques et validations compréhensibles sans expertise technique."
+    ],
+    "rules": [
+      {
+        "name": "The Blue Pencil Rule",
+        "body": "Le bleu désigne une action, une sélection ou un point d'attention. Il ne sert pas à colorer toutes les surfaces.",
+        "section": "colors"
+      },
+      {
+        "name": "The Status Truth Rule",
+        "body": "Les couleurs de statut conservent un sens stable : vert pour confirmé, ambre pour attention et rouge pour erreur ou destruction.",
+        "section": "colors"
+      },
+      {
+        "name": "The Operational Scale Rule",
+        "body": "Les titres du cockpit restent proportionnés à leur outil ; la typographie de hero ne descend pas dans les tableaux, fenêtres ou panneaux compacts.",
+        "section": "typography"
+      },
+      {
+        "name": "The Numeric Rhythm Rule",
+        "body": "Les montants, dates et indicateurs utilisent font-variant-numeric: tabular-nums.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Working Surface Rule",
+        "body": "Une section normale ne flotte pas au-dessus de la page. L'ombre indique une vraie superposition ou une interaction.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do partir du Papier de répétition, de l'Encre de scène et du Bleu de conduite pour toute nouvelle surface.",
+      "Do réserver la couleur forte aux actions, sélections et états qui ont un sens.",
+      "Do utiliser les icônes Lucide existantes et conserver une alternative textuelle ou un tooltip lorsqu'elles sont ambiguës.",
+      "Do maintenir des cibles interactives d'au moins 40px, et 44px pour les contrôles mobiles ou isolés.",
+      "Do privilégier les listes, bandes et grilles non encadrées lorsqu'une carte n'apporte aucune structure utile.",
+      "Do prévoir les états vide, chargement, erreur, focus clavier et réduction des animations."
+    ],
+    "donts": [
+      "Don't transformer TaDiff en dashboard SaaS générique couvert de cartes décoratives.",
+      "Don't empiler une carte dans une autre carte ou faire flotter chaque section.",
+      "Don't employer des dégradés, halos ou animations sans fonction ; le bandeau bêta et les interactions de William sont des usages ciblés.",
+      "Don't utiliser une couleur de statut pour deux significations métier différentes.",
+      "Don't masquer une action essentielle uniquement derrière un survol ou un clic droit.",
+      "Don't utiliser les autres thèmes théâtre comme nouvelle norme sans décision produit explicite."
+    ]
+  }
+}

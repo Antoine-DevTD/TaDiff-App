@@ -235,7 +235,7 @@ export function ReminderForm({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="text-sm font-medium" htmlFor="reminder-title">Action</label>
               <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-border bg-panel px-3 text-xs font-medium text-accent transition hover:border-accent/50 hover:bg-accent/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" disabled={!selectedShow || isWilliamPending} type="button" onClick={() => setWilliamOpen((value) => !value)}>
-                <span className="grid h-5 w-5 place-items-center rounded bg-ink text-[10px] font-semibold text-white">T</span>
+                <span className="grid h-5 w-5 place-items-center rounded bg-ink text-xs font-semibold text-white">T</span>
                 Demander à William
               </button>
             </div>

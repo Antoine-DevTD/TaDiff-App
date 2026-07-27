@@ -660,6 +660,11 @@ Ces couts doivent pouvoir etre lisses dans :
 
 Connecter un compte bancaire est faisable, mais il ne faut pas l'implementer banque par banque.
 
+Decision du 27 juillet 2026 : retenir Powens comme premiere piste d'integration,
+mais reporter cette connexion apres la sortie beta du 6 aout. La beta conserve
+la saisie manuelle du solde et des frais fixes afin de ne pas ajouter un
+traitement financier sensible pendant la phase de stabilisation.
+
 Approche recommandee :
 
 1. MVP : import CSV bancaire + saisie simple des frais fixes.

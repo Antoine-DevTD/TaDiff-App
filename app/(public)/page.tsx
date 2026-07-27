@@ -319,7 +319,7 @@ function CockpitPreview() {
 function PreviewMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="border border-border bg-panel p-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
       <p className="mt-2 text-sm font-semibold">{value}</p>
     </div>
   );

@@ -30,7 +30,7 @@ export function AccountMenu({ companyLogoUrl = "" }: { companyLogoUrl?: string }
         type="button"
         aria-label="Menu du compte"
         onClick={() => setMenuOpen((value) => !value)}
-        className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-border bg-[#1d1d1f] shadow-sm shadow-ink/10 transition hover:scale-[1.03]"
+        className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-border bg-[#1d1d1f] shadow-sm shadow-ink/10 transition hover:scale-[1.03]"
       >
         {companyLogoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element

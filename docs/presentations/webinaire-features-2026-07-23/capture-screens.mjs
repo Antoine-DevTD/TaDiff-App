@@ -17,11 +17,17 @@ async function shot(name, path, action) {
   await page.screenshot({ path: resolve(output, `${name}.png`), animations: "disabled" });
 }
 
+await shot("00-inscription", "/demo-signup");
+await shot("00-welcome", "/welcome?preview=1");
 await shot("01-cockpit", "/dashboard");
 await shot("02-spectacles", "/shows");
 await shot("03-spectacle", "/shows/show-1");
 await shot("04-dossier", "/shows/show-1?tab=files");
 await shot("05-actions", "/reminders");
+await shot("05-action-dialog", "/reminders", async (current) => {
+  await current.getByRole("button", { name: "Ajouter une action", exact: true }).first().click();
+  await current.getByRole("dialog", { name: "Que faut-il faire ?" }).waitFor();
+});
 await shot("06-contacts", "/contacts");
 await shot("07-lieux-carte", "/contacts", async (current) => {
   await current.getByRole("tab", { name: /Lieux/ }).click();
@@ -46,6 +52,7 @@ await shot("11-calendrier", "/calendar");
 await shot("12-subventions", "/subventions");
 await shot("13-mecenat", "/mecenat");
 await shot("14-finances", "/finances");
+await shot("14-budget", "/shows/show-1?tab=budget");
 await shot("15-email", "/campaigns");
 await shot("16-william", "/dashboard", async (current) => {
   await current.getByRole("button", { name: "Ouvrir William" }).click();

@@ -149,7 +149,7 @@ export function AddressAutocomplete({
               </span>
             </button>
           ))}
-          <p className="border-t border-border bg-panel-strong/40 px-4 py-2 text-[11px] text-muted">
+          <p className="border-t border-border bg-panel-strong/40 px-4 py-2 text-xs text-muted">
             Adresses : Base Adresse Nationale, service IGN
           </p>
         </div>

@@ -119,14 +119,27 @@ html[data-theatre-theme="regie"] {
   box-sizing: border-box;
 }
 
-/* William : petit rebond + halo pulsant pour attirer l'oeil sans agacer. */
-@keyframes william-float {
+/* William : mouvements courts et fonctionnels, sans rebond décoratif. */
+@keyframes william-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes william-thinking {
   0%,
   100% {
-    transform: translateY(0);
+    opacity: 0.35;
+    transform: translateY(0) scale(0.82);
   }
-  50% {
-    transform: translateY(-5px);
+  45% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1);
   }
 }
 
@@ -143,7 +156,16 @@ html[data-theatre-theme="regie"] {
 }
 
 .william-bubble-button {
-  animation: william-halo 2.4s ease-out infinite;
+  animation: william-halo 2.4s ease-out 3;
+}
+
+.william-panel-enter {
+  animation: william-panel-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: bottom right;
+}
+
+.william-thinking-dot {
+  animation: william-thinking 900ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 @keyframes destructive-particle {
@@ -189,7 +211,9 @@ html[data-theatre-theme="regie"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .william-bubble-button {
+  .william-bubble-button,
+  .william-panel-enter,
+  .william-thinking-dot {
     animation: none;
   }
 }

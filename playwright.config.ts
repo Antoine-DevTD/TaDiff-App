@@ -24,7 +24,7 @@ export default defineConfig({
       ...process.env,
       TADIFF_E2E_MODE: "playwright-local",
     },
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: process.env.TADIFF_REUSE_TEST_SERVER === "1",
     timeout: 120_000,
     url: "http://127.0.0.1:3100",
   },

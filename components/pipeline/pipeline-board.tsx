@@ -170,7 +170,7 @@ export function PipelineBoard({
               >
                 <Icon aria-hidden="true" className="h-4 w-4" />
                 {item.label}
-                <span className="rounded-full bg-panel-strong px-1.5 py-0.5 text-[11px]">{count}</span>
+                <span className="rounded-full bg-panel-strong px-1.5 py-0.5 text-xs">{count}</span>
               </button>
             );
           })}
@@ -473,7 +473,7 @@ function DiffusionFocus({ contacts, confirmedPerformances, deal, disabled, onDel
 }
 
 function InfoCell({ label, value }: { label: string; value: string }) {
-  return <div className="min-w-0 bg-panel p-3"><p className="text-[11px] text-muted">{label}</p><p className="mt-1 truncate text-sm font-semibold">{value}</p></div>;
+  return <div className="min-w-0 bg-panel p-3"><p className="text-xs text-muted">{label}</p><p className="mt-1 truncate text-sm font-semibold">{value}</p></div>;
 }
 
 function StatusCount({ label, value }: { label: string; value: number }) {

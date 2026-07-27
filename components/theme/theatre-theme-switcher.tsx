@@ -80,7 +80,7 @@ export function TheatreThemeSwitcher({ embedded = false }: { embedded?: boolean 
                 />
                 <span className="flex flex-col items-start leading-tight">
                   <span>{theme.name}</span>
-                  <span className={cn("hidden text-[11px]", active ? "text-white/75" : "text-muted", "sm:block")}>
+                  <span className={cn("hidden text-xs", active ? "text-white/75" : "text-muted", "sm:block")}>
                     {theme.layoutName}
                   </span>
                 </span>

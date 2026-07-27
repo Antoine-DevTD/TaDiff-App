@@ -6,6 +6,8 @@ import {
   ArrowUpDown,
   BellPlus,
   Building2,
+  ChevronLeft,
+  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   Mail,
@@ -26,6 +28,7 @@ import { useMemo, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
@@ -33,7 +36,6 @@ import {
 } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { deleteContacts } from "@/app/(dashboard)/actions";
-import { ContactEmailAssistant } from "@/components/contacts/contact-email-assistant";
 import { ContactImportPanel } from "@/components/contacts/contact-import-panel";
 import { ReminderForm } from "@/components/reminders/reminder-form";
 import { DestructiveActionDialog } from "@/components/ui/destructive-action-dialog";
@@ -46,6 +48,11 @@ import type { Contact, EmailTemplate, Show, ShowDocument } from "@/types";
 const VenueMap = dynamic(
   () => import("@/components/contacts/venue-map").then((module) => module.VenueMap),
   { loading: () => <div className="min-h-[620px] animate-pulse bg-panel-strong/55" />, ssr: false },
+);
+
+const ContactEmailAssistant = dynamic(
+  () => import("@/components/contacts/contact-email-assistant").then((module) => module.ContactEmailAssistant),
+  { ssr: false },
 );
 
 type ContactFilter = {
@@ -143,7 +150,13 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 50,
+      },
+    },
   });
 
   function selectFilter(filter: ContactFilter) {
@@ -219,7 +232,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-panel-strong text-muted transition hover:border-accent/40 hover:text-accent lg:hidden"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-border bg-panel-strong text-muted transition hover:border-accent/40 hover:text-accent lg:hidden"
                 onClick={() => setMobileFiltersOpen(true)}
                 aria-label="Ouvrir les filtres"
               >
@@ -253,7 +266,7 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
                   <SelectionAction danger icon={Trash2} label="Supprimer" onClick={() => setContactsToDelete(selectedContacts)} />
                   <button
                     aria-label="Annuler la sélection"
-                    className="grid h-9 w-9 place-items-center rounded-md text-muted transition hover:bg-panel hover:text-foreground"
+                    className="grid h-11 w-11 place-items-center rounded-md text-muted transition hover:bg-panel hover:text-foreground"
                     title="Annuler la sélection"
                     type="button"
                     onClick={() => setSelectedContactIds([])}
@@ -329,6 +342,36 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
                 ) : null}
               </tbody>
             </table>
+            {table.getPageCount() > 1 ? (
+              <nav
+                aria-label="Pagination des contacts"
+                className="sticky left-0 flex min-h-16 w-full items-center justify-between gap-4 border-t border-border bg-panel px-4"
+              >
+                <p className="text-xs text-muted">
+                  Page {table.getState().pagination.pageIndex + 1} sur {table.getPageCount()}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    aria-label="Page précédente"
+                    className="grid h-11 w-11 place-items-center rounded-md border border-border text-muted transition hover:border-accent/40 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                    disabled={!table.getCanPreviousPage()}
+                    type="button"
+                    onClick={() => table.previousPage()}
+                  >
+                    <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="Page suivante"
+                    className="grid h-11 w-11 place-items-center rounded-md border border-border text-muted transition hover:border-accent/40 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                    disabled={!table.getCanNextPage()}
+                    type="button"
+                    onClick={() => table.nextPage()}
+                  >
+                    <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                </div>
+              </nav>
+            ) : null}
           </div>
           )}
         </section>
@@ -381,15 +424,17 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
         ) : null}
       </Dialog>
 
-      <ContactEmailAssistant
-        selectedContacts={emailContacts}
-        contacts={activeContacts}
-        documents={documents}
-        shows={shows}
-        templates={templates}
-        open={emailContacts.length > 0}
-        onClose={() => setEmailContacts([])}
-      />
+      {emailContacts.length > 0 ? (
+        <ContactEmailAssistant
+          selectedContacts={emailContacts}
+          contacts={activeContacts}
+          documents={documents}
+          shows={shows}
+          templates={templates}
+          open
+          onClose={() => setEmailContacts([])}
+        />
+      ) : null}
 
       <ReminderForm
         key={reminderContacts.map((contact) => contact.id).join("-") || "closed"}
@@ -428,7 +473,7 @@ function ViewButton({ active, icon: Icon, label, onClick }: { active: boolean; i
   return (
     <button
       className={cn(
-        "inline-flex min-h-8 items-center gap-2 rounded px-3 text-sm font-medium transition",
+        "inline-flex min-h-11 items-center gap-2 rounded px-3 text-sm font-medium transition",
         active ? "bg-panel text-foreground shadow-sm" : "text-muted hover:text-foreground",
       )}
       type="button"
@@ -457,7 +502,7 @@ function SelectionAction({
   return (
     <button
       className={cn(
-        "inline-flex min-h-9 items-center gap-2 rounded-md px-3 text-xs font-semibold transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-40",
+        "inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-xs font-semibold transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-40",
         danger ? "text-danger" : "text-foreground",
       )}
       disabled={disabled}
@@ -510,25 +555,29 @@ function buildContactColumns({
     {
       id: "selection",
       header: () => (
-        <input
-          aria-label="Sélectionner tous les contacts visibles"
-          checked={allVisibleSelected}
-          className="h-4 w-4 accent-[var(--color-accent)]"
-          type="checkbox"
-          onChange={onToggleAll}
-        />
+        <label className="-m-3 inline-flex h-11 w-11 cursor-pointer items-center justify-center">
+          <input
+            aria-label="Sélectionner tous les contacts visibles"
+            checked={allVisibleSelected}
+            className="h-4 w-4 accent-[var(--color-accent)]"
+            type="checkbox"
+            onChange={onToggleAll}
+          />
+        </label>
       ),
       enableSorting: false,
       cell: ({ row }) => (
-        <input
-          aria-label={`Sélectionner ${row.original.name}`}
-          checked={selectedContactIds.includes(row.original.id)}
-          className="h-4 w-4 accent-[var(--color-accent)]"
-          title="Ajouter aux actions groupees"
-          type="checkbox"
-          onClick={(event) => event.stopPropagation()}
-          onChange={() => onToggleSelection(row.original)}
-        />
+        <label className="-m-3 inline-flex h-11 w-11 cursor-pointer items-center justify-center">
+          <input
+            aria-label={`Sélectionner ${row.original.name}`}
+            checked={selectedContactIds.includes(row.original.id)}
+            className="h-4 w-4 accent-[var(--color-accent)]"
+            title="Ajouter aux actions groupées"
+            type="checkbox"
+            onClick={(event) => event.stopPropagation()}
+            onChange={() => onToggleSelection(row.original)}
+          />
+        </label>
       ),
     },
     {
@@ -571,7 +620,7 @@ function buildContactColumns({
             row.original.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-accent/10 px-2 py-1 text-[11px] font-medium text-accent"
+                className="rounded-full bg-accent/10 px-2 py-1 text-xs font-medium text-accent"
               >
                 {tag}
               </span>
@@ -652,7 +701,7 @@ function ContactRowAction({
     <button
       type="button"
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-md text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
+        "inline-flex h-11 w-11 items-center justify-center rounded-md text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
         danger ? "hover:bg-danger/10 hover:text-danger" : "hover:bg-accent/10 hover:text-accent",
       )}
       onClick={(event) => {
@@ -872,7 +921,7 @@ function FilterGroup({
   return (
     <div className="space-y-1.5">
       {expanded ? (
-        <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+        <p className="px-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted">
           {label}
         </p>
       ) : null}
@@ -929,7 +978,7 @@ function SortableHeader({ label, onClick }: { label: string; onClick: () => void
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase transition hover:text-foreground"
+      className="relative inline-flex items-center gap-1.5 text-xs font-semibold uppercase transition after:absolute after:-inset-x-2 after:-inset-y-3 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       onClick={onClick}
     >
       {label}

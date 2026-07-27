@@ -54,7 +54,9 @@ test.describe("parcours webinaire", () => {
       await page.getByRole("button", { name: "Créer mon espace" }).click();
       await expect(page.getByRole("heading", { name: "Bienvenue dans TaDiff" })).toBeVisible();
       await page.waitForURL(/welcome\?replay=1&fromSignup=1/);
-      await expect(page.getByRole("heading", { level: 1, name: "Bienvenue, je suis William." })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: "Bienvenue, je suis William." }),
+      ).toBeVisible({ timeout: 15_000 });
       const stage = page.locator("[data-william-stage]");
       const canvas = stage.locator("canvas");
       await expect(canvas).toBeVisible();

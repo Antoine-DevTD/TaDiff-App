@@ -34,6 +34,8 @@ pnpm-debug.log*
 # local agent packages and workspace files
 /.codex/
 /TaDiff.code-workspace
+/.claude/settings.local.json
+/.impeccable/live/
 
 # private source material kept outside version control
 /01 - Contrat/

@@ -59,7 +59,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
             <Link href="/dashboard" className="text-lg font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
               TaDiff
             </Link>
-            <p className="truncate text-[11px] font-medium uppercase tracking-[0.16em] text-white/55">
+            <p className="truncate text-xs font-medium uppercase tracking-[0.16em] text-white/55">
               Cockpit compagnie
             </p>
           </div>
@@ -138,7 +138,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
               href={section.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-medium text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
+                "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-xs font-medium text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
                 active && "bg-accent/10 text-accent",
               )}
             >
@@ -153,7 +153,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
           aria-label="Ouvrir les autres rubriques"
           onClick={() => setMoreOpen(true)}
           className={cn(
-            "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-medium text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
+            "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-xs font-medium text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
             (!mobileSections.some((section) => section.id === activeSection.id) ||
               pathname.startsWith("/settings")) &&
               "bg-accent/10 text-accent",
@@ -243,7 +243,7 @@ function AdminSidebar({ pathname }: { pathname: string }) {
           <Link href="/admin" className="text-lg font-semibold">
             TaDiff
           </Link>
-          <p className="text-[11px] uppercase tracking-[0.16em] text-white/[0.35]">Console interne</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-white/[0.35]">Console interne</p>
         </div>
       </div>
       <nav aria-label="Administration" className="flex-1 space-y-1 overflow-y-auto p-3">

@@ -161,7 +161,7 @@ export function DocumentSlot({
             {previewUrl || fileUrl ? (
               <a
                 aria-label={`Visualiser ${typeLabel}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition hover:bg-panel hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted transition hover:bg-panel hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                 href={previewUrl || fileUrl}
                 rel="noreferrer"
                 target="_blank"
@@ -173,7 +173,7 @@ export function DocumentSlot({
             {fileUrl ? (
               <a
                 aria-label={`Télécharger ${typeLabel}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition hover:bg-panel hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted transition hover:bg-panel hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                 href={fileUrl}
                 title={`Télécharger ${typeLabel}`}
               >
@@ -185,7 +185,7 @@ export function DocumentSlot({
             ) : (
               <button
                 aria-label={`Ajouter ${typeLabel}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition hover:bg-panel hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted transition hover:bg-panel hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                 disabled={isUploading}
                 title={`Ajouter ${typeLabel}`}
                 type="button"

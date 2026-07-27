@@ -189,11 +189,11 @@ function PersonnelRow({ person, onChange, onRemove }: { person: ShowBudgetPerson
     <div className={`grid gap-3 py-4 transition xl:grid-cols-[32px_minmax(170px,1.4fr)_80px_repeat(4,minmax(105px,0.75fr))_40px] ${person.active ? "opacity-100" : "opacity-55"}`}>
       <label className="flex min-h-11 items-center"><input aria-label={`Inclure ${person.label}`} checked={person.active} className="h-5 w-5 accent-accent" type="checkbox" onChange={(event) => onChange(person.id, { active: event.target.checked })} /></label>
       <Field label="Métier"><Input value={person.label} onChange={(event) => onChange(person.id, { label: event.target.value })} /><Select className="mt-2" aria-label={`Famille de ${person.label}`} value={person.group} onChange={(event) => onChange(person.id, { group: event.target.value as ShowBudgetPersonnel["group"] })}><option value="plateau">Au plateau</option><option value="creation">Création</option><option value="technique">Technique</option></Select></Field>
-      <NumberField compact label="Nombre" value={person.count} onChange={(value) => onChange(person.id, { count: Math.max(1, value) })} />
-      <NumberField compact label="Services de répétition" value={person.rehearsalServices} onChange={(value) => onChange(person.id, { rehearsalServices: value })} />
-      <NumberField compact label="Brut / répétition" suffix="EUR" value={person.rehearsalGrossRate} onChange={(value) => onChange(person.id, { rehearsalGrossRate: value })} />
-      <NumberField compact label="Brut / date" suffix="EUR" value={person.performanceGrossRate} onChange={(value) => onChange(person.id, { performanceGrossRate: value })} />
-      <NumberField compact label="Charges" suffix="%" value={Math.round(person.chargeRate * 100)} onChange={(value) => onChange(person.id, { chargeRate: value / 100 })} />
+      <NumberField label="Nombre" value={person.count} onChange={(value) => onChange(person.id, { count: Math.max(1, value) })} />
+      <NumberField label="Services de répétition" value={person.rehearsalServices} onChange={(value) => onChange(person.id, { rehearsalServices: value })} />
+      <NumberField label="Brut / répétition" suffix="EUR" value={person.rehearsalGrossRate} onChange={(value) => onChange(person.id, { rehearsalGrossRate: value })} />
+      <NumberField label="Brut / date" suffix="EUR" value={person.performanceGrossRate} onChange={(value) => onChange(person.id, { performanceGrossRate: value })} />
+      <NumberField label="Charges" suffix="%" value={Math.round(person.chargeRate * 100)} onChange={(value) => onChange(person.id, { chargeRate: value / 100 })} />
       <button aria-label={`Supprimer ${person.label}`} className="mt-6 flex h-10 w-10 items-center justify-center rounded-md text-muted hover:bg-danger/10 hover:text-danger" type="button" onClick={() => onRemove(person.id)}><Trash2 aria-hidden="true" className="h-4 w-4" /></button>
     </div>
   );
@@ -221,9 +221,9 @@ function ProfitabilityChart({ profile, summary }: { profile: ShowBudgetProfile; 
         <line stroke="currentColor" className="text-border" x1="38" x2="38" y1="36" y2="184" />
         <path d={path} fill="none" stroke="currentColor" className="text-accent" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" />
         {points.map((point) => <circle key={`${point.performances}-${point.value}`} cx={x(point.performances)} cy={y(point.value)} fill="currentColor" className="text-accent" r="4" />)}
-        <text className="fill-muted text-[11px]" x="38" y="207">0 date</text>
-        <text className="fill-muted text-[11px]" textAnchor="end" x="682" y="207">{maxPerformances} dates</text>
-        <text className="fill-muted text-[11px]" x="44" y={Math.max(y(0) - 7, 14)}>Équilibre</text>
+        <text className="fill-muted text-xs" x="38" y="207">0 date</text>
+        <text className="fill-muted text-xs" textAnchor="end" x="682" y="207">{maxPerformances} dates</text>
+        <text className="fill-muted text-xs" x="44" y={Math.max(y(0) - 7, 14)}>Équilibre</text>
       </svg>
     </div>
   );
@@ -231,8 +231,8 @@ function ProfitabilityChart({ profile, summary }: { profile: ShowBudgetProfile; 
 
 function Field({ children, label }: { children: ReactNode; label: string }) { return <label className="block text-xs font-semibold text-muted"><span className="mb-2 block">{label}</span>{children}</label>; }
 
-function NumberField({ compact = false, label, onChange, suffix, value }: { compact?: boolean; label: string; onChange: (value: number) => void; suffix?: string; value: number }) {
-  return <Field label={label}><div className="relative"><Input className={suffix ? "pr-14" : ""} min="0" step="0.01" type="number" value={Number.isFinite(value) ? value : 0} onChange={(event) => onChange(Number(event.target.value) || 0)} />{suffix ? <span className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted ${compact ? "text-[10px]" : "text-xs"}`}>{suffix}</span> : null}</div></Field>;
+function NumberField({ label, onChange, suffix, value }: { label: string; onChange: (value: number) => void; suffix?: string; value: number }) {
+  return <Field label={label}><div className="relative"><Input className={suffix ? "pr-14" : ""} min="0" step="0.01" type="number" value={Number.isFinite(value) ? value : 0} onChange={(event) => onChange(Number(event.target.value) || 0)} />{suffix ? <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">{suffix}</span> : null}</div></Field>;
 }
 
 function Metric({ detail, label, tone = "neutral", value }: { detail: string; label: string; tone?: "neutral" | "accent" | "success" | "danger"; value: string }) {

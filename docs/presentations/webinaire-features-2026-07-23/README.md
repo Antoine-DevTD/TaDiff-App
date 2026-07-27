@@ -2,20 +2,23 @@
 
 Livrables :
 
-- `index.html` : présentation plein écran, pilotable au clavier ;
-- `TaDiff-fonctionnalites-webinaire-23-juillet-2026.pdf` : version à envoyer ;
-- `assets/` : captures utilisées dans les slides ;
-- `previews/` : aperçus de contrôle ;
-- `parcours-webinaire.md` : conducteur détaillé de la démonstration.
+- `index.html` : presentation plein ecran de 20 diapositives, pilotable au clavier ;
+- `TaDiff-fonctionnalites-webinaire-23-juillet-2026.pdf` : version a envoyer ;
+- `assets/` : captures representatives des interfaces ;
+- `previews/` : apercus de controle de chaque diapositive ;
+- `parcours-webinaire.md` : conducteur detaille de la demonstration.
 
-Commandes de la présentation :
+Commandes de la presentation :
 
-- flèches gauche/droite ou espace : naviguer ;
-- `F` : plein écran ;
-- `Home` / `End` : première ou dernière slide.
+- fleches gauche/droite ou espace : naviguer ;
+- `F` : plein ecran ;
+- `Home` / `End` : premiere ou derniere diapositive.
 
 Actualiser les captures :
 
-1. démarrer l'application sur `http://127.0.0.1:3100` en mode démonstration ;
-2. exécuter `node docs/presentations/webinaire-features-2026-07-23/capture-screens.mjs` ;
-3. exécuter `node docs/presentations/webinaire-features-2026-07-23/render-presentation.mjs`.
+1. Demarrer l'application sur `http://127.0.0.1:3100` en mode demonstration.
+2. Executer `node docs/presentations/webinaire-features-2026-07-23/capture-screens.mjs`.
+3. Executer `node docs/presentations/webinaire-features-2026-07-23/render-presentation.mjs`.
+
+Le script de rendu regenere les 20 apercus et le PDF. Les cadres sont positionnes
+sur les captures completes, sans recadrage par `object-fit: cover`.

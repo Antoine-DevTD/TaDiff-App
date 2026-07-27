@@ -59,7 +59,7 @@ export function GrantsWorkspace({ initialFocusId, shows, states }: { initialFocu
     </header>
 
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex max-w-full gap-1 overflow-x-auto rounded-md bg-panel-strong p-1">{grantFilters.map((item) => { const Icon = item.icon; const count = states.filter(item.matches).length; return <button key={item.id} aria-pressed={filter === item.id} className={cn("inline-flex min-h-10 shrink-0 items-center gap-2 rounded px-3 text-sm font-medium transition", filter === item.id ? "bg-panel text-foreground shadow-sm" : "text-muted hover:text-foreground")} type="button" onClick={() => setFilter(item.id)}><Icon className="h-4 w-4" />{item.label}<span className="rounded-full bg-panel-strong px-1.5 py-0.5 text-[11px]">{count}</span></button>; })}</div>
+      <div className="flex max-w-full gap-1 overflow-x-auto rounded-md bg-panel-strong p-1">{grantFilters.map((item) => { const Icon = item.icon; const count = states.filter(item.matches).length; return <button key={item.id} aria-pressed={filter === item.id} className={cn("inline-flex min-h-10 shrink-0 items-center gap-2 rounded px-3 text-sm font-medium transition", filter === item.id ? "bg-panel text-foreground shadow-sm" : "text-muted hover:text-foreground")} type="button" onClick={() => setFilter(item.id)}><Icon className="h-4 w-4" />{item.label}<span className="rounded-full bg-panel-strong px-1.5 py-0.5 text-xs">{count}</span></button>; })}</div>
       <label className="relative block lg:w-80"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" /><span className="sr-only">Rechercher une aide</span><Input className="pl-9" placeholder="Organisme, spectacle, territoire" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
     </div>
 
@@ -90,7 +90,7 @@ function GrantFocus({ shows, state }: { shows: Show[]; state: GrantDossierState 
   </Card>;
 }
 
-function InfoCell({ label, value }: { label: string; value: string }) { return <div className="min-w-0 bg-panel p-3"><p className="text-[11px] text-muted">{label}</p><p className="mt-1 truncate text-sm font-semibold">{value}</p></div>; }
+function InfoCell({ label, value }: { label: string; value: string }) { return <div className="min-w-0 bg-panel p-3"><p className="text-xs text-muted">{label}</p><p className="mt-1 truncate text-sm font-semibold">{value}</p></div>; }
 function StatusCount({ label, value }: { label: string; value: number }) { return <span><strong className="text-foreground">{value}</strong> {label}</span>; }
 function startOfDay(date: Date) { const value = new Date(date); value.setHours(0, 0, 0, 0); return value; }
 function daysUntil(deadline: string) { return Math.round((startOfDay(new Date(deadline)).getTime() - startOfDay(new Date()).getTime()) / 86400000); }

@@ -32,7 +32,7 @@ type ChatMessage = {
 
 function TipLink({ tip, onSelect }: { tip: WilliamTip; onSelect: () => void }) {
   return (
-    <Link className="flex items-start gap-2 rounded-md p-2 transition hover:bg-panel-strong/60" href={tip.href} onClick={onSelect}>
+    <Link className="flex min-h-11 items-start gap-2 rounded-md p-2 transition-colors hover:bg-panel-strong/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" href={tip.href} onClick={onSelect}>
       <span aria-hidden="true" className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", toneDot[tip.tone])} />
       <span>
         <span className="block text-sm font-medium">{tip.title}</span>
@@ -125,7 +125,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
           aria-label="Assistant William"
           role="region"
           className={cn(
-            "flex overflow-hidden rounded-lg border border-border bg-panel shadow-xl shadow-ink/20 transition-[width,height] duration-300 motion-reduce:transition-none",
+            "william-panel-enter flex overflow-hidden rounded-lg border border-border bg-panel shadow-xl shadow-ink/20 transition-[width,height] duration-300 motion-reduce:transition-none",
             expanded
               ? "h-[min(48rem,calc(100vh-2rem))] w-[min(58rem,calc(100vw-2rem))]"
               : "h-[min(40rem,calc(100vh-8rem))] w-[24rem] max-w-[calc(100vw-2rem)]",
@@ -141,10 +141,10 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button aria-label={expanded ? "Réduire William" : "Agrandir William"} className="grid h-10 w-10 place-items-center rounded-md transition hover:bg-white/10" title={expanded ? "Réduire" : "Agrandir"} type="button" onClick={() => setExpanded((value) => !value)}>
+                <button aria-label={expanded ? "Réduire William" : "Agrandir William"} className="grid h-11 w-11 place-items-center rounded-md transition hover:bg-white/10" title={expanded ? "Réduire" : "Agrandir"} type="button" onClick={() => setExpanded((value) => !value)}>
                   {expanded ? <Minimize2 aria-hidden="true" className="h-5 w-5" /> : <Maximize2 aria-hidden="true" className="h-5 w-5" />}
                 </button>
-                <button aria-label="Fermer William" className="grid h-10 w-10 place-items-center rounded-md transition hover:bg-white/10" title="Fermer" type="button" onClick={() => setOpen(false)}>
+                <button aria-label="Fermer William" className="grid h-11 w-11 place-items-center rounded-md transition hover:bg-white/10" title="Fermer" type="button" onClick={() => setOpen(false)}>
                   <X aria-hidden="true" className="h-5 w-5" />
                 </button>
               </div>
@@ -161,7 +161,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                       </div>
                       <div className="mt-5 grid gap-2">
                         {suggestedQuestions.map((suggestion) => (
-                          <button key={suggestion} className="rounded-md border border-border bg-panel px-3 py-2.5 text-left text-sm transition hover:border-accent/50 hover:bg-accent-soft/20 disabled:opacity-50" disabled={asking || revealing} type="button" onClick={() => askQuestion(suggestion)}>{suggestion}</button>
+                          <button key={suggestion} className="min-h-11 rounded-md border border-border bg-panel px-3 py-2.5 text-left text-sm transition-colors hover:border-accent/50 hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50" disabled={asking || revealing} type="button" onClick={() => askQuestion(suggestion)}>{suggestion}</button>
                         ))}
                       </div>
                     </div>
@@ -182,7 +182,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                         <div className="flex items-start gap-2.5">
                           <TadiffMark className="h-7 w-7 shrink-0" />
                           <div className="flex h-10 items-center gap-1 rounded-lg rounded-tl-sm border border-border bg-panel px-4" aria-label="William prépare sa réponse">
-                            {[0, 1, 2].map((dot) => <span key={dot} className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent motion-reduce:animate-none" style={{ animationDelay: `${dot * 120}ms` }} />)}
+                            {[0, 1, 2].map((dot) => <span key={dot} className="william-thinking-dot h-1.5 w-1.5 rounded-full bg-accent" style={{ animationDelay: `${dot * 120}ms` }} />)}
                           </div>
                         </div>
                       ) : null}
@@ -209,9 +209,9 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                         }
                       }}
                     />
-                    <button aria-label="Envoyer à William" className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-accent text-white transition hover:bg-accent-strong disabled:opacity-40" disabled={asking || revealing || question.trim().length < 3} title="Envoyer" type="submit"><Send className="h-4 w-4" /></button>
+                    <button aria-label="Envoyer à William" className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-accent text-white transition hover:bg-accent-strong disabled:opacity-40" disabled={asking || revealing || question.trim().length < 3} title="Envoyer" type="submit"><Send className="h-4 w-4" /></button>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-3 px-1 text-[11px] text-muted">
+                  <div className="mt-2 flex items-center justify-between gap-3 px-1 text-xs text-muted">
                     <span>Entrée pour envoyer · Maj + Entrée pour une ligne</span>
                     {remainingTokens !== null ? <span className="shrink-0">{new Intl.NumberFormat("fr-FR").format(remainingTokens)} crédits</span> : null}
                   </div>
@@ -237,12 +237,12 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
         aria-controls="william-panel"
         aria-expanded={open}
         aria-label={open ? "Fermer William" : "Ouvrir William"}
-        className={cn("relative flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg shadow-accent/30 transition hover:bg-accent-strong", urgentCount > 0 && !open && "william-bubble-button")}
+        className={cn("relative flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg shadow-accent/30 transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-accent-strong hover:shadow-xl active:translate-y-0 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent motion-reduce:transform-none", urgentCount > 0 && !open && "william-bubble-button")}
         type="button"
         onClick={() => setOpen((value) => !value)}
       >
         <TadiffMark className="h-10 w-10 shadow-sm ring-1 ring-white/25" />
-        {!open && urgentCount > 0 ? <span aria-label={`${urgentCount} priorité${urgentCount > 1 ? "s" : ""}`} className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[11px] font-bold text-white ring-2 ring-panel">{urgentCount}</span> : null}
+        {!open && urgentCount > 0 ? <span aria-label={`${urgentCount} priorité${urgentCount > 1 ? "s" : ""}`} className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-xs font-bold text-white ring-2 ring-panel">{urgentCount}</span> : null}
       </button>
     </div>
   );

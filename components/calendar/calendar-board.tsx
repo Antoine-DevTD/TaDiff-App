@@ -558,7 +558,7 @@ export function CalendarBoard({
                   >
                     <div className="w-10 shrink-0 text-center">
                       <p className="text-lg font-semibold leading-none">{parseDate(item.date).getDate()}</p>
-                      <p className="mt-1 text-[10px] font-semibold uppercase text-muted">{parseDate(item.date).toLocaleDateString("fr-FR", { month: "short" })}</p>
+                      <p className="mt-1 text-xs font-semibold uppercase text-muted">{parseDate(item.date).toLocaleDateString("fr-FR", { month: "short" })}</p>
                     </div>
                     <div className="min-w-0 border-l border-border pl-3">
                       <div className="flex items-center gap-2">
