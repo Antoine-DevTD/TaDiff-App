@@ -119,7 +119,7 @@ export async function sendBetaWelcomeEmail(
           "",
           "Vous pourrez alors réunir vos spectacles, contacts, dates, dossiers et priorités dans un même espace, avec William pour vous accompagner.",
           "",
-          "Quelques jours avant l'ouverture, vous recevrez un email avec votre lien d'accès et les informations utiles pour bien démarrer.",
+          "Quelques jours avant l'ouverture, vous recevrez un email avec les informations utiles pour bien démarrer.",
           "",
           "D'ici là, vous pouvez répondre directement à cet email si vous avez une question.",
           "",
