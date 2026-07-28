@@ -258,6 +258,7 @@ export function CalendarBoard({
   }
 
   function move(direction: -1 | 1) {
+    setSelectedItemId(null);
     setCursor((current) =>
       view === "week"
         ? addDays(current, direction * 7)
@@ -486,11 +487,7 @@ export function CalendarBoard({
                             isOtherMonth && "bg-panel-strong/30 text-muted",
                             isSunday && !isOtherMonth && "bg-danger/[0.018]",
                           )}
-                      onClick={() => openDraft(toIsoDate(day))}
-                      onContextMenu={(event) => {
-                        event.preventDefault();
-                        openDraft(toIsoDate(day));
-                      }}
+                      onClick={() => setSelectedItemId(null)}
                     >
                       <div className="mb-1 flex items-center justify-between">
                         <span className={cn("inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold", isSunday && !isToday && "text-danger", isToday && "bg-accent text-white shadow-sm shadow-accent/25")}>
@@ -554,14 +551,8 @@ export function CalendarBoard({
 
               return (
                 <section key={dateKey(day)} className="grid grid-cols-[4.25rem_1fr] gap-3 px-4 py-4">
-                  <button
+                  <div
                     className="text-left"
-                    type="button"
-                    onClick={() => openDraft(toIsoDate(day))}
-                    onContextMenu={(event) => {
-                      event.preventDefault();
-                      openDraft(toIsoDate(day));
-                    }}
                   >
                     <span className="block text-xs font-semibold uppercase text-muted">
                       {day.toLocaleDateString("fr-FR", { weekday: "short" })}
@@ -569,7 +560,7 @@ export function CalendarBoard({
                     <span className={cn("mt-1 inline-flex h-9 min-w-9 items-center justify-center rounded-full px-1 text-lg font-semibold", isToday && "bg-accent text-white")}>
                       {day.getDate()}
                     </span>
-                  </button>
+                  </div>
                   <div className="min-w-0 space-y-2">
                     {dayItems.length === 0 ? (
                       <button className="flex min-h-11 w-full items-center gap-2 rounded-md border border-dashed border-border px-3 text-left text-sm text-muted" type="button" onClick={() => openDraft(toIsoDate(day))}>

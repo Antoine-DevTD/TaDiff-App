@@ -250,7 +250,9 @@ test.describe("cockpit en mode demonstration", () => {
     await page.getByRole("button", { name: "Ouvrir les prochaines dates" }).click();
 
     const day = page.locator("[data-calendar-date]").nth(15);
-    await day.click({ button: "right" });
+    await day.click();
+    await expect(page.getByRole("dialog", { name: "Qu'est-ce qui se passe ?" })).toBeHidden();
+    await day.getByRole("button", { name: /Ajouter le/ }).click();
 
     const dialog = page.getByRole("dialog", { name: "Qu'est-ce qui se passe ?" });
     await expect(dialog).toBeVisible();
@@ -270,6 +272,21 @@ test.describe("cockpit en mode demonstration", () => {
 
     await page.getByRole("button", { name: "Mois", exact: true }).click();
     await expect(page.locator("[data-calendar-date]").first()).toBeVisible();
+  });
+
+  test("navigue entre les mois et retire la selection en cliquant ailleurs", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/calendar");
+
+    await page.getByRole("button", { name: "Période suivante" }).click();
+    await expect(page.getByRole("button", { name: /Août 2026/ })).toBeVisible();
+    await page.getByRole("button", { name: "Période précédente" }).click();
+    await expect(page.getByRole("button", { name: /Juillet 2026/ })).toBeVisible();
+
+    await page.locator('button[title*="Aide"]').first().click();
+    await expect(page.getByText(/tail s.*lectionn/i)).toBeVisible();
+    await page.locator("[data-calendar-date]").filter({ hasNot: page.locator("button[title]") }).first().click();
+    await expect(page.getByText(/tail s.*lectionn/i)).toBeHidden();
   });
 
   test("met en avant une subvention depuis le calendrier", async ({ page }) => {
