@@ -313,11 +313,11 @@ export function CalendarBoard({
         <div className="border-b border-border/80 px-4 py-4 sm:px-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <Button className="h-10 w-10 p-0" variant="secondary" type="button" onClick={() => move(-1)} aria-label="Période précédente">
-                <ChevronLeft className="h-5 w-5" aria-hidden />
+              <Button className="h-11 w-11 shrink-0 p-0" variant="secondary" type="button" onClick={() => move(-1)} aria-label="Période précédente">
+                <ChevronLeft className="h-6 w-6 stroke-[2.25]" aria-hidden />
               </Button>
-              <Button className="h-10 w-10 p-0" variant="secondary" type="button" onClick={() => move(1)} aria-label="Période suivante">
-                <ChevronRight className="h-5 w-5" aria-hidden />
+              <Button className="h-11 w-11 shrink-0 p-0" variant="secondary" type="button" onClick={() => move(1)} aria-label="Période suivante">
+                <ChevronRight className="h-6 w-6 stroke-[2.25]" aria-hidden />
               </Button>
               <button className="ml-1 truncate text-left text-xl font-semibold tracking-[-0.02em] transition-colors hover:text-accent focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" type="button" onClick={() => setCursor(today)}>
                 {title}
@@ -355,8 +355,9 @@ export function CalendarBoard({
                 <span className="hidden sm:inline">Filtrer</span>
                 {filter !== "all" ? <span className="h-2 w-2 rounded-full bg-accent" aria-label="Un filtre est actif" /> : null}
               </Button>
-              <Button className="h-10 w-10 p-0" variant="secondary" type="button" onClick={exportIcs} title="Exporter l'agenda">
-                <Download className="h-4 w-4" aria-hidden />
+              <Button className="h-11 gap-2 px-3" variant="secondary" type="button" onClick={exportIcs} title="Exporter l'agenda">
+                <Download className="h-5 w-5 stroke-2" aria-hidden />
+                <span className="hidden 2xl:inline">Exporter</span>
               </Button>
               <Button className="gap-2" type="button" onClick={() => openDraft()}>
                 <Plus className="h-4 w-4" aria-hidden />
@@ -462,14 +463,14 @@ export function CalendarBoard({
                   const isToday = day.getTime() === today.getTime();
                   const isSunday = day.getDay() === 0;
                   const isOtherMonth = view === "month" && day.getMonth() !== cursor.getMonth();
-                  const maxVisible = view === "week" ? 9 : 3;
+                  const maxVisible = view === "week" ? 7 : 2;
 
                   return (
                     <div
                       key={key}
                           data-calendar-date={toIsoDate(day)}
                           className={cn(
-                            "group/day relative min-h-32 border-b border-r border-border/75 p-2.5 transition-colors hover:bg-accent/[0.035]",
+                            "group/day relative min-h-[6.75rem] border-b border-r border-border/75 p-2 transition-colors hover:bg-accent/[0.035]",
                             view === "week" && "min-h-[34rem]",
                             isOtherMonth && "bg-panel-strong/30 text-muted",
                             isSunday && !isOtherMonth && "bg-danger/[0.018]",
@@ -480,7 +481,7 @@ export function CalendarBoard({
                         openDraft(toIsoDate(day));
                       }}
                     >
-                      <div className="mb-1.5 flex items-center justify-between">
+                      <div className="mb-1 flex items-center justify-between">
                         <span className={cn("inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold", isSunday && !isToday && "text-danger", isToday && "bg-accent text-white shadow-sm shadow-accent/25")}>
                           {day.getDate()}
                         </span>
@@ -496,13 +497,13 @@ export function CalendarBoard({
                           <Plus className="h-4 w-4" aria-hidden />
                         </button>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {dayItems.slice(0, maxVisible).map((item) => (
                           <button
                             key={item.id}
                             type="button"
                             className={cn(
-                              "flex w-full items-center gap-1.5 overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs transition-[transform,box-shadow,border-color] hover:-translate-y-px hover:shadow-sm",
+                              "block w-full overflow-hidden rounded-md border px-2 py-1.5 text-left transition-[transform,box-shadow,border-color] hover:-translate-y-px hover:shadow-sm",
                               kindStyles[item.kind].chip,
                               selectedItemId === item.id && "ring-2 ring-accent ring-offset-1 ring-offset-panel",
                             )}
@@ -512,9 +513,18 @@ export function CalendarBoard({
                               setSelectedItemId(item.id);
                             }}
                           >
-                            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
-                            {item.startTime ? <span className="shrink-0 font-semibold">{item.startTime.slice(0, 5)}</span> : null}
-                            <span className="truncate">{item.label}</span>
+                            <span className={cn("inline-flex rounded px-1.5 py-0.5 text-[0.52rem] font-bold uppercase leading-none tracking-[0.04em]", kindStyles[item.kind].chip)}>
+                              {kindStyles[item.kind].label}
+                            </span>
+                            <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[0.7rem] leading-tight text-foreground">
+                              <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
+                              <span className="truncate font-semibold">{item.label}</span>
+                            </span>
+                            {item.startTime || item.kind === "grant" || item.kind === "deadline" ? (
+                              <span className="mt-1 block truncate pl-3 text-[0.62rem] leading-none text-muted">
+                                {item.startTime ? item.startTime.slice(0, 5) : "Date limite"}
+                              </span>
+                            ) : null}
                           </button>
                         ))}
                         {dayItems.length > maxVisible ? <p className="px-2 text-xs text-muted">+ {dayItems.length - maxVisible} autres</p> : null}
