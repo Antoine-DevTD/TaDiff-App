@@ -524,7 +524,7 @@ export function CalendarBoard({
                               selectItem(item.id);
                             }}
                           >
-                            <span className={cn("absolute -top-2 left-2 inline-flex rounded-full border px-1.5 py-0.5 text-[0.52rem] font-bold uppercase leading-none tracking-[0.04em] shadow-sm", kindStyles[item.kind].chip)}>
+                            <span className={cn("absolute -top-2 left-2 z-10 inline-flex rounded-full border px-1.5 py-0.5 text-[0.52rem] font-bold uppercase leading-none tracking-[0.04em] shadow-sm", kindStyles[item.kind].chip)}>
                               {kindStyles[item.kind].label}
                             </span>
                             <span className="flex min-w-0 items-center gap-1.5 text-[0.7rem] leading-tight text-foreground">
