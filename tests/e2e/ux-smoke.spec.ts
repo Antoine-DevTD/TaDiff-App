@@ -259,6 +259,13 @@ test.describe("cockpit en mode demonstration", () => {
 
     await expect(dialog).toBeHidden();
     await expect(page.getByText("Rendez-vous technique test", { exact: true }).first()).toBeVisible();
+
+    await page.getByRole("button", { name: "Liste", exact: true }).click();
+    await expect(page.locator("[data-calendar-date]")).toHaveCount(0);
+    await expect(page.getByText("Rendez-vous technique test", { exact: true }).first()).toBeVisible();
+
+    await page.getByRole("button", { name: "Mois", exact: true }).click();
+    await expect(page.locator("[data-calendar-date]").first()).toBeVisible();
   });
 
   test("met en avant une subvention depuis le calendrier", async ({ page }) => {

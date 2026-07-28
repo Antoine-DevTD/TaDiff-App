@@ -159,10 +159,21 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                         <TadiffMark className="h-10 w-10 shrink-0" />
                         <div><p className="font-semibold">Que voulez-vous faire avancer ?</p><p className="mt-1 text-sm leading-6 text-muted">Je consulte les informations de votre compagnie avant de vous répondre.</p></div>
                       </div>
-                      <div className="mt-5 grid gap-2">
+                      <div className="mt-5">
+                        <p className="text-xs text-muted">Vous pouvez par exemple demander :</p>
+                        <div className="mt-2 flex flex-col items-start gap-1">
                         {suggestedQuestions.map((suggestion) => (
-                          <button key={suggestion} className="min-h-11 rounded-md border border-border bg-panel px-3 py-2.5 text-left text-sm transition-colors hover:border-accent/50 hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50" disabled={asking || revealing} type="button" onClick={() => askQuestion(suggestion)}>{suggestion}</button>
+                          <button
+                            key={suggestion}
+                            className="min-h-10 max-w-full py-2 text-left text-sm italic leading-5 text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-accent hover:decoration-accent/35 focus-visible:rounded-sm focus-visible:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
+                            disabled={asking || revealing}
+                            type="button"
+                            onClick={() => askQuestion(suggestion)}
+                          >
+                            {suggestion}
+                          </button>
                         ))}
+                        </div>
                       </div>
                     </div>
                   ) : (

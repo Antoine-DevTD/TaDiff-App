@@ -8,7 +8,9 @@ import {
   Clock3,
   Download,
   Drama,
+  Filter,
   Landmark,
+  List,
   MapPin,
   Plus,
 } from "lucide-react";
@@ -41,7 +43,7 @@ export type CalendarBoardItem = {
 };
 
 type CalendarGroup = "all" | "show" | "reminder" | "funding" | "finance" | "event";
-type CalendarView = "month" | "week";
+type CalendarView = "month" | "week" | "list";
 type EventDraft = {
   date: string;
   kind: CalendarEventKind;
@@ -158,6 +160,7 @@ export function CalendarBoard({
   const [items, setItems] = useState(initialItems);
   const [view, setView] = useState<CalendarView>("month");
   const [filter, setFilter] = useState<CalendarGroup>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [cursor, setCursor] = useState(() => startOfDay(new Date()));
   const [draft, setDraft] = useState<EventDraft | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -206,6 +209,14 @@ export function CalendarBoard({
         .sort((left, right) => left.date.localeCompare(right.date))
         .slice(0, 8),
     [today, visibleItems],
+  );
+  const chronologicalItems = useMemo(
+    () => [...visibleItems].sort((left, right) => {
+      const byDate = left.date.localeCompare(right.date);
+      if (byDate !== 0) return byDate;
+      return (left.startTime ?? "").localeCompare(right.startTime ?? "");
+    }),
+    [visibleItems],
   );
   const selectedItem = useMemo(
     () => items.find((item) => item.id === selectedItemId) ?? null,
@@ -298,40 +309,52 @@ export function CalendarBoard({
 
   return (
     <div className="space-y-4">
-      <section className="overflow-hidden rounded-lg border border-border bg-panel shadow-sm">
-        <div className="border-b border-border px-4 py-4 sm:px-5">
+      <section className="overflow-hidden rounded-xl bg-panel shadow-[0_22px_55px_-38px_rgba(11,18,32,0.5)] ring-1 ring-border/80">
+        <div className="border-b border-border/80 px-4 py-4 sm:px-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <Button className="h-10 w-10 p-0" variant="secondary" type="button" onClick={() => move(-1)} aria-label="Période précédente">
                 <ChevronLeft className="h-5 w-5" aria-hidden />
               </Button>
               <Button className="h-10 w-10 p-0" variant="secondary" type="button" onClick={() => move(1)} aria-label="Période suivante">
                 <ChevronRight className="h-5 w-5" aria-hidden />
               </Button>
-              <button className="ml-1 truncate text-left text-xl font-semibold hover:text-accent" type="button" onClick={() => setCursor(today)}>
+              <button className="ml-1 truncate text-left text-xl font-semibold tracking-[-0.02em] transition-colors hover:text-accent focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" type="button" onClick={() => setCursor(today)}>
                 {title}
               </button>
-              <Button className="ml-2 hidden sm:inline-flex" variant="secondary" type="button" onClick={() => setCursor(today)}>
+              <Button className="ml-1 hidden sm:inline-flex" variant="ghost" type="button" onClick={() => setCursor(today)}>
                 Aujourd&apos;hui
               </Button>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex rounded-md border border-border bg-panel-strong/45 p-1" aria-label="Vue du calendrier">
-                {(["month", "week"] as CalendarView[]).map((mode) => (
+              <div className="inline-flex rounded-lg bg-panel-strong/70 p-1 ring-1 ring-border/70" aria-label="Vue du calendrier">
+                {(["month", "week", "list"] as CalendarView[]).map((mode) => (
                   <button
                     key={mode}
                     className={cn(
-                      "min-h-8 rounded px-3 text-sm font-medium text-muted transition-colors",
-                      view === mode && "bg-panel text-foreground shadow-sm",
+                      "min-h-9 rounded-md px-3 text-sm font-medium text-muted transition-[background-color,color,box-shadow]",
+                      view === mode && "bg-panel text-accent shadow-sm",
                     )}
                     type="button"
                     onClick={() => setView(mode)}
                   >
-                    {mode === "month" ? "Mois" : "Semaine"}
+                    {mode === "month" ? "Mois" : mode === "week" ? "Semaine" : "Liste"}
                   </button>
                 ))}
               </div>
+              <Button
+                aria-expanded={filtersOpen}
+                aria-controls="calendar-filters"
+                className="h-10 gap-2 px-3"
+                variant="secondary"
+                type="button"
+                onClick={() => setFiltersOpen((current) => !current)}
+              >
+                <Filter className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">Filtrer</span>
+                {filter !== "all" ? <span className="h-2 w-2 rounded-full bg-accent" aria-label="Un filtre est actif" /> : null}
+              </Button>
               <Button className="h-10 w-10 p-0" variant="secondary" type="button" onClick={exportIcs} title="Exporter l'agenda">
                 <Download className="h-4 w-4" aria-hidden />
               </Button>
@@ -342,33 +365,92 @@ export function CalendarBoard({
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-            {filters.map((item) => {
-              const count = items.filter((calendarItem) => groupMatches(calendarItem, item.id)).length;
-              return (
-                <button
-                  key={item.id}
-                  className={cn(
-                    "flex shrink-0 items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent/30 hover:text-foreground",
-                    filter === item.id && "border-accent/25 bg-accent/10 text-accent",
-                  )}
-                  type="button"
-                  onClick={() => setFilter(item.id)}
-                >
-                  {item.label}
-                  <span className="text-xs opacity-70">{count}</span>
-                </button>
-              );
-            })}
-          </div>
+          {filtersOpen ? (
+            <div id="calendar-filters" className="mt-4 flex gap-2 overflow-x-auto border-t border-border/70 pt-4">
+              {filters.map((item) => {
+                const count = items.filter((calendarItem) => groupMatches(calendarItem, item.id)).length;
+                return (
+                  <button
+                    key={item.id}
+                    className={cn(
+                      "flex min-h-9 shrink-0 items-center gap-2 rounded-full border border-border px-3 text-sm text-muted transition-colors hover:border-accent/35 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
+                      filter === item.id && "border-accent/25 bg-accent/10 text-accent",
+                    )}
+                    type="button"
+                    onClick={() => setFilter(item.id)}
+                  >
+                    {item.label}
+                    <span className="text-xs opacity-70">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-muted">
+              {visibleItems.length} date{visibleItems.length > 1 ? "s" : ""} affichée{visibleItems.length > 1 ? "s" : ""}
+              {filter !== "all" ? ` · ${filters.find((item) => item.id === filter)?.label}` : " · Toutes les catégories"}
+            </p>
+          )}
         </div>
 
         <div className="grid xl:grid-cols-[minmax(0,1fr)_22rem]">
+          {view === "list" ? (
+            <div className="min-w-0 divide-y divide-border/70">
+              {chronologicalItems.length === 0 ? (
+                <div className="px-5 py-14 text-center">
+                  <List className="mx-auto h-6 w-6 text-accent" aria-hidden />
+                  <p className="mt-3 font-semibold">Aucune date dans cette sélection</p>
+                  <p className="mt-1 text-sm text-muted">Modifiez les filtres ou ajoutez une nouvelle date.</p>
+                  <Button className="mt-5 gap-2" type="button" onClick={() => openDraft()}>
+                    <Plus className="h-4 w-4" aria-hidden />
+                    Ajouter une date
+                  </Button>
+                </div>
+              ) : (
+                chronologicalItems.map((item) => {
+                  const itemDate = parseDate(item.date);
+                  return (
+                    <button
+                      key={item.id}
+                      className={cn(
+                        "group grid min-h-20 w-full grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-accent/[0.035] focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-accent sm:grid-cols-[5rem_minmax(0,1fr)_auto]",
+                        selectedItemId === item.id && "bg-accent/[0.055]",
+                      )}
+                      type="button"
+                      onClick={() => setSelectedItemId(item.id)}
+                    >
+                      <span className="border-r border-border/80 pr-4 text-center">
+                        <span className="block text-xl font-semibold leading-none">{itemDate.getDate()}</span>
+                        <span className="mt-1 block text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted">
+                          {itemDate.toLocaleDateString("fr-FR", { month: "short" })}
+                        </span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-2">
+                          <span className={cn("h-2 w-2 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
+                          <span className="truncate text-sm font-semibold group-hover:text-accent">{item.label}</span>
+                        </span>
+                        <span className="mt-1 block truncate text-xs text-muted">
+                          {formatSchedule(item)}
+                          {item.meta !== kindStyles[item.kind].label ? ` · ${item.meta}` : ""}
+                        </span>
+                      </span>
+                      <span className={cn("hidden rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase sm:inline-flex", kindStyles[item.kind].chip)}>
+                        {kindStyles[item.kind].label}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          ) : null}
+          {view !== "list" ? (
+            <>
           <div className="hidden overflow-x-auto md:block">
             <div className="min-w-[48rem]">
-              <div className="grid grid-cols-7 border-b border-border bg-panel-strong/35">
+              <div className="grid grid-cols-7 border-b border-border/80 bg-panel-strong/55">
                 {weekdayLabels.map((label) => (
-                  <div key={label} className="px-3 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                  <div key={label} className="px-3 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted">
                     {label}
                   </div>
                 ))}
@@ -378,18 +460,20 @@ export function CalendarBoard({
                   const key = dateKey(day);
                   const dayItems = itemsByDay.get(key) ?? [];
                   const isToday = day.getTime() === today.getTime();
+                  const isSunday = day.getDay() === 0;
                   const isOtherMonth = view === "month" && day.getMonth() !== cursor.getMonth();
                   const maxVisible = view === "week" ? 9 : 3;
 
                   return (
                     <div
                       key={key}
-                      data-calendar-date={toIsoDate(day)}
-                      className={cn(
-                        "group/day relative min-h-36 border-b border-r border-border p-2.5 transition-colors hover:bg-accent/[0.035]",
-                        view === "week" && "min-h-[34rem]",
-                        isOtherMonth && "bg-panel-strong/25 text-muted",
-                      )}
+                          data-calendar-date={toIsoDate(day)}
+                          className={cn(
+                            "group/day relative min-h-32 border-b border-r border-border/75 p-2.5 transition-colors hover:bg-accent/[0.035]",
+                            view === "week" && "min-h-[34rem]",
+                            isOtherMonth && "bg-panel-strong/30 text-muted",
+                            isSunday && !isOtherMonth && "bg-danger/[0.018]",
+                          )}
                       onClick={() => openDraft(toIsoDate(day))}
                       onContextMenu={(event) => {
                         event.preventDefault();
@@ -397,7 +481,7 @@ export function CalendarBoard({
                       }}
                     >
                       <div className="mb-1.5 flex items-center justify-between">
-                        <span className={cn("inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold", isToday && "bg-accent text-white shadow-sm shadow-accent/25")}>
+                        <span className={cn("inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold", isSunday && !isToday && "text-danger", isToday && "bg-accent text-white shadow-sm shadow-accent/25")}>
                           {day.getDate()}
                         </span>
                         <button
@@ -418,7 +502,7 @@ export function CalendarBoard({
                             key={item.id}
                             type="button"
                             className={cn(
-                              "flex w-full items-center gap-1.5 overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs transition hover:-translate-y-px hover:shadow-sm",
+                              "flex w-full items-center gap-1.5 overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs transition-[transform,box-shadow,border-color] hover:-translate-y-px hover:shadow-sm",
                               kindStyles[item.kind].chip,
                               selectedItemId === item.id && "ring-2 ring-accent ring-offset-1 ring-offset-panel",
                             )}
@@ -492,8 +576,13 @@ export function CalendarBoard({
               );
             })}
           </div>
+            </>
+          ) : null}
 
-          <aside className="border-t border-border bg-panel-strong/28 p-4 xl:border-l xl:border-t-0">
+          <aside className={cn(
+            "border-t border-border/80 bg-panel-strong/45 p-4 xl:block xl:border-l xl:border-t-0",
+            selectedItem ? "block" : "hidden",
+          )}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
@@ -540,40 +629,41 @@ export function CalendarBoard({
                 </div>
               </div>
             ) : null}
-            <div className={cn("space-y-2", selectedItem ? "mt-5 border-t border-border pt-4" : "mt-4")}>
-              {upcoming.length === 0 ? (
-                <button className="w-full rounded-md border border-dashed border-border p-4 text-left text-sm text-muted hover:border-accent/35 hover:text-foreground" type="button" onClick={() => openDraft()}>
-                  Rien à venir. Ajouter une première date.
-                </button>
-              ) : (
-                upcoming.map((item) => (
-                  <button
-                    key={item.id}
-                    className={cn(
-                      "group flex w-full gap-3 rounded-md border p-2.5 text-left transition hover:border-border hover:bg-panel",
-                      selectedItemId === item.id ? "border-accent/30 bg-accent/8" : "border-transparent",
-                    )}
-                    type="button"
-                    onClick={() => setSelectedItemId(item.id)}
-                  >
-                    <div className="w-10 shrink-0 text-center">
-                      <p className="text-lg font-semibold leading-none">{parseDate(item.date).getDate()}</p>
-                      <p className="mt-1 text-xs font-semibold uppercase text-muted">{parseDate(item.date).toLocaleDateString("fr-FR", { month: "short" })}</p>
-                    </div>
-                    <div className="min-w-0 border-l border-border pl-3">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("h-2 w-2 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
-                        <p className="truncate text-sm font-medium group-hover:text-accent">{item.label}</p>
-                      </div>
-                      <p className="mt-1 truncate text-xs text-muted">{formatSchedule(item)}</p>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-            <p className="mt-5 border-t border-border pt-4 text-xs leading-relaxed text-muted">
-              Clic droit sur un jour pour créer directement un événement.
-            </p>
+            {!selectedItem ? (
+              <>
+                <div className="mt-4 divide-y divide-border/70">
+                  {upcoming.length === 0 ? (
+                    <button className="w-full rounded-md border border-dashed border-border p-4 text-left text-sm text-muted hover:border-accent/35 hover:text-foreground" type="button" onClick={() => openDraft()}>
+                      Rien à venir. Ajouter une première date.
+                    </button>
+                  ) : (
+                    upcoming.map((item) => (
+                      <button
+                        key={item.id}
+                        className="group grid min-h-16 w-full grid-cols-[3.25rem_minmax(0,1fr)] gap-3 py-3 text-left transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                        type="button"
+                        onClick={() => setSelectedItemId(item.id)}
+                      >
+                        <span className="text-center">
+                          <span className="block text-lg font-semibold leading-none">{parseDate(item.date).getDate()}</span>
+                          <span className="mt-1 block text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-muted">{parseDate(item.date).toLocaleDateString("fr-FR", { month: "short" })}</span>
+                        </span>
+                        <span className="min-w-0 border-l border-border/80 pl-3">
+                          <span className="flex items-center gap-2">
+                            <span className={cn("h-2 w-2 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
+                            <span className="truncate text-sm font-medium">{item.label}</span>
+                          </span>
+                          <span className="mt-1 block truncate text-xs text-muted">{formatSchedule(item)}</span>
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <p className="mt-5 border-t border-border pt-4 text-xs leading-relaxed text-muted">
+                  Cliquez sur un jour ou utilisez Ajouter pour créer un événement.
+                </p>
+              </>
+            ) : null}
           </aside>
         </div>
       </section>
