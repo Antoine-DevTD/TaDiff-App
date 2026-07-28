@@ -6,6 +6,12 @@ Etat : lots 1 a 5 livres sur `main`, verifies et migrations 043 a 051 appliquees
 
 ## Chantier en cours
 
+### Correctif inscription bêta à livrer
+
+- `sql/060_fix_beta_signup_registration.sql` qualifie `beta_signups.position` dans la RPC publique et ajoute le retour `is_new`.
+- `app/(public)/beta/actions.ts` envoie une seule alerte interne et, pour une place réservée, un email de bienvenue au candidat avec rendez-vous le 6 août 2026 à 10 h et lien agenda `.ics`. Une panne Resend n'annule pas l'inscription.
+- Appliquer la migration `060`, configurer `RESEND_API_KEY` et éventuellement `BETA_SIGNUP_NOTIFICATION_EMAIL` / `BETA_SIGNUP_NOTIFICATION_FROM` dans Vercel, puis déployer et tester une vraie demande bêta.
+
 ### Lots 3 a 5 termines localement le 21 juillet
 
 - Administration deleguee : un superadmin peut nommer un admin plateforme et choisir ses permissions. Les exemptions de paiement, comptes fondateurs, quotas IA et maintenance restent reserves au superadmin.
@@ -44,6 +50,8 @@ Etat : lots 1 a 5 livres sur `main`, verifies et migrations 043 a 051 appliquees
 - `sql/049_contact_people_and_venues.sql`
 - `lib/ai/company-context.ts`
 - `types/database.types.ts`
+- `sql/060_fix_beta_signup_registration.sql`
+- `lib/beta-signup-notification.ts`
 
 ## Verification connue
 

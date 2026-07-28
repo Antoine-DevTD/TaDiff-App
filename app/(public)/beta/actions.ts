@@ -1,6 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  notifyBetaSignup,
+  sendBetaWelcomeEmail,
+} from "@/lib/beta-signup-notification";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -22,13 +26,13 @@ export async function registerBetaSignup(
   const parsed = betaSignupSchema.safeParse(values);
 
   if (!parsed.success) {
-    return { ok: false, message: "Le formulaire beta contient des erreurs." };
+    return { ok: false, message: "Le formulaire bêta contient des erreurs." };
   }
 
   if (!hasSupabaseEnv()) {
     return {
       ok: true,
-      message: "Mode demo : inscription beta valide, non enregistree.",
+      message: "Votre place est confirmée. Rendez-vous le 6 août 2026.",
       position: 4,
       status: "reserved",
     };
@@ -49,18 +53,49 @@ export async function registerBetaSignup(
   if (error || !signup) {
     return {
       ok: false,
-      message: error?.message ?? "Impossible d'enregistrer l'inscription beta.",
+      message: error?.message ?? "Impossible d'enregistrer l'inscription bêta.",
     };
   }
 
   revalidatePath("/beta");
 
+  if (signup.is_new !== false) {
+    const signupDetails = {
+      companyName: parsed.data.companyName,
+      contactName: parsed.data.contactName,
+      email: parsed.data.email,
+      phone: parsed.data.phone || "",
+      city: parsed.data.city || "",
+      discipline: parsed.data.discipline,
+      mainNeed: parsed.data.mainNeed,
+      position: signup.position,
+      status: signup.status,
+    } as const;
+    const [notification, welcome] = await Promise.all([
+      notifyBetaSignup(signupDetails),
+      signup.status === "reserved"
+        ? sendBetaWelcomeEmail(signupDetails)
+        : Promise.resolve({ sent: true } as const),
+    ]);
+
+    if (!notification.sent) {
+      console.warn("Beta signup saved without internal email notification", {
+        reason: notification.reason,
+      });
+    }
+    if (!welcome.sent) {
+      console.warn("Beta signup saved without welcome email", {
+        reason: welcome.reason,
+      });
+    }
+  }
+
   return {
     ok: true,
     message:
       signup.status === "reserved"
-        ? "Place beta reservee."
-        : "Vous etes sur liste d'attente.",
+        ? "Votre place est confirmée. Rendez-vous le 6 août 2026."
+        : "Vous êtes sur liste d'attente.",
     position: signup.position,
     status: signup.status,
   };

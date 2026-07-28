@@ -32,6 +32,23 @@ test.describe("landing beta", () => {
     await expect(page.getByRole("link", { name: /Réserver/i }).first()).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
+
+  test("accepte une demande sans besoin principal et confirme avec les accents", async ({ page }) => {
+    await page.goto("/beta");
+
+    await expect(page.getByText("Besoin principal (optionnel)")).toBeVisible();
+    await page.getByLabel("Compagnie").fill("Compagnie Test");
+    await page.getByLabel("Contact").fill("Camille Martin");
+    await page.getByLabel("Email").fill("camille@example.com");
+    await page.getByRole("button", { name: "Réserver ma place bêta" }).click();
+
+    const confirmation = page.getByRole("status");
+    await expect(confirmation).toContainText("Votre place est confirmée !");
+    await expect(confirmation).toContainText("Rendez-vous le 6 août 2026");
+    await expect(confirmation).toContainText("place bêta réservée");
+    await confirmation.getByRole("button", { name: "Fermer la confirmation" }).click();
+    await expect(confirmation).toBeHidden();
+  });
 });
 
 test.describe("parcours webinaire", () => {

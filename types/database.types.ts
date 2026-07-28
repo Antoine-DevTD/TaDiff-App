@@ -2022,6 +2022,7 @@ export type Database = {
         Returns: {
           status: "reserved" | "waitlist";
           position: number;
+          is_new: boolean;
         }[];
       };
       submit_feedback: {

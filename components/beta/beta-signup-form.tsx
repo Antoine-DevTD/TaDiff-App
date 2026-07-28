@@ -1,8 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle2, CircleAlert, X } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { registerBetaSignup } from "@/app/(public)/beta/actions";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,12 @@ export function BetaSignupForm() {
     resolver: zodResolver(betaSignupSchema),
     defaultValues,
   });
+
+  useEffect(() => {
+    if (!state?.ok) return;
+    const timeout = window.setTimeout(() => setState(null), 8_000);
+    return () => window.clearTimeout(timeout);
+  }, [state]);
 
   function onSubmit(values: BetaSignupFormValues) {
     startTransition(async () => {
@@ -93,28 +100,46 @@ export function BetaSignupForm() {
         </Field>
       </div>
 
-      <Field label="Besoin principal" error={errors.mainNeed?.message}>
+      <Field label="Besoin principal (optionnel)" error={errors.mainNeed?.message}>
         <Textarea
-          placeholder="Exemple : ne plus rater les subventions, mieux suivre la trésorerie, relancer les programmateurs..."
+          placeholder="Exemple : ne plus rater les subventions, mieux suivre la trésorerie, relancer les programmateurs…"
           {...register("mainNeed")}
         />
       </Field>
 
       {state ? (
         <div
-          className={
-            state.ok
-              ? "rounded-md border border-success/20 bg-success/10 p-3 text-sm text-success"
-              : "rounded-md border border-danger/20 bg-danger/10 p-3 text-sm text-danger"
-          }
+          aria-live={state.ok ? "polite" : "assertive"}
+          className="animate-in fade-in slide-in-from-bottom-3 fixed inset-x-4 bottom-6 z-[110] mx-auto flex max-w-md items-start gap-3 rounded-xl border border-border bg-panel p-4 text-sm text-foreground shadow-xl shadow-ink/20 duration-300 sm:inset-x-auto sm:right-6 sm:mx-0"
+          role={state.ok ? "status" : "alert"}
         >
-          <p className="font-medium">{state.message}</p>
-          {state.ok && state.position ? (
-            <p className="mt-1">
-              Position {state.position} -{" "}
-              {state.status === "reserved" ? "place bêta reservee" : "liste d'attente"}
+          <span className={state.ok ? "rounded-full bg-success/10 p-2 text-success" : "rounded-full bg-danger/10 p-2 text-danger"}>
+            {state.ok ? <CheckCircle2 className="h-5 w-5" aria-hidden /> : <CircleAlert className="h-5 w-5" aria-hidden />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">
+              {state.ok && state.status === "reserved"
+                ? "Votre place est confirmée !"
+                : state.ok
+                  ? "Votre inscription est bien enregistrée"
+                  : "L'inscription n'a pas abouti"}
             </p>
-          ) : null}
+            <p className="mt-1 text-muted">{state.message}</p>
+            {state.ok && state.position ? (
+              <p className="mt-2 font-medium text-foreground">
+                Position {state.position} ·{" "}
+                {state.status === "reserved" ? "place bêta réservée" : "liste d'attente"}
+              </p>
+            ) : null}
+          </div>
+          <button
+            aria-label="Fermer la confirmation"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-panel-strong hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            type="button"
+            onClick={() => setState(null)}
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
         </div>
       ) : null}
 

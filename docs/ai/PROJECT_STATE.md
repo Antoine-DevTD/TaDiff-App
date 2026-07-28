@@ -56,6 +56,8 @@ Derniere verification : 23 juillet 2026.
 - La migration `057_default_reference_grants.sql` initialise automatiquement les 10 dispositifs de référence à la création ou à la prochaine initialisation d'un espace. Elle doit être appliquée avant de retirer définitivement l'import manuel.
 - La migration `058_reset_webinar_demo_workspace.sql` ajoute la remise à zéro transactionnelle réservée au compte `demo_webinaire`. Elle dépend de la migration `057`.
 - La migration `059_repair_webinar_demo_reset.sql` rend cette remise à zéro compatible avec une base où certains modules optionnels, comme `calendar_events`, ne sont pas présents.
+- La migration `060_fix_beta_signup_registration.sql` corrige l'ambiguïté de la colonne `position` dans l'inscription bêta et distingue une nouvelle demande d'une tentative répétée. Elle doit être appliquée avant de retester le formulaire public.
+- Les nouvelles places bêta réservées déclenchent via Resend une alerte interne et un email de bienvenue au candidat avec rendez-vous le 6 août 2026 à 10 h. L'email propose un fichier agenda universel `.ics`. La production doit définir `RESEND_API_KEY`; `BETA_SIGNUP_NOTIFICATION_EMAIL` permet de remplacer l'adresse support et `BETA_SIGNUP_NOTIFICATION_FROM` l'expéditeur par défaut.
 
 ## Qualite
 
