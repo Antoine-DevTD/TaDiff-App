@@ -161,6 +161,7 @@ export function CalendarBoard({
   const [view, setView] = useState<CalendarView>("month");
   const [filter, setFilter] = useState<CalendarGroup>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [upcomingPanelOpen, setUpcomingPanelOpen] = useState(true);
   const [cursor, setCursor] = useState(() => startOfDay(new Date()));
   const [draft, setDraft] = useState<EventDraft | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -236,6 +237,11 @@ export function CalendarBoard({
   function openDraft(date = toIsoDate(today)) {
     setError(null);
     setDraft(emptyDraft(date, shows));
+  }
+
+  function selectItem(itemId: string) {
+    setSelectedItemId(itemId);
+    setUpcomingPanelOpen(true);
   }
 
   function updateDraft(values: Partial<EventDraft>) {
@@ -394,7 +400,12 @@ export function CalendarBoard({
           )}
         </div>
 
-        <div className="grid xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className={cn(
+          "grid transition-[grid-template-columns] duration-200",
+          upcomingPanelOpen
+            ? "xl:grid-cols-[minmax(0,1fr)_22rem]"
+            : "xl:grid-cols-[minmax(0,1fr)_3.5rem]",
+        )}>
           {view === "list" ? (
             <div className="min-w-0 divide-y divide-border/70">
               {chronologicalItems.length === 0 ? (
@@ -418,7 +429,7 @@ export function CalendarBoard({
                         selectedItemId === item.id && "bg-accent/[0.055]",
                       )}
                       type="button"
-                      onClick={() => setSelectedItemId(item.id)}
+                      onClick={() => selectItem(item.id)}
                     >
                       <span className="border-r border-border/80 pr-4 text-center">
                         <span className="block text-xl font-semibold leading-none">{itemDate.getDate()}</span>
@@ -497,26 +508,26 @@ export function CalendarBoard({
                           <Plus className="h-4 w-4" aria-hidden />
                         </button>
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-3">
                         {dayItems.slice(0, maxVisible).map((item) => (
                           <button
                             key={item.id}
                             type="button"
                             className={cn(
-                              "block w-full overflow-hidden rounded-md border px-2 py-1.5 text-left transition-[transform,box-shadow,border-color] hover:-translate-y-px hover:shadow-sm",
+                              "relative block w-full overflow-visible rounded-md border px-2 pb-1.5 pt-3 text-left transition-[transform,box-shadow,border-color] hover:-translate-y-px hover:shadow-sm",
                               kindStyles[item.kind].chip,
                               selectedItemId === item.id && "ring-2 ring-accent ring-offset-1 ring-offset-panel",
                             )}
                             title={`${item.label} - ${item.meta}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              setSelectedItemId(item.id);
+                              selectItem(item.id);
                             }}
                           >
-                            <span className={cn("inline-flex rounded px-1.5 py-0.5 text-[0.52rem] font-bold uppercase leading-none tracking-[0.04em]", kindStyles[item.kind].chip)}>
+                            <span className={cn("absolute -top-2 left-2 inline-flex rounded-full border px-1.5 py-0.5 text-[0.52rem] font-bold uppercase leading-none tracking-[0.04em] shadow-sm", kindStyles[item.kind].chip)}>
                               {kindStyles[item.kind].label}
                             </span>
-                            <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[0.7rem] leading-tight text-foreground">
+                            <span className="flex min-w-0 items-center gap-1.5 text-[0.7rem] leading-tight text-foreground">
                               <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
                               <span className="truncate font-semibold">{item.label}</span>
                             </span>
@@ -571,7 +582,7 @@ export function CalendarBoard({
                           key={item.id}
                           className={cn("flex min-h-11 w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm", kindStyles[item.kind].chip)}
                           type="button"
-                          onClick={() => setSelectedItemId(item.id)}
+                          onClick={() => selectItem(item.id)}
                         >
                           <span className={cn("h-2 w-2 shrink-0 rounded-full", kindStyles[item.kind].dot)} />
                           <span className="min-w-0 flex-1">
@@ -591,9 +602,24 @@ export function CalendarBoard({
 
           <aside className={cn(
             "border-t border-border/80 bg-panel-strong/45 p-4 xl:block xl:border-l xl:border-t-0",
+            !upcomingPanelOpen && "xl:p-2",
             selectedItem ? "block" : "hidden",
           )}>
-            <div className="flex items-center justify-between">
+            {!upcomingPanelOpen ? (
+              <button
+                className="mx-auto hidden min-h-11 w-10 flex-col items-center justify-center gap-1 rounded-md text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent xl:flex"
+                type="button"
+                onClick={() => setUpcomingPanelOpen(true)}
+                aria-label="Ouvrir les prochaines dates"
+                title="Ouvrir les prochaines dates"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+                <CalendarDays className="h-5 w-5" aria-hidden />
+                <span className="text-[0.65rem] font-semibold tabular-nums">{upcoming.length}</span>
+              </button>
+            ) : (
+              <>
+            <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                   {selectedItem ? kindStyles[selectedItem.kind].label : "En approche"}
@@ -602,7 +628,15 @@ export function CalendarBoard({
                   {selectedItem ? "Détail sélectionné" : "Les prochaines dates"}
                 </p>
               </div>
-              <CalendarDays className="h-5 w-5 text-accent" aria-hidden />
+              <button
+                className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent xl:flex"
+                type="button"
+                onClick={() => setUpcomingPanelOpen(false)}
+                aria-label="Replier les prochaines dates"
+                title="Replier pour agrandir le calendrier"
+              >
+                <ChevronRight className="h-5 w-5" aria-hidden />
+              </button>
             </div>
             {selectedItem ? (
               <div className="mt-4 rounded-lg border border-accent/25 bg-panel p-4 shadow-sm ring-1 ring-accent/10">
@@ -652,7 +686,7 @@ export function CalendarBoard({
                         key={item.id}
                         className="group grid min-h-16 w-full grid-cols-[3.25rem_minmax(0,1fr)] gap-3 py-3 text-left transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                         type="button"
-                        onClick={() => setSelectedItemId(item.id)}
+                        onClick={() => selectItem(item.id)}
                       >
                         <span className="text-center">
                           <span className="block text-lg font-semibold leading-none">{parseDate(item.date).getDate()}</span>
@@ -674,6 +708,8 @@ export function CalendarBoard({
                 </p>
               </>
             ) : null}
+              </>
+            )}
           </aside>
         </div>
       </section>

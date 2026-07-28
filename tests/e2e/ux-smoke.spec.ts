@@ -245,6 +245,10 @@ test.describe("cockpit en mode demonstration", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/calendar");
 
+    await page.getByRole("button", { name: "Replier les prochaines dates" }).click();
+    await expect(page.getByRole("button", { name: "Ouvrir les prochaines dates" })).toBeVisible();
+    await page.getByRole("button", { name: "Ouvrir les prochaines dates" }).click();
+
     const day = page.locator("[data-calendar-date]").nth(15);
     await day.click({ button: "right" });
 
