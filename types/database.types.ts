@@ -53,6 +53,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      william_chat_sessions: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          status: "active" | "archived";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id: string;
+          status?: "active" | "archived";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: "active" | "archived";
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      william_chat_messages: {
+        Row: {
+          id: string;
+          session_id: string;
+          company_id: string;
+          user_id: string;
+          role: "user" | "assistant";
+          content: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          company_id: string;
+          user_id: string;
+          role: "user" | "assistant";
+          content: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
       william_conversations: {
         Row: {
           id: string;

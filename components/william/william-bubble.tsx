@@ -3,8 +3,12 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { ChevronDown, Maximize2, Minimize2, Send, X } from "lucide-react";
-import { askWilliamAction } from "@/app/(dashboard)/william/assistant-action";
+import { ChevronDown, CornerDownRight, Maximize2, MessageSquarePlus, Minimize2, Send, X } from "lucide-react";
+import {
+  loadWilliamChatAction,
+  sendWilliamChatMessageAction,
+  startNewWilliamChatAction,
+} from "@/app/(dashboard)/william/assistant-action";
 import { TadiffMark } from "@/components/brand/tadiff-mark";
 import { cn } from "@/lib/utils";
 import type { WilliamTip } from "@/lib/william";
@@ -28,6 +32,7 @@ type ChatMessage = {
   id: string;
   role: "assistant" | "user";
   text: string;
+  suggestedQuestions: string[];
 };
 
 function TipLink({ tip, onSelect }: { tip: WilliamTip; onSelect: () => void }) {
@@ -47,11 +52,15 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
   const [expanded, setExpanded] = useState(false);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [remainingTokens, setRemainingTokens] = useState<number | null>(null);
   const [answerToReveal, setAnswerToReveal] = useState<{ id: string; text: string } | null>(null);
   const [asking, startAsking] = useTransition();
+  const [loadingChat, startLoadingChat] = useTransition();
+  const [resettingChat, startResettingChat] = useTransition();
   const conversationEndRef = useRef<HTMLDivElement>(null);
+  const chatLoadedRef = useRef(false);
   const messageSequenceRef = useRef(0);
   const urgentCount = tips.filter((tip) => tip.tone === "danger" || tip.tone === "warning").length;
   const priorityTip = tips[0];
@@ -63,6 +72,25 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
     "Quelles sont mes trois prochaines priorités ?",
     "Quel email puis-je préparer maintenant ?",
   ].slice(0, 4);
+
+  useEffect(() => {
+    if (!open || !aiEnabled || chatLoadedRef.current) return;
+    chatLoadedRef.current = true;
+    startLoadingChat(async () => {
+      const result = await loadWilliamChatAction();
+      if (!result.ok) {
+        setAnswerError(result.message);
+        return;
+      }
+      setSessionId(result.conversation.sessionId);
+      setMessages(result.conversation.messages.map((message) => ({
+        id: message.id,
+        role: message.role,
+        text: message.text,
+        suggestedQuestions: message.suggestedQuestions,
+      })));
+    });
+  }, [aiEnabled, open]);
 
   useEffect(() => {
     if (!answerToReveal) return;
@@ -88,27 +116,54 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
 
   function askQuestion(nextQuestion: string) {
     const value = nextQuestion.trim();
-    if (value.length < 3 || asking || revealing) return;
+    if (value.length < 3 || asking || revealing || loadingChat || resettingChat) return;
     messageSequenceRef.current += 1;
-    const userMessage: ChatMessage = { id: `user-${messageSequenceRef.current}`, role: "user", text: value };
+    const userMessage: ChatMessage = {
+      id: `user-${messageSequenceRef.current}`,
+      role: "user",
+      text: value,
+      suggestedQuestions: [],
+    };
     setMessages((current) => [...current, userMessage]);
     setAnswerError(null);
     setQuestion("");
     startAsking(async () => {
-      const result = await askWilliamAction(value);
+      const result = await sendWilliamChatMessageAction({ question: value, sessionId });
       if (!result.ok) {
         setAnswerError(result.message);
         return;
       }
+      setSessionId(result.sessionId);
       setRemainingTokens(result.answer.remainingTokens);
-      messageSequenceRef.current += 1;
-      const answerId = `william-${messageSequenceRef.current}`;
+      const answerId = result.answer.messageId;
+      const assistantMessage = {
+        id: answerId,
+        role: "assistant" as const,
+        suggestedQuestions: result.answer.suggestedQuestions,
+      };
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        setMessages((current) => [...current, { id: answerId, role: "assistant", text: result.answer.text }]);
+        setMessages((current) => [...current, { ...assistantMessage, text: result.answer.text }]);
       } else {
-        setMessages((current) => [...current, { id: answerId, role: "assistant", text: "" }]);
+        setMessages((current) => [...current, { ...assistantMessage, text: "" }]);
         setAnswerToReveal({ id: answerId, text: result.answer.text });
       }
+    });
+  }
+
+  function startNewConversation() {
+    if (asking || revealing || loadingChat || resettingChat) return;
+    setAnswerError(null);
+    startResettingChat(async () => {
+      const result = await startNewWilliamChatAction(sessionId);
+      if (!result.ok) {
+        setAnswerError(result.message);
+        return;
+      }
+      setSessionId(null);
+      setMessages([]);
+      setQuestion("");
+      setRemainingTokens(null);
+      setAnswerToReveal(null);
     });
   }
 
@@ -141,6 +196,18 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {aiEnabled && (sessionId || messages.length > 0) ? (
+                  <button
+                    aria-label="Nouvelle conversation"
+                    className="grid h-11 w-11 place-items-center rounded-md transition hover:bg-white/10 disabled:opacity-40"
+                    disabled={asking || revealing || loadingChat || resettingChat}
+                    title="Nouvelle conversation"
+                    type="button"
+                    onClick={startNewConversation}
+                  >
+                    <MessageSquarePlus aria-hidden="true" className="h-5 w-5" />
+                  </button>
+                ) : null}
                 <button aria-label={expanded ? "Réduire William" : "Agrandir William"} className="grid h-11 w-11 place-items-center rounded-md transition hover:bg-white/10" title={expanded ? "Réduire" : "Agrandir"} type="button" onClick={() => setExpanded((value) => !value)}>
                   {expanded ? <Minimize2 aria-hidden="true" className="h-5 w-5" /> : <Maximize2 aria-hidden="true" className="h-5 w-5" />}
                 </button>
@@ -153,7 +220,12 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
             {aiEnabled ? (
               <>
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-panel-strong/35 px-4 py-5" aria-live="polite">
-                  {messages.length === 0 && !asking ? (
+                  {loadingChat ? (
+                    <div className="flex h-full min-h-32 items-center justify-center gap-2 text-sm text-muted">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-accent motion-reduce:animate-none" />
+                      William retrouve votre conversation...
+                    </div>
+                  ) : messages.length === 0 && !asking ? (
                     <div className="mx-auto max-w-lg py-3">
                       <div className="flex items-center gap-3">
                         <TadiffMark className="h-10 w-10 shrink-0" />
@@ -166,7 +238,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                           <button
                             key={suggestion}
                             className="min-h-10 max-w-full py-2 text-left text-sm italic leading-5 text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-accent hover:decoration-accent/35 focus-visible:rounded-sm focus-visible:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
-                            disabled={asking || revealing}
+                            disabled={asking || revealing || loadingChat || resettingChat}
                             type="button"
                             onClick={() => askQuestion(suggestion)}
                           >
@@ -175,6 +247,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                         ))}
                         </div>
                       </div>
+                      {answerError ? <p className="mt-4 rounded-md border border-danger/20 bg-danger/10 p-3 text-sm text-danger" role="alert">{answerError}</p> : null}
                     </div>
                   ) : (
                     <div className="mx-auto space-y-4" style={{ maxWidth: expanded ? "46rem" : "100%" }}>
@@ -186,6 +259,22 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                           <div className="min-w-0 flex-1 rounded-lg rounded-tl-sm border border-border bg-panel px-3.5 py-2.5 text-sm leading-6">
                             <WilliamMarkdown>{message.text}</WilliamMarkdown>
                             {revealing && messages.at(-1)?.id === message.id ? <span aria-hidden="true" className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-accent motion-reduce:animate-none" /> : null}
+                            {message.suggestedQuestions.length > 0 && !(revealing && messages.at(-1)?.id === message.id) ? (
+                              <div className="mt-3 border-t border-border pt-2">
+                                {message.suggestedQuestions.map((suggestion) => (
+                                  <button
+                                    key={suggestion}
+                                    className="group flex min-h-9 w-full items-start gap-2 rounded-md px-1.5 py-2 text-left text-xs font-medium leading-5 text-accent transition-colors hover:bg-accent/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
+                                    disabled={asking || revealing || resettingChat}
+                                    type="button"
+                                    onClick={() => askQuestion(suggestion)}
+                                  >
+                                    <CornerDownRight aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
+                                    <span className="underline decoration-accent/25 underline-offset-4 group-hover:decoration-accent">{suggestion}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                       ))}
@@ -208,7 +297,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                     <textarea
                       id="william-question"
                       className="max-h-36 min-h-12 flex-1 resize-none bg-transparent py-2 text-sm leading-5 outline-none"
-                      maxLength={12000}
+                      maxLength={4000}
                       placeholder="Demandez à William..."
                       rows={2}
                       value={question}
@@ -220,7 +309,7 @@ export function WilliamBubble({ aiEnabled, tips }: { aiEnabled: boolean; tips: W
                         }
                       }}
                     />
-                    <button aria-label="Envoyer à William" className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-accent text-white transition hover:bg-accent-strong disabled:opacity-40" disabled={asking || revealing || question.trim().length < 3} title="Envoyer" type="submit"><Send className="h-4 w-4" /></button>
+                    <button aria-label="Envoyer à William" className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-accent text-white transition hover:bg-accent-strong disabled:opacity-40" disabled={asking || revealing || loadingChat || resettingChat || question.trim().length < 3} title="Envoyer" type="submit"><Send className="h-4 w-4" /></button>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-3 px-1 text-xs text-muted">
                     <span>Entrée pour envoyer · Maj + Entrée pour une ligne</span>
