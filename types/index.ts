@@ -46,6 +46,9 @@ export type CompanyProfile = {
   siret: string;
   licenseNumber: string;
   logoUrl: string;
+  logoScale: number;
+  logoPositionX: number;
+  logoPositionY: number;
   description: string;
 };
 

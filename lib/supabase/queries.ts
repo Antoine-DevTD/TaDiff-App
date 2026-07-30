@@ -1219,6 +1219,9 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
       siret: "",
       licenseNumber: "",
       logoUrl: "",
+      logoScale: 100,
+      logoPositionX: 50,
+      logoPositionY: 50,
       description: "",
     };
   }
@@ -1240,7 +1243,7 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
 
   const { data, error } = await supabase
     .from("companies")
-    .select("id,name,city,discipline,email,phone,website,siret,license_number,logo_url,description")
+    .select("id,name,city,discipline,email,phone,website,siret,license_number,logo_url,logo_scale,logo_position_x,logo_position_y,description")
     .eq("id", profile.company_id)
     .maybeSingle();
 
@@ -1257,6 +1260,9 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
     siret: data.siret ?? "",
     licenseNumber: data.license_number ?? "",
     logoUrl: data.logo_url ?? "",
+    logoScale: data.logo_scale ?? 100,
+    logoPositionX: data.logo_position_x ?? 50,
+    logoPositionY: data.logo_position_y ?? 50,
     description: data.description ?? "",
   };
 }

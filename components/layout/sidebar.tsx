@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, MoreHorizontal, Settings, X } from "lucide-react";
+import { BookOpen, CalendarDays, ExternalLink, MoreHorizontal, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,6 +18,8 @@ const adminNavItems = [
     initials: "SU",
   },
 ];
+
+const bookingUrl = "https://calendar.app.google/qpNBBf3UhVusTHYo7";
 
 function isItemActive(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
@@ -101,6 +103,21 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
         </nav>
 
         <div className="space-y-2 border-t border-white/10 p-3">
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="group flex min-h-14 items-center gap-3 rounded-md border border-accent/45 bg-accent/15 px-3 text-white transition-colors hover:border-accent/70 hover:bg-accent/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-accent">
+              <CalendarDays className="h-[18px] w-[18px]" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">On vous accompagne</span>
+              <span className="block text-xs text-white/65">Réserver un rendez-vous</span>
+            </span>
+            <ExternalLink className="h-3.5 w-3.5 text-white/55 group-hover:text-white" aria-hidden />
+          </a>
           <Link
             href="/resources"
             className={cn(
@@ -224,6 +241,20 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
                   <span className="block text-xs text-muted">Compte et données</span>
                 </span>
               </Link>
+              <a
+                href={bookingUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setMoreOpen(false)}
+                className="flex min-h-16 items-center gap-3 rounded-md border border-accent/30 bg-accent/10 px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <CalendarDays className="h-5 w-5 text-accent" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">On vous accompagne</span>
+                  <span className="block text-xs text-muted">Réserver un rendez-vous</span>
+                </span>
+                <ExternalLink className="h-4 w-4 text-muted" aria-hidden />
+              </a>
             </div>
           </section>
         </div>

@@ -12,7 +12,17 @@ const AccountShowDialog = dynamic(
   { ssr: false },
 );
 
-export function AccountMenu({ companyLogoUrl = "" }: { companyLogoUrl?: string }) {
+export function AccountMenu({
+  companyLogoUrl = "",
+  logoScale = 100,
+  logoPositionX = 50,
+  logoPositionY = 50,
+}: {
+  companyLogoUrl?: string;
+  logoScale?: number;
+  logoPositionX?: number;
+  logoPositionY?: number;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [isSigningOut, startSignOut] = useTransition();
@@ -37,7 +47,11 @@ export function AccountMenu({ companyLogoUrl = "" }: { companyLogoUrl?: string }
           <img
             src={companyLogoUrl}
             alt="Logo de la compagnie"
-            className="h-full w-full bg-white object-contain p-1"
+            className="h-full w-full bg-white object-cover"
+            style={{
+              objectPosition: `${logoPositionX}% ${logoPositionY}%`,
+              transform: `scale(${logoScale / 100})`,
+            }}
           />
         ) : (
           <TadiffMark className="h-full w-full rounded-full" />

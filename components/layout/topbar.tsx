@@ -18,9 +18,15 @@ import { cn } from "@/lib/utils";
 
 export function Topbar({
   companyLogoUrl = "",
+  logoScale = 100,
+  logoPositionX = 50,
+  logoPositionY = 50,
   workspaceLabel,
 }: {
   companyLogoUrl?: string;
+  logoScale?: number;
+  logoPositionX?: number;
+  logoPositionY?: number;
   workspaceLabel: string;
 }) {
   const pathname = usePathname();
@@ -66,7 +72,12 @@ export function Topbar({
               <span className="sm:hidden">Ajouter</span>
             </Button>
           ) : null}
-          <AccountMenu companyLogoUrl={companyLogoUrl} />
+          <AccountMenu
+            companyLogoUrl={companyLogoUrl}
+            logoScale={logoScale}
+            logoPositionX={logoPositionX}
+            logoPositionY={logoPositionY}
+          />
         </div>
       </div>
 

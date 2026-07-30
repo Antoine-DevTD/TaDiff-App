@@ -10,6 +10,9 @@ export const companyProfileSchema = z.object({
   siret: z.string().max(40).optional().or(z.literal("")),
   licenseNumber: z.string().max(80).optional().or(z.literal("")),
   logoUrl: z.string().url("Lien invalide").optional().or(z.literal("")),
+  logoScale: z.coerce.number().int().min(100).max(200),
+  logoPositionX: z.coerce.number().int().min(0).max(100),
+  logoPositionY: z.coerce.number().int().min(0).max(100),
   description: z.string().max(1200, "La description est trop longue").optional().or(z.literal("")),
 });
 

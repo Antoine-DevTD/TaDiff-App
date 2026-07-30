@@ -44,11 +44,17 @@ export function CompanyProfileForm({
       siret: profile.siret,
       licenseNumber: profile.licenseNumber,
       logoUrl: profile.logoUrl,
+      logoScale: profile.logoScale,
+      logoPositionX: profile.logoPositionX,
+      logoPositionY: profile.logoPositionY,
       description: profile.description,
     },
   });
 
   const logoUrl = useWatch({ control, name: "logoUrl" }) ?? "";
+  const logoScale = Number(useWatch({ control, name: "logoScale" }) ?? 100);
+  const logoPositionX = Number(useWatch({ control, name: "logoPositionX" }) ?? 50);
+  const logoPositionY = Number(useWatch({ control, name: "logoPositionY" }) ?? 50);
 
   function onSubmit(values: CompanyProfileValues) {
     startTransition(async () => {
@@ -101,6 +107,49 @@ export function CompanyProfileForm({
           />
         </Field>
 
+        {logoUrl ? (
+          <section className="rounded-lg border border-border bg-panel-strong/45 p-4">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+              <div className="mx-auto flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-white shadow-sm sm:mx-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoUrl}
+                  alt="Aperçu du cadrage du logo"
+                  className="h-full w-full object-cover"
+                  style={{
+                    objectPosition: `${logoPositionX}% ${logoPositionY}%`,
+                    transform: `scale(${logoScale / 100})`,
+                  }}
+                />
+              </div>
+              <div className="min-w-0 flex-1 space-y-4">
+                <p className="text-sm font-semibold">Ajuster le cadrage</p>
+                <LogoRange
+                  label="Zoom"
+                  value={logoScale}
+                  min={100}
+                  max={200}
+                  registerProps={register("logoScale", { valueAsNumber: true })}
+                />
+                <LogoRange
+                  label="Position horizontale"
+                  value={logoPositionX}
+                  min={0}
+                  max={100}
+                  registerProps={register("logoPositionX", { valueAsNumber: true })}
+                />
+                <LogoRange
+                  label="Position verticale"
+                  value={logoPositionY}
+                  min={0}
+                  max={100}
+                  registerProps={register("logoPositionY", { valueAsNumber: true })}
+                />
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="SIRET" error={errors.siret?.message}>
             <Input placeholder="123 456 789 00012" {...register("siret")} />
@@ -140,6 +189,36 @@ export function CompanyProfileForm({
         )}
       </fieldset>
     </form>
+  );
+}
+
+function LogoRange({
+  label,
+  max,
+  min,
+  registerProps,
+  value,
+}: {
+  label: string;
+  max: number;
+  min: number;
+  registerProps: React.InputHTMLAttributes<HTMLInputElement>;
+  value: number;
+}) {
+  return (
+    <label className="block">
+      <span className="flex items-center justify-between text-xs text-muted">
+        {label}
+        <span>{value}%</span>
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        className="mt-2 h-2 w-full cursor-pointer accent-accent"
+        {...registerProps}
+      />
+    </label>
   );
 }
 

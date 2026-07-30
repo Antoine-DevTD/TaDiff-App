@@ -1504,6 +1504,9 @@ export async function updateCompanyProfile(
       siret: parsed.data.siret || null,
       license_number: parsed.data.licenseNumber || null,
       logo_url: parsed.data.logoUrl || null,
+      logo_scale: parsed.data.logoScale,
+      logo_position_x: parsed.data.logoPositionX,
+      logo_position_y: parsed.data.logoPositionY,
       description: parsed.data.description || null,
     })
     .eq("id", workspace.companyId);

@@ -35,7 +35,7 @@ export const getWorkspaceBranding = cache(async function getWorkspaceBranding() 
   } = await getSupabaseServerUser();
 
   if (!user) {
-    return { label: "Compagnie demo", logoUrl: "" };
+    return { label: "Compagnie demo", logoUrl: "", logoScale: 100, logoPositionX: 50, logoPositionY: 50 };
   }
 
   const { data: profile } = await supabase
@@ -45,18 +45,21 @@ export const getWorkspaceBranding = cache(async function getWorkspaceBranding() 
     .maybeSingle();
 
   if (!profile?.company_id) {
-    return { label: "Espace a configurer", logoUrl: "" };
+    return { label: "Espace a configurer", logoUrl: "", logoScale: 100, logoPositionX: 50, logoPositionY: 50 };
   }
 
   const { data: company } = await supabase
     .from("companies")
-    .select("name,logo_url")
+    .select("name,logo_url,logo_scale,logo_position_x,logo_position_y")
     .eq("id", profile.company_id)
     .maybeSingle();
 
   return {
     label: company?.name ?? "Compagnie",
     logoUrl: company?.logo_url ?? "",
+    logoScale: company?.logo_scale ?? 100,
+    logoPositionX: company?.logo_position_x ?? 50,
+    logoPositionY: company?.logo_position_y ?? 50,
   };
 });
 

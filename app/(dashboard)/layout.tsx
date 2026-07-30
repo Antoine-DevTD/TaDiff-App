@@ -18,6 +18,9 @@ export default async function DashboardLayout({
 }>) {
   let workspaceLabel = "Compagnie demo";
   let companyLogoUrl = "";
+  let logoScale = 100;
+  let logoPositionX = 50;
+  let logoPositionY = 50;
   let superAdmin = false;
 
   if (hasSupabaseEnv()) {
@@ -36,6 +39,9 @@ export default async function DashboardLayout({
     superAdmin = platformAccess.isSuperAdmin || platformAccess.permissions.length > 0;
     workspaceLabel = superAdmin ? "Console interne" : workspaceBranding.label;
     companyLogoUrl = superAdmin ? "" : workspaceBranding.logoUrl;
+    logoScale = workspaceBranding.logoScale;
+    logoPositionX = workspaceBranding.logoPositionX;
+    logoPositionY = workspaceBranding.logoPositionY;
   }
 
   return (
@@ -49,7 +55,13 @@ export default async function DashboardLayout({
       </a>
       <Sidebar variant={superAdmin ? "admin" : "company"} />
       <div className="min-w-0 flex-1">
-        <Topbar workspaceLabel={workspaceLabel} companyLogoUrl={companyLogoUrl} />
+        <Topbar
+          workspaceLabel={workspaceLabel}
+          companyLogoUrl={companyLogoUrl}
+          logoScale={logoScale}
+          logoPositionX={logoPositionX}
+          logoPositionY={logoPositionY}
+        />
         <main
           id="main-content"
           tabIndex={-1}

@@ -134,6 +134,9 @@ export type Database = {
           siret: string | null;
           license_number: string | null;
           logo_url: string | null;
+          logo_scale: number;
+          logo_position_x: number;
+          logo_position_y: number;
           description: string | null;
           invite_code: string | null;
           created_at: string;
@@ -160,6 +163,9 @@ export type Database = {
           siret?: string | null;
           license_number?: string | null;
           logo_url?: string | null;
+          logo_scale?: number;
+          logo_position_x?: number;
+          logo_position_y?: number;
           description?: string | null;
           created_at?: string;
         };
@@ -185,6 +191,9 @@ export type Database = {
           siret?: string | null;
           license_number?: string | null;
           logo_url?: string | null;
+          logo_scale?: number;
+          logo_position_x?: number;
+          logo_position_y?: number;
           description?: string | null;
           created_at?: string;
         };
