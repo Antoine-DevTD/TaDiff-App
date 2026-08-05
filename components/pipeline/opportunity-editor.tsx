@@ -5,6 +5,7 @@ import { deleteOpportunity, updateOpportunity } from "@/app/(dashboard)/actions"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { MultiDateField } from "@/components/pipeline/multi-date-field";
 import { Textarea } from "@/components/ui/textarea";
 import {
   calculateCompanyRevenue,
@@ -43,8 +44,10 @@ export function OpportunityEditor({
     estimatedBoxOffice: String(deal.estimatedBoxOffice),
     companySharePercent: String(deal.companySharePercent),
     minimumGuarantee: String(deal.minimumGuarantee),
+    minimumGuaranteeBasis: deal.minimumGuaranteeBasis ?? "total" as const,
     venueRental: String(deal.venueRental),
     performanceDate: deal.performanceDate,
+    performanceDates: deal.performanceDates?.length ? deal.performanceDates : deal.performanceDate ? [deal.performanceDate] : [],
     nextAction: deal.nextAction === "Prochaine action a definir" ? "" : deal.nextAction,
     nextFollowUpAt: deal.nextFollowUpAt,
     lostReason: deal.lostReason,
@@ -76,6 +79,8 @@ export function OpportunityEditor({
       estimatedBoxOffice: Number(draft.estimatedBoxOffice) || 0,
       companySharePercent: Number(draft.companySharePercent) || 0,
       minimumGuarantee: Number(draft.minimumGuarantee) || 0,
+      minimumGuaranteeBasis: draft.minimumGuaranteeBasis,
+      performanceCount: draft.performanceDates.length,
       venueRental: Number(draft.venueRental) || 0,
     });
 
@@ -94,8 +99,10 @@ export function OpportunityEditor({
         estimatedBoxOffice: Number(draft.estimatedBoxOffice) || 0,
         companySharePercent: Number(draft.companySharePercent) || 0,
         minimumGuarantee: Number(draft.minimumGuarantee) || 0,
+        minimumGuaranteeBasis: draft.minimumGuaranteeBasis,
         venueRental: Number(draft.venueRental) || 0,
-        performanceDate: draft.performanceDate,
+        performanceDate: draft.performanceDates[0] ?? "",
+        performanceDates: draft.performanceDates,
         nextAction: draft.nextAction || "Prochaine action a definir",
         nextFollowUpAt: draft.nextFollowUpAt,
         lostReason: draft.stage === "Perdu" ? draft.lostReason : "",
@@ -177,7 +184,8 @@ export function OpportunityEditor({
         <div className="grid grid-cols-2 gap-2">
           <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
           <Input aria-label="Part compagnie" className="min-h-9 text-xs" min="0" max="100" step="5" type="number" value={draft.companySharePercent} onChange={(event) => setDraft((current) => ({ ...current, companySharePercent: event.target.value }))} />
-          <Input aria-label="Minimum garanti" className="col-span-2 min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.minimumGuarantee} onChange={(event) => setDraft((current) => ({ ...current, minimumGuarantee: event.target.value }))} />
+          <Input aria-label="Minimum garanti" className="min-h-9 text-xs" min="0" step="1" type="number" value={draft.minimumGuarantee} onChange={(event) => setDraft((current) => ({ ...current, minimumGuarantee: event.target.value }))} />
+          <Select aria-label="Application du minimum garanti" className="min-h-9 text-xs" value={draft.minimumGuaranteeBasis} onChange={(event) => setDraft((current) => ({ ...current, minimumGuaranteeBasis: event.target.value as "per_performance" | "total" }))}><option value="total">Minimum global</option><option value="per_performance">Par représentation</option></Select>
         </div>
       ) : null}
       {draft.exploitationMode === "location" ? (
@@ -186,15 +194,7 @@ export function OpportunityEditor({
           <Input aria-label="Coût de location" className="min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.venueRental} onChange={(event) => setDraft((current) => ({ ...current, venueRental: event.target.value }))} />
         </div>
       ) : null}
-      <Input
-        aria-label="Date de jeu"
-        className="min-h-9 text-xs"
-        type="date"
-        value={draft.performanceDate}
-        onChange={(event) =>
-          setDraft((current) => ({ ...current, performanceDate: event.target.value }))
-        }
-      />
+      <MultiDateField dates={draft.performanceDates} label="Dates envisagées" onChange={(performanceDates) => setDraft((current) => ({ ...current, performanceDate: performanceDates.filter(Boolean)[0] ?? "", performanceDates: performanceDates.filter(Boolean) }))} />
       <Input
         aria-label="Date de prochaine action"
         className="min-h-9 text-xs"

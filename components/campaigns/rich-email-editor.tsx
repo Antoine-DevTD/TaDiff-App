@@ -6,7 +6,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { emailVariables } from "@/lib/email-template-variables";
@@ -29,6 +29,8 @@ export function RichEmailEditor({
   onChange,
 }: RichEmailEditorProps) {
   const [variableQuery, setVariableQuery] = useState<{ from: number; query: string } | null>(null);
+  const [activeVariableIndex, setActiveVariableIndex] = useState(0);
+  const variableListId = useId();
   const editor = useEditor({
     immediatelyRender: false,
     editable,
@@ -79,6 +81,7 @@ export function RichEmailEditor({
     const beforeCursor = $from.parent.textBetween(0, $from.parentOffset, undefined, "\ufffc");
     const match = beforeCursor.match(/(?:^|\s)@([\p{L}\p{N}_]*)$/u);
     setVariableQuery(match ? { from: $from.pos - match[0].trimStart().length, query: match[1].toLocaleLowerCase("fr") } : null);
+    setActiveVariableIndex(0);
   }
 
   const suggestedVariables = variableQuery
@@ -121,23 +124,45 @@ export function RichEmailEditor({
           ) : null}
         </div>
       ) : null}
-      <div className="relative">
+      <div>
         <EditorContent
           aria-label={editable ? "Corps du message" : "Apercu du message"}
+          aria-autocomplete="list"
+          aria-controls={variableQuery && suggestedVariables.length > 0 ? variableListId : undefined}
+          aria-expanded={Boolean(variableQuery && suggestedVariables.length > 0)}
+          aria-activedescendant={variableQuery && suggestedVariables[activeVariableIndex] ? `${variableListId}-${activeVariableIndex}` : undefined}
           className={cn(
             "email-editor min-h-72 px-6 py-5 text-sm leading-7 outline-none",
             !editable && "bg-white text-slate-900",
           )}
           editor={editor}
+          onKeyDown={(event) => {
+            if (!variableQuery || suggestedVariables.length === 0) return;
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              setActiveVariableIndex((current) => (current + 1) % suggestedVariables.length);
+            } else if (event.key === "ArrowUp") {
+              event.preventDefault();
+              setActiveVariableIndex((current) => (current - 1 + suggestedVariables.length) % suggestedVariables.length);
+            } else if (event.key === "Enter" || event.key === "Tab") {
+              event.preventDefault();
+              insertVariable(suggestedVariables[activeVariableIndex].token);
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              setVariableQuery(null);
+            }
+          }}
         />
         {variableQuery && suggestedVariables.length > 0 ? (
-          <div className="absolute bottom-4 left-6 z-10 w-72 overflow-hidden rounded-md border border-border bg-panel shadow-xl shadow-ink/15" role="listbox" aria-label="Variables disponibles">
-            <p className="border-b border-border px-3 py-2 text-xs font-semibold text-muted">Insérer une information</p>
-            {suggestedVariables.map((variable) => (
-              <button key={variable.token} className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-panel-strong focus-visible:bg-panel-strong focus-visible:outline-none" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertVariable(variable.token)}>
-                <span>{variable.label}</span><span className="text-xs font-medium text-accent">{variable.token}</span>
-              </button>
-            ))}
+          <div id={variableListId} className="border-t border-border bg-panel-strong/45 p-2" role="listbox" aria-label="Variables disponibles">
+            <p className="px-2 pb-2 text-xs font-semibold text-muted">Insérer une information — ↑ ↓ pour choisir, Entrée pour insérer</p>
+            <div className="grid gap-1 sm:grid-cols-2">
+              {suggestedVariables.map((variable, index) => (
+                <button id={`${variableListId}-${index}`} key={variable.token} aria-selected={index === activeVariableIndex} className={`flex min-h-10 w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm focus-visible:outline-none ${index === activeVariableIndex ? "bg-accent text-white" : "hover:bg-panel"}`} role="option" type="button" onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setActiveVariableIndex(index)} onClick={() => insertVariable(variable.token)}>
+                  <span>{variable.label}</span><span className={index === activeVariableIndex ? "text-xs font-medium text-white/80" : "text-xs font-medium text-accent"}>{variable.token}</span>
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
       </div>

@@ -44,6 +44,10 @@ Derniere verification : 23 juillet 2026.
 - Une exploitation accepte une sélection explicite des jours joués dans une période. La billetterie s'enregistre automatiquement et une représentation peut être annulée puis rétablie sans perdre son historique.
 - La modification d'une diffusion s'ouvre dans une fenêtre dédiée au lieu d'allonger la fiche active. Les montants, dont le minimum garanti, acceptent les centimes et les valeurs non arrondies.
 - La prochaine représentation d'un spectacle est dérivée des diffusions confirmées lorsqu'une date de jeu est renseignée. Les montants de diffusion, dont le minimum garanti, acceptent les valeurs non arrondies à la centaine.
+- Une diffusion accepte plusieurs dates dans une saisie continue, distingue le minimum garanti par représentation du minimum global et propose explicitement « Je ne sais pas encore » pour le mode d'exploitation.
+- Une exploitation peut reprendre une diffusion confirmée avec son spectacle, son contact, ses dates et ses conditions économiques. Sa saisie de dates n'utilise plus la double notion période/jours joués.
+- La console bêta peut activer William et créditer une seule fois 200 000 tokens à chaque compte sélectionné. L'utilisateur reçoit ensuite une présentation ponctuelle des usages et du consentement documentaire.
+- Le budget détaillé commence par une sélection guidée des métiers et dépenses, sépare clairement création, plateau et technique, utilise des incréments entiers et explique que les taux de charges sont des hypothèses à vérifier.
 
 ## Etat technique a confirmer avant livraison
 
@@ -51,6 +55,7 @@ Derniere verification : 23 juillet 2026.
 - `036_opportunity_exploitation_models.sql` couvre les modeles economiques de diffusion.
 - `037_email_templates.sql` couvre les templates email persistants.
 - `064_unify_grant_catalog_and_email_variants.sql` importe les anciennes références dans le catalogue global, branche l'ensemencement des nouveaux comptes dessus et ajoute la variation avec pièces jointes aux modèles plateforme.
+- `065_guided_diffusion_exploitation_and_beta_william.sql` ajoute les dates multiples, la base du minimum garanti et l'activation idempotente de William pour les comptes bêta. Elle doit être appliquée avant de tester ces parcours.
 - Stripe reste a valider de bout en bout avec les variables et webhooks de l'environnement cible.
 - `038_platform_admin_and_ai_foundation.sql` ajoute les informations legales dynamiques, les catalogues globaux, les templates plateforme et la fondation RAG de William. Application Supabase confirmee par l'utilisateur le 20 juillet 2026.
 - `039_ai_access_quotas_and_credits.sql` ajoute l'acces progressif par compte, les quotas mensuels, le journal d'usage et les credits Stripe.

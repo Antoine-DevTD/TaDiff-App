@@ -223,11 +223,11 @@ export type ExploitationPerformance = {
 };
 
 export type Exploitation = {
-  id: string; showId: string; contactId: string; title: string; showTitle: string;
+  id: string; opportunityId: string; showId: string; contactId: string; title: string; showTitle: string;
   venue: string; city: string; exploitationMode: ExploitationMode;
   status: "preparation" | "confirmee" | "terminee" | "annulee";
   startDate: string; endDate: string; cessionFeePerPerformance: number;
-  companySharePercent: number; minimumGuarantee: number; venueRentalTotal: number;
+  companySharePercent: number; minimumGuarantee: number; minimumGuaranteeBasis: "per_performance" | "total"; venueRentalTotal: number;
   fixedCostsTotal: number; performances: ExploitationPerformance[];
 };
 
@@ -245,8 +245,10 @@ export type PipelineDeal = {
   estimatedBoxOffice: number;
   companySharePercent: number;
   minimumGuarantee: number;
+  minimumGuaranteeBasis?: "per_performance" | "total";
   venueRental: number;
   performanceDate: string;
+  performanceDates?: string[];
   nextAction: string;
   nextFollowUpAt: string;
   lostReason: string;

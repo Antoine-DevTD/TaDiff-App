@@ -8,7 +8,7 @@ export const exploitationModes: Array<{
   { id: "cession", label: "Cession", description: "Le lieu achète la représentation." },
   { id: "corealisation", label: "Coréalisation", description: "Vous partagez les recettes de billetterie." },
   { id: "location", label: "Location", description: "Vous louez le lieu et gardez les recettes." },
-  { id: "other", label: "Autre accord", description: "Mise à disposition ou montage particulier." },
+  { id: "other", label: "Je ne sais pas encore", description: "Gardez la discussion ouverte et précisez l'accord plus tard." },
 ];
 
 export function getExploitationModeLabel(mode: ExploitationMode) {
@@ -21,11 +21,16 @@ export function calculateCompanyRevenue(input: {
   estimatedBoxOffice: number;
   companySharePercent: number;
   minimumGuarantee: number;
+  minimumGuaranteeBasis?: "per_performance" | "total";
+  performanceCount?: number;
   venueRental: number;
 }) {
   if (input.exploitationMode === "corealisation") {
     const sharedRevenue = input.estimatedBoxOffice * (input.companySharePercent / 100);
-    return Math.max(sharedRevenue, input.minimumGuarantee);
+    const guaranteed = input.minimumGuaranteeBasis === "per_performance"
+      ? input.minimumGuarantee * Math.max(input.performanceCount ?? 1, 1)
+      : input.minimumGuarantee;
+    return Math.max(sharedRevenue, guaranteed);
   }
 
   if (input.exploitationMode === "location") {

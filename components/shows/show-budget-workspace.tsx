@@ -21,11 +21,15 @@ import type { ShowBudgetItem, ShowBudgetProfile } from "@/types";
 
 type BudgetKind = "expense" | "revenue";
 
-const starterLines: Record<BudgetKind, Array<{ category: string; label: string }>> = {
+const starterLines: Record<BudgetKind, Array<{ category: string; label: string; scope?: "creation" | "performance" }>> = {
   expense: [
     { category: "creation", label: "Répétitions rémunérées" },
     { category: "scenography", label: "Décor, accessoires ou costumes" },
-    { category: "artistic", label: "Équipe artistique" },
+    { category: "technical", label: "Location ou achat de matériel technique" },
+    { category: "communication", label: "Photos, vidéo et communication" },
+    { category: "touring", label: "Transport et défraiements", scope: "performance" },
+    { category: "rights", label: "Droits et taxes", scope: "performance" },
+    { category: "other", label: "Assurance du spectacle" },
   ],
   revenue: [
     { category: "own", label: "Apport de la compagnie" },
@@ -154,7 +158,7 @@ function BudgetSection({
                     category: starter.category,
                     label: starter.label,
                     amount: 0,
-                    scope: "creation",
+                    scope: starter.scope ?? "creation",
                     sortOrder: 0,
                   })
                 }

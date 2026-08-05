@@ -45,6 +45,7 @@ export type AdminBetaSignup = {
   invitedUserId: string | null;
   accountCreatedAt: string | null;
   lastAccessError: string;
+  williamBetaCreditedAt: string | null;
 };
 
 export type FeedbackKind = "bug" | "idee" | "avis";
@@ -303,6 +304,7 @@ export async function getAdminBetaSignups(): Promise<AdminBetaSignup[]> {
     invitedUserId: signup.invited_user_id,
     accountCreatedAt: signup.account_created_at,
     lastAccessError: signup.last_access_error ?? "",
+    williamBetaCreditedAt: signup.william_beta_credited_at,
   }));
 }
 

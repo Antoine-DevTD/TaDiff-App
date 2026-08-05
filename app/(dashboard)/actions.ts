@@ -213,6 +213,11 @@ function isOpportunityExploitationSchemaError(message: string | undefined) {
   );
 }
 
+function isOpportunitySchedulingSchemaError(message: string | undefined) {
+  return Boolean(message?.includes("schema cache") &&
+    (message.includes("performance_dates") || message.includes("minimum_guarantee_basis")));
+}
+
 function withoutOptionalOpportunityColumns<T extends Record<string, unknown>>(payload: T) {
   const fallbackPayload = { ...payload };
   delete fallbackPayload.next_action;
@@ -326,10 +331,11 @@ async function ensureOpportunityReminder({
 }
 
 export async function createExploitation(values: {
-  showId: string; contactId?: string; title: string; venue?: string; city?: string;
+  opportunityId?: string; showId: string; contactId?: string; title: string; venue?: string; city?: string;
+  newContact?: { name: string; organization: string; email?: string };
   exploitationMode: "cession" | "corealisation" | "location" | "other";
   startDate: string; endDate: string; cessionFeePerPerformance: number;
-  companySharePercent: number; minimumGuarantee: number; venueRentalTotal: number;
+  companySharePercent: number; minimumGuarantee: number; minimumGuaranteeBasis: "per_performance" | "total"; venueRentalTotal: number;
   fixedCostsTotal: number; performanceDates: string[];
 }): Promise<ActionResult> {
   if (!values.showId || !values.title.trim() || !values.startDate || !values.endDate) {
@@ -355,10 +361,53 @@ export async function createExploitation(values: {
   const workspace = await getOrCreateWorkspace();
   if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
   const supabase = await getSupabaseServerClient();
+  let contactId = values.contactId || null;
+  let createdContactId: string | null = null;
+  if (!contactId && values.newContact) {
+    const parsedContact = contactSchema.safeParse({
+      contactType: "person",
+      venueId: "",
+      name: values.newContact.name,
+      organization: values.newContact.organization,
+      role: "Diffusion",
+      email: values.newContact.email || "",
+      phone: "",
+      city: values.city || "",
+      address: "",
+      postalCode: "",
+      department: "",
+      region: "",
+      website: "",
+      capacity: "",
+      latitude: "",
+      longitude: "",
+      status: "En discussion",
+      tags: ["exploitation"],
+      directorName: "",
+      directorEmail: "",
+      directorPhone: "",
+    });
+    if (!parsedContact.success) return { ok: false, message: parsedContact.error.issues[0]?.message ?? "Nouveau contact invalide." };
+    const { data: contact, error: contactError } = await supabase.from("contacts").insert({
+      company_id: workspace.companyId,
+      contact_type: "person",
+      name: parsedContact.data.name,
+      organization: parsedContact.data.organization,
+      role: parsedContact.data.role,
+      email: parsedContact.data.email || null,
+      city: parsedContact.data.city || null,
+      status: parsedContact.data.status,
+      tags: parsedContact.data.tags ?? [],
+    }).select("id").single();
+    if (contactError || !contact) return { ok: false, message: contactError?.message ?? "Contact non créé." };
+    contactId = contact.id;
+    createdContactId = contact.id;
+  }
   const { data: exploitation, error } = await supabase.from("exploitations").insert({
     company_id: workspace.companyId,
+    opportunity_id: values.opportunityId || null,
     show_id: values.showId,
-    contact_id: values.contactId || null,
+    contact_id: contactId,
     title: values.title.trim(),
     venue: values.venue?.trim() || null,
     city: values.city?.trim() || null,
@@ -369,18 +418,24 @@ export async function createExploitation(values: {
     cession_fee_per_performance: Math.max(0, values.cessionFeePerPerformance || 0),
     company_share_percent: Math.min(100, Math.max(0, values.companySharePercent || 0)),
     minimum_guarantee: Math.max(0, values.minimumGuarantee || 0),
+    minimum_guarantee_basis: values.minimumGuaranteeBasis,
     venue_rental_total: Math.max(0, values.venueRentalTotal || 0),
     fixed_costs_total: Math.max(0, values.fixedCostsTotal || 0),
   }).select("id").single();
-  if (error || !exploitation) return { ok: false, message: error?.message ?? "Exploitation non creee." };
+  if (error || !exploitation) {
+    if (createdContactId) await supabase.from("contacts").delete().eq("id", createdContactId);
+    return { ok: false, message: error?.message ?? "Exploitation non creee." };
+  }
   const { error: performanceError } = await supabase.from("exploitation_performances").insert(
     dates.map((performanceDate) => ({ company_id: workspace.companyId!, exploitation_id: exploitation.id, performance_date: performanceDate })),
   );
   if (performanceError) {
     await supabase.from("exploitations").delete().eq("id", exploitation.id);
+    if (createdContactId) await supabase.from("contacts").delete().eq("id", createdContactId);
     return { ok: false, message: performanceError.message };
   }
   revalidatePath("/pipeline");
+  if (createdContactId) revalidatePath("/contacts");
   revalidatePath("/finances");
   revalidatePath("/calendar");
   return { ok: true, message: `${dates.length} representation(s) ajoutee(s) a l'exploitation.` };
@@ -2442,8 +2497,10 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
     estimated_box_office: parsed.data.estimatedBoxOffice,
     company_share_percent: parsed.data.companySharePercent,
     minimum_guarantee: parsed.data.minimumGuarantee,
+    minimum_guarantee_basis: parsed.data.minimumGuaranteeBasis,
     venue_rental: parsed.data.venueRental,
-    performance_date: parsed.data.performanceDate || null,
+    performance_date: parsed.data.performanceDates[0] || parsed.data.performanceDate || null,
+    performance_dates: parsed.data.performanceDates,
     next_action: parsed.data.nextAction || williamAction.action || null,
     next_follow_up_at: parsed.data.nextFollowUpAt || williamAction.dueDate || null,
     lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
@@ -2453,6 +2510,10 @@ export async function createOpportunity(values: OpportunityFormInput): Promise<A
     .insert(basePayload)
     .select("id")
     .single();
+
+  if (error && isOpportunitySchedulingSchemaError(error.message)) {
+    return { ok: false, message: "Appliquez la migration SQL 065 avant d'ajouter plusieurs dates." };
+  }
 
   if (error && isOpportunityExploitationSchemaError(error.message)) {
     return { ok: false, message: "Appliquez la migration SQL 036 avant de créer une diffusion." };
@@ -2538,8 +2599,10 @@ export async function updateOpportunity(
     estimated_box_office: parsed.data.estimatedBoxOffice,
     company_share_percent: parsed.data.companySharePercent,
     minimum_guarantee: parsed.data.minimumGuarantee,
+    minimum_guarantee_basis: parsed.data.minimumGuaranteeBasis,
     venue_rental: parsed.data.venueRental,
-    performance_date: parsed.data.performanceDate || null,
+    performance_date: parsed.data.performanceDates[0] || parsed.data.performanceDate || null,
+    performance_dates: parsed.data.performanceDates,
     next_action: parsed.data.nextAction || null,
     next_follow_up_at: parsed.data.nextFollowUpAt || null,
     lost_reason: parsed.data.stage === "Perdu" ? parsed.data.lostReason || null : null,
@@ -2548,6 +2611,10 @@ export async function updateOpportunity(
     .from("opportunities")
     .update(basePayload)
     .eq("id", opportunityId);
+
+  if (error && isOpportunitySchedulingSchemaError(error.message)) {
+    return { ok: false, message: "Appliquez la migration SQL 065 avant de modifier plusieurs dates." };
+  }
 
   if (error && isOpportunityExploitationSchemaError(error.message)) {
     return { ok: false, message: "Appliquez la migration SQL 036 avant de modifier cette diffusion." };

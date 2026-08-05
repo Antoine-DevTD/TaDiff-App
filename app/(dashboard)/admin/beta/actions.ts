@@ -5,7 +5,7 @@ import { z } from "zod";
 import { renderBetaEmailTemplate } from "@/lib/beta-access";
 import { isSuperAdmin } from "@/lib/supabase/admin";
 import { getSupabaseAdminClient, hasSupabaseAdminEnv } from "@/lib/supabase/admin-client";
-import { getSupabaseServerUser } from "@/lib/supabase/server";
+import { getSupabaseServerClient, getSupabaseServerUser } from "@/lib/supabase/server";
 
 const idsSchema = z.array(z.string().uuid()).min(1).max(30);
 const emailSchema = z.object({
@@ -170,6 +170,22 @@ export async function inviteBetaSignups(input: z.input<typeof inviteSchema>): Pr
   }
   revalidatePath("/admin/beta");
   return { ok: failed === 0, message: `${succeeded} invitation(s) envoyee(s), ${failed} ignoree(s) ou en echec.`, succeeded, failed };
+}
+
+export async function creditBetaWilliam(input: z.input<typeof inviteSchema>): Promise<Result> {
+  const parsed = inviteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Sélection invalide." };
+  if (!(await requireSuperAdmin())) return { ok: false, message: "Action réservée au super-admin." };
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_credit_beta_william", { p_signup_ids: parsed.data.signupIds });
+  if (error) return { ok: false, message: error.message.includes("schema cache") ? "Appliquez la migration SQL 065 avant de créditer William." : error.message };
+  const result = data?.[0];
+  revalidatePath("/admin/beta");
+  revalidatePath("/admin");
+  return {
+    ok: (result?.credited_count ?? 0) > 0,
+    message: `${result?.credited_count ?? 0} compte(s) crédité(s) de 200 000 tokens, ${result?.skipped_count ?? 0} ignoré(s).`,
+  };
 }
 
 export async function resendBetaInvitation(input: z.input<typeof resendInviteSchema>): Promise<Result> {

@@ -9,6 +9,7 @@ import { createOpportunity, createOpportunityWithNewContact } from "@/app/(dashb
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { MultiDateField } from "@/components/pipeline/multi-date-field";
 import {
   calculateCompanyRevenue,
   exploitationModes,
@@ -52,6 +53,7 @@ export function OpportunityForm({
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [contactMode, setContactMode] = useState<"existing" | "new">("existing");
   const [hasMinimumGuarantee, setHasMinimumGuarantee] = useState(false);
+  const [performanceDates, setPerformanceDates] = useState<string[]>([""]);
   const [newContact, setNewContact] = useState({
     contactType: "person" as const,
     city: "",
@@ -82,8 +84,10 @@ export function OpportunityForm({
       estimatedBoxOffice: 0,
       companySharePercent: 50,
       minimumGuarantee: 0,
+      minimumGuaranteeBasis: "total",
       venueRental: 0,
       performanceDate: "",
+      performanceDates: [],
       nextAction: "",
       nextFollowUpAt: "",
       lostReason: "",
@@ -96,6 +100,7 @@ export function OpportunityForm({
   const estimatedBoxOffice = Number(useWatch({ control, name: "estimatedBoxOffice" })) || 0;
   const companySharePercent = Number(useWatch({ control, name: "companySharePercent" })) || 0;
   const minimumGuarantee = Number(useWatch({ control, name: "minimumGuarantee" })) || 0;
+  const minimumGuaranteeBasis = useWatch({ control, name: "minimumGuaranteeBasis" }) ?? "total";
   const venueRental = Number(useWatch({ control, name: "venueRental" })) || 0;
   const estimatedRevenue = calculateCompanyRevenue({
     exploitationMode,
@@ -103,6 +108,8 @@ export function OpportunityForm({
     estimatedBoxOffice,
     companySharePercent,
     minimumGuarantee,
+    minimumGuaranteeBasis,
+    performanceCount: performanceDates.filter(Boolean).length,
     venueRental,
   });
   const williamAction = getWilliamOpportunityAction(stage, exploitationMode);
@@ -129,6 +136,8 @@ export function OpportunityForm({
     const organization = selectedContact?.organization || newContact.organization;
     const payload = {
       ...values,
+      performanceDate: performanceDates.filter(Boolean)[0] ?? "",
+      performanceDates: performanceDates.filter(Boolean),
       title: `${selectedShow.title} - ${organization}`,
       value: estimatedRevenue,
       probability: getDefaultProbability(values.stage),
@@ -144,6 +153,7 @@ export function OpportunityForm({
 
       if (result.ok) {
         reset();
+        setPerformanceDates([""]);
         router.refresh();
         onSuccess?.();
       }
@@ -157,6 +167,7 @@ export function OpportunityForm({
       <input type="hidden" {...register("probability")} />
       <input type="hidden" {...register("nextAction")} />
       <input type="hidden" {...register("nextFollowUpAt")} />
+      <input type="hidden" {...register("minimumGuaranteeBasis")} />
 
       <section aria-labelledby="diffusion-project-title" className="space-y-4">
         <div>
@@ -285,9 +296,17 @@ export function OpportunityForm({
                 Un minimum garanti est prévu
               </label>
               {hasMinimumGuarantee ? (
-                <Field label="Montant du minimum garanti" error={errors.minimumGuarantee?.message} suffix="EUR">
-                  <Input type="number" min="0" step="0.01" inputMode="decimal" {...register("minimumGuarantee")} />
-                </Field>
+                <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+                  <Field label="Montant du minimum garanti" error={errors.minimumGuarantee?.message} suffix="EUR">
+                    <Input type="number" min="0" step="1" inputMode="decimal" {...register("minimumGuarantee")} />
+                  </Field>
+                  <Field label="Ce montant s’applique">
+                    <Select value={minimumGuaranteeBasis} onChange={(event) => setValue("minimumGuaranteeBasis", event.target.value as "per_performance" | "total") }>
+                      <option value="total">À l’ensemble des dates</option>
+                      <option value="per_performance">À chaque représentation</option>
+                    </Select>
+                  </Field>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -316,11 +335,9 @@ export function OpportunityForm({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Recette estimée pour la compagnie</p>
               <p className="mt-1 text-2xl font-semibold">{estimatedRevenue.toLocaleString("fr-FR")} EUR</p>
             </div>
-            <Field label="Date de représentation (si connue)" error={errors.performanceDate?.message}>
-              <Input type="date" {...register("performanceDate")} />
-            </Field>
           </div>
         </div>
+        <MultiDateField dates={performanceDates} onChange={setPerformanceDates} />
       </section>
 
       {williamAction.action ? (

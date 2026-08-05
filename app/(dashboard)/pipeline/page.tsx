@@ -22,7 +22,7 @@ export default async function PipelinePage() {
         <PipelineBoard contacts={contacts} deals={deals} shows={shows} />
       )}
 
-      <ExploitationWorkspace contacts={contacts} exploitations={exploitations} shows={shows} />
+      <ExploitationWorkspace contacts={contacts} deals={deals} exploitations={exploitations} shows={shows} />
     </div>
   );
 }

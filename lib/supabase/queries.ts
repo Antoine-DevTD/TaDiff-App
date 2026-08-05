@@ -157,7 +157,7 @@ export async function getShowById(showId: string): Promise<{
       supabase
         .from("opportunities")
         .select(
-          "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,venue_rental,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
+          "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,minimum_guarantee_basis,venue_rental,performance_date,performance_dates,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
         )
         .eq("show_id", showId)
         .order("created_at", { ascending: false }),
@@ -273,8 +273,10 @@ export async function getShowById(showId: string): Promise<{
           estimatedBoxOffice: deal.estimated_box_office ?? 0,
           companySharePercent: deal.company_share_percent ?? 50,
           minimumGuarantee: deal.minimum_guarantee ?? 0,
+          minimumGuaranteeBasis: deal.minimum_guarantee_basis ?? "total",
           venueRental: deal.venue_rental ?? 0,
           performanceDate: deal.performance_date ?? "",
+          performanceDates: deal.performance_dates ?? (deal.performance_date ? [deal.performance_date] : []),
           nextAction: deal.next_action ?? "Prochaine action a definir",
           nextFollowUpAt: deal.next_follow_up_at ?? "",
           lostReason: deal.lost_reason ?? "",
@@ -449,7 +451,7 @@ export async function getContactById(contactId: string): Promise<{
     supabase
       .from("opportunities")
       .select(
-        "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,venue_rental,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title,discipline,status,next_date,budget,notes,poster_url,id)",
+        "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,minimum_guarantee_basis,venue_rental,performance_date,performance_dates,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title,discipline,status,next_date,budget,notes,poster_url,id)",
       )
       .eq("contact_id", contactId)
       .order("created_at", { ascending: false }),
@@ -521,8 +523,10 @@ export async function getContactById(contactId: string): Promise<{
     estimatedBoxOffice: deal.estimated_box_office ?? 0,
     companySharePercent: deal.company_share_percent ?? 50,
     minimumGuarantee: deal.minimum_guarantee ?? 0,
+    minimumGuaranteeBasis: deal.minimum_guarantee_basis ?? "total",
     venueRental: deal.venue_rental ?? 0,
     performanceDate: deal.performance_date ?? "",
+    performanceDates: deal.performance_dates ?? (deal.performance_date ? [deal.performance_date] : []),
     nextAction: deal.next_action ?? "Prochaine action a definir",
     nextFollowUpAt: deal.next_follow_up_at ?? "",
     lostReason: deal.lost_reason ?? "",
@@ -599,6 +603,7 @@ export async function getExploitations(): Promise<Exploitation[]> {
   if (error || !rows) return [];
   return rows.map((row) => ({
     id: row.id,
+    opportunityId: row.opportunity_id ?? "",
     showId: row.show_id,
     contactId: row.contact_id ?? "",
     title: row.title,
@@ -612,6 +617,7 @@ export async function getExploitations(): Promise<Exploitation[]> {
     cessionFeePerPerformance: row.cession_fee_per_performance,
     companySharePercent: row.company_share_percent,
     minimumGuarantee: row.minimum_guarantee,
+    minimumGuaranteeBasis: row.minimum_guarantee_basis ?? "total",
     venueRentalTotal: row.venue_rental_total,
     fixedCostsTotal: row.fixed_costs_total,
     performances: (performanceRows ?? []).filter((performance) => performance.exploitation_id === row.id).map((performance) => ({
@@ -640,7 +646,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     supabase
       .from("opportunities")
       .select(
-        "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,venue_rental,performance_date,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
+        "id,title,contact_id,show_id,stage,value,probability,exploitation_mode,cession_fee,estimated_box_office,company_share_percent,minimum_guarantee,minimum_guarantee_basis,venue_rental,performance_date,performance_dates,next_action,next_follow_up_at,lost_reason,created_at,contacts(name,organization,email),shows(title)",
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -671,8 +677,10 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     estimatedBoxOffice: deal.estimated_box_office ?? 0,
     companySharePercent: deal.company_share_percent ?? 50,
     minimumGuarantee: deal.minimum_guarantee ?? 0,
+    minimumGuaranteeBasis: deal.minimum_guarantee_basis ?? "total",
     venueRental: deal.venue_rental ?? 0,
     performanceDate: deal.performance_date ?? "",
+    performanceDates: deal.performance_dates ?? (deal.performance_date ? [deal.performance_date] : []),
     nextAction: deal.next_action ?? "Prochaine action a definir",
     nextFollowUpAt: deal.next_follow_up_at ?? "",
     lostReason: deal.lost_reason ?? "",

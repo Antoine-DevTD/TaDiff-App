@@ -1,4 +1,5 @@
 import { WilliamBubble } from "@/components/william/william-bubble";
+import { WilliamCreditWelcome } from "@/components/william/william-credit-welcome";
 import {
   getGrantOpportunities,
   getLatestTreasurySnapshot,
@@ -19,5 +20,5 @@ export async function WilliamAssistant() {
 
   const tips = buildWilliamTips({ reminders, grants, documents, treasury });
 
-  return <WilliamBubble aiEnabled={Boolean(entitlement?.enabled)} tips={tips} />;
+  return <><WilliamCreditWelcome bonusBalance={entitlement?.bonusBalance ?? 0} /><WilliamBubble aiEnabled={Boolean(entitlement?.enabled)} tips={tips} /></>;
 }

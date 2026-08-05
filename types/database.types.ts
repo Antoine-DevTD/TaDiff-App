@@ -674,8 +674,10 @@ export type Database = {
           estimated_box_office: number;
           company_share_percent: number;
           minimum_guarantee: number;
+          minimum_guarantee_basis: "per_performance" | "total";
           venue_rental: number;
           performance_date: string | null;
+          performance_dates: string[];
           next_action: string | null;
           next_follow_up_at: string | null;
           lost_reason: string | null;
@@ -695,8 +697,10 @@ export type Database = {
           estimated_box_office?: number;
           company_share_percent?: number;
           minimum_guarantee?: number;
+          minimum_guarantee_basis?: "per_performance" | "total";
           venue_rental?: number;
           performance_date?: string | null;
+          performance_dates?: string[];
           next_action?: string | null;
           next_follow_up_at?: string | null;
           lost_reason?: string | null;
@@ -714,8 +718,10 @@ export type Database = {
           estimated_box_office?: number;
           company_share_percent?: number;
           minimum_guarantee?: number;
+          minimum_guarantee_basis?: "per_performance" | "total";
           venue_rental?: number;
           performance_date?: string | null;
+          performance_dates?: string[];
           next_action?: string | null;
           next_follow_up_at?: string | null;
           lost_reason?: string | null;
@@ -746,9 +752,9 @@ export type Database = {
         ];
       };
       exploitations: {
-        Row: { id: string; company_id: string; show_id: string; contact_id: string | null; opportunity_id: string | null; title: string; venue: string | null; city: string | null; exploitation_mode: string; status: string; start_date: string; end_date: string; cession_fee_per_performance: number; company_share_percent: number; minimum_guarantee: number; venue_rental_total: number; fixed_costs_total: number; created_at: string; updated_at: string };
-        Insert: { id?: string; company_id: string; show_id: string; contact_id?: string | null; opportunity_id?: string | null; title: string; venue?: string | null; city?: string | null; exploitation_mode?: string; status?: string; start_date: string; end_date: string; cession_fee_per_performance?: number; company_share_percent?: number; minimum_guarantee?: number; venue_rental_total?: number; fixed_costs_total?: number; created_at?: string; updated_at?: string };
-        Update: { title?: string; contact_id?: string | null; venue?: string | null; city?: string | null; exploitation_mode?: string; status?: string; start_date?: string; end_date?: string; cession_fee_per_performance?: number; company_share_percent?: number; minimum_guarantee?: number; venue_rental_total?: number; fixed_costs_total?: number; updated_at?: string };
+        Row: { id: string; company_id: string; show_id: string; contact_id: string | null; opportunity_id: string | null; title: string; venue: string | null; city: string | null; exploitation_mode: string; status: string; start_date: string; end_date: string; cession_fee_per_performance: number; company_share_percent: number; minimum_guarantee: number; minimum_guarantee_basis: "per_performance" | "total"; venue_rental_total: number; fixed_costs_total: number; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; contact_id?: string | null; opportunity_id?: string | null; title: string; venue?: string | null; city?: string | null; exploitation_mode?: string; status?: string; start_date: string; end_date: string; cession_fee_per_performance?: number; company_share_percent?: number; minimum_guarantee?: number; minimum_guarantee_basis?: "per_performance" | "total"; venue_rental_total?: number; fixed_costs_total?: number; created_at?: string; updated_at?: string };
+        Update: { title?: string; contact_id?: string | null; venue?: string | null; city?: string | null; exploitation_mode?: string; status?: string; start_date?: string; end_date?: string; cession_fee_per_performance?: number; company_share_percent?: number; minimum_guarantee?: number; minimum_guarantee_basis?: "per_performance" | "total"; venue_rental_total?: number; fixed_costs_total?: number; updated_at?: string };
         Relationships: [];
       };
       exploitation_performances: {
@@ -1022,6 +1028,8 @@ export type Database = {
           invited_user_id: string | null;
           account_created_at: string | null;
           last_access_error: string | null;
+          william_beta_credited_at: string | null;
+          william_beta_credited_by: string | null;
         };
         Insert: {
           id?: string;
@@ -1046,6 +1054,8 @@ export type Database = {
           invited_user_id?: string | null;
           account_created_at?: string | null;
           last_access_error?: string | null;
+          william_beta_credited_at?: string | null;
+          william_beta_credited_by?: string | null;
         };
         Update: {
           company_name?: string;
@@ -1069,6 +1079,8 @@ export type Database = {
           invited_user_id?: string | null;
           account_created_at?: string | null;
           last_access_error?: string | null;
+          william_beta_credited_at?: string | null;
+          william_beta_credited_by?: string | null;
         };
         Relationships: [];
       };
@@ -2126,7 +2138,12 @@ export type Database = {
           invited_user_id: string | null;
           account_created_at: string | null;
           last_access_error: string | null;
+          william_beta_credited_at: string | null;
         }[];
+      };
+      admin_credit_beta_william: {
+        Args: { p_signup_ids: string[] };
+        Returns: { credited_count: number; skipped_count: number }[];
       };
       register_beta_signup: {
         Args: {
