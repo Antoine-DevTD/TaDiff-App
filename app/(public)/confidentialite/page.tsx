@@ -37,7 +37,7 @@ export default async function PrivacyPage() {
         </LegalList>
       </LegalSection>
       <LegalSection title="Destinataires et prestataires">
-        <p>Les données sont accessibles uniquement aux personnes autorisées de TaDiff et, selon le service utilisé, à ses prestataires techniques : Supabase pour l&apos;authentification, la base et le stockage, Vercel pour l&apos;hébergement de l&apos;application, et Stripe pour le paiement.</p>
+        <p>Les données sont accessibles uniquement aux personnes autorisées de TaDiff et, selon le service utilisé, à ses prestataires techniques : Netlify pour le site public, Vercel pour l&apos;hébergement de l&apos;application, Supabase pour l&apos;authentification, la base et le stockage principal, Cloudflare R2 lorsqu&apos;il est activé comme stockage documentaire alternatif, et Stripe pour le paiement.</p>
         <p>Certains traitements peuvent impliquer un transfert hors de l&apos;Espace économique européen, encadre par les mecanismes prevus par le RGPD.</p>
       </LegalSection>
       <LegalSection title="Durees de conservation">

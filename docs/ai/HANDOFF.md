@@ -6,6 +6,14 @@ Etat : lots 1 a 5 livres sur `main`, verifies et migrations 043 a 051 appliquees
 
 ## Chantier en cours
 
+### Console d'acces beta a activer
+
+- Migration `sql/063_beta_access_workflow.sql` confirmee appliquee en production par l'utilisateur le 4 aout 2026.
+- Verifier dans Vercel Production et Preview : `RESEND_API_KEY`, `BETA_PAYMENT_LINK_URL` et `BETA_SIGNUP_NOTIFICATION_FROM`.
+- Le lien Stripe actuel est traite comme un paiement unique de 19,99 EUR pour le premier mois, sans renouvellement automatique.
+- L'invitation transmet le nom, la compagnie, la discipline et le besoin principal. `/welcome` confirme les informations préremplies puis ouvre directement la première action choisie ; le logo reste facultatif.
+- Effectuer un envoi vers une adresse interne, confirmer le paiement manuellement puis tester l'invitation dans une fenetre privee.
+
 ### Correctif inscription bêta à livrer
 
 - `sql/060_fix_beta_signup_registration.sql` qualifie `beta_signups.position` dans la RPC publique et ajoute le retour `is_new`.

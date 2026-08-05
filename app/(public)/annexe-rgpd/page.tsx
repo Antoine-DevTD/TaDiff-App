@@ -56,7 +56,7 @@ export default async function DataProcessingPage() {
       </LegalSection>
 
       <LegalSection title="7. Sous-traitants ulterieurs">
-        <p>TaDiff peut recourir a des prestataires pour l'hébergement, la base de données, le stockage, l'authentification, le paiement et les communications. La liste initiale comprend Supabase, Vercel et Stripe selon les fonctions activees.</p>
+        <p>TaDiff peut recourir a des prestataires pour l'hébergement, la base de données, le stockage, l'authentification, le paiement et les communications. La liste initiale comprend Netlify pour le site public, Vercel pour l'application, Supabase pour l'authentification, la base et le stockage principal, Cloudflare R2 lorsqu'il est active comme stockage documentaire alternatif, et Stripe pour le paiement.</p>
         <p>TaDiff impose a ces prestataires des obligations de protection appropriees. Le client est informe d'un ajout ou remplacement significatif et peut formuler une objection motivee liee a la protection des données.</p>
       </LegalSection>
 

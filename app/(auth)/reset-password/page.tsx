@@ -1,7 +1,16 @@
 import { ResetPasswordForm } from "@/components/forms/reset-password-form";
 import { Card } from "@/components/ui/card";
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ next?: string }>;
+}) {
+  const params = await searchParams;
+  const nextPath = params?.next?.startsWith("/") && !params.next.startsWith("//")
+    ? params.next
+    : "/dashboard";
+
   return (
     <Card className="w-full max-w-md">
       <div className="mb-6">
@@ -12,7 +21,7 @@ export default function ResetPasswordPage() {
           l&apos;ancien immediatement.
         </p>
       </div>
-      <ResetPasswordForm />
+      <ResetPasswordForm nextPath={nextPath} />
     </Card>
   );
 }

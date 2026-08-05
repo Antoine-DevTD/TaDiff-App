@@ -21,18 +21,18 @@ export type LegalInformation = {
 
 export const fallbackLegalInformation: LegalInformation = {
   serviceName: "TaDiff",
-  operatorName: process.env.NEXT_PUBLIC_LEGAL_NAME || "ARKENCIEL Compagnie",
-  operatorLegalForm: process.env.NEXT_PUBLIC_LEGAL_FORM || "Forme juridique a completer",
-  operatorAddress: process.env.NEXT_PUBLIC_LEGAL_ADDRESS || "Adresse du siege a completer avant la beta",
-  operatorRegistration: process.env.NEXT_PUBLIC_LEGAL_REGISTRATION || "SIREN et RCS a completer",
+  operatorName: process.env.NEXT_PUBLIC_LEGAL_NAME || "ARKENCIEL COMPAGNIE",
+  operatorLegalForm: process.env.NEXT_PUBLIC_LEGAL_FORM || "Association loi 1901 declaree",
+  operatorAddress: process.env.NEXT_PUBLIC_LEGAL_ADDRESS || "15 passage Ramey, 75018 Paris, France",
+  operatorRegistration: process.env.NEXT_PUBLIC_LEGAL_REGISTRATION || "SIREN 808 466 056 - SIRET 808 466 056 00021 - RNA W751226993 - APE 90.01Z",
   operatorVat: process.env.NEXT_PUBLIC_LEGAL_VAT || "Numero de TVA a completer si applicable",
-  publicationDirector: process.env.NEXT_PUBLIC_LEGAL_DIRECTOR || "Directeur de publication a completer avant la beta",
-  professionalPhone: process.env.NEXT_PUBLIC_LEGAL_PHONE || "",
+  publicationDirector: process.env.NEXT_PUBLIC_LEGAL_DIRECTOR || "Vladimir Mazur",
+  professionalPhone: process.env.NEXT_PUBLIC_LEGAL_PHONE || "06 42 40 26 88",
   legalEmail: process.env.NEXT_PUBLIC_LEGAL_EMAIL || "contact@tadiff.com",
   privacyEmail: process.env.NEXT_PUBLIC_PRIVACY_EMAIL || "contact@tadiff.com",
-  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "contact@tadiff.com",
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@tadiff.com",
   billingEmail: process.env.NEXT_PUBLIC_BILLING_EMAIL || "contact@tadiff.com",
-  betaPrice: process.env.NEXT_PUBLIC_BETA_PRICE || "19,99 EUR TTC par mois",
+  betaPrice: process.env.NEXT_PUBLIC_BETA_PRICE || "19,99 EUR TTC pour le premier mois de beta, sans renouvellement automatique",
   legalVersion: process.env.NEXT_PUBLIC_LEGAL_VERSION || "1.0",
 };
 

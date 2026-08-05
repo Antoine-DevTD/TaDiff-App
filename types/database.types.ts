@@ -978,6 +978,26 @@ export type Database = {
           },
         ];
       };
+      beta_access_events: {
+        Row: {
+          id: string;
+          beta_signup_id: string;
+          actor_id: string | null;
+          event_type: "payment_email_sent" | "payment_email_failed" | "payment_confirmed" | "invitation_sent" | "invitation_failed" | "account_created";
+          detail: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          beta_signup_id: string;
+          actor_id?: string | null;
+          event_type: "payment_email_sent" | "payment_email_failed" | "payment_confirmed" | "invitation_sent" | "invitation_failed" | "account_created";
+          detail?: string | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
       beta_signups: {
         Row: {
           id: string;
@@ -992,6 +1012,16 @@ export type Database = {
           position: number;
           created_at: string;
           is_demo: boolean;
+          payment_email_sent_at: string | null;
+          payment_email_sent_by: string | null;
+          payment_confirmed_at: string | null;
+          payment_confirmed_by: string | null;
+          payment_reference: string | null;
+          invitation_sent_at: string | null;
+          invitation_sent_by: string | null;
+          invited_user_id: string | null;
+          account_created_at: string | null;
+          last_access_error: string | null;
         };
         Insert: {
           id?: string;
@@ -1006,6 +1036,16 @@ export type Database = {
           position: number;
           created_at?: string;
           is_demo?: boolean;
+          payment_email_sent_at?: string | null;
+          payment_email_sent_by?: string | null;
+          payment_confirmed_at?: string | null;
+          payment_confirmed_by?: string | null;
+          payment_reference?: string | null;
+          invitation_sent_at?: string | null;
+          invitation_sent_by?: string | null;
+          invited_user_id?: string | null;
+          account_created_at?: string | null;
+          last_access_error?: string | null;
         };
         Update: {
           company_name?: string;
@@ -1019,6 +1059,16 @@ export type Database = {
           position?: number;
           created_at?: string;
           is_demo?: boolean;
+          payment_email_sent_at?: string | null;
+          payment_email_sent_by?: string | null;
+          payment_confirmed_at?: string | null;
+          payment_confirmed_by?: string | null;
+          payment_reference?: string | null;
+          invitation_sent_at?: string | null;
+          invitation_sent_by?: string | null;
+          invited_user_id?: string | null;
+          account_created_at?: string | null;
+          last_access_error?: string | null;
         };
         Relationships: [];
       };
@@ -2063,6 +2113,13 @@ export type Database = {
           position: number;
           is_demo: boolean;
           created_at: string;
+          payment_email_sent_at: string | null;
+          payment_confirmed_at: string | null;
+          payment_reference: string | null;
+          invitation_sent_at: string | null;
+          invited_user_id: string | null;
+          account_created_at: string | null;
+          last_access_error: string | null;
         }[];
       };
       register_beta_signup: {

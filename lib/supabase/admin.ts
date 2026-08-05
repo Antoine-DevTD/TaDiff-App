@@ -38,6 +38,13 @@ export type AdminBetaSignup = {
   position: number;
   isDemo: boolean;
   createdAt: string;
+  paymentEmailSentAt: string | null;
+  paymentConfirmedAt: string | null;
+  paymentReference: string;
+  invitationSentAt: string | null;
+  invitedUserId: string | null;
+  accountCreatedAt: string | null;
+  lastAccessError: string;
 };
 
 export type FeedbackKind = "bug" | "idee" | "avis";
@@ -288,6 +295,13 @@ export async function getAdminBetaSignups(): Promise<AdminBetaSignup[]> {
     position: signup.position,
     isDemo: signup.is_demo,
     createdAt: signup.created_at,
+    paymentEmailSentAt: signup.payment_email_sent_at,
+    paymentConfirmedAt: signup.payment_confirmed_at,
+    paymentReference: signup.payment_reference ?? "",
+    invitationSentAt: signup.invitation_sent_at,
+    invitedUserId: signup.invited_user_id,
+    accountCreatedAt: signup.account_created_at,
+    lastAccessError: signup.last_access_error ?? "",
   }));
 }
 

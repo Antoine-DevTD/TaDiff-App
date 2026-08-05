@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CalendarDays, ExternalLink, MoreHorizontal, Settings, X } from "lucide-react";
+import { BookOpen, CalendarDays, ExternalLink, MoreHorizontal, Settings, TestTube2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -17,6 +17,12 @@ const adminNavItems = [
     summary: "Compagnies, facturation, bêta et retours",
     initials: "SU",
   },
+  {
+    href: "/admin/beta",
+    label: "Bêta",
+    summary: "Paiements, invitations et comptes",
+    initials: "BE",
+  },
 ];
 
 const bookingUrl = "https://calendar.app.google/qpNBBf3UhVusTHYo7";
@@ -25,11 +31,11 @@ function isItemActive(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
 }
 
-export function Sidebar({ variant = "company" }: { variant?: "admin" | "company" }) {
+export function Sidebar({ variant = "company", canViewBeta = false }: { variant?: "admin" | "company"; canViewBeta?: boolean }) {
   const pathname = usePathname();
 
   if (variant === "admin") {
-    return <AdminSidebar pathname={pathname} />;
+    return <AdminSidebar canViewBeta={canViewBeta} pathname={pathname} />;
   }
 
   return <CompanyNavigation pathname={pathname} />;
@@ -263,7 +269,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
   );
 }
 
-function AdminSidebar({ pathname }: { pathname: string }) {
+function AdminSidebar({ canViewBeta, pathname }: { canViewBeta: boolean; pathname: string }) {
   return (
     <>
       <div aria-hidden="true" className="hidden w-64 shrink-0 lg:block" />
@@ -278,8 +284,8 @@ function AdminSidebar({ pathname }: { pathname: string }) {
         </div>
       </div>
       <nav aria-label="Administration" className="flex-1 space-y-1 overflow-y-auto p-3">
-        {adminNavItems.map((item) => {
-          const active = isItemActive(pathname, item.href);
+        {adminNavItems.filter((item) => item.href !== "/admin/beta" || canViewBeta).map((item) => {
+          const active = item.href === "/admin" ? pathname === "/admin" : isItemActive(pathname, item.href);
 
           return (
             <Link
@@ -291,7 +297,7 @@ function AdminSidebar({ pathname }: { pathname: string }) {
               )}
             >
               <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-xs font-semibold">
-                {item.initials}
+                {item.href === "/admin/beta" ? <TestTube2 className="h-4 w-4" aria-hidden /> : item.initials}
               </span>
               <span className="min-w-0">
                 <span className="block font-medium leading-5">{item.label}</span>

@@ -27,7 +27,8 @@ export default async function TermsOfSalePage() {
       </LegalSection>
 
       <LegalSection title="3. Offre bêta">
-        <p>L'offre bêta donne accès aux fonctions rendues disponibles dans le cockpit pendant la période de test. Son prix de référence est de {legalInformation.betaPrice}. Le périmètre exact, les limites d'usage et les fonctions actives sont présentés avant la souscription.</p>
+        <p>L'offre bêta, reservee aux compagnies selectionnees pour le programme de test, donne acces aux fonctions rendues disponibles dans le cockpit pendant la periode de test.</p>
+        <p>Pendant la phase beta, le paiement de 19,99 EUR TTC couvre uniquement le premier mois d'acces. Il ne declenche aucun renouvellement automatique. Toute poursuite payante fera l'objet d'une proposition distincte et d'un accord explicite avant une nouvelle facturation.</p>
         <p>Les fonctions annoncees comme futures, experimentales ou en preparation ne constituent pas une caracteristique garantie de l'offre souscrite.</p>
       </LegalSection>
 
@@ -46,8 +47,8 @@ export default async function TermsOfSalePage() {
         <p>La facture est mise a disposition ou envoyee electroniquement. Le client accepte ce mode de facturation et signale rapidement toute erreur.</p>
       </LegalSection>
 
-      <LegalSection title="7. Duree et renouvellement">
-        <p>Sauf indication differente lors de la commande, l'abonnement bêta est mensuel, sans engagement minimum, et se renouvelle chaque mois jusqu'a resiliation.</p>
+      <LegalSection title="7. Duree et poursuite de la beta">
+        <p>Le premier paiement couvre un mois d'acces a la beta et prend fin sans reconduction automatique. TaDiff informe le client des conditions proposees pour poursuivre avant toute nouvelle facturation.</p>
         <p>La résiliation prend effet à la fin de la période déjà payée. Toute période commencée reste due et n'est pas remboursée, sauf obligation légale, double paiement ou manquement imputable à TaDiff justifiant un remboursement.</p>
       </LegalSection>
 

@@ -12,7 +12,7 @@ import {
   type ResetPasswordFormValues,
 } from "@/lib/validation/auth";
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ nextPath = "/dashboard" }: { nextPath?: string }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const {
@@ -49,7 +49,7 @@ export function ResetPasswordForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(nextPath);
     router.refresh();
   }
 

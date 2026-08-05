@@ -12,6 +12,7 @@ export default async function WelcomePage({
   let initialFullName = "";
   let initialCompanyName = "";
   let initialLogoUrl = "";
+  let initialMainNeed = "";
   const params = await searchParams;
   const devPreview = process.env.NODE_ENV !== "production" && params?.preview === "1";
   const replay = params?.replay === "1";
@@ -37,6 +38,8 @@ export default async function WelcomePage({
       typeof user.user_metadata.company_name === "string"
         ? user.user_metadata.company_name
         : "";
+    initialMainNeed =
+      typeof user.user_metadata.main_need === "string" ? user.user_metadata.main_need : "";
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -73,6 +76,7 @@ export default async function WelcomePage({
       initialCompanyName={initialCompanyName}
       initialFullName={initialFullName}
       initialLogoUrl={initialLogoUrl}
+      initialMainNeed={initialMainNeed}
       fromSignup={fromSignup}
       replay={replay}
     />

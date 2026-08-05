@@ -73,6 +73,10 @@ async function syncCheckoutSession(session: Stripe.Checkout.Session) {
     return;
   }
 
+  if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
+    return;
+  }
+
   const companyId = session.metadata?.companyId ?? session.client_reference_id;
   const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
 

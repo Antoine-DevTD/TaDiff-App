@@ -8,19 +8,20 @@ Renseigner les informations exactement comme elles figurent au registre officiel
 
 | Information | Valeur a fournir |
 | --- | --- |
-| Denomination exacte | ARKENCIEL Compagnie - confirmer la casse et l'orthographe |
-| Forme juridique | A COMPLETER : association, SAS, autre |
-| Adresse du siege | A COMPLETER |
-| SIREN | A COMPLETER |
-| RCS ou RNA | A COMPLETER |
-| Capital social | A COMPLETER si societe |
+| Denomination exacte | ARKENCIEL COMPAGNIE |
+| Forme juridique | Association loi 1901 declaree |
+| Adresse du siege | 15 passage Ramey, 75018 Paris, France |
+| SIREN / SIRET | 808 466 056 / 808 466 056 00021 |
+| RNA / APE | W751226993 / 90.01Z |
+| Capital social | Sans objet pour une association loi 1901 |
 | Numero de TVA | A COMPLETER ou indiquer "TVA non applicable, art. 293 B du CGI" si valide par le comptable |
-| Representant legal | A COMPLETER |
-| Directeur de publication | A COMPLETER |
-| Telephone professionnel | A COMPLETER |
-| Email juridique | contact@tadiff.com - A CONFIRMER |
-| Email support | contact@tadiff.com - A CONFIRMER |
-| Email facturation | contact@tadiff.com - A CONFIRMER |
+| Representant legal | Vladimir Mazur |
+| Directeur de publication | Vladimir Mazur |
+| Telephone professionnel | 06 42 40 26 88 |
+| Email juridique | contact@tadiff.com |
+| Email RGPD | contact@tadiff.com |
+| Email support | support@tadiff.com |
+| Email facturation | contact@tadiff.com |
 
 ## 2. Publication dans TaDiff
 
@@ -29,18 +30,18 @@ Apres application de `sql/038_platform_admin_and_ai_foundation.sql`, renseigner 
 Les variables Vercel ci-dessous restent uniquement des valeurs de secours si la base est indisponible ou si la migration n'est pas encore appliquee. Ne pas mettre de guillemets autour des valeurs.
 
 ```env
-NEXT_PUBLIC_LEGAL_NAME=ARKENCIEL Compagnie
-NEXT_PUBLIC_LEGAL_FORM=A COMPLETER
-NEXT_PUBLIC_LEGAL_ADDRESS=A COMPLETER
-NEXT_PUBLIC_LEGAL_REGISTRATION=A COMPLETER
+NEXT_PUBLIC_LEGAL_NAME=ARKENCIEL COMPAGNIE
+NEXT_PUBLIC_LEGAL_FORM=Association loi 1901 declaree
+NEXT_PUBLIC_LEGAL_ADDRESS=15 passage Ramey, 75018 Paris, France
+NEXT_PUBLIC_LEGAL_REGISTRATION=SIREN 808 466 056 - SIRET 808 466 056 00021 - RNA W751226993 - APE 90.01Z
 NEXT_PUBLIC_LEGAL_VAT=A COMPLETER
-NEXT_PUBLIC_LEGAL_DIRECTOR=A COMPLETER
-NEXT_PUBLIC_LEGAL_PHONE=
+NEXT_PUBLIC_LEGAL_DIRECTOR=Vladimir Mazur
+NEXT_PUBLIC_LEGAL_PHONE=06 42 40 26 88
 NEXT_PUBLIC_LEGAL_EMAIL=contact@tadiff.com
 NEXT_PUBLIC_PRIVACY_EMAIL=contact@tadiff.com
-NEXT_PUBLIC_SUPPORT_EMAIL=contact@tadiff.com
+NEXT_PUBLIC_SUPPORT_EMAIL=support@tadiff.com
 NEXT_PUBLIC_BILLING_EMAIL=contact@tadiff.com
-NEXT_PUBLIC_BETA_PRICE=19,99 EUR TTC par mois
+NEXT_PUBLIC_BETA_PRICE=19,99 EUR TTC pour le premier mois de beta, sans renouvellement automatique
 NEXT_PUBLIC_LEGAL_VERSION=1.0
 ```
 
@@ -51,10 +52,10 @@ Quand la societe TaDiff reprend l'exploitation, remplacer les valeurs juridiques
 Les pages utilisent actuellement les hypotheses suivantes. Corriger ce fichier et les CGV si l'une d'elles est fausse.
 
 - Cible contractuelle : professionnels, associations et compagnies agissant pour leur activite.
-- Prix beta : `19,99 EUR TTC par mois`.
-- Periodicite : mensuelle.
+- Prix beta actuel : `19,99 EUR TTC pour le premier mois`.
+- Periodicite : paiement unique, sans reconduction automatique.
 - Engagement minimum : aucun.
-- Renouvellement : mensuel automatique.
+- Poursuite : nouvelle proposition et accord explicite avant toute facturation supplementaire.
 - Resiliation : a tout moment, effective en fin de periode payee.
 - Remboursement : pas de remboursement d'une periode commencee, sauf obligation legale, double paiement ou manquement justifie.
 - Preavis avant hausse de prix : 30 jours.
@@ -65,9 +66,7 @@ Les pages utilisent actuellement les hypotheses suivantes. Corriger ce fichier e
 
 Questions a trancher :
 
-- Le prix de 19,99 EUR est-il HT ou TTC ?
 - ARKENCIEL facture-t-elle la TVA ?
-- Le tarif beta est-il conserve apres la beta, et pendant combien de temps ?
 - Quelles limites sont incluses : utilisateurs, spectacles, stockage, emails ?
 - Le client peut-il resilier directement dans l'application des le lancement ?
 - Quelle adresse doit recevoir les reclamations urgentes ?
@@ -77,8 +76,10 @@ Questions a trancher :
 
 | Prestataire | Usage | Information manquante |
 | --- | --- | --- |
+| Netlify | Hebergement du site public et DNS | DPA accepte, journaux et coordonnees completes de l'hebergeur |
 | Supabase | Auth, base de donnees, stockage | Region du projet, DPA accepte, sauvegardes et cycle de suppression |
-| Vercel | Hebergement web | DPA accepte, region et journaux techniques |
+| Vercel | Hebergement de l'application | DPA accepte, region et journaux techniques |
+| Cloudflare R2 | Stockage documentaire alternatif, si active | DPA accepte, region, cycle de suppression et date d'activation |
 | Stripe | Paiement | Compte au nom de l'exploitant, TVA, factures, DPA |
 | Service email | Emails transactionnels et campagnes | Prestataire definitif, pays, DPA, desinscription |
 | William / IA | Assistance future | Fournisseur, modele, pays, conservation, entrainement, cout et consentement |

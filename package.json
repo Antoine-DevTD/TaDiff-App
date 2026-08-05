@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "admin:create": "node scripts/create-superadmin.mjs",
+    "beta:email": "node scripts/send-beta-payment-email.mjs",
+    "beta:invite": "node scripts/invite-beta-user.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

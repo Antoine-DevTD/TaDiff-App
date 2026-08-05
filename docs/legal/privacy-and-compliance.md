@@ -20,11 +20,11 @@ Ce document est le registre de travail technique et organisationnel. Il ne rempl
 
 ## A faire avant l'ouverture de la beta
 
-1. Renseigner dans Vercel les variables `NEXT_PUBLIC_LEGAL_NAME`, `NEXT_PUBLIC_LEGAL_ADDRESS`, `NEXT_PUBLIC_LEGAL_DIRECTOR` et `NEXT_PUBLIC_PRIVACY_EMAIL`.
+1. Reporter dans l'onglet `Informations` du super-admin l'identite validee d'ARKENCIEL COMPAGNIE, Vladimir Mazur comme directeur de publication, le siege, les immatriculations et les coordonnees. Aligner aussi les variables Vercel de secours.
 2. Remplacer la mention "societe en cours de constitution" des que la structure existe, puis ajouter forme juridique, capital, SIREN/RCS et numero de TVA si applicable.
 3. Appliquer la migration `sql/029_rgpd_access_event_retention.sql`.
 4. Dans Supabase Cron, planifier chaque jour : `delete from public.access_events where created_at < now() - interval '90 days'; delete from public.public_analytics_events where created_at < now() - interval '90 days';`.
-5. Signer ou accepter les DPA/accords de sous-traitance de Supabase, Vercel, Stripe et de tout futur outil email ou IA.
+5. Signer ou accepter les DPA/accords de sous-traitance de Netlify, Supabase, Vercel, Stripe, Cloudflare R2 s'il est active, et de tout futur outil email ou IA.
 6. Verifier la region du projet Supabase et documenter les transferts hors EEE ainsi que les garanties utilisees.
 7. Definir qui recoit les demandes envoyees a l'adresse RGPD et une procedure de reponse sous un mois.
 8. Completer `docs/legal/information-to-complete.md`, faire relire les CGU/CGV et implementer la preuve d'acceptation versionnee.

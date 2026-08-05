@@ -15,10 +15,8 @@ import { PublicAnalyticsPanel } from "@/components/admin/public-analytics-panel"
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { buildRevenueForecast } from "@/lib/admin-forecast";
-import { betaReservedSeatLimit } from "@/lib/beta";
 import { formatCurrency } from "@/lib/finance";
 import {
-  getAdminBetaSignups,
   getAdminAccessEvents,
   getAdminCompanies,
   getAdminFeedback,
@@ -67,7 +65,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     : allowedTabs[0];
   const [
     companies,
-    betaSignups,
     feedback,
     accessEvents,
     maintenanceActive,
@@ -83,7 +80,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     platformAdmins,
   ] = await Promise.all([
     getAdminCompanies(),
-    getAdminBetaSignups(),
     getAdminFeedback(),
     getAdminAccessEvents(60),
     getAdminMaintenanceMode(),
@@ -102,8 +98,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const activeCount = companies.filter((company) => company.billingStatus === "active").length;
   const compedCount = companies.filter((company) => company.billingStatus === "comped").length;
-  const reserved = betaSignups.filter((signup) => signup.status === "reserved" && !signup.isDemo);
-  const waitlist = betaSignups.filter((signup) => signup.status === "waitlist" && !signup.isDemo);
   const monthlyRevenue = activeCount * 19.99;
   const forecast = buildRevenueForecast(companies);
   const openFeedback = feedback.filter((entry) => entry.status !== "traite").length;
@@ -162,11 +156,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <MaintenanceToggle active={maintenanceActive} />
       </Card> : null}
 
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2">
         <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} active(s), ${compedCount} offerte(s)`} />
         <MetricCard label="MRR bêta" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) a 19,99 EUR`} />
-        <MetricCard label="Bêta reservee" value={`${reserved.length}/${betaReservedSeatLimit}`} detail="Places confirmees" />
-        <MetricCard label="Liste d'attente" value={waitlist.length.toString()} detail="Compagnies en attente" />
       </section>
 
       <Card className="space-y-4 p-5">
@@ -223,47 +215,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         )}
       </Card>
 
-      <Card className="space-y-4 p-5">
-        <div>
-          <p className="text-base font-semibold">Inscriptions bêta</p>
-          <p className="mt-1 text-sm text-muted">
-            {betaReservedSeatLimit} places reservees puis liste d&apos;attente, dans l&apos;ordre d&apos;arrivee.
-          </p>
-        </div>
-        {betaSignups.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-            Aucune inscription bêta pour le moment.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {betaSignups.map((signup) => (
-              <div
-                key={signup.id}
-                className="flex flex-col gap-2 rounded-md border border-border bg-panel-strong/35 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium">
-                    #{signup.position} {signup.companyName}
-                    <span className="ml-2 font-normal text-muted">
-                      {signup.contactName} · {signup.email}
-                      {signup.city ? ` · ${signup.city}` : ""}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-xs text-muted">
-                    {signup.discipline} — {signup.mainNeed}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {signup.isDemo ? <Badge tone="warning">Donnee demo</Badge> : null}
-                  <Badge tone={signup.status === "reserved" ? "success" : "neutral"}>
-                    {signup.status === "reserved" ? "Place reservee" : "Liste d'attente"}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
         </>
       )}
     </div>

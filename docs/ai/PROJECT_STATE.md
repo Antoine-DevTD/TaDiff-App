@@ -14,7 +14,8 @@ Derniere verification : 23 juillet 2026.
 - Landing, reservation beta, authentification et recuperation de mot de passe.
 - Le compte du webinaire dispose d'une inscription simulée protégée sur `/demo-signup`, suivie de la préparation animée de l'espace puis du replay de l'accueil William. Elle ne crée aucun utilisateur et ne rouvre pas les inscriptions publiques.
 - Le parcours simulé du webinaire repart avec un formulaire vierge et remet à zéro les données métier du compte webinaire avant l'accueil William : spectacles, contacts, diffusion, actions, agenda, trésorerie, documents, mécénat, emails et historiques. L'abonnement, le rôle, les crédits William et les journaux de sécurité restent conservés.
-- Welcome accepte le logo de la compagnie par sélection ou glisser-déposer JPG, PNG et WebP, le redimensionne côté navigateur, puis l'affiche dans le menu de compte en haut à droite du cockpit.
+- Welcome s'adresse à la personne par son prénom, reprend le nom de sa compagnie depuis l'invitation et lui permet de corriger ces informations. Le besoin indiqué à l'inscription pré-sélectionne une première action réelle : spectacle, contacts, agenda, trésorerie, documents ou visite du cockpit.
+- Welcome accepte aussi le logo de la compagnie, de manière facultative, par sélection ou glisser-déposer JPG, PNG et WebP, le redimensionne côté navigateur, puis l'affiche dans le menu de compte en haut à droite du cockpit.
 - Le logo de compagnie remplit le rond du menu de compte. Les administrateurs peuvent ajuster son zoom et son point de cadrage dans les paramètres de compagnie. La navigation propose aussi un rendez-vous d'accompagnement TaDiff, sur ordinateur comme sur mobile.
 - Cockpit, spectacles, documents, contacts, diffusion, agenda, finances, dossiers et administration.
 - Import de contacts, donnees de demonstration, visite guidee et premiers flux William.
@@ -62,6 +63,8 @@ Derniere verification : 23 juillet 2026.
 - La migration `061_company_logo_framing.sql` ajoute le zoom et la position du logo de chaque compagnie. Elle doit être appliquée avant de déployer le cadrage personnalisable.
 - La migration `062_william_chat_memory.sql` ajoute les sessions et messages de la bulle William avec isolation RLS par utilisateur et compagnie. Elle les inclut aussi dans la remise à zéro du compte webinaire et doit être appliquée avant d'activer la mémoire conversationnelle.
 - Les nouvelles places bêta réservées déclenchent via Resend une alerte interne et un email de bienvenue au candidat avec rendez-vous le 6 août 2026 à 10 h. L'email propose un fichier agenda universel `.ics`. La production doit définir `RESEND_API_KEY`; `BETA_SIGNUP_NOTIFICATION_EMAIL` permet de remplacer l'adresse support et `BETA_SIGNUP_NOTIFICATION_FROM` l'expéditeur par défaut.
+- La console interne dispose d'une route `/admin/beta` distincte de la supervision. Elle suit le mail de paiement, la verification manuelle Stripe, l'invitation Supabase et la creation du compte. Les actions sont reservees au super-admin ; `view_beta` reste un droit de lecture. La migration `063_beta_access_workflow.sql` est confirmee appliquee en production ; `BETA_PAYMENT_LINK_URL` reste requis avant activation.
+- La carte des lieux distingue theatre, festival, salle/espace et lieu culturel a partir du nom et des tags. Un lieu non categorise est traite comme un theatre.
 
 ## Qualite
 

@@ -55,6 +55,8 @@ STRIPE_PRICE_SOLO_MONTHLY=
 STRIPE_PRICE_PRO_MONTHLY=
 STRIPE_PRICE_STUDIO_MONTHLY=
 RESEND_API_KEY=
+BETA_PAYMENT_LINK_URL=
+BETA_SIGNUP_NOTIFICATION_FROM=TaDiff <support@tadiff.com>
 
 TADIFF_MAINTENANCE_MODE=false
 TADIFF_MAINTENANCE_ALLOWED_IPS=
@@ -120,9 +122,7 @@ via `TADIFF_MAINTENANCE_MODE`.
 
 ## External Integrations
 
-- Stripe Checkout is wired for subscription test mode. Create test products/prices in Stripe,
-  set `STRIPE_PRICE_BETA_MONTHLY`, then point the webhook to `/api/stripe/webhook`.
-  The webhook synchronizes `companies.billing_status`.
+- The current beta cohort uses the external `BETA_PAYMENT_LINK_URL` as a one-time payment for one month. Payments are verified manually in `/admin/beta` before the Supabase invitation is sent. The existing Stripe webhook and recurring price variables are reserved for the later subscription flow.
 - Email campaigns are operational as planning objects; real sending needs an email provider key and a send action.
 - FEC export is represented as a preview generated from quote/accounting lines; file export can be added on top of the current billing data.
 

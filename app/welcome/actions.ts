@@ -5,6 +5,7 @@ import { z } from "zod";
 import { hasSupabaseEnv } from "@/lib/env";
 import { demoWebinarEmail } from "@/lib/demo-webinar";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient, hasSupabaseAdminEnv } from "@/lib/supabase/admin-client";
 import {
   getConfiguredStorageProvider,
   removePrivateObject,
@@ -16,7 +17,7 @@ const welcomeOnboardingSchema = z.object({
   companyName: z.string().trim().min(2, "Indiquez le nom de la compagnie."),
   logoUrl: z.string().trim().url("URL invalide").optional().or(z.literal("")),
   replay: z.boolean().optional(),
-  showReadiness: z.enum(["ready", "later"]),
+  firstAction: z.enum(["show", "contacts", "calendar", "tour"]),
 });
 
 export type WelcomeOnboardingValues = z.infer<typeof welcomeOnboardingSchema>;
@@ -25,6 +26,13 @@ export type WelcomeOnboardingResult = {
   ok: boolean;
   message: string;
   nextPath: string;
+};
+
+const firstActionPaths: Record<WelcomeOnboardingValues["firstAction"], string> = {
+  show: "/shows?create=1",
+  contacts: "/contacts/new",
+  calendar: "/calendar",
+  tour: "/dashboard?startTour=1",
 };
 
 export async function resetWebinarDemoWorkspace(): Promise<{
@@ -146,7 +154,9 @@ export async function completeWelcomeOnboarding(
     return {
       ok: true,
       message: "Mode demo : espace prepare localement.",
-      nextPath: "/dashboard?startTour=1",
+      nextPath: parsed.data.replay
+        ? "/dashboard?startTour=1&webinarReplay=1"
+        : firstActionPaths[parsed.data.firstAction],
     };
   }
 
@@ -211,17 +221,29 @@ export async function completeWelcomeOnboarding(
     return { ok: false, message: companyError.message, nextPath: "/welcome" };
   }
 
+  if (user.email && hasSupabaseAdminEnv()) {
+    const admin = getSupabaseAdminClient();
+    const now = new Date().toISOString();
+    const { data: signup } = await admin
+      .from("beta_signups")
+      .update({ account_created_at: now, invited_user_id: user.id, last_access_error: null })
+      .eq("email", user.email.toLowerCase())
+      .eq("is_demo", false)
+      .select("id")
+      .maybeSingle();
+    if (signup) {
+      await admin.from("beta_access_events").insert({ beta_signup_id: signup.id, actor_id: user.id, event_type: "account_created" });
+    }
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/settings");
 
   return {
     ok: true,
-    message:
-      parsed.data.showReadiness === "ready"
-        ? "Espace pret. William va vous guider vers votre premier spectacle."
-        : "Espace pret. William va vous montrer le cockpit.",
+    message: "Votre espace est prêt. William vous accompagne pour la suite.",
     nextPath: parsed.data.replay
       ? "/dashboard?startTour=1&webinarReplay=1"
-      : "/dashboard?startTour=1",
+      : firstActionPaths[parsed.data.firstAction],
   };
 }

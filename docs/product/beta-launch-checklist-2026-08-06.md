@@ -5,7 +5,7 @@ Dernier audit : 27 juillet 2026.
 ## Décision de périmètre
 
 - Cohorte actuelle : 15 compagnies.
-- Tarif annoncé : 19,99 EUR par mois.
+- Tarif annoncé : paiement unique de 19,99 EUR TTC pour un mois de bêta, sans renouvellement automatique.
 - Création publique de compte fermée. Les comptes bêta sont activés manuellement.
 - Powens et la connexion bancaire sont reportés après la bêta.
 - Pour la bêta, la trésorerie repose sur la saisie du solde, les frais fixes, les devis, les dates et les projections déjà disponibles.
@@ -71,24 +71,19 @@ Le worktree contient encore un lot conséquent de modifications et d'artefacts n
 - [ ] Conserver le compte `demo_webinaire` séparé des comptes réels.
 - [ ] Vérifier que le replay démo remet bien toutes les données métier à zéro sans toucher aux rôles, crédits IA et journaux de sécurité.
 
-### 4. Décider le mode de facturation
+### 4. Configurer le paiement unique de la bêta
 
-Décision bloquante : les compagnies paient-elles réellement 19,99 EUR dès le 6 août ?
-
-#### Si la bêta est payante dans Stripe
+#### Paiement unique avec le lien Stripe de Tony
 
 - [ ] Faire vérifier le compte Stripe de l'exploitant.
-- [ ] Créer le produit et le prix mensuel bêta à 19,99 EUR dans le bon régime HT/TTC.
+- [ ] Vérifier que le lien de Tony facture une seule fois 19,99 EUR TTC et ne crée aucun abonnement.
+- [ ] Ne pas afficher l'offre à 99 EUR ni de renouvellement tant que le parcours récurrent n'est pas conçu et validé séparément.
 - [ ] Configurer dans Vercel :
-  - `STRIPE_SECRET_KEY`
-  - `STRIPE_WEBHOOK_SECRET`
-  - `STRIPE_PRICE_BETA_MONTHLY`
+  - `BETA_PAYMENT_LINK_URL`
   - `SUPABASE_SERVICE_ROLE_KEY`
-- [ ] Déclarer `https://tadiff.com/api/stripe/webhook` dans Stripe.
-- [ ] Tester : paiement réussi, paiement refusé, renouvellement, impayé et résiliation.
+- [ ] Vérifier chaque paiement dans le Dashboard Stripe puis le confirmer manuellement dans `/admin/beta` avant l'invitation.
+- [ ] Tester : paiement réussi, paiement refusé, reçu Stripe et absence d'abonnement après paiement.
 - [ ] Vérifier les factures, mentions légales, TVA et emails Stripe.
-- [ ] Ajouter un accès simple à la résiliation ou formaliser le traitement par email avant de promettre une résiliation autonome.
-- [ ] Passer des clés de test aux clés de production seulement après validation complète.
 
 #### Si la bêta est offerte ou facturée manuellement
 
@@ -117,7 +112,7 @@ Le composeur actuel prépare des emails et ouvre Gmail, Outlook ou la messagerie
 
 ### 6. Juridique et RGPD
 
-- [ ] Récupérer auprès de Tony les informations encore marquées `A COMPLETER` dans `docs/legal/information-to-complete.md`.
+- [ ] Confirmer les informations encore marquees `A COMPLETER` dans `docs/legal/information-to-complete.md`, notamment le regime de TVA et les informations des sous-traitants.
 - [ ] Renseigner l'identité d'ARKENCIEL dans l'onglet `Informations` du super-admin.
 - [ ] Trancher : prix HT ou TTC, TVA, durée du tarif bêta, résiliation et limites incluses.
 - [ ] Faire relire `/cgu`, `/cgv`, `/annexe-rgpd`, `/confidentialite`, `/cookies` et `/mentions-legales`.
