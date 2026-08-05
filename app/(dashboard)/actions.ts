@@ -1819,16 +1819,19 @@ export async function prepareShowPosterUpload(values: {
     };
   }
 
-  const accessError = await requireWriteAccess();
-
-  if (accessError) {
-    return { ok: false, message: accessError };
-  }
-
   const workspace = await getOrCreateWorkspace();
 
   if (!workspace.companyId) {
     return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  // Welcome allows a logo upload before the final onboarding submission.
+  // Provision the authenticated user's workspace first, then enforce its
+  // billing/role access and the company-scoped Storage policy.
+  const accessError = await requireWriteAccess();
+
+  if (accessError) {
+    return { ok: false, message: accessError };
   }
 
   const showSegment = values.showId || "sans-spectacle";
