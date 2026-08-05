@@ -16,6 +16,8 @@ Ce protocole privilegie un lancement simple et controlable pour une cohorte de 1
 
 Si le mail de paiement a ete envoye depuis une messagerie personnelle, selectionner la compagnie dans `/admin/beta`, puis cliquer sur `Mails deja envoyes manuellement`. Cette action enregistre l'etape sans renvoyer de message et rend disponible la verification du paiement.
 
+Si une compagnie ne recoit pas son invitation, utiliser `Renvoyer l'invitation` sur sa ligne. TaDiff refuse le renvoi si l'adresse est deja confirmee ou si le compte est cree ; dans ce cas, utiliser le parcours `Mot de passe oublie`.
+
 Pour la petite cohorte beta, les etapes 4 et 5 peuvent etre traitees manuellement une fois par jour. Cette solution est plus facile a verifier qu'une automatisation prematuree et empeche qu'un compte impaye obtienne un acces.
 
 Apres la creation effective de l'espace, verifier la compagnie dans le super-admin et passer son statut de facturation a `Actif` avec une note contenant la reference Stripe. Le lien de paiement externe ne connait pas encore l'identifiant de la compagnie TaDiff et ne peut donc pas effectuer seul cette association.

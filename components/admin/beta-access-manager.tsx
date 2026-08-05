@@ -2,7 +2,7 @@
 
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { CheckCircle2, Mail, Search, Send } from "lucide-react";
-import { confirmBetaPayment, inviteBetaSignups, markBetaPaymentEmailsSent, sendBetaPaymentEmails } from "@/app/(dashboard)/admin/beta/actions";
+import { confirmBetaPayment, inviteBetaSignups, markBetaPaymentEmailsSent, resendBetaInvitation, sendBetaPaymentEmails } from "@/app/(dashboard)/admin/beta/actions";
 import { betaPaymentEmailBody, betaPaymentEmailSubject, getBetaAccessStage, renderBetaEmailTemplate } from "@/lib/beta-access";
 import type { AdminBetaSignup } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/badge";
@@ -85,13 +85,13 @@ export function BetaAccessManager({ canManage, signups }: { canManage: boolean; 
         </div>
         {canManage && eligible.length ? <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={eligible.every((signup) => selected.includes(signup.id))} onChange={(event) => setSelected(event.target.checked ? eligible.map((signup) => signup.id) : [])} />Selectionner les compagnies eligibles affichees</label> : null}
         {message ? <p className="rounded-md border border-border bg-panel-strong p-3 text-sm" role="status">{message}</p> : null}
-        {filtered.length === 0 ? <p className="rounded-md border border-dashed border-border p-5 text-sm text-muted">Aucune inscription ne correspond a ce filtre.</p> : <div className="space-y-3">{filtered.map((signup) => <BetaSignupRow key={signup.id} canManage={canManage} checked={selected.includes(signup.id)} pending={pending} signup={signup} onCheck={(checked) => setSelected((current) => checked ? [...new Set([...current, signup.id])] : current.filter((id) => id !== signup.id))} onConfirm={(reference) => run(() => confirmBetaPayment({ signupId: signup.id, reference }))} />)}</div>}
+        {filtered.length === 0 ? <p className="rounded-md border border-dashed border-border p-5 text-sm text-muted">Aucune inscription ne correspond a ce filtre.</p> : <div className="space-y-3">{filtered.map((signup) => <BetaSignupRow key={signup.id} canManage={canManage} checked={selected.includes(signup.id)} pending={pending} signup={signup} onCheck={(checked) => setSelected((current) => checked ? [...new Set([...current, signup.id])] : current.filter((id) => id !== signup.id))} onConfirm={(reference) => run(() => confirmBetaPayment({ signupId: signup.id, reference }))} onResend={() => run(() => resendBetaInvitation({ signupId: signup.id }))} />)}</div>}
       </Card>
     </div>
   );
 }
 
-function BetaSignupRow({ canManage, checked, onCheck, onConfirm, pending, signup }: { canManage: boolean; checked: boolean; onCheck: (checked: boolean) => void; onConfirm: (reference: string) => void; pending: boolean; signup: AdminBetaSignup }) {
+function BetaSignupRow({ canManage, checked, onCheck, onConfirm, onResend, pending, signup }: { canManage: boolean; checked: boolean; onCheck: (checked: boolean) => void; onConfirm: (reference: string) => void; onResend: () => void; pending: boolean; signup: AdminBetaSignup }) {
   const [reference, setReference] = useState("");
   const currentStage = getBetaAccessStage(signup);
   const eligible = !signup.isDemo && signup.status === "reserved";
@@ -102,6 +102,7 @@ function BetaSignupRow({ canManage, checked, onCheck, onConfirm, pending, signup
     </div>
     {signup.lastAccessError ? <p className="mt-3 rounded-md border border-danger/20 bg-danger/10 p-3 text-sm text-danger" role="alert">{signup.lastAccessError}</p> : null}
     {canManage && eligible && signup.paymentEmailSentAt && !signup.paymentConfirmedAt ? <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row"><Input aria-label={`Reference de paiement pour ${signup.companyName}`} placeholder="Reference Stripe ou note de verification" value={reference} onChange={(event) => setReference(event.target.value)} /><Button disabled={pending || reference.trim().length < 3} type="button" variant="secondary" onClick={() => onConfirm(reference)}><CheckCircle2 className="mr-2 h-4 w-4" />Paiement verifie</Button></div> : null}
+    {canManage && eligible && signup.invitationSentAt && !signup.accountCreatedAt ? <div className="mt-4 border-t border-border pt-4"><Button disabled={pending} type="button" variant="secondary" onClick={onResend}><Send className="mr-2 h-4 w-4" />Renvoyer l&apos;invitation</Button><p className="mt-2 text-xs text-muted">Genere un nouveau lien personnel et remplace le lien precedent.</p></div> : null}
     {signup.paymentReference ? <p className="mt-3 text-xs text-muted">Verification : {signup.paymentReference}</p> : null}
   </article>;
 }

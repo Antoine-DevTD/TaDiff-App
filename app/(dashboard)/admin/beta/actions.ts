@@ -15,6 +15,7 @@ const emailSchema = z.object({
 });
 const paymentSchema = z.object({ signupId: z.string().uuid(), reference: z.string().trim().min(3).max(240) });
 const inviteSchema = z.object({ signupIds: idsSchema });
+const resendInviteSchema = z.object({ signupId: z.string().uuid() });
 
 type Result = { ok: boolean; message: string; succeeded?: number; failed?: number };
 
@@ -169,4 +170,60 @@ export async function inviteBetaSignups(input: z.input<typeof inviteSchema>): Pr
   }
   revalidatePath("/admin/beta");
   return { ok: failed === 0, message: `${succeeded} invitation(s) envoyee(s), ${failed} ignoree(s) ou en echec.`, succeeded, failed };
+}
+
+export async function resendBetaInvitation(input: z.input<typeof resendInviteSchema>): Promise<Result> {
+  const parsed = resendInviteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Inscription invalide." };
+  const access = await requireSuperAdmin();
+  if (!access) return { ok: false, message: "Action reservee au super-admin." };
+  const { admin, actorId: actor } = access;
+  const { data: signup, error } = await admin
+    .from("beta_signups")
+    .select("id,email,contact_name,company_name,main_need,discipline,payment_confirmed_at,invitation_sent_at,invited_user_id,account_created_at,is_demo,status")
+    .eq("id", parsed.data.signupId)
+    .maybeSingle();
+
+  if (error || !signup || signup.is_demo || signup.status !== "reserved") {
+    return { ok: false, message: "Inscription introuvable ou non eligible." };
+  }
+  if (!signup.payment_confirmed_at) {
+    return { ok: false, message: "Verifiez d'abord le paiement avant de renvoyer l'invitation." };
+  }
+  if (!signup.invitation_sent_at || !signup.invited_user_id) {
+    return { ok: false, message: "Envoyez d'abord une premiere invitation." };
+  }
+  if (signup.account_created_at) {
+    return { ok: false, message: "Le compte est deja cree. Utilisez plutot le mot de passe oublie." };
+  }
+
+  const { data: invitedUser } = await admin.auth.admin.getUserById(signup.invited_user_id);
+  if (invitedUser.user?.email_confirmed_at) {
+    return { ok: false, message: "L'adresse est deja confirmee. Utilisez plutot le mot de passe oublie." };
+  }
+
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://tadiff.com").replace(/\/$/, "");
+  const { data, error: inviteError } = await admin.auth.admin.inviteUserByEmail(signup.email, {
+    data: {
+      company_name: signup.company_name,
+      discipline: signup.discipline,
+      full_name: signup.contact_name,
+      main_need: signup.main_need,
+    },
+    redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent("/reset-password?next=/welcome")}`,
+  });
+
+  if (inviteError || !data.user) {
+    const detail = inviteError?.message.slice(0, 240) || "Invitation Supabase impossible";
+    await admin.from("beta_signups").update({ last_access_error: detail }).eq("id", signup.id);
+    await admin.from("beta_access_events").insert({ beta_signup_id: signup.id, actor_id: actor, event_type: "invitation_failed", detail: `Renvoi : ${detail}` });
+    revalidatePath("/admin/beta");
+    return { ok: false, message: `Invitation non renvoyee : ${detail}` };
+  }
+
+  const now = new Date().toISOString();
+  await admin.from("beta_signups").update({ invitation_sent_at: now, invitation_sent_by: actor, invited_user_id: data.user.id, last_access_error: null }).eq("id", signup.id);
+  await admin.from("beta_access_events").insert({ beta_signup_id: signup.id, actor_id: actor, event_type: "invitation_sent", detail: "Invitation renvoyee manuellement" });
+  revalidatePath("/admin/beta");
+  return { ok: true, message: `Invitation renvoyee a ${signup.email}.` };
 }
