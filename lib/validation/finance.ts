@@ -32,6 +32,19 @@ export const treasuryBalanceSchema = z.object({
 export type TreasuryBalanceFormInput = z.input<typeof treasuryBalanceSchema>;
 export type TreasuryBalanceFormValues = z.infer<typeof treasuryBalanceSchema>;
 
+export const treasuryMovementSchema = z.object({
+  label: z.string().trim().min(2, "Le libellé est requis").max(160),
+  direction: z.enum(["income", "expense"]),
+  amount: z.coerce.number().positive("Le montant doit être positif").max(10_000_000),
+  movementDate: z.iso.date(),
+  reliability: z.enum(["secured", "probable", "uncertain"]),
+  status: z.enum(["planned", "paid"]),
+  showId: z.union([z.literal(""), z.uuid()]).optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+export type TreasuryMovementInput = z.input<typeof treasuryMovementSchema>;
+
 export const treasurySetupSchema = z.object({
   balance: treasuryBalanceSchema.shape.balance,
   fixedCosts: z.array(fixedCostSchema).max(12, "Trop de frais fixes renseignes").default([]),

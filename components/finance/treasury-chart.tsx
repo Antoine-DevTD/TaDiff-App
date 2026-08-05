@@ -1,85 +1,59 @@
 import { formatCurrency } from "@/lib/finance";
-import type { TreasurySnapshot } from "@/types";
 
-// Graphe de suivi de tresorerie : aire + ligne en SVG pur (pas de librairie).
-export function TreasuryChart({ snapshots }: { snapshots: TreasurySnapshot[] }) {
-  if (snapshots.length < 2) {
-    return (
-      <div className="rounded-lg border border-dashed border-border bg-panel-strong/35 p-6 text-center text-sm text-muted">
-        Saisissez au moins deux soldes pour visualiser la courbe de trésorerie.
-      </div>
-    );
-  }
+export type TreasuryProjectionPoint = {
+  label: string;
+  central: number;
+  prudent: number;
+  optimistic: number;
+  income: number;
+  expense: number;
+};
 
-  const width = 640;
-  const height = 200;
-  const padX = 12;
-  const padY = 16;
+export function TreasuryChart({ points }: { points: TreasuryProjectionPoint[] }) {
+  if (points.length < 2) return null;
 
-  const balances = snapshots.map((snapshot) => snapshot.balance);
-  const min = Math.min(...balances, 0);
-  const max = Math.max(...balances);
+  const width = 920;
+  const height = 310;
+  const pad = { x: 48, top: 20, bottom: 52 };
+  const values = points.flatMap((point) => [point.prudent, point.optimistic, point.central, 0]);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
   const range = max - min || 1;
-
-  const stepX = (width - padX * 2) / (snapshots.length - 1);
-  const points = snapshots.map((snapshot, index) => {
-    const x = padX + index * stepX;
-    const y = padY + (height - padY * 2) * (1 - (snapshot.balance - min) / range);
-    return { x, y, snapshot };
-  });
-
-  const linePath = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L${points[points.length - 1].x.toFixed(1)},${height - padY} L${points[0].x.toFixed(1)},${height - padY} Z`;
-
-  const last = snapshots[snapshots.length - 1];
-  const first = snapshots[0];
-  const delta = last.balance - first.balance;
+  const chartHeight = height - pad.top - pad.bottom;
+  const x = (index: number) => pad.x + (index * (width - pad.x * 2)) / (points.length - 1);
+  const y = (value: number) => pad.top + chartHeight * (1 - (value - min) / range);
+  const line = (key: "central" | "prudent" | "optimistic") =>
+    points.map((point, index) => `${index ? "L" : "M"}${x(index).toFixed(1)},${y(point[key]).toFixed(1)}`).join(" ");
+  const band = `${line("optimistic")} ${[...points].reverse().map((point, reverseIndex) => `L${x(points.length - 1 - reverseIndex).toFixed(1)},${y(point.prudent).toFixed(1)}`).join(" ")} Z`;
+  const zeroY = y(0);
 
   return (
-    <div className="space-y-3 text-accent">
-      <div className="flex flex-wrap items-end justify-between gap-3 text-foreground">
-        <div>
-          <p className="text-2xl font-semibold">{formatCurrency(last.balance)}</p>
-          <p className="text-xs text-muted">
-            Dernier solde - {new Date(last.recordedOn).toLocaleDateString("fr-FR")}
-          </p>
-        </div>
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-            delta >= 0 ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
-          }`}
-        >
-          {delta >= 0 ? "+" : ""}
-          {formatCurrency(delta)} depuis {new Date(first.recordedOn).toLocaleDateString("fr-FR")}
-        </span>
-      </div>
-
-      <div className="overflow-x-auto">
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className="h-48 w-full min-w-[32rem]"
-          preserveAspectRatio="none"
-          role="img"
-          aria-label="Courbe de trésorerie"
-        >
-          <defs>
-            <linearGradient id="treasury-fill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={areaPath} fill="url(#treasury-fill)" />
-          <path d={linePath} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
-          {points.map((point) => (
-            <circle key={point.snapshot.id} cx={point.x} cy={point.y} r="3.5" fill="currentColor" />
-          ))}
-        </svg>
-      </div>
-
-      <div className="flex justify-between text-xs text-muted">
-        <span>{new Date(first.recordedOn).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}</span>
-        <span>{new Date(last.recordedOn).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}</span>
+    <div className="overflow-x-auto">
+      <svg className="h-[19rem] min-w-[46rem] w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Projection de trésorerie sur treize semaines, avec scénarios prudent, central et optimiste">
+        <defs>
+          <linearGradient id="treasury-range" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0.03" />
+          </linearGradient>
+        </defs>
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+          const value = min + range * ratio;
+          return <g key={ratio}><line x1={pad.x} x2={width - pad.x} y1={y(value)} y2={y(value)} stroke="currentColor" className="text-border" strokeDasharray="3 5" /><text x={pad.x - 8} y={y(value) + 4} textAnchor="end" className="fill-muted text-[10px]">{formatCurrency(value)}</text></g>;
+        })}
+        {min < 0 && max > 0 ? <line x1={pad.x} x2={width - pad.x} y1={zeroY} y2={zeroY} stroke="currentColor" className="text-danger" strokeDasharray="5 5" /> : null}
+        <path d={band} fill="url(#treasury-range)" />
+        <path d={line("prudent")} fill="none" stroke="currentColor" className="text-warning" strokeDasharray="6 5" strokeWidth="1.5" />
+        <path d={line("optimistic")} fill="none" stroke="currentColor" className="text-success" strokeDasharray="6 5" strokeWidth="1.5" />
+        <path d={line("central")} fill="none" stroke="currentColor" className="text-accent" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+        {points.map((point, index) => <g key={`${point.label}-${index}`}><circle cx={x(index)} cy={y(point.central)} r="3.5" className="fill-accent" /><text x={x(index)} y={height - 18} textAnchor="middle" className="fill-muted text-[10px]">{point.label}</text></g>)}
+      </svg>
+      <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-muted" aria-hidden>
+        <Legend className="bg-accent" label="Scénario central" /><Legend className="bg-warning" label="Prudent" dashed /><Legend className="bg-success" label="Optimiste" dashed />
       </div>
     </div>
   );
+}
+
+function Legend({ className, label, dashed = false }: { className: string; label: string; dashed?: boolean }) {
+  return <span className="flex items-center gap-2"><span className={`h-0.5 w-5 ${className} ${dashed ? "opacity-70" : ""}`} />{label}</span>;
 }

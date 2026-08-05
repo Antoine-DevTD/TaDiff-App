@@ -5,11 +5,11 @@
 - William est filtrable et triable par compagnie, réponse, recherche et date dans la console plateforme.
 - Les erreurs Next.js, interface et Supabase significatives alimentent un centre de notifications groupées. Resend alerte l'adresse interne et prévient les utilisateurs identifiés lorsqu'une erreur est marquée corrigée.
 - Les modèles d'emails peuvent être proposés ou masqués et définis par défaut pour chaque usage. Une duplication apparaît immédiatement dans la liste et le composeur filtre les modèles par usage.
-- Trésorerie compare une projection optimiste et prudente, propose un seul ajout pour le solde ou un frais récurrent et n'active la connexion bancaire que si `BANK_CONNECTION_URL` est configurée.
+- Trésorerie tient un journal d'encaissements et de décaissements, projette 13 semaines selon trois scénarios et fait remonter les risques et actions utiles. Le même ajout prend en charge un mouvement ponctuel ou un frais récurrent ; la connexion bancaire reste désactivée sans `BANK_CONNECTION_URL`.
 - `npm run check:copy` contrôle les erreurs d'accents les plus courantes et fait partie de la définition de terminé.
-- Les migrations `069_email_template_preferences.sql` et `070_application_error_notifications.sql` doivent être appliquées avant promotion en production.
+- La migration `071_treasury_movements.sql` doit être appliquée avant promotion du nouveau journal de trésorerie en production.
 
-Derniere verification : 23 juillet 2026.
+Derniere verification : 6 août 2026.
 
 ## Socle
 
@@ -46,7 +46,7 @@ Derniere verification : 23 juillet 2026.
 - La première ouverture de Trésorerie guide la saisie du solde, la sélection des frais fixes puis leurs montants, fréquences et échéances avant d'afficher une projection réelle.
 - Le catalogue global de subventions est administrable depuis la console plateforme. Les pièces demandées se sélectionnent dans une liste structurée et les nouveaux espaces sont alimentés depuis ce catalogue, sans écraser les dossiers déjà suivis.
 - Les modèles d'emails proposés sont administrables, y compris leur variation avec pièces jointes. Les variables utilisent la syntaxe `@variable` et l'éditeur propose les tags dès la saisie de `@`.
-- L'agenda propose une grille plus lisible et un panneau de detail persistant. Une subvention selectionnee ouvre son dossier en surbrillance.
+- L'agenda propose une grille plus lisible et un panneau de détail persistant. Selon l'élément sélectionné, il regroupe spectacle, lieu, contacts, documents, prochaine action et repère financier. Une subvention sélectionnée ouvre son dossier en surbrillance.
 - Les subventions utilisent le même langage visuel que les actions : vues par urgence et avancement, liste groupée par spectacle, dossier actif et pièces attendues directement manipulables.
 - Les 10 dispositifs de subvention de référence sont ajoutés automatiquement et sans doublon lors de l'initialisation d'un espace compagnie.
 - Le mécénat reprend ce langage visuel avec des vues par avancement, une liste de partenaires et une fiche active. L'entrée Documents est temporairement masquée du sous-menu Dossiers, sans supprimer les fichiers ni la route.
@@ -90,13 +90,15 @@ Derniere verification : 23 juillet 2026.
 - La migration `060_fix_beta_signup_registration.sql` corrige l'ambiguïté de la colonne `position` dans l'inscription bêta et distingue une nouvelle demande d'une tentative répétée. Elle doit être appliquée avant de retester le formulaire public.
 - La migration `061_company_logo_framing.sql` ajoute le zoom et la position du logo de chaque compagnie. Elle doit être appliquée avant de déployer le cadrage personnalisable.
 - La migration `062_william_chat_memory.sql` ajoute les sessions et messages de la bulle William avec isolation RLS par utilisateur et compagnie. Elle les inclut aussi dans la remise à zéro du compte webinaire et doit être appliquée avant d'activer la mémoire conversationnelle.
+- La migration `071_treasury_movements.sql` ajoute le journal de trésorerie par compagnie, ses rattachements spectacle/frais fixe et ses politiques RLS. Elle doit être appliquée avant le déploiement du chantier Trésorerie.
+- La migration `072_repair_calendar_events_data_api.sql` répare les bases où l'agenda persistant manque ou n'est pas exposé à PostgREST. Elle ajoute les droits Data API explicites et sépare la lecture des droits d'écriture en RLS.
 - Les nouvelles places bêta réservées déclenchent via Resend une alerte interne et un email de bienvenue au candidat avec rendez-vous le 6 août 2026 à 10 h. L'email propose un fichier agenda universel `.ics`. La production doit définir `RESEND_API_KEY`; `BETA_SIGNUP_NOTIFICATION_EMAIL` permet de remplacer l'adresse support et `BETA_SIGNUP_NOTIFICATION_FROM` l'expéditeur par défaut.
 - La console interne dispose d'une route `/admin/beta` distincte de la supervision. Elle suit le mail de paiement, la verification manuelle Stripe, l'invitation Supabase et la creation du compte. Les actions sont reservees au super-admin ; `view_beta` reste un droit de lecture. La migration `063_beta_access_workflow.sql` est confirmee appliquee en production ; `BETA_PAYMENT_LINK_URL` reste requis avant activation.
 - La carte des lieux distingue theatre, festival, salle/espace et lieu culturel a partir du nom et des tags. Un lieu non categorise est traite comme un theatre.
 
 ## Qualite
 
-- Dernier passage connu le 23 juillet 2026 : lint, TypeScript, build et 26 parcours Playwright passés, dont la sélection des jours d'exploitation, le maintien de suppression stable, le nouveau mécénat, le replay webinaire et le géocodage des lieux importés.
+- Dernier passage connu le 6 août 2026 : lint, TypeScript, copie française et build passent ; les 29 parcours Playwright passent, dont Agenda et Trésorerie sur mobile.
 - Relancer les controles apres toute modification ; ce statut n'est pas une garantie sur un worktree plus recent.
 
 Pour la vision, le planning et le backlog complet, consulter `docs/product/product-plan.md`. Pour les contraintes d'implementation, consulter `docs/engineering/implementation-reference.md`.

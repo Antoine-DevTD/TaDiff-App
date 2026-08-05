@@ -8,16 +8,18 @@ import {
   Clock3,
   Download,
   Drama,
+  FileText,
   Filter,
   Landmark,
   List,
   MapPin,
   Plus,
+  Users,
+  CircleDollarSign,
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { createCalendarEvent } from "@/app/(dashboard)/actions";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -40,6 +42,10 @@ export type CalendarBoardItem = {
   location: string;
   relatedShowId?: string;
   relatedShowTitle?: string;
+  people?: Array<{ name: string; role: string; email: string }>;
+  documents?: Array<{ id: string; title: string; status: string; fileUrl: string }>;
+  nextAction?: { label: string; dueDate: string; href: string };
+  finance?: { mode: string; amount: number; probability: number };
 };
 
 type CalendarGroup = "all" | "show" | "reminder" | "funding" | "finance" | "event";
@@ -156,7 +162,6 @@ export function CalendarBoard({
   items: CalendarBoardItem[];
   shows?: Array<{ id: string; title: string }>;
 }) {
-  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [view, setView] = useState<CalendarView>("month");
   const [filter, setFilter] = useState<CalendarGroup>("all");
@@ -654,10 +659,15 @@ export function CalendarBoard({
                     <p className="mt-0.5 text-sm font-semibold text-accent">{selectedItem.relatedShowTitle}</p>
                   </div>
                 ) : null}
+                {selectedItem.location ? <DetailSection icon={<MapPin className="h-4 w-4" aria-hidden />} title="Lieu"><p className="text-sm">{selectedItem.location}</p></DetailSection> : null}
+                {selectedItem.people?.length ? <DetailSection icon={<Users className="h-4 w-4" aria-hidden />} title="Contacts"><div className="space-y-2">{selectedItem.people.map((person) => <div key={`${person.name}-${person.email}`}><p className="text-sm font-medium">{person.name}</p><p className="text-xs text-muted">{person.role}</p>{person.email ? <a className="text-xs text-accent hover:underline" href={`mailto:${person.email}`}>{person.email}</a> : null}</div>)}</div></DetailSection> : null}
+                {selectedItem.documents?.length ? <DetailSection icon={<FileText className="h-4 w-4" aria-hidden />} title="Documents"><div className="space-y-2">{selectedItem.documents.map((document) => <div className="flex items-center justify-between gap-2" key={document.id}><a className="min-w-0 truncate text-sm font-medium text-accent hover:underline" href={document.fileUrl || selectedItem.href}>{document.title}</a><span className="shrink-0 text-[0.65rem] text-muted">{document.status}</span></div>)}</div></DetailSection> : null}
+                {selectedItem.nextAction ? <DetailSection icon={<Bell className="h-4 w-4" aria-hidden />} title="Prochaine action"><ButtonLink className="w-full justify-between" href={selectedItem.nextAction.href} variant="secondary">{selectedItem.nextAction.label}<span className="ml-2 text-xs opacity-70">{selectedItem.nextAction.dueDate ? parseDate(selectedItem.nextAction.dueDate).toLocaleDateString("fr-FR") : "À planifier"}</span></ButtonLink></DetailSection> : null}
+                {selectedItem.finance ? <DetailSection icon={<CircleDollarSign className="h-4 w-4" aria-hidden />} title="Repère financier"><dl className="grid grid-cols-2 gap-2 text-sm"><div><dt className="text-xs text-muted">Mode</dt><dd className="mt-0.5 capitalize">{selectedItem.finance.mode}</dd></div><div><dt className="text-xs text-muted">Montant</dt><dd className="mt-0.5 font-semibold tabular-nums">{selectedItem.finance.amount.toLocaleString("fr-FR")} €</dd></div><div><dt className="text-xs text-muted">Probabilité</dt><dd className="mt-0.5">{selectedItem.finance.probability} %</dd></div></dl></DetailSection> : null}
                 <div className="mt-4 flex gap-2">
-                  <Button type="button" className="flex-1" onClick={() => router.push(selectedItem.href)}>
-                    {selectedItem.kind === "grant" ? "Ouvrir la subvention" : "Ouvrir"}
-                  </Button>
+                  <ButtonLink className="flex-1" href={selectedItem.href}>
+                    {selectedItem.kind === "grant" ? "Ouvrir la subvention" : selectedItem.relatedShowId ? "Ouvrir le dossier" : "Ouvrir"}
+                  </ButtonLink>
                   <Button type="button" variant="secondary" onClick={() => setSelectedItemId(null)}>
                     Fermer
                   </Button>
@@ -799,6 +809,10 @@ export function CalendarBoard({
       </Dialog>
     </div>
   );
+}
+
+function DetailSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return <section className="mt-4 border-t border-border pt-4"><h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.11em] text-muted">{icon}{title}</h3>{children}</section>;
 }
 
 function formatSchedule(item: CalendarBoardItem) {

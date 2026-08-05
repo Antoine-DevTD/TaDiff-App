@@ -59,9 +59,11 @@ import type { GrantStatus } from "@/types";
 import {
   fixedCostSchema,
   treasuryBalanceSchema,
+  treasuryMovementSchema,
   treasurySetupSchema,
   type FixedCostFormInput,
   type TreasuryBalanceFormInput,
+  type TreasuryMovementInput,
   type TreasurySetupInput,
 } from "@/lib/validation/finance";
 import {
@@ -100,7 +102,24 @@ type ActionResult = {
   reminder?: Reminder;
   reminders?: Reminder[];
   treasurySnapshot?: import("@/types").TreasurySnapshot;
+  treasuryMovement?: import("@/types").TreasuryMovement;
 };
+
+export async function createTreasuryMovement(values: TreasuryMovementInput): Promise<ActionResult> {
+  const parsed = treasuryMovementSchema.safeParse(values);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Mouvement invalide." };
+  if (!hasSupabaseEnv()) return { ok: true, message: "Mode démo : mouvement ajouté pour cette visite.", treasuryMovement: { id: `movement-demo-${Date.now()}`, showId: parsed.data.showId || null, fixedCostId: null, label: parsed.data.label, direction: parsed.data.direction, amount: parsed.data.amount, movementDate: parsed.data.movementDate, reliability: parsed.data.reliability, status: parsed.data.status, notes: parsed.data.notes || "", showTitle: "" } };
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("treasury_movements").insert({ company_id: workspace.companyId, show_id: parsed.data.showId || null, label: parsed.data.label, direction: parsed.data.direction, amount: parsed.data.amount, movement_date: parsed.data.movementDate, reliability: parsed.data.reliability, status: parsed.data.status, notes: parsed.data.notes || null }).select("id,show_id,fixed_cost_id,label,direction,amount,movement_date,reliability,status,notes").single();
+  if (error || !data) return { ok: false, message: error?.message ?? "Mouvement non enregistré." };
+  revalidatePath("/finances"); revalidatePath("/calendar"); revalidatePath("/dashboard");
+  await logActivity("a ajouté un mouvement de trésorerie", "trésorerie", parsed.data.label);
+  return { ok: true, message: "Mouvement ajouté.", treasuryMovement: { id: data.id, showId: data.show_id, fixedCostId: data.fixed_cost_id, label: data.label, direction: data.direction, amount: data.amount, movementDate: data.movement_date, reliability: data.reliability, status: data.status, notes: data.notes ?? "", showTitle: "" } };
+}
 
 export async function saveEmailTemplate(
   templateId: string | null,

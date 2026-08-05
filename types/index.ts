@@ -501,6 +501,20 @@ export type TreasurySnapshot = {
   note: string;
 };
 
+export type TreasuryMovement = {
+  id: string;
+  showId: string | null;
+  fixedCostId: string | null;
+  label: string;
+  direction: "income" | "expense";
+  amount: number;
+  movementDate: string;
+  reliability: "secured" | "probable" | "uncertain";
+  status: "planned" | "paid" | "cancelled";
+  notes: string;
+  showTitle: string;
+};
+
 export type ActivityEntry = {
   id: string;
   actorName: string;

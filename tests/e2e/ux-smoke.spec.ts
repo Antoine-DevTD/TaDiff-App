@@ -298,6 +298,27 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.locator("[data-calendar-date]").first()).toBeVisible();
   });
 
+  test("presente la projection de tresorerie et son journal sur mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/finances");
+
+    await expect(page.getByRole("heading", { name: "Projection de trésorerie" })).toBeVisible();
+    await expect(page.getByText("Prévision à 13 semaines")).toBeVisible();
+    await expect(page.getByText("Prochains mouvements")).toBeVisible();
+
+    await page.getByRole("button", { name: "Ajouter un mouvement" }).click();
+    const dialog = page.getByRole("dialog", { name: "Ajouter un mouvement" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("tab", { name: "Ponctuel" })).toHaveAttribute("aria-selected", "true");
+    await dialog.getByRole("tab", { name: "Régulier" }).click();
+    await expect(dialog.getByLabel("Libelle")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
+
   test("navigue entre les mois et retire la selection en cliquant ailleurs", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/calendar");
@@ -320,7 +341,7 @@ test.describe("cockpit en mode demonstration", () => {
     await page.locator('button[title*="Aide"]').first().click();
     await expect(page.getByText(/tail s.*lectionn/i)).toBeVisible();
     await expect(page.getByText(/Spectacle concern/i)).toBeVisible();
-    await page.getByRole("button", { name: "Ouvrir la subvention" }).click();
+    await page.getByRole("link", { name: "Ouvrir la subvention" }).click();
 
     await expect(page).toHaveURL(/\/subventions\?focus=/);
     await expect(page.getByRole("heading", { name: "Les prochains dossiers à faire avancer" })).toBeVisible();

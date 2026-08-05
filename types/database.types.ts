@@ -9,6 +9,12 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      treasury_movements: {
+        Row: { id: string; company_id: string; show_id: string | null; fixed_cost_id: string | null; label: string; direction: "income" | "expense"; amount: number; movement_date: string; reliability: "secured" | "probable" | "uncertain"; status: "planned" | "paid" | "cancelled"; notes: string | null; created_by: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; show_id?: string | null; fixed_cost_id?: string | null; label: string; direction: "income" | "expense"; amount: number; movement_date: string; reliability?: "secured" | "probable" | "uncertain"; status?: "planned" | "paid" | "cancelled"; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string };
+        Update: { show_id?: string | null; fixed_cost_id?: string | null; label?: string; direction?: "income" | "expense"; amount?: number; movement_date?: string; reliability?: "secured" | "probable" | "uncertain"; status?: "planned" | "paid" | "cancelled"; notes?: string | null; updated_at?: string };
+        Relationships: [];
+      };
       application_error_groups: {
         Row: { id: string; fingerprint: string; message: string; error_code: string; route: string; source: string; occurrence_count: number; company_ids: string[]; reporter_emails: string[]; first_seen_at: string; last_seen_at: string; resolved_at: string | null; resolved_by: string | null; created_at: string; updated_at: string };
         Insert: { id?: string; fingerprint: string; message: string; error_code?: string; route?: string; source?: string; occurrence_count?: number; company_ids?: string[]; reporter_emails?: string[]; first_seen_at?: string; last_seen_at?: string; resolved_at?: string | null; resolved_by?: string | null; created_at?: string; updated_at?: string };

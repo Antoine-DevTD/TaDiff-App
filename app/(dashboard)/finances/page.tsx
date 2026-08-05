@@ -24,6 +24,7 @@ import {
   getReminders,
   getShows,
   getTreasurySnapshots,
+  getTreasuryMovements,
 } from "@/lib/supabase/queries";
 import type { FixedCost, PipelineDeal, Reminder } from "@/types";
 
@@ -86,7 +87,7 @@ function getFixedCostTone(cost: FixedCost) {
 }
 
 export default async function FinancesPage() {
-  const [deals, reminders, shows, quotes, fixedCosts, grants, treasury, treasuryHistory] =
+  const [deals, reminders, shows, quotes, fixedCosts, grants, treasury, treasuryHistory, movements] =
     await Promise.all([
       getPipelineDeals(),
       getReminders(),
@@ -96,6 +97,7 @@ export default async function FinancesPage() {
       getGrantOpportunities(),
       getLatestTreasurySnapshot(),
       getTreasurySnapshots(),
+      getTreasuryMovements(),
     ]);
   const isDemoTreasury = !hasSupabaseEnv();
 
@@ -151,6 +153,9 @@ export default async function FinancesPage() {
             isDemoTreasury={isDemoTreasury}
             quotes={quotes}
             bankConnectionUrl={process.env.BANK_CONNECTION_URL?.trim() || null}
+            initialMovements={movements}
+            shows={shows}
+            today={new Date().toISOString().slice(0, 10)}
           />
 
           <section className="grid gap-3 md:grid-cols-3">

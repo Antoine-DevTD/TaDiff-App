@@ -5,6 +5,9 @@ import {
   getGrantOpportunities,
   getReminders,
   getShows,
+  getContacts,
+  getPipelineDeals,
+  getShowDocuments,
 } from "@/lib/supabase/queries";
 
 function startOfDay(date: Date) {
@@ -23,13 +26,29 @@ function getReminderTone(date: string) {
 }
 
 export default async function CalendarPage() {
-  const [shows, reminders, grants, fixedCosts, events] = await Promise.all([
+  const [shows, reminders, grants, fixedCosts, events, contacts, deals, documents] = await Promise.all([
     getShows(),
     getReminders(),
     getGrantOpportunities(),
     getFixedCosts(),
     getCalendarEvents(),
+    getContacts(),
+    getPipelineDeals(),
+    getShowDocuments(),
   ]);
+
+  const detailsFor = (showId?: string | null, date?: string) => {
+    if (!showId) return {};
+    const deal = deals.find((item) => item.showId === showId && (!date || item.performanceDates?.includes(date) || item.performanceDate === date)) ?? deals.find((item) => item.showId === showId);
+    const contact = deal ? contacts.find((item) => item.id === deal.contactId) : undefined;
+    const nextReminder = reminders.find((item) => !item.done && (item.showId === showId || item.contactId === deal?.contactId));
+    return {
+      people: contact ? [{ name: contact.name, role: contact.role || contact.organization, email: contact.email }] : [],
+      documents: documents.filter((item) => item.showId === showId).slice(0, 4).map((item) => ({ id: item.id, title: item.title, status: item.status, fileUrl: item.fileUrl })),
+      nextAction: nextReminder ? { label: nextReminder.label, dueDate: nextReminder.dueDate, href: "/reminders" } : deal?.nextAction ? { label: deal.nextAction, dueDate: deal.nextFollowUpAt, href: "/pipeline" } : undefined,
+      finance: deal ? { mode: deal.exploitationMode, amount: deal.value, probability: deal.probability } : undefined,
+    };
+  };
 
   const items: CalendarBoardItem[] = [
     ...events.map((event) => ({
@@ -48,6 +67,7 @@ export default async function CalendarPage() {
       relatedShowTitle: event.relatedShowId
         ? shows.find((show) => show.id === event.relatedShowId)?.title
         : undefined,
+      ...detailsFor(event.relatedShowId, event.eventDate),
     })),
     ...reminders.map((reminder) => ({
       id: `reminder-${reminder.id}`,
@@ -61,6 +81,9 @@ export default async function CalendarPage() {
       startTime: null,
       endTime: null,
       location: "",
+      relatedShowId: reminder.showId,
+      relatedShowTitle: reminder.showId ? shows.find((show) => show.id === reminder.showId)?.title : undefined,
+      ...detailsFor(reminder.showId, reminder.dueDate),
     })),
     ...shows
       .filter((show) => show.nextDate)
@@ -76,6 +99,9 @@ export default async function CalendarPage() {
         startTime: null,
         endTime: null,
         location: "",
+        relatedShowId: show.id,
+        relatedShowTitle: show.title,
+        ...detailsFor(show.id, show.nextDate),
       })),
     ...grants.map((grant) => ({
       id: `grant-${grant.id}`,

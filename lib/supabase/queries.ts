@@ -50,6 +50,7 @@ import type {
   ShowWorkDocument,
   ShowWorkFolder,
   TreasurySnapshot,
+  TreasuryMovement,
 } from "@/types";
 
 type DashboardStat = {
@@ -1526,6 +1527,21 @@ export async function getTreasurySnapshots(): Promise<TreasurySnapshot[]> {
     recordedOn: entry.recorded_on,
     note: entry.note ?? "",
   }));
+}
+
+export async function getTreasuryMovements(): Promise<TreasuryMovement[]> {
+  if (!hasSupabaseEnv()) {
+    const today = new Date();
+    return [
+      { id: "demo-income", showId: null, fixedCostId: null, label: "Acompte de cession", direction: "income", amount: 4200, movementDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 8).toISOString().slice(0, 10), reliability: "secured", status: "planned", notes: "", showTitle: "" },
+      { id: "demo-expense", showId: null, fixedCostId: null, label: "Paie de l'équipe", direction: "expense", amount: 2800, movementDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 18).toISOString().slice(0, 10), reliability: "secured", status: "planned", notes: "", showTitle: "" },
+    ];
+  }
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("treasury_movements").select("id,show_id,fixed_cost_id,label,direction,amount,movement_date,reliability,status,notes").neq("status", "cancelled").order("movement_date", { ascending: true }).limit(500);
+  if (error || !data) return [];
+  const showMap = new Map((await getShows()).map((show) => [show.id, show.title]));
+  return data.map((row) => ({ id: row.id, showId: row.show_id, fixedCostId: row.fixed_cost_id, label: row.label, direction: row.direction, amount: row.amount, movementDate: row.movement_date, reliability: row.reliability, status: row.status, notes: row.notes ?? "", showTitle: row.show_id ? showMap.get(row.show_id) ?? "" : "" }));
 }
 
 function buildDashboardStats({
