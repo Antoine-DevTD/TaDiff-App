@@ -2,7 +2,7 @@
 
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { CheckCircle2, Mail, Search, Send } from "lucide-react";
-import { confirmBetaPayment, inviteBetaSignups, sendBetaPaymentEmails } from "@/app/(dashboard)/admin/beta/actions";
+import { confirmBetaPayment, inviteBetaSignups, markBetaPaymentEmailsSent, sendBetaPaymentEmails } from "@/app/(dashboard)/admin/beta/actions";
 import { betaPaymentEmailBody, betaPaymentEmailSubject, getBetaAccessStage, renderBetaEmailTemplate } from "@/lib/beta-access";
 import type { AdminBetaSignup } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/badge";
@@ -75,7 +75,7 @@ export function BetaAccessManager({ canManage, signups }: { canManage: boolean; 
         <label className="block text-sm font-medium">Message<textarea className="mt-2 min-h-72 w-full rounded-md border border-border bg-panel px-4 py-3 text-sm leading-6 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/10" maxLength={12000} value={body} onChange={(event) => { setBody(event.target.value); setPreview(false); }} /></label>
         <p className="text-xs text-muted">Variables : {"{{prenom}} · {{compagnie}} · {{email}} · {{lien_paiement}}"}</p>
         {preview && context ? <div className="rounded-md border border-border bg-white p-5 text-slate-900"><p className="border-b pb-3 text-sm"><strong>Objet :</strong> {renderBetaEmailTemplate(subject, context)}</p><p className="mt-4 whitespace-pre-wrap text-sm leading-6">{renderBetaEmailTemplate(body, context)}</p></div> : null}
-        <div className="flex flex-wrap gap-2"><Button type="button" variant="secondary" onClick={() => setPreview(true)}>Apercu final</Button><Button disabled={!preview || pending || selected.length === 0} type="button" onClick={() => run(() => sendBetaPaymentEmails({ signupIds: selected, subject, body }))}><Mail className="mr-2 h-4 w-4" />Envoyer le paiement</Button><Button disabled={pending || selected.length === 0} type="button" variant="secondary" onClick={() => run(() => inviteBetaSignups({ signupIds: selected }))}><Send className="mr-2 h-4 w-4" />Envoyer les invitations eligibles</Button></div>
+        <div className="flex flex-wrap gap-2"><Button type="button" variant="secondary" onClick={() => setPreview(true)}>Apercu final</Button><Button disabled={!preview || pending || selected.length === 0} type="button" onClick={() => run(() => sendBetaPaymentEmails({ signupIds: selected, subject, body }))}><Mail className="mr-2 h-4 w-4" />Envoyer le paiement</Button><Button disabled={pending || selected.length === 0} type="button" variant="secondary" onClick={() => run(() => markBetaPaymentEmailsSent({ signupIds: selected }))}><CheckCircle2 className="mr-2 h-4 w-4" />Mails deja envoyes manuellement</Button><Button disabled={pending || selected.length === 0} type="button" variant="secondary" onClick={() => run(() => inviteBetaSignups({ signupIds: selected }))}><Send className="mr-2 h-4 w-4" />Envoyer les invitations eligibles</Button></div>
       </Card> : null}
 
       <Card className="space-y-4 p-5">

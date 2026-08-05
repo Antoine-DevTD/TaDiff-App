@@ -71,6 +71,47 @@ export async function sendBetaPaymentEmails(input: z.input<typeof emailSchema>):
   return { ok: failed === 0, message: `${succeeded} mail(s) envoye(s), ${failed} echec(s).`, succeeded, failed };
 }
 
+export async function markBetaPaymentEmailsSent(input: z.input<typeof inviteSchema>): Promise<Result> {
+  const parsed = inviteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Selection invalide." };
+  const access = await requireSuperAdmin();
+  if (!access) return { ok: false, message: "Action reservee au super-admin." };
+  const { admin, actorId: actor } = access;
+  const { data: signups, error } = await admin
+    .from("beta_signups")
+    .select("id,status,is_demo")
+    .in("id", parsed.data.signupIds);
+  if (error || !signups) return { ok: false, message: "Impossible de charger les inscriptions." };
+
+  const eligibleIds = signups
+    .filter((signup) => !signup.is_demo && signup.status === "reserved")
+    .map((signup) => signup.id);
+  if (eligibleIds.length === 0) return { ok: false, message: "Aucune inscription eligible dans la selection." };
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await admin
+    .from("beta_signups")
+    .update({ payment_email_sent_at: now, payment_email_sent_by: actor, last_access_error: null })
+    .in("id", eligibleIds);
+  if (updateError) return { ok: false, message: "Impossible d'enregistrer l'envoi manuel des mails." };
+
+  await admin.from("beta_access_events").insert(
+    eligibleIds.map((signupId) => ({
+      beta_signup_id: signupId,
+      actor_id: actor,
+      event_type: "payment_email_sent" as const,
+      detail: "Mail de paiement envoye manuellement hors de TaDiff",
+    })),
+  );
+  revalidatePath("/admin/beta");
+  return {
+    ok: true,
+    message: `${eligibleIds.length} mail(s) marque(s) comme envoye(s) manuellement.`,
+    succeeded: eligibleIds.length,
+    failed: parsed.data.signupIds.length - eligibleIds.length,
+  };
+}
+
 export async function confirmBetaPayment(input: z.input<typeof paymentSchema>): Promise<Result> {
   const parsed = paymentSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Une reference Stripe ou une note est obligatoire." };
