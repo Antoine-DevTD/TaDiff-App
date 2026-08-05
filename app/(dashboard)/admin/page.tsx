@@ -4,6 +4,7 @@ import { CompanyBillingForm } from "@/components/admin/company-billing-form";
 import { AiConfigurationPanel } from "@/components/admin/ai-configuration-panel";
 import { AiAccessManager } from "@/components/admin/ai-access-manager";
 import { WilliamAnalyticsPanel } from "@/components/admin/william-analytics-panel";
+import { ErrorNotificationsPanel } from "@/components/admin/error-notifications-panel";
 import { FeedbackRow } from "@/components/admin/feedback-row";
 import { LegalInformationForm } from "@/components/admin/legal-information-form";
 import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
@@ -32,6 +33,7 @@ import {
   getAiProviderReadiness,
   getAdminPublicAnalyticsEvents,
   getAdminPlatformAdmins,
+  getAdminErrorGroups,
   getPlatformAdminAccess,
   type PlatformPermission,
   type AdminAccessEvent,
@@ -78,6 +80,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     aiAccounts,
     williamQuestionEvents,
     platformAdmins,
+    errorGroups,
   ] = await Promise.all([
     getAdminCompanies(),
     getAdminFeedback(),
@@ -93,6 +96,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     getAdminAiAccounts(),
     getAdminWilliamQuestionEvents(),
     getAdminPlatformAdmins(),
+    getAdminErrorGroups(),
   ]);
   const aiReadiness = getAiProviderReadiness();
 
@@ -117,6 +121,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           href="/admin?tab=retours"
           label={`Retours${openFeedback > 0 ? ` (${openFeedback})` : ""}`}
         /> : null}
+        {allowedTabs.includes("notifications") ? <AdminTab active={activeTab === "notifications"} href="/admin?tab=notifications" label={`Notifications${errorGroups.filter((error) => !error.resolvedAt).length ? ` (${errorGroups.filter((error) => !error.resolvedAt).length})` : ""}`} /> : null}
         {allowedTabs.includes("audience") ? <AdminTab active={activeTab === "audience"} href="/admin?tab=audience" label="Audience" /> : null}
         {allowedTabs.includes("informations") ? <AdminTab active={activeTab === "informations"} href="/admin?tab=informations" label="Informations" /> : null}
         {allowedTabs.includes("catalogues") ? <AdminTab active={activeTab === "catalogues"} href="/admin?tab=catalogues" label="Catalogues" /> : null}
@@ -127,6 +132,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       {activeTab === "administrateurs" ? (
         <PlatformAdminManager accounts={aiAccounts} admins={platformAdmins} />
+      ) : activeTab === "notifications" ? (
+        <ErrorNotificationsPanel errors={errorGroups} />
       ) : activeTab === "informations" ? (
         <LegalInformationForm initialValue={legalInformation} />
       ) : activeTab === "catalogues" ? (
@@ -224,10 +231,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 const adminTabMeta = {
   supervision: { title: "Supervision TaDiff", description: "Compagnies, facturation, accès et inscriptions bêta." },
   retours: { title: "Retours compagnies", description: "Bugs, idees et avis envoyes depuis le cockpit." },
+  notifications: { title: "Notifications techniques", description: "Erreurs groupées, compagnies touchées et suivi des corrections." },
   audience: { title: "Audience publique", description: "Visites, clics et inscriptions sur les pages publiques, sans adresse IP." },
   informations: { title: "Informations publiees", description: "Identite legale, contacts et prix modifiables sans redeploiement." },
   catalogues: { title: "Catalogues de référence", description: "Subventions et programmes de mécénat proposés aux compagnies et à William." },
-  emails: { title: "Bibliotheque d'emails", description: "Modeles globaux personnalisables par les compagnies." },
+  emails: { title: "Bibliothèque d'emails", description: "Modèles globaux personnalisables par les compagnies." },
   ia: { title: "William IA", description: "Fournisseurs, secrets disponibles et corpus de recherche contrôlé." },
   administrateurs: { title: "Administrateurs délégués", description: "Accès internes limités, sans droit sur la facturation ni les comptes offerts." },
 } as const;
@@ -235,10 +243,11 @@ const adminTabMeta = {
 type AdminTabId = keyof typeof adminTabMeta;
 
 function getAllowedTabs(isSuperAdmin: boolean, permissions: PlatformPermission[]): AdminTabId[] {
-  if (isSuperAdmin) return ["supervision", "retours", "audience", "informations", "catalogues", "emails", "ia", "administrateurs"];
+  if (isSuperAdmin) return ["supervision", "retours", "notifications", "audience", "informations", "catalogues", "emails", "ia", "administrateurs"];
   const tabs: AdminTabId[] = [];
   if (["view_companies", "view_beta", "view_access"].some((permission) => permissions.includes(permission as PlatformPermission))) tabs.push("supervision");
   if (permissions.includes("manage_feedback")) tabs.push("retours");
+  if (permissions.includes("manage_feedback")) tabs.push("notifications");
   if (permissions.includes("view_audience")) tabs.push("audience");
   if (permissions.includes("manage_legal")) tabs.push("informations");
   if (permissions.includes("manage_catalogs")) tabs.push("catalogues");

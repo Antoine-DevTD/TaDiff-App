@@ -1,5 +1,12 @@
 # Passage de relais actif
 
+## Livraison retours 2 à 8 — 5 août 2026
+
+- Code validé localement : TypeScript, lint, build, budget unitaire et 28 parcours Playwright (27 au premier passage, puis le seul test d'accent corrigé et repassé).
+- Appliquer `sql/069_email_template_preferences.sql` puis `sql/070_application_error_notifications.sql` avant la promotion du commit.
+- Ajouter facultativement `BANK_CONNECTION_URL`; le bouton reste volontairement désactivé sans cette variable. `ERROR_NOTIFICATION_EMAIL` et `ERROR_NOTIFICATION_FROM` ont des valeurs TaDiff de repli.
+- Les modifications utilisateur de `03 - retours/Propositions 22-07-2026.md` et `components/william/william-bubble.tsx` restent hors du commit.
+
 ## Reprise du 5 aout 2026
 
 - Le commit `2b0425c` stabilise dates multiples, lien Diffusion/Exploitation, William beta et saisie `@`.

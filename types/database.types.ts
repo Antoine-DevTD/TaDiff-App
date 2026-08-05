@@ -9,6 +9,12 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      application_error_groups: {
+        Row: { id: string; fingerprint: string; message: string; error_code: string; route: string; source: string; occurrence_count: number; company_ids: string[]; reporter_emails: string[]; first_seen_at: string; last_seen_at: string; resolved_at: string | null; resolved_by: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; fingerprint: string; message: string; error_code?: string; route?: string; source?: string; occurrence_count?: number; company_ids?: string[]; reporter_emails?: string[]; first_seen_at?: string; last_seen_at?: string; resolved_at?: string | null; resolved_by?: string | null; created_at?: string; updated_at?: string };
+        Update: { message?: string; error_code?: string; route?: string; source?: string; occurrence_count?: number; company_ids?: string[]; reporter_emails?: string[]; last_seen_at?: string; resolved_at?: string | null; resolved_by?: string | null; updated_at?: string };
+        Relationships: [];
+      };
       platform_admin_access: {
         Row: { user_id: string; permissions: string[]; granted_by: string | null; created_at: string; updated_at: string };
         Insert: { user_id: string; permissions?: string[]; granted_by?: string | null; created_at?: string; updated_at?: string };
@@ -1736,6 +1742,8 @@ export type Database = {
           body_json: Json;
           created_at: string;
           updated_at: string;
+          enabled: boolean;
+          is_default: boolean;
         };
         Insert: {
           id?: string;
@@ -1746,6 +1754,8 @@ export type Database = {
           body_json: Json;
           created_at?: string;
           updated_at?: string;
+          enabled?: boolean;
+          is_default?: boolean;
         };
         Update: {
           name?: string;
@@ -1753,6 +1763,8 @@ export type Database = {
           subject_template?: string;
           body_json?: Json;
           updated_at?: string;
+          enabled?: boolean;
+          is_default?: boolean;
         };
         Relationships: [
           {

@@ -427,6 +427,8 @@ export type EmailTemplate = {
   attachmentTemplate?: string;
   updatedAt: string;
   scope?: "company" | "platform";
+  enabled?: boolean;
+  isDefault?: boolean;
 };
 
 export type BillingPlan = {

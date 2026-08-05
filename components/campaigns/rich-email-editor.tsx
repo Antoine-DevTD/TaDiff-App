@@ -126,7 +126,7 @@ export function RichEmailEditor({
       ) : null}
       <div>
         <EditorContent
-          aria-label={editable ? "Corps du message" : "Apercu du message"}
+          aria-label={editable ? "Corps du message" : "Aperçu du message"}
           aria-autocomplete="list"
           aria-controls={variableQuery && suggestedVariables.length > 0 ? variableListId : undefined}
           aria-expanded={Boolean(variableQuery && suggestedVariables.length > 0)}

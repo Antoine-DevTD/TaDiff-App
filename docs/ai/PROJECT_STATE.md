@@ -1,5 +1,14 @@
 # Etat court du projet
 
+## Reprise des retours 2 à 8 — 5 août 2026
+
+- William est filtrable et triable par compagnie, réponse, recherche et date dans la console plateforme.
+- Les erreurs Next.js, interface et Supabase significatives alimentent un centre de notifications groupées. Resend alerte l'adresse interne et prévient les utilisateurs identifiés lorsqu'une erreur est marquée corrigée.
+- Les modèles d'emails peuvent être proposés ou masqués et définis par défaut pour chaque usage. Une duplication apparaît immédiatement dans la liste et le composeur filtre les modèles par usage.
+- Trésorerie compare une projection optimiste et prudente, propose un seul ajout pour le solde ou un frais récurrent et n'active la connexion bancaire que si `BANK_CONNECTION_URL` est configurée.
+- `npm run check:copy` contrôle les erreurs d'accents les plus courantes et fait partie de la définition de terminé.
+- Les migrations `069_email_template_preferences.sql` et `070_application_error_notifications.sql` doivent être appliquées avant promotion en production.
+
 Derniere verification : 23 juillet 2026.
 
 ## Socle

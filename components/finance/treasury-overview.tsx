@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import { TreasuryBalanceForm } from "@/components/finance/treasury-balance-form";
 import { TreasuryChart } from "@/components/finance/treasury-chart";
+import { TreasuryMovementDialog } from "@/components/finance/treasury-movement-dialog";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Landmark } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   buildTreasuryProjection,
@@ -18,6 +21,7 @@ export function TreasuryOverview({
   initialTreasury,
   isDemoTreasury,
   quotes,
+  bankConnectionUrl,
 }: {
   fixedCosts: FixedCost[];
   grants: GrantOpportunity[];
@@ -25,6 +29,7 @@ export function TreasuryOverview({
   initialTreasury: TreasurySnapshot | null;
   isDemoTreasury: boolean;
   quotes: QuoteItem[];
+  bankConnectionUrl: string | null;
 }) {
   const [treasury, setTreasury] = useState(initialTreasury);
   const [history, setHistory] = useState(initialHistory);
@@ -39,6 +44,7 @@ export function TreasuryOverview({
       }),
     [fixedCosts, grants, quotes, treasury],
   );
+  const prudentProjection = useMemo(() => buildTreasuryProjection({ currentCash: treasury?.balance ?? 0, fixedCosts, grants: [], quotes: [] }), [fixedCosts, treasury]);
 
   function recordSnapshot(snapshot: TreasurySnapshot) {
     setTreasury(snapshot);
@@ -49,9 +55,11 @@ export function TreasuryOverview({
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-      <Card className="overflow-hidden p-0" data-tour="finance-tresorerie">
-            <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
+    <section className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold">Projection de trésorerie</h2><p className="mt-1 text-sm text-muted">Comparez les encaissements attendus à un scénario prudent.</p></div><div className="flex flex-wrap gap-2"><TreasuryMovementDialog currentBalance={treasury?.balance ?? null} onRecorded={recordSnapshot} />{bankConnectionUrl ? <ButtonLink href={bankConnectionUrl} variant="secondary"><Landmark className="mr-2 h-4 w-4" />Connecter la banque</ButtonLink> : <Button disabled variant="secondary" title="Configurez BANK_CONNECTION_URL dans Vercel pour activer ce bouton"><Landmark className="mr-2 h-4 w-4" />Connexion bancaire bientôt disponible</Button>}</div></div>
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <Card className="min-w-0 overflow-hidden p-0" data-tour="finance-tresorerie">
+            <div className="grid min-h-full md:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.2fr)]">
               <div className="flex flex-col justify-between gap-[1.375rem] bg-ink p-5 text-white">
                 <div>
                   <div className="flex items-center justify-between gap-3">
@@ -121,6 +129,11 @@ export function TreasuryOverview({
                   ))}
                 </div>
 
+                <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
+                  <div><p className="text-xs text-muted">Projection optimiste · 90 j</p><p className="mt-1 font-semibold tabular-nums text-success">{formatCurrency(projection.cash90)}</p></div>
+                  <div><p className="text-xs text-muted">Projection prudente · 90 j</p><p className="mt-1 font-semibold tabular-nums text-warning">{formatCurrency(prudentProjection.cash90)}</p></div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-[1.375rem] border-t border-border pt-4 text-sm">
                   <p>
                     <span className="block text-xs text-muted">Frais fixes / mois</span>
@@ -160,6 +173,7 @@ export function TreasuryOverview({
             onRecorded={recordSnapshot}
           />
         </Card>
+      </div>
       </div>
     </section>
   );

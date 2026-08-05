@@ -496,7 +496,7 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(attachmentDialog).toContainText(/ne peuvent pas ajouter automatiquement/);
     await page.keyboard.press("Escape");
     await expect(attachmentDialog).toBeHidden();
-    await expect(page.getByRole("heading", { name: "Modeles d'emails" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Modèles d'emails" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Nouveau modèle" })).toBeVisible();
   });
 

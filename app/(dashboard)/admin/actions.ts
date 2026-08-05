@@ -40,6 +40,20 @@ type ActionResult = {
   message: string;
 };
 
+export async function adminResolveErrorGroup(errorId: string, resolved: boolean): Promise<ActionResult> {
+  if (!hasSupabaseEnv() || !(await hasPlatformPermission("manage_feedback"))) return { ok: false, message: "Permission requise." };
+  const supabase = await getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: group } = await supabase.from("application_error_groups").select("reporter_emails,message").eq("id", errorId).single();
+  const { error } = await supabase.from("application_error_groups").update({ resolved_at: resolved ? new Date().toISOString() : null, resolved_by: resolved ? user?.id ?? null : null, updated_at: new Date().toISOString() }).eq("id", errorId);
+  if (error) return { ok: false, message: error.message };
+  if (resolved && group?.reporter_emails.length && process.env.RESEND_API_KEY) {
+    await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: process.env.ERROR_NOTIFICATION_FROM?.trim() || "TaDiff Support <support@tadiff.com>", to: group.reporter_emails, subject: "Votre problème TaDiff est corrigé", text: `Bonjour,\n\nLe problème rencontré sur TaDiff a été corrigé. Vous pouvez reprendre votre parcours.\n\nL’équipe TaDiff\nsupport@tadiff.com` }) });
+  }
+  revalidatePath("/admin");
+  return { ok: true, message: resolved ? "Erreur marquée comme corrigée." : "Erreur rouverte." };
+}
+
 export async function adminSetFeedbackStatus(
   feedbackId: string,
   values: FeedbackStatusFormInput,

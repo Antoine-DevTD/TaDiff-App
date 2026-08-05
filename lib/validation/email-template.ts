@@ -18,6 +18,8 @@ export const emailTemplateSchema = z.object({
   messageType: z.enum(["first-touch", "follow-up", "date-option"]),
   subjectTemplate: z.string().trim().min(2, "L'objet est requis.").max(180),
   bodyJson: richTextNodeSchema,
+  enabled: z.boolean().default(true),
+  isDefault: z.boolean().default(false),
 });
 
 export type EmailTemplateInput = z.infer<typeof emailTemplateSchema>;

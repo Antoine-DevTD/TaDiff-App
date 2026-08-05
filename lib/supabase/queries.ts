@@ -1100,7 +1100,7 @@ export async function getEmailTemplates(): Promise<EmailTemplate[]> {
   const [companyResult, platformResult] = await Promise.all([
     supabase
       .from("email_templates")
-      .select("id,name,message_type,subject_template,body_json,updated_at")
+      .select("id,name,message_type,subject_template,body_json,enabled,is_default,updated_at")
       .order("updated_at", { ascending: false }),
     supabase
       .from("platform_email_templates")
@@ -1117,6 +1117,8 @@ export async function getEmailTemplates(): Promise<EmailTemplate[]> {
     bodyJson: template.body_json,
     updatedAt: template.updated_at,
     scope: "company" as const,
+    enabled: template.enabled,
+    isDefault: template.is_default,
   }));
   const platformTemplates = (platformResult.data ?? []).map((template) => ({
     id: template.id,
@@ -1127,6 +1129,8 @@ export async function getEmailTemplates(): Promise<EmailTemplate[]> {
     attachmentTemplate: template.attachment_template,
     updatedAt: template.updated_at,
     scope: "platform" as const,
+    enabled: true,
+    isDefault: false,
   }));
 
   return [...platformTemplates, ...companyTemplates];

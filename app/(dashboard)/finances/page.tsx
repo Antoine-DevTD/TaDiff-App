@@ -150,6 +150,7 @@ export default async function FinancesPage() {
             initialTreasury={treasury}
             isDemoTreasury={isDemoTreasury}
             quotes={quotes}
+            bankConnectionUrl={process.env.BANK_CONNECTION_URL?.trim() || null}
           />
 
           <section className="grid gap-3 md:grid-cols-3">

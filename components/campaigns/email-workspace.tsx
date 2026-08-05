@@ -53,11 +53,12 @@ export function EmailComposer({ contacts, documents, initialContactId, initialCo
     () => [
       ...(templates.some((template) => template.scope === "platform")
         ? []
-        : builtInEmailTemplates.map((template) => ({ ...template, custom: false }))),
-      ...templates.map((template) => ({ ...template, custom: template.scope === "company" })),
+        : builtInEmailTemplates.map((template) => ({ ...template, custom: false, isDefault: false, enabled: true }))),
+      ...templates.filter((template) => template.enabled !== false).map((template) => ({ ...template, custom: template.scope === "company" })),
     ],
     [templates],
   );
+  const [messageType, setMessageType] = useState<EmailTemplate["messageType"]>("first-touch");
   const [contactIds, setContactIds] = useState(() => {
     const requestedIds = initialContactIds?.filter((id) => contacts.some((contact) => contact.id === id && contact.email)) ?? [];
     if (requestedIds.length > 0) return requestedIds;
@@ -65,13 +66,15 @@ export function EmailComposer({ contacts, documents, initialContactId, initialCo
     return contacts[0]?.id ? [contacts[0].id] : [];
   });
   const [showId, setShowId] = useState(() => shows.some((show) => show.id === initialShowId) ? initialShowId! : "");
-  const [templateId, setTemplateId] = useState(choices[0]?.id ?? "");
+  const initialTemplate = choices.find((template) => template.messageType === "first-touch" && template.isDefault) ?? choices.find((template) => template.messageType === "first-touch") ?? choices[0];
+  const [templateId, setTemplateId] = useState(initialTemplate?.id ?? "");
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const selectedContacts = contacts.filter((contact) => contactIds.includes(contact.id));
   const selectedContact = selectedContacts[0] ?? null;
   const groupedRecipients = selectedContacts.length > 1;
   const selectedShow = shows.find((show) => show.id === showId);
   const selectedTemplate = choices.find((template) => template.id === templateId) ?? choices[0];
+  const availableTemplates = choices.filter((template) => template.messageType === messageType);
   const showDocuments = useMemo(() => documents.filter((document) => document.showId === showId), [documents, showId]);
   const attachmentSlots = useMemo(
     () => emailAttachmentTypes.map((type) => ({ type, document: showDocuments.find((document) => document.documentType === type) })),
@@ -97,6 +100,12 @@ export function EmailComposer({ contacts, documents, initialContactId, initialCo
   function selectShow(value: string) {
     setShowId(value);
     setSelectedDocumentIds([]);
+  }
+
+  function selectMessageType(value: EmailTemplate["messageType"]) {
+    setMessageType(value);
+    const next = choices.find((template) => template.messageType === value && template.isDefault) ?? choices.find((template) => template.messageType === value);
+    setTemplateId(next?.id ?? "");
   }
 
   function toggleDocument(documentId: string) {
@@ -131,9 +140,12 @@ export function EmailComposer({ contacts, documents, initialContactId, initialCo
             {shows.map((show) => <option key={show.id} value={show.id}>{show.title}</option>)}
           </Select>
         </label>
+        <label className="block text-sm font-medium">Usage
+          <Select aria-label="Usage de l'email" className="mt-2" value={messageType} onChange={(event) => selectMessageType(event.target.value as EmailTemplate["messageType"])}><option value="first-touch">Premier contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select>
+        </label>
         <label className="block text-sm font-medium">Modèle
           <Select aria-label="Modèle d'email" className="mt-2" value={templateId} onChange={(event) => setTemplateId(event.target.value)}>
-            {choices.map((choice) => <option key={choice.id} value={choice.id}>{choice.name}{choice.custom ? " - perso" : ""}</option>)}
+            {availableTemplates.map((choice) => <option key={choice.id} value={choice.id}>{choice.name}{choice.isDefault ? " - par défaut" : choice.custom ? " - perso" : ""}</option>)}
           </Select>
         </label>
         {selectedShow ? (

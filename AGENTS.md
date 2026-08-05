@@ -26,6 +26,7 @@ Ce fichier est le point d'entree court pour tout agent travaillant dans ce depot
 
 - Flux utilisateur verifie, y compris vide, erreur, clavier et mobile si pertinent.
 - `npm run lint`, `npx tsc --noEmit`, `npm run build` et tests cibles selon le risque.
+- Toute nouvelle copie visible en français doit être relue avec ses accents ; lancer `npm run check:copy` avant chaque livraison.
 - Migration et variables d'environnement signalees explicitement.
 - `docs/ai/HANDOFF.md` mis a jour seulement si une reprise est necessaire.
 - `docs/ai/PROJECT_STATE.md` mis a jour si l'etat durable du produit change.

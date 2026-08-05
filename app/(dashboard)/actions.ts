@@ -124,8 +124,17 @@ export async function saveEmailTemplate(
     message_type: parsed.data.messageType,
     subject_template: parsed.data.subjectTemplate,
     body_json: parsed.data.bodyJson as Json,
+    enabled: parsed.data.enabled,
+    is_default: parsed.data.isDefault,
     updated_at: new Date().toISOString(),
   };
+
+  if (parsed.data.isDefault) {
+    const workspace = await getOrCreateWorkspace();
+    if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+    const { error: resetError } = await supabase.from("email_templates").update({ is_default: false }).eq("company_id", workspace.companyId).eq("message_type", parsed.data.messageType);
+    if (resetError) return { ok: false, message: resetError.message };
+  }
 
   const result = templateId
     ? await supabase.from("email_templates").update(payload).eq("id", templateId)

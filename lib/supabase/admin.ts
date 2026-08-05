@@ -184,6 +184,9 @@ export type AdminAiAccount = {
 
 export type AdminWilliamQuestionEvent = {
   id: string;
+  companyId: string;
+  companyName: string;
+  userId: string;
   questionExcerpt: string;
   topic: string;
   requestKind: string;
@@ -191,6 +194,7 @@ export type AdminWilliamQuestionEvent = {
   outOfScope: boolean;
   createdAt: string;
 };
+export type AdminErrorGroup = { id: string; message: string; errorCode: string; route: string; source: string; occurrenceCount: number; companyCount: number; reporterEmails: string[]; firstSeenAt: string; lastSeenAt: string; resolvedAt: string | null };
 
 export type PlatformAdminAccess = { isSuperAdmin: boolean; permissions: PlatformPermission[] };
 export type AdminPlatformAdmin = { userId: string; email: string; fullName: string; permissions: PlatformPermission[]; updatedAt: string };
@@ -557,13 +561,21 @@ export async function getAdminWilliamQuestionEvents(days = 30, limit = 500): Pro
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("william_question_events")
-    .select("id,question_excerpt,topic,request_kind,answered,out_of_scope,created_at")
+    .select("id,company_id,user_id,question_excerpt,topic,request_kind,answered,out_of_scope,created_at")
     .gte("created_at", since)
     .order("created_at", { ascending: false })
     .limit(Math.min(Math.max(limit, 1), 2000));
   if (error || !data) return [];
+  const companyIds = Array.from(new Set(data.map((event) => event.company_id)));
+  const { data: companies } = companyIds.length
+    ? await supabase.from("companies").select("id,name").in("id", companyIds)
+    : { data: [] };
+  const companyNames = new Map((companies ?? []).map((company) => [company.id, company.name]));
   return data.map((event) => ({
     id: event.id,
+    companyId: event.company_id,
+    companyName: companyNames.get(event.company_id) ?? "Compagnie inconnue",
+    userId: event.user_id,
     questionExcerpt: event.question_excerpt,
     topic: event.topic,
     requestKind: event.request_kind,
@@ -571,6 +583,14 @@ export async function getAdminWilliamQuestionEvents(days = 30, limit = 500): Pro
     outOfScope: event.out_of_scope,
     createdAt: event.created_at,
   }));
+}
+
+export async function getAdminErrorGroups(): Promise<AdminErrorGroup[]> {
+  if (!hasSupabaseEnv()) return [];
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.from("application_error_groups").select("id,message,error_code,route,source,occurrence_count,company_ids,reporter_emails,first_seen_at,last_seen_at,resolved_at").order("last_seen_at", { ascending: false }).limit(500);
+  if (error || !data) return [];
+  return data.map((item) => ({ id: item.id, message: item.message, errorCode: item.error_code, route: item.route, source: item.source, occurrenceCount: item.occurrence_count, companyCount: item.company_ids.length, reporterEmails: item.reporter_emails, firstSeenAt: item.first_seen_at, lastSeenAt: item.last_seen_at, resolvedAt: item.resolved_at }));
 }
 
 export function getAiProviderReadiness(): AiProviderReadiness {

@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check:copy": "node scripts/check-french-copy.mjs",
     "test:budget": "node --experimental-strip-types --test tests/unit/show-budget.test.mjs",
     "test:e2e": "playwright test"
   },
