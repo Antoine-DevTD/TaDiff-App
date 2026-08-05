@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
-import type { Contact } from "@/types";
+import type { Contact, ContactCustomFieldDefinition } from "@/types";
 
 const defaultValues: ContactFormValues = {
   contactType: "person",
@@ -35,13 +35,16 @@ const defaultValues: ContactFormValues = {
   directorName: "",
   directorEmail: "",
   directorPhone: "",
+  customFields: {},
 };
 
 export function ContactForm({
   contact,
+  customFieldDefinitions = [],
   onSuccess,
 }: {
   contact?: Contact;
+  customFieldDefinitions?: ContactCustomFieldDefinition[];
   onSuccess?: () => void;
 }) {
   const router = useRouter();
@@ -80,6 +83,7 @@ export function ContactForm({
           directorName: "",
           directorEmail: "",
           directorPhone: "",
+          customFields: contact.customFields ?? {},
         }
       : defaultValues,
   });
@@ -143,6 +147,31 @@ export function ContactForm({
         </Field>
         {contactType === "person" ? <Field label="Structure" error={errors.organization?.message}><Input placeholder="Scène nationale" {...register("organization")} /></Field> : null}
       </div>
+
+      {customFieldDefinitions.some((definition) => definition.active && (definition.appliesTo === "both" || definition.appliesTo === contactType)) ? (
+        <section className="rounded-md border border-border bg-panel-strong/45 p-4" aria-labelledby="contact-custom-fields-title">
+          <h4 id="contact-custom-fields-title" className="font-semibold">Informations personnalisées</h4>
+          <p className="mt-1 text-xs leading-5 text-muted">Ces champs appartiennent à votre compagnie et restent disponibles dans les imports.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {customFieldDefinitions.filter((definition) => definition.active && (definition.appliesTo === "both" || definition.appliesTo === contactType)).map((definition) => (
+              <Field key={definition.id} label={definition.label}>
+                {definition.fieldType === "select" ? (
+                  <Select {...register(`customFields.${definition.id}`)}>
+                    <option value="">À renseigner</option>
+                    {definition.options.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </Select>
+                ) : (
+                  <Input
+                    type={definition.fieldType === "url" ? "url" : definition.fieldType === "date" ? "date" : definition.fieldType === "number" ? "number" : "text"}
+                    step={definition.fieldType === "number" ? "any" : undefined}
+                    {...register(`customFields.${definition.id}`)}
+                  />
+                )}
+              </Field>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {contactType === "venue" ? (
         <section className="rounded-md border border-border bg-panel-strong/45 p-4">
@@ -227,7 +256,9 @@ export function ContactForm({
         <Field label="Statut" error={errors.status?.message}>
           <Select {...register("status")}>
             <option value="Prospect">Prospect</option>
+            <option value="Premier contact">Premier contact</option>
             <option value="En discussion">En discussion</option>
+            <option value="Refus">Refus</option>
             <option value="Partenaire">Partenaire</option>
           </Select>
         </Field>

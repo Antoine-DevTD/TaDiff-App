@@ -53,6 +53,7 @@ test.describe("landing beta", () => {
 
 test.describe("parcours webinaire", () => {
   test("simule l'inscription sans rouvrir la creation publique de compte", async ({ page }) => {
+    test.slow();
     await page.goto("/signup");
     await expect(page.getByRole("heading", { name: "Creation de compte suspendue" })).toBeVisible();
 
@@ -72,7 +73,7 @@ test.describe("parcours webinaire", () => {
       await expect(page.getByRole("heading", { name: "Bienvenue dans TaDiff" })).toBeVisible();
       await page.waitForURL(/welcome\?replay=1&fromSignup=1/);
       await expect(
-        page.getByRole("heading", { level: 1, name: "Bienvenue, je suis William." }),
+        page.getByRole("heading", { level: 1, name: /Préparons votre cockpit/ }),
       ).toBeVisible({ timeout: 15_000 });
       const stage = page.locator("[data-william-stage]");
       const canvas = stage.locator("canvas");
@@ -83,14 +84,20 @@ test.describe("parcours webinaire", () => {
       await expectNoHorizontalOverflow(page);
 
       await page.getByRole("button", { name: "Continuer" }).click();
-      await expect(page.getByPlaceholder("Prenom Nom")).toHaveValue("Titouan Laporte");
-      await page.getByRole("button", { name: "Continuer" }).click();
-      await page.getByRole("button", { name: "Continuer" }).click();
+      await expect(page.getByLabel("Votre prénom et votre nom")).toHaveValue("Titouan Laporte");
+      await expect(page.getByLabel("Nom de la compagnie")).toHaveValue("Compagnie de l'Estran");
+      await page.getByText("Ajouter le logo maintenant (facultatif)").click();
       await expect(page.getByRole("button", { name: /Déposer une image ici/ })).toBeVisible();
       await expect(page.locator('input[type="file"]')).toHaveAttribute(
         "accept",
         ".png,.jpg,.jpeg,.webp",
       );
+      await page.getByRole("button", { name: "Continuer" }).click();
+      await expect(page.getByRole("button", { name: /Créer un spectacle/ })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expectNoHorizontalOverflow(page);
     }
   });
 });
@@ -296,9 +303,9 @@ test.describe("cockpit en mode demonstration", () => {
     await page.goto("/calendar");
 
     await page.getByRole("button", { name: "Période suivante" }).click();
-    await expect(page.getByRole("button", { name: /Août 2026/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Septembre 2026/ })).toBeVisible();
     await page.getByRole("button", { name: "Période précédente" }).click();
-    await expect(page.getByRole("button", { name: /Juillet 2026/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Août 2026/ })).toBeVisible();
 
     await page.locator('button[title*="Aide"]').first().click();
     await expect(page.getByText(/tail s.*lectionn/i)).toBeVisible();
@@ -440,18 +447,17 @@ test.describe("cockpit en mode demonstration", () => {
     await expect(page.getByRole("dialog", { name: "Ajouter une diffusion" })).toBeVisible();
   });
 
-  test("selectionne explicitement les jours joues d'une exploitation", async ({ page }) => {
+  test("renseigne plusieurs dates d'exploitation sans passer par un agenda", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/pipeline");
 
     await page.getByRole("button", { name: "Ajouter une exploitation" }).click();
     const dialog = page.getByRole("dialog", { name: "Ajouter des représentations" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("Jours joués", { exact: true })).toBeVisible();
-    await expect(dialog.getByText("1 représentation(s) sélectionnée(s)")).toBeVisible();
-    await dialog.getByLabel("Fin de période").fill("2026-08-31");
-    await dialog.getByRole("button", { name: "Jeu", exact: true }).click();
-    await expect(dialog.getByText(/représentation\(s\) sélectionnée\(s\)/)).toBeVisible();
+    await expect(dialog.getByText("Dates de représentation", { exact: true })).toBeVisible();
+    await dialog.getByLabel("Représentation 1").fill("2026-08-21");
+    await dialog.getByLabel("Représentation 2").fill("2026-08-22");
+    await expect(dialog.getByText("2 date(s) renseignée(s)")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
   });

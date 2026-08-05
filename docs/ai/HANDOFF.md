@@ -1,5 +1,12 @@
 # Passage de relais actif
 
+## Reprise du 5 aout 2026
+
+- Le commit `2b0425c` stabilise dates multiples, lien Diffusion/Exploitation, William beta et saisie `@`.
+- Les migrations 066 a 068 sont pretes localement : budget guide persistant, champs Contacts/Lieux avec RLS, tarifs et projections d'exploitation.
+- Ne pas deployer ces interfaces avant application des migrations 065 a 068 et smoke tests en Preview.
+- Le fichier `03 - retours/Propositions 22-07-2026.md` et les modifications preexistantes de `components/william/william-bubble.tsx` et `tests/e2e/ux-smoke.spec.ts` restent hors du lot a committer.
+
 Date : 22 juillet 2026
 Branche : `main`
 Etat : lots 1 a 5 livres sur `main`, verifies et migrations 043 a 051 appliquees dans Supabase.

@@ -444,6 +444,7 @@ export async function createExploitation(values: {
 export async function updateExploitationPerformance(performanceId: string, values: {
   capacity: number; paidTickets: number; complimentaryTickets: number;
   grossBoxOffice: number; ticketingFees: number; variableCosts: number; sacdDeclared: boolean;
+  ticketCategories?: Array<{ id?: string; label: string; unitPrice: number; paidTickets: number }>;
 }): Promise<ActionResult> {
   if (!performanceId || Object.values(values).some((value) => typeof value === "number" && value < 0)) {
     return { ok: false, message: "Chiffres de billetterie invalides." };
@@ -451,17 +452,38 @@ export async function updateExploitationPerformance(performanceId: string, value
   const accessError = await requireWriteAccess();
   if (accessError) return { ok: false, message: accessError };
   const supabase = await getSupabaseServerClient();
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const categories = (values.ticketCategories ?? []).map((category) => ({
+    label: category.label.trim().slice(0, 80),
+    unitPrice: Math.max(0, Number(category.unitPrice) || 0),
+    paidTickets: Math.max(0, Math.floor(Number(category.paidTickets) || 0)),
+  })).filter((category) => category.label);
+  const categoryTickets = categories.reduce((sum, category) => sum + category.paidTickets, 0);
+  const categoryGross = categories.reduce((sum, category) => sum + category.unitPrice * category.paidTickets, 0);
   const { error } = await supabase.from("exploitation_performances").update({
     capacity: values.capacity,
-    paid_tickets: values.paidTickets,
+    paid_tickets: categories.length ? categoryTickets : values.paidTickets,
     complimentary_tickets: values.complimentaryTickets,
-    gross_box_office: values.grossBoxOffice,
+    gross_box_office: categories.length ? categoryGross : values.grossBoxOffice,
     ticketing_fees: values.ticketingFees,
     variable_costs: values.variableCosts,
     sacd_declared: values.sacdDeclared,
+    financials_entered_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  }).eq("id", performanceId);
+  }).eq("id", performanceId).eq("company_id", workspace.companyId);
   if (error) return { ok: false, message: error.message };
+  if (values.ticketCategories) {
+    const { error: deleteError } = await supabase.from("exploitation_ticket_categories").delete().eq("performance_id", performanceId).eq("company_id", workspace.companyId);
+    if (deleteError) return { ok: false, message: deleteError.message.includes("schema cache") ? "Appliquez la migration 068 avant d'utiliser les tarifs." : deleteError.message };
+    if (categories.length) {
+      const { error: categoryError } = await supabase.from("exploitation_ticket_categories").insert(categories.map((category, index) => ({
+        company_id: workspace.companyId!, performance_id: performanceId, label: category.label,
+        unit_price: category.unitPrice, paid_tickets: category.paidTickets, sort_order: index,
+      })));
+      if (categoryError) return { ok: false, message: categoryError.message };
+    }
+  }
   revalidatePath("/pipeline");
   revalidatePath("/finances");
   return { ok: true, message: "Billetterie mise a jour." };
@@ -794,6 +816,7 @@ export async function saveShowBudgetProfile(showId: string, values: ShowBudgetPr
 
   const profileValues = {
     company_id: workspace.companyId,
+    setup_complete: parsed.data.setupComplete,
     convention: parsed.data.convention,
     rate_source_url: parsed.data.rateSourceUrl || null,
     rate_effective_date: parsed.data.rateEffectiveDate || null,
@@ -1002,6 +1025,14 @@ export async function updateContact(
     return { ok: false, message: error.message };
   }
 
+  const customFieldError = await saveContactCustomFields(
+    supabase,
+    workspace.companyId,
+    contactId,
+    parsed.data.customFields,
+  );
+  if (customFieldError) return { ok: false, message: customFieldError };
+
   revalidatePath("/contacts");
   revalidatePath(`/contacts/${contactId}`);
   revalidatePath("/pipeline");
@@ -1021,6 +1052,103 @@ function normalizeContactTags(tags: string[] | undefined) {
         .slice(0, 12),
     ),
   );
+}
+
+async function saveContactCustomFields(
+  supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
+  companyId: string,
+  contactId: string,
+  values: Record<string, string> | undefined,
+) {
+  if (!values) return null;
+  const definitionIds = Object.keys(values);
+  if (definitionIds.length === 0) return null;
+  const { data: definitions, error: definitionsError } = await supabase
+    .from("contact_custom_field_definitions")
+    .select("id,field_type,options")
+    .eq("company_id", companyId)
+    .eq("active", true)
+    .in("id", definitionIds);
+  if (definitionsError) {
+    return definitionsError.message.includes("schema cache") ? "Appliquez la migration 067 avant d'utiliser les champs personnalisés." : definitionsError.message;
+  }
+  for (const definition of definitions ?? []) {
+    const value = values[definition.id]?.trim() ?? "";
+    if (!value) {
+      await supabase.from("contact_custom_field_values").delete().eq("company_id", companyId).eq("contact_id", contactId).eq("definition_id", definition.id);
+      continue;
+    }
+    if (definition.field_type === "number" && !Number.isFinite(Number(value.replace(",", ".")))) return "Un champ personnalisé de type nombre est invalide.";
+    if (definition.field_type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "Un champ personnalisé de type date est invalide.";
+    if (definition.field_type === "url") {
+      try { new URL(value); } catch { return "Un lien personnalisé est invalide."; }
+    }
+    if (definition.field_type === "select" && !(definition.options ?? []).includes(value)) return "Une valeur de liste personnalisée est invalide.";
+    const { error } = await supabase.from("contact_custom_field_values").upsert({
+      company_id: companyId,
+      contact_id: contactId,
+      definition_id: definition.id,
+      value,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "contact_id,definition_id" });
+    if (error) return error.message;
+  }
+  return null;
+}
+
+export async function saveContactCustomFieldDefinition(values: {
+  id?: string;
+  label: string;
+  appliesTo: "person" | "venue" | "both";
+  fieldType: "text" | "number" | "date" | "url" | "select";
+  options?: string[];
+}): Promise<ActionResult> {
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+  const label = values.label.trim().slice(0, 80);
+  if (!label) return { ok: false, message: "Donnez un nom au champ." };
+  const options = Array.from(new Set((values.options ?? []).map((value) => value.trim()).filter(Boolean))).slice(0, 30);
+  if (values.fieldType === "select" && options.length === 0) return { ok: false, message: "Ajoutez au moins un choix à la liste." };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const supabase = await getSupabaseServerClient();
+  const payload = {
+    company_id: workspace.companyId,
+    label,
+    applies_to: values.appliesTo,
+    field_type: values.fieldType,
+    options,
+    updated_at: new Date().toISOString(),
+  };
+  const response = values.id
+    ? await supabase.from("contact_custom_field_definitions").update(payload).eq("id", values.id).eq("company_id", workspace.companyId)
+    : await supabase.from("contact_custom_field_definitions").insert({ ...payload, field_key: `${label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 64) || "champ"}-${crypto.randomUUID().slice(0, 6)}` });
+  if (response.error) return { ok: false, message: response.error.message.includes("schema cache") ? "Appliquez la migration 067." : response.error.message };
+  revalidatePath("/contacts");
+  return { ok: true, message: values.id ? "Champ mis à jour." : "Champ ajouté." };
+}
+
+export async function saveContactTablePreference(
+  contactType: "person" | "venue",
+  visibleColumns: string[],
+  columnOrder: string[],
+): Promise<ActionResult> {
+  const supabase = await getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Session expirée." };
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  const { error } = await supabase.from("contact_table_preferences").upsert({
+    user_id: user.id,
+    company_id: workspace.companyId,
+    contact_type: contactType,
+    visible_columns: Array.from(new Set(visibleColumns)).slice(0, 100),
+    column_order: Array.from(new Set(columnOrder)).slice(0, 100),
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "user_id,company_id,contact_type" });
+  if (error) return { ok: false, message: error.message.includes("schema cache") ? "Appliquez la migration 067." : error.message };
+  revalidatePath("/contacts");
+  return { ok: true, message: "Affichage enregistré." };
 }
 
 function isContactTagsSchemaCacheError(error: { message?: string } | null) {
@@ -2246,6 +2374,19 @@ export async function createContact(values: ContactFormValues): Promise<ActionRe
     return { ok: false, message: error.message };
   }
 
+  if (createdContact?.id) {
+    const customFieldError = await saveContactCustomFields(
+      supabase,
+      workspace.companyId,
+      createdContact.id,
+      parsed.data.customFields,
+    );
+    if (customFieldError) {
+      await supabase.from("contacts").delete().eq("id", createdContact.id).eq("company_id", workspace.companyId);
+      return { ok: false, message: customFieldError };
+    }
+  }
+
   if (parsed.data.contactType === "venue" && parsed.data.directorName?.trim() && createdContact?.id) {
     const { error: directorError } = await supabase.from("contacts").insert({
       company_id: workspace.companyId,
@@ -2322,6 +2463,7 @@ export async function importContacts(
 
   const supabase = await getSupabaseServerClient();
   const payload = parsedContacts.map((contact) => ({
+    id: crypto.randomUUID(),
     company_id: workspace.companyId,
     contact_type: contact.contactType,
     venue_id: null,
@@ -2346,6 +2488,7 @@ export async function importContacts(
 
   if (isContactTagsSchemaCacheError(error)) {
     const fallbackPayload = payload.map((contact) => ({
+      id: contact.id,
       company_id: contact.company_id,
       name: contact.name,
       organization: contact.organization,
@@ -2360,6 +2503,18 @@ export async function importContacts(
 
   if (error) {
     return { ok: false, imported: 0, skipped: values.length, message: error.message };
+  }
+
+  for (let index = 0; index < parsedContacts.length; index += 1) {
+    const customFieldError = await saveContactCustomFields(
+      supabase,
+      workspace.companyId,
+      payload[index].id,
+      parsedContacts[index].customFields,
+    );
+    if (customFieldError) {
+      return { ok: false, imported: index, skipped: values.length - index, message: customFieldError };
+    }
   }
 
   revalidatePath("/contacts");

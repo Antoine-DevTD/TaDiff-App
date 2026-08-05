@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpDown,
   BellPlus,
@@ -18,13 +19,14 @@ import {
   Pin,
   PinOff,
   Search,
+  Settings2,
   Tags,
   Trash2,
   UserRound,
   Users,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -33,17 +35,20 @@ import {
   useReactTable,
   type ColumnDef,
   type SortingState,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { deleteContacts } from "@/app/(dashboard)/actions";
+import { Button } from "@/components/ui/button";
+import { deleteContacts, saveContactCustomFieldDefinition, saveContactTablePreference } from "@/app/(dashboard)/actions";
 import { ContactImportPanel } from "@/components/contacts/contact-import-panel";
 import { ReminderForm } from "@/components/reminders/reminder-form";
 import { DestructiveActionDialog } from "@/components/ui/destructive-action-dialog";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { ContactForm } from "@/components/forms/contact-form";
 import { cn } from "@/lib/utils";
-import type { Contact, EmailTemplate, Show, ShowDocument } from "@/types";
+import type { Contact, ContactCustomFieldDefinition, ContactTablePreference, EmailTemplate, Show, ShowDocument } from "@/types";
 
 const VenueMap = dynamic(
   () => import("@/components/contacts/venue-map").then((module) => module.VenueMap),
@@ -70,7 +75,7 @@ type ContactContextMenu = {
   y: number;
 } | null;
 
-export function ContactsTable({ contacts, documents, shows, templates }: { contacts: Contact[]; documents: ShowDocument[]; shows: Show[]; templates: EmailTemplate[] }) {
+export function ContactsTable({ contacts, customization, documents, shows, templates }: { contacts: Contact[]; customization: { definitions: ContactCustomFieldDefinition[]; preferences: ContactTablePreference[] }; documents: ShowDocument[]; shows: Show[]; templates: EmailTemplate[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState("");
   const [railLocked, setRailLocked] = useState(false);
@@ -85,6 +90,20 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
   const [venueView, setVenueView] = useState<"list" | "map">("list");
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [contextMenu, setContextMenu] = useState<ContactContextMenu>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const defaultVisible = ["selection", "name", "organization", "role", "phone", "city", "tags", "status", "actions"];
+  const [visibleByType, setVisibleByType] = useState<Record<"person" | "venue", string[]>>(() => ({
+    person: customization.preferences.find((preference) => preference.contactType === "person")?.visibleColumns.length
+      ? customization.preferences.find((preference) => preference.contactType === "person")!.visibleColumns
+      : defaultVisible,
+    venue: customization.preferences.find((preference) => preference.contactType === "venue")?.visibleColumns.length
+      ? customization.preferences.find((preference) => preference.contactType === "venue")!.visibleColumns
+      : defaultVisible,
+  }));
+  const [orderByType, setOrderByType] = useState<Record<"person" | "venue", string[]>>(() => ({
+    person: customization.preferences.find((preference) => preference.contactType === "person")?.columnOrder ?? [],
+    venue: customization.preferences.find((preference) => preference.contactType === "venue")?.columnOrder ?? [],
+  }));
   const [activeFilter, setActiveFilter] = useState<ContactFilter>({
     label: "Tous les contacts",
     value: "all",
@@ -140,14 +159,16 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
       : Array.from(new Set([...current, ...filteredContacts.map((contact) => contact.id)]))),
     onToggleSelection: (contact) => setSelectedContactIds((current) => current.includes(contact.id) ? current.filter((id) => id !== contact.id) : [...current, contact.id]),
     selectedContactIds,
+    definitions: customization.definitions.filter((definition) => definition.active && (definition.appliesTo === "both" || definition.appliesTo === contactTab)),
   });
+  const columnVisibility = Object.fromEntries(columns.map((column) => [column.id ?? ("accessorKey" in column ? String(column.accessorKey) : ""), visibleByType[contactTab].includes(column.id ?? ("accessorKey" in column ? String(column.accessorKey) : ""))])) as VisibilityState;
 
   // TanStack Table intentionally returns function-rich instances.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: filteredContacts,
     columns,
-    state: { sorting },
+    state: { sorting, columnVisibility, columnOrder: ["selection", ...orderByType[contactTab], "actions"] },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -252,7 +273,8 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
                   <ViewButton active={venueView === "map"} icon={MapIcon} label="Carte" onClick={() => setVenueView("map")} />
                 </div>
               ) : null}
-              <ContactImportPanel contactType={contactTab} />
+              <button className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-border px-3 text-sm font-medium text-muted transition hover:border-accent/40 hover:text-accent" type="button" onClick={() => setSettingsOpen(true)}><Settings2 className="h-4 w-4" aria-hidden />Colonnes</button>
+              <ContactImportPanel contactType={contactTab} customFieldDefinitions={customization.definitions} />
               {selectedContacts.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-1 rounded-md border border-accent/20 bg-accent/5 p-1">
                   <span className="px-2 text-xs font-semibold text-accent">{selectedContacts.length} sélectionné{selectedContacts.length > 1 ? "s" : ""}</span>
@@ -420,9 +442,20 @@ export function ContactsTable({ contacts, documents, shows, templates }: { conta
         className="max-w-2xl"
       >
         {editingContact ? (
-          <ContactForm contact={editingContact} onSuccess={() => setEditingContact(null)} />
+          <ContactForm contact={editingContact} customFieldDefinitions={customization.definitions} onSuccess={() => setEditingContact(null)} />
         ) : null}
       </Dialog>
+
+      <ContactColumnSettings
+        contactType={contactTab}
+        definitions={customization.definitions}
+        open={settingsOpen}
+        columnOrder={orderByType[contactTab]}
+        visibleColumns={visibleByType[contactTab]}
+        onClose={() => setSettingsOpen(false)}
+        onVisibilityChange={(columns) => setVisibleByType((current) => ({ ...current, [contactTab]: columns }))}
+        onOrderChange={(columns) => setOrderByType((current) => ({ ...current, [contactTab]: columns }))}
+      />
 
       {emailContacts.length > 0 ? (
         <ContactEmailAssistant
@@ -542,6 +575,7 @@ function buildContactColumns({
   onToggleAll,
   onToggleSelection,
   selectedContactIds,
+  definitions,
 }: {
   allContacts: Contact[];
   allVisibleSelected: boolean;
@@ -550,8 +584,9 @@ function buildContactColumns({
   onToggleAll: () => void;
   onToggleSelection: (contact: Contact) => void;
   selectedContactIds: string[];
+  definitions: ContactCustomFieldDefinition[];
 }): ColumnDef<Contact>[] {
-  return [
+  const baseColumns: ColumnDef<Contact>[] = [
     {
       id: "selection",
       header: () => (
@@ -611,6 +646,14 @@ function buildContactColumns({
       accessorKey: "city",
       header: ({ column }) => <SortableHeader label="Ville" onClick={() => column.toggleSorting()} />,
     },
+    { accessorKey: "department", header: "Département" },
+    { accessorKey: "region", header: "Région" },
+    ...definitions.map((definition): ColumnDef<Contact> => ({
+      id: `custom:${definition.id}`,
+      accessorFn: (contact) => contact.customFields?.[definition.id] ?? "",
+      header: ({ column }) => <SortableHeader label={definition.label} onClick={() => column.toggleSorting()} />,
+      cell: ({ row }) => row.original.customFields?.[definition.id] || <span className="text-xs text-muted">À renseigner</span>,
+    })),
     {
       accessorKey: "tags",
       header: "Tags",
@@ -680,6 +723,81 @@ function buildContactColumns({
       ),
     },
   ];
+  return baseColumns;
+}
+
+function ContactColumnSettings({ columnOrder, contactType, definitions, onClose, onOrderChange, onVisibilityChange, open, visibleColumns }: {
+  columnOrder: string[];
+  contactType: "person" | "venue";
+  definitions: ContactCustomFieldDefinition[];
+  onClose: () => void;
+  onOrderChange: (columns: string[]) => void;
+  onVisibilityChange: (columns: string[]) => void;
+  open: boolean;
+  visibleColumns: string[];
+}) {
+  const router = useRouter();
+  const [label, setLabel] = useState("");
+  const [fieldType, setFieldType] = useState<ContactCustomFieldDefinition["fieldType"]>("text");
+  const [appliesTo, setAppliesTo] = useState<ContactCustomFieldDefinition["appliesTo"]>(contactType);
+  const [options, setOptions] = useState("");
+  const [message, setMessage] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const fixedColumns = [
+    ["name", "Nom"], ["organization", contactType === "venue" ? "Direction" : "Structure"], ["role", "Rôle"],
+    ["phone", "Téléphone"], ["city", "Ville"], ["department", "Département"], ["region", "Région"], ["tags", "Tags"], ["status", "Statut"],
+  ] as const;
+  const unordered = [...fixedColumns, ...definitions.filter((definition) => definition.active && (definition.appliesTo === "both" || definition.appliesTo === contactType)).map((definition) => [`custom:${definition.id}`, definition.label] as const)];
+  const available = [...unordered].sort(([left], [right]) => {
+    const leftIndex = columnOrder.indexOf(left); const rightIndex = columnOrder.indexOf(right);
+    return (leftIndex < 0 ? 999 : leftIndex) - (rightIndex < 0 ? 999 : rightIndex);
+  });
+
+  function toggle(id: string) {
+    const next = visibleColumns.includes(id) ? visibleColumns.filter((column) => column !== id) : [...visibleColumns, id];
+    onVisibilityChange(next);
+  }
+
+  function persist() {
+    startTransition(async () => {
+      const result = await saveContactTablePreference(contactType, visibleColumns, available.map(([id]) => id));
+      setMessage(result.message);
+      if (result.ok) onClose();
+    });
+  }
+
+  function move(id: string, offset: number) {
+    const ids: string[] = available.map(([columnId]) => columnId);
+    const from = ids.indexOf(id); const to = from + offset;
+    if (from < 0 || to < 0 || to >= ids.length) return;
+    [ids[from], ids[to]] = [ids[to], ids[from]];
+    onOrderChange(ids);
+  }
+
+  function addField(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startTransition(async () => {
+      const result = await saveContactCustomFieldDefinition({
+        label,
+        fieldType,
+        appliesTo,
+        options: fieldType === "select" ? options.split("\n") : [],
+      });
+      setMessage(result.message);
+      if (result.ok) {
+        setLabel("");
+        setOptions("");
+        router.refresh();
+      }
+    });
+  }
+
+  return <Dialog open={open} onClose={onClose} eyebrow="Carnet de contacts" title="Colonnes et champs" description="Choisissez ce que vous voyez. Département et Région restent masqués par défaut." className="max-w-2xl">
+    <div className="grid gap-6 md:grid-cols-2">
+      <section aria-labelledby="visible-columns-title"><h3 id="visible-columns-title" className="text-sm font-semibold">Colonnes visibles et ordre</h3><div className="mt-3 space-y-1">{available.map(([id, columnLabel], index) => <div className="flex min-h-11 items-center gap-2 rounded-md px-2 text-sm hover:bg-panel-strong" key={id}><label className="flex min-w-0 flex-1 items-center gap-3"><input checked={visibleColumns.includes(id)} className="h-4 w-4 accent-accent" type="checkbox" onChange={() => toggle(id)} /><span className="truncate">{columnLabel}</span></label><button aria-label={`Monter ${columnLabel}`} className="h-9 w-9 rounded text-muted hover:bg-panel hover:text-accent disabled:opacity-25" disabled={index === 0} type="button" onClick={() => move(id, -1)}>↑</button><button aria-label={`Descendre ${columnLabel}`} className="h-9 w-9 rounded text-muted hover:bg-panel hover:text-accent disabled:opacity-25" disabled={index === available.length - 1} type="button" onClick={() => move(id, 1)}>↓</button></div>)}</div><Button className="mt-4" disabled={isPending} type="button" onClick={persist}>Enregistrer mon affichage</Button></section>
+      <form className="rounded-md border border-border bg-panel-strong/45 p-4" onSubmit={addField}><h3 className="text-sm font-semibold">Ajouter un champ à la compagnie</h3><label className="mt-4 block text-xs font-semibold text-muted">Nom<Input className="mt-2" required maxLength={80} value={label} onChange={(event) => setLabel(event.target.value)} /></label><label className="mt-4 block text-xs font-semibold text-muted">Type<Select className="mt-2" value={fieldType} onChange={(event) => setFieldType(event.target.value as ContactCustomFieldDefinition["fieldType"])}><option value="text">Texte</option><option value="number">Nombre</option><option value="date">Date</option><option value="url">Lien</option><option value="select">Liste courte</option></Select></label><label className="mt-4 block text-xs font-semibold text-muted">Disponible pour<Select className="mt-2" value={appliesTo} onChange={(event) => setAppliesTo(event.target.value as ContactCustomFieldDefinition["appliesTo"])}><option value="person">Personnes</option><option value="venue">Lieux</option><option value="both">Les deux</option></Select></label>{fieldType === "select" ? <label className="mt-4 block text-xs font-semibold text-muted">Un choix par ligne<textarea className="mt-2 min-h-28 w-full rounded-md border border-border bg-panel px-3 py-2 text-sm" value={options} onChange={(event) => setOptions(event.target.value)} /></label> : null}<Button className="mt-4" disabled={isPending} type="submit">Ajouter le champ</Button></form>
+    </div>{message ? <p className="mt-4 text-sm text-muted" role="status">{message}</p> : null}
+  </Dialog>;
 }
 
 function ContactRowAction({

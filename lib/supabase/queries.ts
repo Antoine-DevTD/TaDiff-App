@@ -32,6 +32,8 @@ import type {
   CompanyMember,
   CompanyProfile,
   Contact,
+  ContactCustomFieldDefinition,
+  ContactTablePreference,
   EmailCampaign,
   EmailTemplate,
   Exploitation,
@@ -227,7 +229,8 @@ export async function getShowById(showId: string): Promise<{
         }));
 
   const parsedBudgetProfile = budgetProfileRow
-    ? showBudgetProfileSchema.safeParse({
+      ? showBudgetProfileSchema.safeParse({
+        setupComplete: budgetProfileRow.setup_complete ?? false,
         convention: budgetProfileRow.convention,
         rateSourceUrl: budgetProfileRow.rate_source_url ?? "",
         rateEffectiveDate: budgetProfileRow.rate_effective_date ?? "",
@@ -391,6 +394,17 @@ export async function getContacts(): Promise<Contact[]> {
     return [];
   }
 
+  const { data: customValueRows } = await supabase
+    .from("contact_custom_field_values")
+    .select("contact_id,definition_id,value");
+  const customValues = new Map<string, Record<string, string>>();
+  for (const row of customValueRows ?? []) {
+    customValues.set(row.contact_id, {
+      ...(customValues.get(row.contact_id) ?? {}),
+      [row.definition_id]: row.value,
+    });
+  }
+
   return data.map((contact) => ({
     id: contact.id,
     contactType: "contact_type" in contact && contact.contact_type === "venue" ? "venue" : "person",
@@ -411,7 +425,37 @@ export async function getContacts(): Promise<Contact[]> {
     longitude: "longitude" in contact ? contact.longitude ?? null : null,
     status: contact.status,
     tags: "tags" in contact && Array.isArray(contact.tags) ? contact.tags : [],
+    customFields: customValues.get(contact.id) ?? {},
   }));
+}
+
+export async function getContactCustomization(): Promise<{
+  definitions: ContactCustomFieldDefinition[];
+  preferences: ContactTablePreference[];
+}> {
+  if (!hasSupabaseEnv()) return { definitions: [], preferences: [] };
+  const supabase = await getSupabaseServerClient();
+  const [{ data: definitionRows }, { data: preferenceRows }] = await Promise.all([
+    supabase.from("contact_custom_field_definitions").select("id,field_key,label,applies_to,field_type,options,sort_order,active").order("sort_order"),
+    supabase.from("contact_table_preferences").select("contact_type,visible_columns,column_order"),
+  ]);
+  return {
+    definitions: (definitionRows ?? []).map((row) => ({
+      id: row.id,
+      key: row.field_key,
+      label: row.label,
+      appliesTo: row.applies_to,
+      fieldType: row.field_type,
+      options: row.options ?? [],
+      sortOrder: row.sort_order,
+      active: row.active,
+    })),
+    preferences: (preferenceRows ?? []).map((row) => ({
+      contactType: row.contact_type,
+      visibleColumns: row.visible_columns ?? [],
+      columnOrder: row.column_order ?? [],
+    })),
+  };
 }
 
 export async function getContactById(contactId: string): Promise<{
@@ -487,6 +531,11 @@ export async function getContactById(contactId: string): Promise<{
     return { contact: null, opportunities: [], reminders: [], shows: [] };
   }
 
+  const { data: contactCustomValues } = await supabase
+    .from("contact_custom_field_values")
+    .select("definition_id,value")
+    .eq("contact_id", contactId);
+
   const resolvedContact: Contact = {
     id: contact.id,
     contactType: "contact_type" in contact && contact.contact_type === "venue" ? "venue" : "person",
@@ -507,6 +556,7 @@ export async function getContactById(contactId: string): Promise<{
     longitude: "longitude" in contact ? contact.longitude ?? null : null,
     status: contact.status,
     tags: "tags" in contact && Array.isArray(contact.tags) ? contact.tags : [],
+    customFields: Object.fromEntries((contactCustomValues ?? []).map((row) => [row.definition_id, row.value])),
   };
 
   const resolvedOpportunities: PipelineDeal[] = opportunities.map((deal) => ({
@@ -595,10 +645,11 @@ export async function getContactById(contactId: string): Promise<{
 export async function getExploitations(): Promise<Exploitation[]> {
   if (!hasSupabaseEnv()) return [];
   const supabase = await getSupabaseServerClient();
-  const [{ data: rows, error }, { data: performanceRows }, { data: showRows }] = await Promise.all([
+  const [{ data: rows, error }, { data: performanceRows }, { data: showRows }, { data: ticketCategoryRows }] = await Promise.all([
     supabase.from("exploitations").select("*").order("start_date", { ascending: false }),
     supabase.from("exploitation_performances").select("*").order("performance_date"),
     supabase.from("shows").select("id,title"),
+    supabase.from("exploitation_ticket_categories").select("id,performance_id,label,unit_price,paid_tickets,sort_order").order("sort_order"),
   ]);
   if (error || !rows) return [];
   return rows.map((row) => ({
@@ -632,6 +683,13 @@ export async function getExploitations(): Promise<Exploitation[]> {
       ticketingFees: performance.ticketing_fees,
       variableCosts: performance.variable_costs,
       sacdDeclared: performance.sacd_declared,
+      financialsEnteredAt: performance.financials_entered_at ?? "",
+      ticketCategories: (ticketCategoryRows ?? []).filter((category) => category.performance_id === performance.id).map((category) => ({
+        id: category.id,
+        label: category.label,
+        unitPrice: category.unit_price,
+        paidTickets: category.paid_tickets,
+      })),
     })),
   }));
 }

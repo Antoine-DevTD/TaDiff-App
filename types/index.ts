@@ -93,10 +93,12 @@ export type ShowBudgetPersonnel = {
   rehearsalGrossRate: number;
   performanceGrossRate: number;
   chargeRate: number;
+  employmentProfile: "artist" | "technician" | "other";
 };
 
 export type ShowBudgetProfile = {
   showId: string;
+  setupComplete: boolean;
   convention: string;
   rateSourceUrl: string;
   rateEffectiveDate: string;
@@ -201,8 +203,26 @@ export type Contact = {
   capacity?: number | null;
   latitude?: number | null;
   longitude?: number | null;
-  status: "Prospect" | "En discussion" | "Partenaire";
+  status: "Prospect" | "Premier contact" | "En discussion" | "Refus" | "Partenaire";
   tags: string[];
+  customFields?: Record<string, string>;
+};
+
+export type ContactCustomFieldDefinition = {
+  id: string;
+  key: string;
+  label: string;
+  appliesTo: "person" | "venue" | "both";
+  fieldType: "text" | "number" | "date" | "url" | "select";
+  options: string[];
+  sortOrder: number;
+  active: boolean;
+};
+
+export type ContactTablePreference = {
+  contactType: "person" | "venue";
+  visibleColumns: string[];
+  columnOrder: string[];
 };
 
 export type PipelineStage =
@@ -220,6 +240,15 @@ export type ExploitationPerformance = {
   paidTickets: number; complimentaryTickets: number; grossBoxOffice: number;
   ticketingFees: number; variableCosts: number; sacdDeclared: boolean;
   status: "programmee" | "annulee";
+  financialsEnteredAt: string;
+  ticketCategories: ExploitationTicketCategory[];
+};
+
+export type ExploitationTicketCategory = {
+  id: string;
+  label: string;
+  unitPrice: number;
+  paidTickets: number;
 };
 
 export type Exploitation = {

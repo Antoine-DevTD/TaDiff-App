@@ -49,6 +49,13 @@ Derniere verification : 23 juillet 2026.
 - La console bêta peut activer William et créditer une seule fois 200 000 tokens à chaque compte sélectionné. L'utilisateur reçoit ensuite une présentation ponctuelle des usages et du consentement documentaire.
 - Le budget détaillé commence par une sélection guidée des métiers et dépenses, sépare clairement création, plateau et technique, utilise des incréments entiers et explique que les taux de charges sont des hypothèses à vérifier.
 
+## Reprise produit du 5 aout 2026
+
+- Le premier parametrage du budget est persistant par spectacle. Les profils artiste, technicien et autre restent modifiables, avec une source et une date visibles pour les estimations de charges.
+- Les Personnes et Lieux acceptent des champs personnalises texte, nombre, date, lien ou liste courte. Leurs valeurs sont isolees par compagnie ; l'ordre et la visibilite des colonnes sont propres a chaque utilisateur et les champs masques restent disponibles a l'import.
+- La carte des lieux utilise la couleur pour l'avancement commercial et conserve le type de lieu comme information secondaire. Un selecteur natif rend chaque lieu accessible au clavier et sur mobile.
+- L'exploitation calcule le resultat de chaque representation, le cumul, la projection de fin de serie et la date estimee d'equilibre. Les tarifs facultatifs alimentent les billets payants et la recette brute ; le recapitulatif SACD mensuel est copiable ou telechargeable sans teledeclaration.
+
 ## Etat technique a confirmer avant livraison
 
 - Les migrations sont versionnees dans `sql/`; leur presence dans le depot ne prouve pas leur application dans Supabase.
@@ -56,6 +63,9 @@ Derniere verification : 23 juillet 2026.
 - `037_email_templates.sql` couvre les templates email persistants.
 - `064_unify_grant_catalog_and_email_variants.sql` importe les anciennes références dans le catalogue global, branche l'ensemencement des nouveaux comptes dessus et ajoute la variation avec pièces jointes aux modèles plateforme.
 - `065_guided_diffusion_exploitation_and_beta_william.sql` ajoute les dates multiples, la base du minimum garanti et l'activation idempotente de William pour les comptes bêta. Elle doit être appliquée avant de tester ces parcours.
+- `066_persistent_guided_show_budget.sql` persiste la fin du parametrage guide du budget.
+- `067_contact_custom_fields_and_views.sql` ajoute les champs personnalises, leurs valeurs, les preferences de colonnes et les statuts commerciaux avec RLS multi-compagnie.
+- `068_exploitation_ticket_categories.sql` ajoute les tarifs par representation et distingue les chiffres reellement saisis des projections.
 - Stripe reste a valider de bout en bout avec les variables et webhooks de l'environnement cible.
 - `038_platform_admin_and_ai_foundation.sql` ajoute les informations legales dynamiques, les catalogues globaux, les templates plateforme et la fondation RAG de William. Application Supabase confirmee par l'utilisateur le 20 juillet 2026.
 - `039_ai_access_quotas_and_credits.sql` ajoute l'acces progressif par compte, les quotas mensuels, le journal d'usage et les credits Stripe.

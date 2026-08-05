@@ -61,9 +61,11 @@ export const showBudgetPersonnelSchema = z.object({
   rehearsalGrossRate: boundedAmount,
   performanceGrossRate: boundedAmount,
   chargeRate: z.coerce.number().min(0).max(2),
+  employmentProfile: z.enum(["artist", "technician", "other"]).default("other"),
 });
 
 export const showBudgetProfileSchema = z.object({
+  setupComplete: z.boolean().default(false),
   convention: z.string().trim().min(2).max(160),
   rateSourceUrl: z.union([z.literal(""), z.url()]),
   rateEffectiveDate: z.union([z.literal(""), z.iso.date()]),

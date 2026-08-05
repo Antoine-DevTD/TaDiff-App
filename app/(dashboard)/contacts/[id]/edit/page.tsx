@@ -4,7 +4,7 @@ import { ContactForm } from "@/components/forms/contact-form";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
-import { getContactById } from "@/lib/supabase/queries";
+import { getContactById, getContactCustomization } from "@/lib/supabase/queries";
 
 type EditContactPageProps = {
   params: Promise<{ id: string }>;
@@ -12,7 +12,7 @@ type EditContactPageProps = {
 
 export default async function EditContactPage({ params }: EditContactPageProps) {
   const { id } = await params;
-  const { contact } = await getContactById(id);
+  const [{ contact }, { definitions }] = await Promise.all([getContactById(id), getContactCustomization()]);
 
   if (!contact) {
     notFound();
@@ -29,7 +29,7 @@ export default async function EditContactPage({ params }: EditContactPageProps) 
             {contact.name} - {contact.organization}
           </CardDescription>
         </CardHeader>
-        <ContactForm contact={contact} />
+        <ContactForm contact={contact} customFieldDefinitions={definitions} />
       </Card>
 
       <Card className="border-danger/25">

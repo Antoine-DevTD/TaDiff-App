@@ -499,6 +499,7 @@ export type Database = {
         Row: {
           show_id: string;
           company_id: string;
+          setup_complete: boolean;
           convention: string;
           rate_source_url: string | null;
           rate_effective_date: string | null;
@@ -526,6 +527,7 @@ export type Database = {
         Insert: {
           show_id: string;
           company_id: string;
+          setup_complete?: boolean;
           convention?: string;
           rate_source_url?: string | null;
           rate_effective_date?: string | null;
@@ -594,7 +596,7 @@ export type Database = {
           capacity: number | null;
           latitude: number | null;
           longitude: number | null;
-          status: "Prospect" | "En discussion" | "Partenaire";
+          status: "Prospect" | "Premier contact" | "En discussion" | "Refus" | "Partenaire";
           tags: string[] | null;
           created_at: string;
         };
@@ -617,7 +619,7 @@ export type Database = {
           capacity?: number | null;
           latitude?: number | null;
           longitude?: number | null;
-          status?: "Prospect" | "En discussion" | "Partenaire";
+          status?: "Prospect" | "Premier contact" | "En discussion" | "Refus" | "Partenaire";
           tags?: string[] | null;
           created_at?: string;
         };
@@ -638,7 +640,7 @@ export type Database = {
           capacity?: number | null;
           latitude?: number | null;
           longitude?: number | null;
-          status?: "Prospect" | "En discussion" | "Partenaire";
+          status?: "Prospect" | "Premier contact" | "En discussion" | "Refus" | "Partenaire";
           tags?: string[] | null;
           created_at?: string;
         };
@@ -658,6 +660,24 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      contact_custom_field_definitions: {
+        Row: { id: string; company_id: string; field_key: string; label: string; applies_to: "person" | "venue" | "both"; field_type: "text" | "number" | "date" | "url" | "select"; options: string[]; sort_order: number; active: boolean; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; field_key: string; label: string; applies_to?: "person" | "venue" | "both"; field_type: "text" | "number" | "date" | "url" | "select"; options?: string[]; sort_order?: number; active?: boolean; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["contact_custom_field_definitions"]["Insert"]>;
+        Relationships: [];
+      };
+      contact_custom_field_values: {
+        Row: { id: string; company_id: string; contact_id: string; definition_id: string; value: string; updated_at: string };
+        Insert: { id?: string; company_id: string; contact_id: string; definition_id: string; value?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["contact_custom_field_values"]["Insert"]>;
+        Relationships: [];
+      };
+      contact_table_preferences: {
+        Row: { id: string; user_id: string; company_id: string; contact_type: "person" | "venue"; visible_columns: string[]; column_order: string[]; updated_at: string };
+        Insert: { id?: string; user_id: string; company_id: string; contact_type: "person" | "venue"; visible_columns?: string[]; column_order?: string[]; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["contact_table_preferences"]["Insert"]>;
+        Relationships: [];
       };
       opportunities: {
         Row: {
@@ -758,9 +778,15 @@ export type Database = {
         Relationships: [];
       };
       exploitation_performances: {
-        Row: { id: string; company_id: string; exploitation_id: string; performance_date: string; performance_time: string | null; status: "programmee" | "annulee"; capacity: number; paid_tickets: number; complimentary_tickets: number; gross_box_office: number; ticketing_fees: number; variable_costs: number; sacd_declared: boolean; notes: string | null; created_at: string; updated_at: string };
-        Insert: { id?: string; company_id: string; exploitation_id: string; performance_date: string; performance_time?: string | null; status?: "programmee" | "annulee"; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; created_at?: string; updated_at?: string };
-        Update: { performance_date?: string; performance_time?: string | null; status?: "programmee" | "annulee"; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; notes?: string | null; updated_at?: string };
+        Row: { id: string; company_id: string; exploitation_id: string; performance_date: string; performance_time: string | null; status: "programmee" | "annulee"; capacity: number; paid_tickets: number; complimentary_tickets: number; gross_box_office: number; ticketing_fees: number; variable_costs: number; sacd_declared: boolean; financials_entered_at: string | null; notes: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; exploitation_id: string; performance_date: string; performance_time?: string | null; status?: "programmee" | "annulee"; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; financials_entered_at?: string | null; notes?: string | null; created_at?: string; updated_at?: string };
+        Update: { performance_date?: string; performance_time?: string | null; status?: "programmee" | "annulee"; capacity?: number; paid_tickets?: number; complimentary_tickets?: number; gross_box_office?: number; ticketing_fees?: number; variable_costs?: number; sacd_declared?: boolean; financials_entered_at?: string | null; notes?: string | null; updated_at?: string };
+        Relationships: [];
+      };
+      exploitation_ticket_categories: {
+        Row: { id: string; company_id: string; performance_id: string; label: string; unit_price: number; paid_tickets: number; sort_order: number; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; performance_id: string; label: string; unit_price?: number; paid_tickets?: number; sort_order?: number; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["exploitation_ticket_categories"]["Insert"]>;
         Relationships: [];
       };
       reminders: {

@@ -1,8 +1,8 @@
 "use client";
 
 import { CircleHelp, ExternalLink, Plus, Save, Sparkles, Trash2, Users } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
-import { saveShowBudgetProfile } from "@/app/(dashboard)/actions";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { saveShowBudgetItem, saveShowBudgetProfile } from "@/app/(dashboard)/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,25 +16,33 @@ const groupLabels = {
   technique: "Technique",
 } as const;
 
+const setupExpenses = [
+  { id: "decor", category: "scenography", label: "Décor et accessoires", scope: "creation" },
+  { id: "costumes", category: "scenography", label: "Costumes", scope: "creation" },
+  { id: "technical-rental", category: "technical", label: "Matériel technique", scope: "creation" },
+  { id: "communication", category: "communication", label: "Photos, vidéo et communication", scope: "creation" },
+  { id: "insurance", category: "rights", label: "Assurance du spectacle", scope: "creation" },
+  { id: "transport", category: "touring", label: "Transport et défraiements", scope: "performance" },
+  { id: "rights", category: "rights", label: "Droits et taxes", scope: "performance" },
+] as const;
+
 export function TheatreBudgetPlanner({
   initialProfile,
   items,
   showId,
+  onItemsAdded,
 }: {
   initialProfile: ShowBudgetProfile;
   items: ShowBudgetItem[];
   showId: string;
+  onItemsAdded?: (items: ShowBudgetItem[]) => void;
 }) {
   const [profile, setProfile] = useState(initialProfile);
   const [message, setMessage] = useState("");
-  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(!initialProfile.setupComplete);
+  const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const summary = useMemo(() => calculateShowBudget(profile, items), [profile, items]);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setSetupOpen(window.localStorage.getItem(`tadiff:budget-setup:${showId}`) !== "done"), 0);
-    return () => window.clearTimeout(timeout);
-  }, [showId]);
 
   function update<K extends keyof ShowBudgetProfile>(key: K, value: ShowBudgetProfile[K]) {
     setMessage("");
@@ -54,14 +62,36 @@ export function TheatreBudgetPlanner({
   }
 
   function finishSetup() {
-    window.localStorage.setItem(`tadiff:budget-setup:${showId}`, "done");
-    setSetupOpen(false);
-    save();
+    const completedProfile = { ...profile, setupComplete: true };
+    setMessage("");
+    startTransition(async () => {
+      const profileResult = await saveShowBudgetProfile(showId, completedProfile);
+      if (!profileResult.ok) {
+        setMessage(profileResult.message);
+        return;
+      }
+      const existingLabels = new Set(items.map((item) => item.label));
+      const created: ShowBudgetItem[] = [];
+      for (const expense of setupExpenses.filter((entry) => selectedExpenses.includes(entry.id) && !existingLabels.has(entry.label))) {
+        const result = await saveShowBudgetItem(showId, null, {
+          kind: "expense",
+          category: expense.category,
+          label: expense.label,
+          amount: 0,
+          scope: expense.scope,
+        });
+        if (result.ok && "item" in result && result.item) created.push(result.item);
+      }
+      setProfile(completedProfile);
+      setSetupOpen(false);
+      onItemsAdded?.(created);
+      setMessage("Budget initialisé. Vous pouvez maintenant préciser les montants.");
+    });
   }
 
   return (
     <div className="space-y-10">
-      {setupOpen ? <BudgetSetup personnel={profile.personnel} onChange={updatePerson} onFinish={finishSetup} /> : null}
+      {setupOpen ? <BudgetSetup expenses={selectedExpenses} personnel={profile.personnel} onChange={updatePerson} onExpenseChange={setSelectedExpenses} onFinish={finishSetup} /> : null}
       <section className="border-y border-border py-6" aria-labelledby="budget-reading-title">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -201,12 +231,12 @@ function PersonnelRow({ person, onChange, onRemove }: { person: ShowBudgetPerson
   return (
     <div className={`grid gap-3 py-4 transition xl:grid-cols-[32px_minmax(170px,1.4fr)_80px_repeat(4,minmax(105px,0.75fr))_40px] ${person.active ? "opacity-100" : "opacity-55"}`}>
       <label className="flex min-h-11 items-center"><input aria-label={`Inclure ${person.label}`} checked={person.active} className="h-5 w-5 accent-accent" type="checkbox" onChange={(event) => onChange(person.id, { active: event.target.checked })} /></label>
-      <Field label="Métier"><Input value={person.label} onChange={(event) => onChange(person.id, { label: event.target.value })} /><Select className="mt-2" aria-label={`Famille de ${person.label}`} value={person.group} onChange={(event) => onChange(person.id, { group: event.target.value as ShowBudgetPersonnel["group"] })}><option value="plateau">Au plateau</option><option value="creation">Création</option><option value="technique">Technique</option></Select></Field>
+      <Field label="Métier"><Input value={person.label} onChange={(event) => onChange(person.id, { label: event.target.value })} /><Select className="mt-2" aria-label={`Famille de ${person.label}`} value={person.group} onChange={(event) => onChange(person.id, { group: event.target.value as ShowBudgetPersonnel["group"] })}><option value="plateau">Au plateau</option><option value="creation">Création</option><option value="technique">Technique</option></Select><Select className="mt-2" aria-label={`Profil social de ${person.label}`} value={person.employmentProfile} onChange={(event) => onChange(person.id, { employmentProfile: event.target.value as ShowBudgetPersonnel["employmentProfile"] })}><option value="artist">Artiste</option><option value="technician">Technicien</option><option value="other">Autre profil</option></Select></Field>
       <NumberField label="Nombre" value={person.count} onChange={(value) => onChange(person.id, { count: Math.max(1, value) })} />
       <NumberField label="Services de répétition" value={person.rehearsalServices} onChange={(value) => onChange(person.id, { rehearsalServices: value })} />
       <NumberField label="Brut / répétition" suffix="EUR" value={person.rehearsalGrossRate} onChange={(value) => onChange(person.id, { rehearsalGrossRate: value })} />
       <NumberField label="Brut / date" suffix="EUR" value={person.performanceGrossRate} onChange={(value) => onChange(person.id, { performanceGrossRate: value })} />
-      <NumberField help={<ChargeHelp group={person.group} />} label="Charges" suffix="%" value={Math.round(person.chargeRate * 100)} onChange={(value) => onChange(person.id, { chargeRate: value / 100 })} />
+      <NumberField help={<ChargeHelp profile={person.employmentProfile} />} label="Charges" suffix="%" value={Math.round(person.chargeRate * 100)} onChange={(value) => onChange(person.id, { chargeRate: value / 100 })} />
       <button aria-label={`Supprimer ${person.label}`} className="mt-6 flex h-10 w-10 items-center justify-center rounded-md text-muted hover:bg-danger/10 hover:text-danger" type="button" onClick={() => onRemove(person.id)}><Trash2 aria-hidden="true" className="h-4 w-4" /></button>
     </div>
   );
@@ -248,13 +278,14 @@ function NumberField({ help, label, onChange, step = 1, suffix, value }: { help?
   return <Field label={<span className="flex items-center gap-1.5">{label}{help}</span>}><div className="relative"><Input className={suffix ? "pr-14" : ""} min="0" step={step} type="number" value={Number.isFinite(value) ? value : 0} onChange={(event) => onChange(Number(event.target.value) || 0)} />{suffix ? <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">{suffix}</span> : null}</div></Field>;
 }
 
-function ChargeHelp({ group }: { group: ShowBudgetPersonnel["group"] }) {
-  const estimate = group === "technique" ? "48 %" : "52 %";
-  return <span className="group/help relative inline-flex"><CircleHelp aria-label="Explication des charges" className="h-3.5 w-3.5 cursor-help text-accent" /><span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-72 -translate-x-1/2 rounded-md border border-border bg-panel p-3 text-xs font-normal leading-5 text-foreground shadow-xl group-hover/help:block group-focus-within/help:block">Le repère de {estimate} est une hypothèse de coût employeur, pas un taux légal unique. Le résultat dépend du statut, de la paie, de l’effectif et des caisses applicables. Vérifiez-le avec votre gestionnaire de paie et les barèmes Urssaf 2026.</span></span>;
+function ChargeHelp({ profile }: { profile: ShowBudgetPersonnel["employmentProfile"] }) {
+  const estimate = profile === "technician" ? "48 %" : profile === "artist" ? "52 %" : "50 %";
+  const label = profile === "technician" ? "technicien" : profile === "artist" ? "artiste" : "autre profil";
+  return <span className="group/help relative inline-flex" tabIndex={0}><CircleHelp aria-label="Explication des charges" className="h-3.5 w-3.5 cursor-help text-accent" /><span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-72 -translate-x-1/2 rounded-md border border-border bg-panel p-3 text-xs font-normal leading-5 text-foreground shadow-xl group-hover/help:block group-focus-within/help:block">Profil : {label}. Repère estimatif : {estimate}, vérifié le 5 août 2026. Source : Urssaf, à contrôler avec votre gestionnaire de paie. Ce taux reste modifiable et ne garantit pas la conformité de la paie.</span></span>;
 }
 
-function BudgetSetup({ personnel, onChange, onFinish }: { personnel: ShowBudgetPersonnel[]; onChange: (id: string, changes: Partial<ShowBudgetPersonnel>) => void; onFinish: () => void }) {
-  return <section className="rounded-lg border border-accent/30 bg-accent/5 p-5" aria-labelledby="budget-setup-title"><div className="flex gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white"><Sparkles className="h-5 w-5" /></span><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Première mise en place</p><h3 className="mt-1 text-xl font-semibold" id="budget-setup-title">Préparons les postes avant de saisir les prix</h3><p className="mt-1 text-sm text-muted">Sélectionnez les métiers utiles. Vous renseignerez ensuite le nombre de personnes, les services, les cachets et les dépenses libres.</p></div></div><div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{personnel.map((person) => <button aria-pressed={person.active} className={person.active ? "rounded-md border border-accent bg-panel px-3 py-3 text-left text-sm font-semibold text-accent" : "rounded-md border border-border bg-panel px-3 py-3 text-left text-sm text-muted hover:border-accent/40"} key={person.id} type="button" onClick={() => onChange(person.id, { active: !person.active })}>{person.label}<span className="mt-1 block text-xs font-normal">{groupLabels[person.group]}</span></button>)}</div><div className="mt-5 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted">Vous pourrez ajouter un métier ou une dépense libre à tout moment.</p><Button type="button" onClick={onFinish}>Continuer vers les montants</Button></div></section>;
+function BudgetSetup({ expenses, personnel, onChange, onExpenseChange, onFinish }: { expenses: string[]; personnel: ShowBudgetPersonnel[]; onChange: (id: string, changes: Partial<ShowBudgetPersonnel>) => void; onExpenseChange: (ids: string[]) => void; onFinish: () => void }) {
+  return <section className="rounded-lg border border-accent/30 bg-accent/5 p-5" aria-labelledby="budget-setup-title"><div className="flex gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white"><Sparkles className="h-5 w-5" /></span><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Première mise en place</p><h3 className="mt-1 text-xl font-semibold" id="budget-setup-title">Préparons les postes avant de saisir les prix</h3><p className="mt-1 text-sm text-muted">Sélectionnez les métiers et dépenses utiles. Les montants restent libres et modifiables.</p></div></div><h4 className="mt-6 text-sm font-semibold">Équipe</h4><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{personnel.map((person) => <button aria-pressed={person.active} className={person.active ? "rounded-md border border-accent bg-panel px-3 py-3 text-left text-sm font-semibold text-accent" : "rounded-md border border-border bg-panel px-3 py-3 text-left text-sm text-muted hover:border-accent/40"} key={person.id} type="button" onClick={() => onChange(person.id, { active: !person.active })}>{person.label}<span className="mt-1 block text-xs font-normal">{groupLabels[person.group]}</span></button>)}</div><h4 className="mt-6 text-sm font-semibold">Dépenses à prévoir</h4><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{setupExpenses.map((expense) => { const selected = expenses.includes(expense.id); return <button aria-pressed={selected} className={selected ? "rounded-md border border-accent bg-panel px-3 py-3 text-left text-sm font-semibold text-accent" : "rounded-md border border-border bg-panel px-3 py-3 text-left text-sm text-muted hover:border-accent/40"} key={expense.id} type="button" onClick={() => onExpenseChange(selected ? expenses.filter((id) => id !== expense.id) : [...expenses, expense.id])}>{expense.label}<span className="mt-1 block text-xs font-normal">{expense.scope === "performance" ? "Par représentation" : "Création"}</span></button>; })}</div><div className="mt-5 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted">Vous pourrez ajouter un métier ou une dépense libre à tout moment.</p><Button type="button" onClick={onFinish}>Continuer vers les montants</Button></div></section>;
 }
 
 function Metric({ detail, label, tone = "neutral", value }: { detail: string; label: string; tone?: "neutral" | "accent" | "success" | "danger"; value: string }) {
@@ -262,7 +293,7 @@ function Metric({ detail, label, tone = "neutral", value }: { detail: string; la
 }
 
 function newPerson(): ShowBudgetPersonnel {
-  return { id: crypto.randomUUID(), label: "Nouveau métier", group: "creation", active: true, count: 1, rehearsalServices: 1, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.5 };
+  return { id: crypto.randomUUID(), label: "Nouveau métier", group: "creation", active: true, count: 1, rehearsalServices: 1, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.5, employmentProfile: "other" };
 }
 
 function money(value: number) { return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value); }

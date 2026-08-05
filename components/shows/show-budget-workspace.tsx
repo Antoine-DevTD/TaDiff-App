@@ -73,7 +73,12 @@ export function ShowBudgetWorkspace({
 
   return (
     <div className="space-y-8">
-      <TheatreBudgetPlanner initialProfile={initialProfile} items={items} showId={showId} />
+      <TheatreBudgetPlanner
+        initialProfile={initialProfile}
+        items={items}
+        showId={showId}
+        onItemsAdded={(created) => setItems((current) => [...current, ...created])}
+      />
 
       <section className="border-t border-border pt-7">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Dépenses et financements</p>

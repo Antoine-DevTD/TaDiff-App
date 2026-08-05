@@ -6,14 +6,24 @@ import type {
 } from "@/types";
 
 export const defaultTheatreBudgetPersonnel: ShowBudgetPersonnel[] = [
-  { id: "actors", label: "Comédien ou comédienne", group: "plateau", active: true, count: 1, rehearsalServices: 15, rehearsalGrossRate: 84, performanceGrossRate: 119.42, chargeRate: 0.52 },
-  { id: "director", label: "Metteur ou metteuse en scène", group: "creation", active: true, count: 1, rehearsalServices: 15, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52 },
-  { id: "assistant-director", label: "Assistant ou assistante mise en scène", group: "creation", active: false, count: 1, rehearsalServices: 15, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52 },
-  { id: "stage-manager", label: "Régisseur ou régisseuse", group: "technique", active: false, count: 1, rehearsalServices: 5, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.48 },
+  { id: "actors", label: "Comédien ou comédienne", group: "plateau", active: true, count: 1, rehearsalServices: 15, rehearsalGrossRate: 84, performanceGrossRate: 119.42, chargeRate: 0.52, employmentProfile: "artist" },
+  { id: "musicians", label: "Musicien ou musicienne", group: "plateau", active: false, count: 1, rehearsalServices: 10, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52, employmentProfile: "artist" },
+  { id: "dancers", label: "Danseur ou danseuse", group: "plateau", active: false, count: 1, rehearsalServices: 15, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52, employmentProfile: "artist" },
+  { id: "director", label: "Metteur ou metteuse en scène", group: "creation", active: true, count: 1, rehearsalServices: 15, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52, employmentProfile: "artist" },
+  { id: "assistant-director", label: "Assistant ou assistante mise en scène", group: "creation", active: false, count: 1, rehearsalServices: 15, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52, employmentProfile: "artist" },
+  { id: "dramaturgy", label: "Dramaturgie", group: "creation", active: false, count: 1, rehearsalServices: 10, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52, employmentProfile: "artist" },
+  { id: "choreography", label: "Chorégraphe", group: "creation", active: false, count: 1, rehearsalServices: 10, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.52, employmentProfile: "artist" },
+  { id: "scenography", label: "Scénographe", group: "creation", active: false, count: 1, rehearsalServices: 10, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.48, employmentProfile: "technician" },
+  { id: "costumes", label: "Costumier ou costumière", group: "creation", active: false, count: 1, rehearsalServices: 10, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.48, employmentProfile: "technician" },
+  { id: "lighting", label: "Création lumière", group: "technique", active: false, count: 1, rehearsalServices: 5, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.48, employmentProfile: "technician" },
+  { id: "sound-video", label: "Création son ou vidéo", group: "technique", active: false, count: 1, rehearsalServices: 5, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.48, employmentProfile: "technician" },
+  { id: "stage-manager", label: "Régisseur ou régisseuse", group: "technique", active: false, count: 1, rehearsalServices: 5, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.48, employmentProfile: "technician" },
+  { id: "technical-director", label: "Direction technique", group: "technique", active: false, count: 1, rehearsalServices: 5, rehearsalGrossRate: 0, performanceGrossRate: 0, chargeRate: 0.48, employmentProfile: "technician" },
 ];
 
 export const defaultShowBudgetProfile: ShowBudgetProfile = {
   showId: "",
+  setupComplete: false,
   convention: "Spectacle vivant privé - IDCC 3090",
   rateSourceUrl: "https://www.legifrance.gouv.fr/conv_coll/id/KALITEXT000053721738",
   rateEffectiveDate: "2025-09-01",

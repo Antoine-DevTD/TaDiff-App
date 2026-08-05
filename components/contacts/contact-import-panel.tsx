@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
+import type { ContactCustomFieldDefinition } from "@/types";
 
 type ImportMessage = {
   ok: boolean;
@@ -40,7 +41,7 @@ type ContactField =
   | "status"
   | "tags";
 
-type ColumnMapping = Record<ContactField, string>;
+type ColumnMapping = Record<string, string>;
 
 const contactFields: { key: ContactField; label: string; required?: boolean }[] = [
   { key: "contactType", label: "Type de fiche" },
@@ -82,7 +83,7 @@ const emptyMapping: ColumnMapping = {
   tags: "",
 };
 
-export function ContactImportPanel({ contactType }: { contactType: "person" | "venue" }) {
+export function ContactImportPanel({ contactType, customFieldDefinitions = [] }: { contactType: "person" | "venue"; customFieldDefinitions?: ContactCustomFieldDefinition[] }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -98,7 +99,7 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
   const bodyRows = rows.slice(1);
   const previewRows = bodyRows.slice(0, 3);
   const mappedRows = rows.length > 1
-    ? mapRowsToContacts(bodyRows, mapping, contactType)
+    ? mapRowsToContacts(bodyRows, mapping, contactType, customFieldDefinitions)
     : { contacts: [], rejectedRows: [] };
   const contacts = mappedRows.contacts;
   const rejectedRows = mappedRows.rejectedRows;
@@ -129,7 +130,7 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
       }
 
       setRows(parsedRows);
-      setMapping(autoMapColumns(parsedRows[0]));
+      setMapping(autoMapColumns(parsedRows[0], customFieldDefinitions));
     } catch (error) {
       setRows([]);
       setMapping(emptyMapping);
@@ -297,7 +298,7 @@ export function ContactImportPanel({ contactType }: { contactType: "person" | "v
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                {contactFields
+                {[...contactFields, ...customFieldDefinitions.filter((definition) => definition.active && (definition.appliesTo === "both" || definition.appliesTo === contactType)).map((definition) => ({ key: `custom:${definition.id}` as ContactField, label: `${definition.label} · personnalisé`, required: false }))]
                   .filter((field) => !["contactType", "latitude", "longitude"].includes(field.key))
                   .map((field) => (
                   <label key={field.key} className="text-sm font-medium">
@@ -466,7 +467,7 @@ function normalizeRows(rows: unknown[][]): SheetRow[] {
     .filter((row) => row.some(Boolean));
 }
 
-function autoMapColumns(headers: SheetRow): ColumnMapping {
+function autoMapColumns(headers: SheetRow, customFieldDefinitions: ContactCustomFieldDefinition[] = []): ColumnMapping {
   const normalizedHeaders = headers.map(normalizeHeader);
 
   return {
@@ -504,6 +505,7 @@ function autoMapColumns(headers: SheetRow): ColumnMapping {
     longitude: findIndexValue(normalizedHeaders, ["longitude", "lon", "lng"]),
     status: findIndexValue(normalizedHeaders, ["statut", "status"]),
     tags: findIndexValue(normalizedHeaders, ["tags", "tag", "categorie", "categories", "type"]),
+    ...Object.fromEntries(customFieldDefinitions.map((definition) => [`custom:${definition.id}`, findIndexValue(normalizedHeaders, [normalizeHeader(definition.label), normalizeHeader(definition.key)])])),
   };
 }
 
@@ -511,6 +513,7 @@ function mapRowsToContacts(
   rows: SheetRow[],
   mapping: ColumnMapping,
   forcedContactType: ContactFormValues["contactType"],
+  customFieldDefinitions: ContactCustomFieldDefinition[] = [],
 ): { contacts: ContactFormValues[]; rejectedRows: RejectedRow[] } {
   const contacts: ContactFormValues[] = [];
   const rejectedRows: RejectedRow[] = [];
@@ -547,6 +550,7 @@ function mapRowsToContacts(
       longitude: parseOptionalNumber(getMappedCell(row, mapping.longitude)),
       status: normalizeStatus(getMappedCell(row, mapping.status)),
       tags: splitTags(getMappedCell(row, mapping.tags)),
+      customFields: Object.fromEntries(customFieldDefinitions.map((definition) => [definition.id, getMappedCell(row, mapping[`custom:${definition.id}`])]).filter(([, value]) => Boolean(value))),
     } satisfies ContactFormValues;
     const parsed = contactSchema.safeParse(candidate);
 
