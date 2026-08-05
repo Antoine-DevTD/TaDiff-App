@@ -1,12 +1,12 @@
 export const betaPaymentEmailSubject = "Votre acces a la beta TaDiff est pret";
 
-export const betaPaymentEmailBody = `Bonjour {{prenom}},
+export const betaPaymentEmailBody = `Bonjour @prenom,
 
-La beta TaDiff ouvre ses portes et la place de {{compagnie}} est confirmee.
+La beta TaDiff ouvre ses portes et la place de @compagnie est confirmee.
 
-Pour activer votre acces, reglez le premier mois de beta au tarif unique de 19,99 EUR TTC avec le lien securise ci-dessous. Utilisez la meme adresse email que lors de votre inscription : {{email}}.
+Pour activer votre acces, reglez le premier mois de beta au tarif unique de 19,99 EUR TTC avec le lien securise ci-dessous. Utilisez la meme adresse email que lors de votre inscription : @email.
 
-{{lien_paiement}}
+@lien_paiement
 
 Ce paiement couvre uniquement votre premier mois de beta. Aucun renouvellement automatique ne sera effectue. Les conditions de poursuite vous seront presentees separement avant toute nouvelle facturation.
 
@@ -24,16 +24,17 @@ export type BetaEmailContext = {
   paymentUrl: string;
 };
 
-const allowedTokens = new Set(["prenom", "compagnie", "email", "lien_paiement"]);
-
 export function renderBetaEmailTemplate(template: string, context: BetaEmailContext) {
-  return template.replace(/\{\{([a-z_]+)\}\}/g, (match, token: string) => {
-    if (!allowedTokens.has(token)) return match;
-    if (token === "prenom") return context.firstName;
-    if (token === "compagnie") return context.companyName;
-    if (token === "email") return context.email;
-    return context.paymentUrl;
-  });
+  const values: Record<string, string> = {
+    prenom: context.firstName,
+    compagnie: context.companyName,
+    email: context.email,
+    lien_paiement: context.paymentUrl,
+  };
+  return Object.entries(values).reduce(
+    (result, [token, value]) => result.replaceAll(`@${token}`, value).replaceAll(`{{${token}}}`, value),
+    template,
+  );
 }
 export function getBetaAccessStage(signup: {
   accountCreatedAt: string | null;

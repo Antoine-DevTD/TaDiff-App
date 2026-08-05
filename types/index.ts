@@ -393,6 +393,7 @@ export type EmailTemplate = {
   messageType: "first-touch" | "follow-up" | "date-option";
   subjectTemplate: string;
   bodyJson: import("@/types/database.types").Json;
+  attachmentTemplate?: string;
   updatedAt: string;
   scope?: "company" | "platform";
 };

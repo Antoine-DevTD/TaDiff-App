@@ -13,9 +13,20 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { StringListEditor } from "@/components/admin/string-list-editor";
 import type { AdminGrantCatalogItem, AdminPatronageCatalogItem } from "@/lib/supabase/admin";
 
 type CatalogKind = "grants" | "patronage";
+
+const grantRequirementSuggestions = [
+  "Dossier artistique", "Note d'intention", "Synopsis", "Fiche technique", "Budget",
+  "Devis", "RIB", "Statuts", "Bilan d'activité", "Plan de financement",
+];
+
+const grantThemeSuggestions = [
+  "Création", "Production", "Diffusion", "Fonctionnement", "Emploi artistique",
+  "Écriture", "Territoire", "International", "Coopération",
+];
 
 export function PlatformCatalogManager({ grants, patronage }: { grants: AdminGrantCatalogItem[]; patronage: AdminPatronageCatalogItem[] }) {
   const [kind, setKind] = useState<CatalogKind>("grants");
@@ -62,8 +73,8 @@ function GrantCatalog({ grants }: { grants: AdminGrantCatalogItem[] }) {
           <Field label="Discipline"><Input value={draft.discipline} onChange={(event) => update("discipline", event.target.value)} /></Field>
           <Field label="Date limite"><Input type="date" value={draft.deadline} onChange={(event) => update("deadline", event.target.value)} /></Field>
           <Field label="Montant maximal"><Input min="0" type="number" value={draft.amountMax} onChange={(event) => update("amountMax", Number(event.target.value))} /></Field>
-          <Field label="Themes, separes par des virgules"><Input value={draft.themes.join(", ")} onChange={(event) => update("themes", splitList(event.target.value))} /></Field>
-          <Field label="Pièces demandées, séparées par des virgules"><Input value={draft.requirements.join(", ")} onChange={(event) => update("requirements", splitList(event.target.value))} /></Field>
+          <div className="md:col-span-2"><StringListEditor label="Thèmes" suggestions={grantThemeSuggestions} value={draft.themes} onChange={(value) => update("themes", value)} /></div>
+          <div className="md:col-span-2"><StringListEditor label="Pièces demandées" suggestions={grantRequirementSuggestions} value={draft.requirements} onChange={(value) => update("requirements", value)} /></div>
           <Field label="Source officielle"><Input type="url" value={draft.sourceUrl} onChange={(event) => update("sourceUrl", event.target.value)} /></Field>
           <Field label="Vérifié le"><Input type="date" value={draft.lastVerifiedAt} onChange={(event) => update("lastVerifiedAt", event.target.value)} /></Field>
           <div className="md:col-span-2"><Field label="Eligibilite"><Textarea value={draft.eligibility} onChange={(event) => update("eligibility", event.target.value)} /></Field></div>

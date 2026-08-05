@@ -131,6 +131,7 @@ export type AdminPlatformEmailTemplate = {
   messageType: "first-touch" | "follow-up" | "date-option";
   subjectTemplate: string;
   bodyJson: Json;
+  attachmentTemplate: string;
   active: boolean;
   updatedAt: string;
 };
@@ -464,7 +465,7 @@ export async function getAdminPlatformEmailTemplates(): Promise<AdminPlatformEma
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("platform_email_templates")
-    .select("id,name,message_type,subject_template,body_json,active,updated_at")
+    .select("id,name,message_type,subject_template,body_json,attachment_template,active,updated_at")
     .order("updated_at", { ascending: false });
   if (error || !data) return [];
   return data.map((template) => ({
@@ -473,6 +474,7 @@ export async function getAdminPlatformEmailTemplates(): Promise<AdminPlatformEma
     messageType: template.message_type,
     subjectTemplate: template.subject_template,
     bodyJson: template.body_json,
+    attachmentTemplate: template.attachment_template,
     active: template.active,
     updatedAt: template.updated_at,
   }));

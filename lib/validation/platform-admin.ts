@@ -61,6 +61,7 @@ export const platformEmailTemplateSchema = z.object({
   messageType: z.enum(["first-touch", "follow-up", "date-option"]),
   subjectTemplate: z.string().trim().min(2).max(300),
   bodyJson: z.unknown(),
+  attachmentTemplate: z.string().trim().max(600),
   active: z.boolean(),
 });
 

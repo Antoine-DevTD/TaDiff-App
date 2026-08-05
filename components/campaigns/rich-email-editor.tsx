@@ -6,7 +6,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { emailVariables } from "@/lib/email-template-variables";
@@ -28,6 +28,7 @@ export function RichEmailEditor({
   className,
   onChange,
 }: RichEmailEditorProps) {
+  const [variableQuery, setVariableQuery] = useState<{ from: number; query: string } | null>(null);
   const editor = useEditor({
     immediatelyRender: false,
     editable,
@@ -43,7 +44,9 @@ export function RichEmailEditor({
     },
     onUpdate: ({ editor: currentEditor }) => {
       onChange?.(currentEditor.getJSON() as Json, currentEditor.getHTML(), currentEditor.getText({ blockSeparator: "\n\n" }));
+      updateVariableQuery(currentEditor);
     },
+    onSelectionUpdate: ({ editor: currentEditor }) => updateVariableQuery(currentEditor),
   });
 
   useEffect(() => {
@@ -62,8 +65,25 @@ export function RichEmailEditor({
 
   function insertVariable(token: string) {
     if (!token) return;
+    if (editor && variableQuery) {
+      editor.chain().focus().deleteRange({ from: variableQuery.from, to: editor.state.selection.from }).insertContent(`${token} `).run();
+      setVariableQuery(null);
+      return;
+    }
     editor?.chain().focus().insertContent(token).run();
   }
+
+  function updateVariableQuery(currentEditor: NonNullable<typeof editor>) {
+    if (!currentEditor.isEditable) return setVariableQuery(null);
+    const { $from } = currentEditor.state.selection;
+    const beforeCursor = $from.parent.textBetween(0, $from.parentOffset, undefined, "\ufffc");
+    const match = beforeCursor.match(/(?:^|\s)@([\p{L}\p{N}_]*)$/u);
+    setVariableQuery(match ? { from: $from.pos - match[0].trimStart().length, query: match[1].toLocaleLowerCase("fr") } : null);
+  }
+
+  const suggestedVariables = variableQuery
+    ? emailVariables.filter((variable) => variable.token.slice(1).includes(variableQuery.query)).slice(0, 7)
+    : [];
 
   return (
     <div className={cn("overflow-hidden rounded-lg border border-border bg-panel", className)}>
@@ -90,7 +110,7 @@ export function RichEmailEditor({
           {showVariables ? (
             <Select aria-label="Ajouter une information" className="ml-auto min-h-9 w-56 py-1" defaultValue="" onChange={(event) => { insertVariable(event.target.value); event.target.value = ""; }}>
               <option value="">+ Ajouter une information</option>
-              {(["Contact", "Spectacle"] as const).map((group) => (
+              {(["Contact", "Spectacle", "Date et pièces"] as const).map((group) => (
                 <optgroup key={group} label={group}>
                   {emailVariables.filter((variable) => variable.group === group).map((variable) => (
                     <option key={variable.token} value={variable.token}>{variable.label}</option>
@@ -101,14 +121,26 @@ export function RichEmailEditor({
           ) : null}
         </div>
       ) : null}
-      <EditorContent
-        aria-label={editable ? "Corps du message" : "Apercu du message"}
-        className={cn(
-          "email-editor min-h-72 px-6 py-5 text-sm leading-7 outline-none",
-          !editable && "bg-white text-slate-900",
-        )}
-        editor={editor}
-      />
+      <div className="relative">
+        <EditorContent
+          aria-label={editable ? "Corps du message" : "Apercu du message"}
+          className={cn(
+            "email-editor min-h-72 px-6 py-5 text-sm leading-7 outline-none",
+            !editable && "bg-white text-slate-900",
+          )}
+          editor={editor}
+        />
+        {variableQuery && suggestedVariables.length > 0 ? (
+          <div className="absolute bottom-4 left-6 z-10 w-72 overflow-hidden rounded-md border border-border bg-panel shadow-xl shadow-ink/15" role="listbox" aria-label="Variables disponibles">
+            <p className="border-b border-border px-3 py-2 text-xs font-semibold text-muted">Insérer une information</p>
+            {suggestedVariables.map((variable) => (
+              <button key={variable.token} className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-panel-strong focus-visible:bg-panel-strong focus-visible:outline-none" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertVariable(variable.token)}>
+                <span>{variable.label}</span><span className="text-xs font-medium text-accent">{variable.token}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

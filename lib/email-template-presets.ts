@@ -8,6 +8,7 @@ export type BuiltInEmailTemplate = {
   messageType: ContactEmailTemplate;
   subjectTemplate: string;
   bodyJson: Json;
+  attachmentTemplate: string;
 };
 
 const bold = [{ type: "bold" }];
@@ -18,6 +19,7 @@ export const builtInEmailTemplates: BuiltInEmailTemplate[] = [
     name: "Premiere rencontre",
     messageType: "first-touch",
     subjectTemplate: "@titre_spectacle - proposition pour @structure",
+    attachmentTemplate: "Vous trouverez également en pièces jointes : @pieces_jointes.",
     bodyJson: {
       type: "doc",
       content: [
@@ -37,6 +39,7 @@ export const builtInEmailTemplates: BuiltInEmailTemplate[] = [
     name: "Relance",
     messageType: "follow-up",
     subjectTemplate: "Suite a notre echange - @titre_spectacle",
+    attachmentTemplate: "Je vous remets également les pièces utiles : @pieces_jointes.",
     bodyJson: {
       type: "doc",
       content: [
@@ -54,6 +57,7 @@ export const builtInEmailTemplates: BuiltInEmailTemplate[] = [
     name: "Invitation a une representation",
     messageType: "date-option",
     subjectTemplate: "Invitation - @titre_spectacle",
+    attachmentTemplate: "Pour préparer votre venue, vous trouverez en pièces jointes : @pieces_jointes.",
     bodyJson: {
       type: "doc",
       content: [

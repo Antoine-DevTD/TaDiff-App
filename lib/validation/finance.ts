@@ -31,3 +31,11 @@ export const treasuryBalanceSchema = z.object({
 
 export type TreasuryBalanceFormInput = z.input<typeof treasuryBalanceSchema>;
 export type TreasuryBalanceFormValues = z.infer<typeof treasuryBalanceSchema>;
+
+export const treasurySetupSchema = z.object({
+  balance: treasuryBalanceSchema.shape.balance,
+  fixedCosts: z.array(fixedCostSchema).max(12, "Trop de frais fixes renseignes").default([]),
+});
+
+export type TreasurySetupInput = z.input<typeof treasurySetupSchema>;
+export type TreasurySetupValues = z.infer<typeof treasurySetupSchema>;

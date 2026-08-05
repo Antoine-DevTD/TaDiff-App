@@ -1038,7 +1038,7 @@ export async function getEmailTemplates(): Promise<EmailTemplate[]> {
       .order("updated_at", { ascending: false }),
     supabase
       .from("platform_email_templates")
-      .select("id,name,message_type,subject_template,body_json,updated_at")
+      .select("id,name,message_type,subject_template,body_json,attachment_template,updated_at")
       .eq("active", true)
       .order("updated_at", { ascending: false }),
   ]);
@@ -1058,6 +1058,7 @@ export async function getEmailTemplates(): Promise<EmailTemplate[]> {
     messageType: template.message_type,
     subjectTemplate: template.subject_template,
     bodyJson: template.body_json,
+    attachmentTemplate: template.attachment_template,
     updatedAt: template.updated_at,
     scope: "platform" as const,
   }));

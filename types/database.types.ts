@@ -1492,6 +1492,8 @@ export type Database = {
           message_type: "first-touch" | "follow-up" | "date-option";
           subject_template: string;
           body_json: Json;
+          system_key: string | null;
+          attachment_template: string;
           active: boolean;
           created_at: string;
           updated_at: string;
@@ -1502,6 +1504,8 @@ export type Database = {
           message_type?: "first-touch" | "follow-up" | "date-option";
           subject_template: string;
           body_json: Json;
+          system_key?: string | null;
+          attachment_template?: string;
           active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -1511,6 +1515,8 @@ export type Database = {
           message_type?: "first-touch" | "follow-up" | "date-option";
           subject_template?: string;
           body_json?: Json;
+          system_key?: string | null;
+          attachment_template?: string;
           active?: boolean;
           updated_at?: string;
         };

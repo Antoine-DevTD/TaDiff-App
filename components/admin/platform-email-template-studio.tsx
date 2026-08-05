@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { adminDeletePlatformEmailTemplate, adminSavePlatformEmailTemplate } from "@/app/(dashboard)/admin/actions";
 import { RichEmailEditor } from "@/components/campaigns/rich-email-editor";
+import { VariableInput } from "@/components/campaigns/variable-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ export function PlatformEmailTemplateStudio({ templates }: { templates: AdminPla
   const [messageType, setMessageType] = useState<AdminPlatformEmailTemplate["messageType"]>(selected?.messageType ?? "first-touch");
   const [subject, setSubject] = useState(selected?.subjectTemplate ?? "@titre_spectacle - @structure");
   const [body, setBody] = useState<Json>(selected?.bodyJson ?? emptyBody);
+  const [attachmentTemplate, setAttachmentTemplate] = useState(selected?.attachmentTemplate ?? "Vous trouverez également en pièces jointes : @pieces_jointes.");
   const [active, setActive] = useState(selected?.active ?? true);
   const [preview, setPreview] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export function PlatformEmailTemplateStudio({ templates }: { templates: AdminPla
     setMessageType(template?.messageType ?? "first-touch");
     setSubject(template?.subjectTemplate ?? "@titre_spectacle - @structure");
     setBody(template?.bodyJson ?? emptyBody);
+    setAttachmentTemplate(template?.attachmentTemplate ?? "Vous trouverez également en pièces jointes : @pieces_jointes.");
     setActive(template?.active ?? true);
     setPreview(false);
     setMessage(null);
@@ -48,7 +51,7 @@ export function PlatformEmailTemplateStudio({ templates }: { templates: AdminPla
 
   function save() {
     startTransition(async () => {
-      const result = await adminSavePlatformEmailTemplate(selectedId, { name, messageType, subjectTemplate: subject, bodyJson: body, active });
+      const result = await adminSavePlatformEmailTemplate(selectedId, { name, messageType, subjectTemplate: subject, bodyJson: body, attachmentTemplate, active });
       setMessage(result.message);
       if (result.ok) router.refresh();
     });
@@ -82,10 +85,15 @@ export function PlatformEmailTemplateStudio({ templates }: { templates: AdminPla
             <Field label="Nom"><Input value={name} onChange={(event) => setName(event.target.value)} /></Field>
             <Field label="Usage"><Select value={messageType} onChange={(event) => setMessageType(event.target.value as typeof messageType)}><option value="first-touch">Premier contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select></Field>
           </div>
-          <Field label="Objet"><Input value={subject} onChange={(event) => setSubject(event.target.value)} /></Field>
+          <Field label="Objet"><VariableInput value={subject} onChange={setSubject} /></Field>
           <div className="flex flex-wrap gap-1.5">{emailVariables.slice(0, 8).map((variable) => <button key={variable.token} className="rounded-full border border-border px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent" type="button" onClick={() => setSubject((current) => `${current} ${variable.token}`)}>{variable.token}</button>)}</div>
           <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">Corps du message</p><Button type="button" variant="secondary" onClick={() => setPreview((current) => !current)}>{preview ? <FilePenLine className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{preview ? "Editer" : "Apercu brut"}</Button></div>
           <RichEmailEditor key={`${selectedId ?? "new"}-${preview}`} content={body} editable={!preview} showVariables={!preview} onChange={(nextBody) => setBody(nextBody)} />
+          <div className="rounded-md border border-border bg-panel-strong/35 p-4">
+            <p className="text-sm font-semibold">Variation avec pièces jointes</p>
+            <p className="mt-1 text-xs leading-5 text-muted">Ce paragraphe est ajouté uniquement lorsque l’utilisateur sélectionne au moins un document. Utilisez <strong>@pieces_jointes</strong> pour insérer leur liste.</p>
+            <div className="mt-3"><VariableInput value={attachmentTemplate} onChange={setAttachmentTemplate} /></div>
+          </div>
           <label className="flex items-center gap-2 text-sm"><input checked={active} type="checkbox" onChange={(event) => setActive(event.target.checked)} />Proposer ce modèle aux compagnies</label>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4"><div className="flex items-center gap-3"><Button disabled={!selectedId || isPending} type="button" variant="ghost" onClick={remove}><Trash2 className="mr-2 h-4 w-4" />Supprimer</Button><p className="text-sm text-muted" role="status">{message}</p></div><Button disabled={isPending} type="button" onClick={save}><Save className="mr-2 h-4 w-4" />Enregistrer</Button></div>
         </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { deleteEmailTemplate, saveEmailTemplate } from "@/app/(dashboard)/actions";
 import { RichEmailEditor } from "@/components/campaigns/rich-email-editor";
+import { VariableInput } from "@/components/campaigns/variable-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,7 +133,7 @@ export function EmailTemplateStudio({ contacts, shows, templates }: { contacts: 
             <label className="block text-sm font-medium">Usage<Select className="mt-2" value={messageType} onChange={(event) => setMessageType(event.target.value as ContactEmailTemplate)}><option value="first-touch">Premier contact</option><option value="follow-up">Relance</option><option value="date-option">Invitation</option></Select></label>
           </div>
 
-          <label className="mt-4 block text-sm font-medium">Objet<Input className="mt-2" value={subject} onChange={(event) => setSubject(event.target.value)} /></label>
+          <label className="mt-4 block text-sm font-medium">Objet<span className="mt-2 block"><VariableInput value={subject} onChange={setSubject} /></span></label>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {emailVariables.filter((variable) => ["@titre_spectacle", "@structure", "@prenom_contact"].includes(variable.token)).map((variable) => (
               <button key={variable.token} className="rounded-full border border-border bg-panel-strong px-2.5 py-1 text-xs text-muted transition hover:border-accent hover:text-accent" type="button" onClick={() => setSubject((current) => `${current}${current.endsWith(" ") ? "" : " "}${variable.token}`)}>{variable.token}</button>

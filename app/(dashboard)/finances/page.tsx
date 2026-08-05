@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FixedCostCreateDialog } from "@/components/finance/fixed-cost-create-dialog";
 import { FixedCostRowActions } from "@/components/finance/fixed-cost-row-actions";
 import { TreasuryOverview } from "@/components/finance/treasury-overview";
+import { TreasurySetup } from "@/components/finance/treasury-setup";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -131,7 +132,9 @@ export default async function FinancesPage() {
 
   return (
     <div className="space-y-6">
-      {deals.length === 0 && shows.length === 0 ? (
+      {!isDemoTreasury && !treasury && fixedCosts.length === 0 ? (
+        <TreasurySetup />
+      ) : deals.length === 0 && shows.length === 0 ? (
         <EmptyState
           title="Aucune base financiere"
           description="Ajoutez un spectacle et des dates possibles pour commencer a suivre budgets et revenus."

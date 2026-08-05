@@ -50,7 +50,12 @@ export function EmailWorkspace(props: Omit<EmailComposerProps, "initialContactId
 
 export function EmailComposer({ contacts, documents, initialContactId, initialContactIds, initialShowId, shows, templates }: EmailComposerProps) {
   const choices = useMemo(
-    () => [...builtInEmailTemplates.map((template) => ({ ...template, custom: false })), ...templates.map((template) => ({ ...template, custom: true }))],
+    () => [
+      ...(templates.some((template) => template.scope === "platform")
+        ? []
+        : builtInEmailTemplates.map((template) => ({ ...template, custom: false }))),
+      ...templates.map((template) => ({ ...template, custom: template.scope === "company" })),
+    ],
     [templates],
   );
   const [contactIds, setContactIds] = useState(() => {
@@ -79,7 +84,12 @@ export function EmailComposer({ contacts, documents, initialContactId, initialCo
     let body = renderTemplateDocument(selectedTemplate.bodyJson, context);
     if (selectedDocuments.length > 0) {
       const labels = selectedDocuments.map((document) => getShowDocumentTypeLabel(document.documentType).toLocaleLowerCase("fr-FR"));
-      body = appendParagraph(body, `Vous trouverez également en pièces jointes : ${labels.join(", ")}.`);
+      const attachmentTemplate = selectedTemplate.attachmentTemplate
+        || "Vous trouverez également en pièces jointes : @pieces_jointes.";
+      body = appendParagraph(
+        body,
+        renderTemplateText(attachmentTemplate.replaceAll("@pieces_jointes", labels.join(", ")), context),
+      );
     }
     return { subject: renderTemplateText(selectedTemplate.subjectTemplate, context), body };
   }, [selectedContact, selectedContacts.length, selectedDocuments, selectedShow, selectedTemplate]);

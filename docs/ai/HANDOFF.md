@@ -6,6 +6,13 @@ Etat : lots 1 a 5 livres sur `main`, verifies et migrations 043 a 051 appliquees
 
 ## Chantier en cours
 
+### Catalogue, emails et prise en main trésorerie à livrer
+
+- Appliquer `sql/064_unify_grant_catalog_and_email_variants.sql` avant de déployer le code correspondant.
+- Vérifier dans `/admin?tab=catalogues` que les références historiques apparaissent, puis corriger leurs dates et désactiver celles qui ne sont plus fiables.
+- Vérifier dans `/admin?tab=emails` les trois modèles proposés, leur variation avec pièces jointes et l'autocomplétion des variables `@...`.
+- Tester `/finances` avec une compagnie sans solde ni frais fixe : le parcours doit enregistrer les données puis afficher la projection.
+
 ### Console d'acces beta a activer
 
 - Migration `sql/063_beta_access_workflow.sql` confirmee appliquee en production par l'utilisateur le 4 aout 2026.

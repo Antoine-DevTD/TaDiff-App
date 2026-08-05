@@ -34,6 +34,9 @@ Derniere verification : 23 juillet 2026.
 - Le carnet de lieux propose une vue carte avec points colores par avancement, fiche rapide et creation d'action. La recherche d'adresse via la Base Adresse Nationale remplit la ville, le code postal et les coordonnees sans exposer latitude/longitude. Les imports Personnes et Lieux sont contextualises dans chaque onglet.
 - L'import de lieux reconnait les variantes de colonnes comme `Nom du lieu`, explique les lignes rejetees et geocode automatiquement les adresses avant enregistrement. Les coordonnees presentes dans un fichier restent acceptees sans etre demandees dans l'interface.
 - Les quatre indicateurs de la vue d'ensemble du cockpit ouvrent directement leur rubrique : tresorerie, diffusion, dossiers et actions urgentes.
+- La première ouverture de Trésorerie guide la saisie du solde, la sélection des frais fixes puis leurs montants, fréquences et échéances avant d'afficher une projection réelle.
+- Le catalogue global de subventions est administrable depuis la console plateforme. Les pièces demandées se sélectionnent dans une liste structurée et les nouveaux espaces sont alimentés depuis ce catalogue, sans écraser les dossiers déjà suivis.
+- Les modèles d'emails proposés sont administrables, y compris leur variation avec pièces jointes. Les variables utilisent la syntaxe `@variable` et l'éditeur propose les tags dès la saisie de `@`.
 - L'agenda propose une grille plus lisible et un panneau de detail persistant. Une subvention selectionnee ouvre son dossier en surbrillance.
 - Les subventions utilisent le même langage visuel que les actions : vues par urgence et avancement, liste groupée par spectacle, dossier actif et pièces attendues directement manipulables.
 - Les 10 dispositifs de subvention de référence sont ajoutés automatiquement et sans doublon lors de l'initialisation d'un espace compagnie.
@@ -47,6 +50,7 @@ Derniere verification : 23 juillet 2026.
 - Les migrations sont versionnees dans `sql/`; leur presence dans le depot ne prouve pas leur application dans Supabase.
 - `036_opportunity_exploitation_models.sql` couvre les modeles economiques de diffusion.
 - `037_email_templates.sql` couvre les templates email persistants.
+- `064_unify_grant_catalog_and_email_variants.sql` importe les anciennes références dans le catalogue global, branche l'ensemencement des nouveaux comptes dessus et ajoute la variation avec pièces jointes aux modèles plateforme.
 - Stripe reste a valider de bout en bout avec les variables et webhooks de l'environnement cible.
 - `038_platform_admin_and_ai_foundation.sql` ajoute les informations legales dynamiques, les catalogues globaux, les templates plateforme et la fondation RAG de William. Application Supabase confirmee par l'utilisateur le 20 juillet 2026.
 - `039_ai_access_quotas_and_credits.sql` ajoute l'acces progressif par compte, les quotas mensuels, le journal d'usage et les credits Stripe.

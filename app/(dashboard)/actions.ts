@@ -59,8 +59,10 @@ import type { GrantStatus } from "@/types";
 import {
   fixedCostSchema,
   treasuryBalanceSchema,
+  treasurySetupSchema,
   type FixedCostFormInput,
   type TreasuryBalanceFormInput,
+  type TreasurySetupInput,
 } from "@/lib/validation/finance";
 import {
   opportunitySchema,
@@ -2021,6 +2023,78 @@ export async function recordTreasuryBalance(
       note: snapshot.note ?? "",
     },
   };
+}
+
+export async function completeTreasurySetup(values: TreasurySetupInput): Promise<ActionResult> {
+  const parsed = treasurySetupSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Les informations de tresorerie sont invalides.",
+    };
+  }
+
+  if (!hasSupabaseEnv()) {
+    return { ok: true, message: "Mode demo : configuration validee pour cette visite." };
+  }
+
+  const accessError = await requireWriteAccess();
+  if (accessError) return { ok: false, message: accessError };
+
+  const workspace = await getOrCreateWorkspace();
+  if (!workspace.companyId) {
+    return { ok: false, message: workspace.error ?? "Compagnie introuvable." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  let insertedCostIds: string[] = [];
+
+  if (parsed.data.fixedCosts.length > 0) {
+    const { data: insertedCosts, error: fixedCostsError } = await supabase
+      .from("fixed_costs")
+      .insert(parsed.data.fixedCosts.map((cost) => ({
+        company_id: workspace.companyId as string,
+        label: cost.label,
+        category: cost.category,
+        amount: cost.amount,
+        frequency: cost.frequency,
+        next_due_date: cost.nextDueDate,
+        notes: cost.notes || null,
+      })))
+      .select("id");
+
+    if (fixedCostsError || !insertedCosts) {
+      return { ok: false, message: fixedCostsError?.message ?? "Les frais fixes n'ont pas ete enregistres." };
+    }
+    insertedCostIds = insertedCosts.map((cost) => cost.id);
+  }
+
+  const { error: treasuryError } = await supabase.from("treasury_snapshots").insert({
+    company_id: workspace.companyId,
+    balance: parsed.data.balance,
+    note: "Configuration initiale de la tresorerie",
+  });
+
+  if (treasuryError) {
+    if (insertedCostIds.length > 0) {
+      await supabase.from("fixed_costs").delete().in("id", insertedCostIds);
+    }
+    return { ok: false, message: treasuryError.message };
+  }
+
+  revalidatePath("/finances");
+  revalidatePath("/dashboard");
+  revalidatePath("/billing");
+  revalidatePath("/calendar");
+
+  await logActivity(
+    "a configure la tresorerie",
+    "tresorerie",
+    `${parsed.data.fixedCosts.length} frais fixes`,
+  );
+
+  return { ok: true, message: "Votre tresorerie est prete." };
 }
 
 export async function createContact(values: ContactFormValues): Promise<ActionResult> {

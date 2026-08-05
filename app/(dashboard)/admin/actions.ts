@@ -325,6 +325,7 @@ export async function adminSavePlatformEmailTemplate(id: string | null, values: 
     message_type: parsed.data.messageType,
     subject_template: parsed.data.subjectTemplate,
     body_json: parsed.data.bodyJson as Json,
+    attachment_template: parsed.data.attachmentTemplate,
     active: parsed.data.active,
     updated_at: new Date().toISOString(),
   };

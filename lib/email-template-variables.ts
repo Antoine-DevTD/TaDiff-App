@@ -4,7 +4,7 @@ import type { Contact, Show } from "@/types";
 export type EmailVariable = {
   token: string;
   label: string;
-  group: "Contact" | "Spectacle";
+  group: "Contact" | "Spectacle" | "Date et pièces";
   optional?: boolean;
 };
 
@@ -18,6 +18,8 @@ export const emailVariables: EmailVariable[] = [
   { token: "@thematiques", label: "Thematiques", group: "Spectacle", optional: true },
   { token: "@public", label: "Public", group: "Spectacle", optional: true },
   { token: "@prochaine_date", label: "Prochaine date", group: "Spectacle", optional: true },
+  { token: "@date", label: "Prochaine date", group: "Date et pièces", optional: true },
+  { token: "@pieces_jointes", label: "Liste des pièces jointes", group: "Date et pièces", optional: true },
 ];
 
 export type EmailTemplateContext = {
@@ -43,6 +45,10 @@ export function getEmailVariableValues({ contact, recipientCount = 1, show }: Em
     "@prochaine_date": show?.nextDate
       ? new Date(show.nextDate).toLocaleDateString("fr-FR")
       : "",
+    "@date": show?.nextDate
+      ? new Date(show.nextDate).toLocaleDateString("fr-FR")
+      : "",
+    "@pieces_jointes": "",
   } satisfies Record<string, string>;
 }
 
