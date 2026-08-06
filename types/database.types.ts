@@ -2150,6 +2150,41 @@ export type Database = {
           last_activity: string | null;
         }[];
       };
+      admin_list_company_workflow_metrics: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          company_id: string;
+          company_name: string;
+          billing_status: "trial" | "active" | "comped" | "past_due" | "cancelled";
+          plan_code: string;
+          created_at: string;
+          member_count: number;
+          profile_field_count: number;
+          show_count: number;
+          budget_setup_count: number;
+          contact_count: number;
+          venue_count: number;
+          opportunity_count: number;
+          exploitation_count: number;
+          performance_count: number;
+          reminder_count: number;
+          completed_reminder_count: number;
+          document_count: number;
+          calendar_event_count: number;
+          fixed_cost_count: number;
+          treasury_movement_count: number;
+          grant_count: number;
+          email_template_count: number;
+          william_request_count: number;
+          activity_7d_count: number;
+          activity_30d_count: number;
+          page_view_30d_count: number;
+          active_days_30d: number;
+          visited_sections: string[];
+          last_activity: string | null;
+          last_login: string | null;
+        }[];
+      };
       admin_set_company_billing: {
         Args: {
           target_company_id: string;

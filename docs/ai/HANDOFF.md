@@ -1,5 +1,12 @@
 # Passage de relais actif
 
+## Observabilite des parcours compagnie et resilience — 6 aout 2026
+
+- La nouvelle route `/admin/companies` presente au superadmin, ou a un administrateur disposant de `view_companies`, des compteurs et jalons d'usage par compagnie sans exposer le contenu des contacts, documents, budgets, emails ou questions William.
+- Migration `sql/073_admin_company_workflow_metrics.sql` confirmee appliquee par l'utilisateur le 6 aout 2026. Le refus anonyme et l'absence de donnees avec la cle de service sans session ont ete verifies ; terminer la matrice d'acces en Preview avec un membre, un administrateur autorise et un superadmin connectes.
+- Les principes de collecte sont documentes dans `docs/product/company-workflow-observability.md` et le plan de sauvegarde, restauration et chiffrement dans `docs/engineering/backup-recovery-encryption.md`.
+- La sauvegarde externe et le chiffrement applicatif des documents restent un plan d'implementation : ils ne sont pas encore actifs en production.
+
 ## Livraison retours 2 à 8 — 5 août 2026
 
 - Code validé localement : TypeScript, lint, build, budget unitaire et 28 parcours Playwright (27 au premier passage, puis le seul test d'accent corrigé et repassé).

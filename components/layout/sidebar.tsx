@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CalendarDays, ExternalLink, MoreHorizontal, Settings, TestTube2, X } from "lucide-react";
+import { BookOpen, Building2, CalendarDays, ExternalLink, MoreHorizontal, Settings, TestTube2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -23,6 +23,12 @@ const adminNavItems = [
     summary: "Paiements, invitations et comptes",
     initials: "BE",
   },
+  {
+    href: "/admin/companies",
+    label: "Compagnies",
+    summary: "Adoption, parcours et espaces utilisés",
+    initials: "CO",
+  },
 ];
 
 const bookingUrl = "https://calendar.app.google/qpNBBf3UhVusTHYo7";
@@ -31,11 +37,11 @@ function isItemActive(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
 }
 
-export function Sidebar({ variant = "company", canViewBeta = false }: { variant?: "admin" | "company"; canViewBeta?: boolean }) {
+export function Sidebar({ variant = "company", canViewBeta = false, canViewCompanies = false }: { variant?: "admin" | "company"; canViewBeta?: boolean; canViewCompanies?: boolean }) {
   const pathname = usePathname();
 
   if (variant === "admin") {
-    return <AdminSidebar canViewBeta={canViewBeta} pathname={pathname} />;
+    return <AdminSidebar canViewBeta={canViewBeta} canViewCompanies={canViewCompanies} pathname={pathname} />;
   }
 
   return <CompanyNavigation pathname={pathname} />;
@@ -269,7 +275,13 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
   );
 }
 
-function AdminSidebar({ canViewBeta, pathname }: { canViewBeta: boolean; pathname: string }) {
+function AdminSidebar({ canViewBeta, canViewCompanies, pathname }: { canViewBeta: boolean; canViewCompanies: boolean; pathname: string }) {
+  const visibleItems = adminNavItems.filter((item) => {
+    if (item.href === "/admin/beta") return canViewBeta;
+    if (item.href === "/admin/companies") return canViewCompanies;
+    return true;
+  });
+
   return (
     <>
       <div aria-hidden="true" className="hidden w-64 shrink-0 lg:block" />
@@ -284,20 +296,21 @@ function AdminSidebar({ canViewBeta, pathname }: { canViewBeta: boolean; pathnam
         </div>
       </div>
       <nav aria-label="Administration" className="flex-1 space-y-1 overflow-y-auto p-3">
-        {adminNavItems.filter((item) => item.href !== "/admin/beta" || canViewBeta).map((item) => {
+        {visibleItems.map((item) => {
           const active = item.href === "/admin" ? pathname === "/admin" : isItemActive(pathname, item.href);
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-start gap-3 rounded-md px-3 py-2.5 text-sm text-white/[0.72] transition-colors hover:bg-white/10 hover:text-white",
+                "flex items-start gap-3 rounded-md px-3 py-2.5 text-sm text-white/[0.72] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
                 active && "bg-white/[0.16] text-white",
               )}
             >
               <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-xs font-semibold">
-                {item.href === "/admin/beta" ? <TestTube2 className="h-4 w-4" aria-hidden /> : item.initials}
+                {item.href === "/admin/beta" ? <TestTube2 className="h-4 w-4" aria-hidden /> : item.href === "/admin/companies" ? <Building2 className="h-4 w-4" aria-hidden /> : item.initials}
               </span>
               <span className="min-w-0">
                 <span className="block font-medium leading-5">{item.label}</span>
@@ -311,6 +324,29 @@ function AdminSidebar({ canViewBeta, pathname }: { canViewBeta: boolean; pathnam
         <SignOutButton />
       </div>
       </aside>
+      <nav
+        aria-label="Administration mobile"
+        className="fixed inset-x-0 bottom-0 z-50 grid border-t border-border bg-panel/96 px-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-8px_24px_rgba(11,18,32,0.10)] backdrop-blur-xl lg:hidden"
+        style={{ gridTemplateColumns: `repeat(${visibleItems.length}, minmax(0, 1fr))` }}
+      >
+        {visibleItems.map((item) => {
+          const active = item.href === "/admin" ? pathname === "/admin" : isItemActive(pathname, item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-xs font-medium text-muted transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
+                active && "bg-accent/10 text-accent",
+              )}
+            >
+              {item.href === "/admin/beta" ? <TestTube2 className="h-5 w-5" aria-hidden /> : item.href === "/admin/companies" ? <Building2 className="h-5 w-5" aria-hidden /> : <span className="flex h-5 items-center font-semibold" aria-hidden>{item.initials}</span>}
+              <span className="max-w-full truncate">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </>
   );
 }

@@ -32,6 +32,7 @@ export default async function PrivacyPage() {
           <li>Gérer la bêta et repondre aux demandes : mesures precontractuelles.</li>
           <li>Créer et faire fonctionner le cockpit : execution du contrat.</li>
           <li>Assurer la sécurité, prevenir les abus et aider les utilisateurs : interet legitime de TaDiff.</li>
+          <li>Comprendre l&apos;adoption des espaces du cockpit à partir de compteurs et de jalons d&apos;usage, sans consulter le contenu métier des compagnies : intérêt légitime de TaDiff à améliorer son service.</li>
           <li>Gérer les paiements et la comptabilite : execution du contrat et obligations légales.</li>
           <li>Envoyer des informations commerciales : consentement lorsqu&apos;il est requis, avec desinscription possible a tout moment.</li>
         </LegalList>

@@ -25,6 +25,39 @@ export type AdminCompany = {
   lastActivity: string | null;
 };
 
+export type AdminCompanyWorkflowMetrics = {
+  companyId: string;
+  companyName: string;
+  billingStatus: BillingStatus;
+  planCode: string;
+  createdAt: string;
+  memberCount: number;
+  profileFieldCount: number;
+  showCount: number;
+  budgetSetupCount: number;
+  contactCount: number;
+  venueCount: number;
+  opportunityCount: number;
+  exploitationCount: number;
+  performanceCount: number;
+  reminderCount: number;
+  completedReminderCount: number;
+  documentCount: number;
+  calendarEventCount: number;
+  fixedCostCount: number;
+  treasuryMovementCount: number;
+  grantCount: number;
+  emailTemplateCount: number;
+  williamRequestCount: number;
+  activity7dCount: number;
+  activity30dCount: number;
+  pageView30dCount: number;
+  activeDays30d: number;
+  visitedSections: string[];
+  lastActivity: string | null;
+  lastLogin: string | null;
+};
+
 export type AdminBetaSignup = {
   id: string;
   companyName: string;
@@ -273,6 +306,47 @@ export async function getAdminCompanies(): Promise<AdminCompany[]> {
     contactCount: company.contact_count,
     dealCount: company.deal_count,
     lastActivity: company.last_activity,
+  }));
+}
+
+export async function getAdminCompanyWorkflowMetrics(): Promise<AdminCompanyWorkflowMetrics[] | null> {
+  if (!hasSupabaseEnv()) return [];
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_company_workflow_metrics");
+  if (error || !data) return null;
+
+  return data.map((company) => ({
+    companyId: company.company_id,
+    companyName: company.company_name,
+    billingStatus: company.billing_status,
+    planCode: company.plan_code,
+    createdAt: company.created_at,
+    memberCount: company.member_count,
+    profileFieldCount: company.profile_field_count,
+    showCount: company.show_count,
+    budgetSetupCount: company.budget_setup_count,
+    contactCount: company.contact_count,
+    venueCount: company.venue_count,
+    opportunityCount: company.opportunity_count,
+    exploitationCount: company.exploitation_count,
+    performanceCount: company.performance_count,
+    reminderCount: company.reminder_count,
+    completedReminderCount: company.completed_reminder_count,
+    documentCount: company.document_count,
+    calendarEventCount: company.calendar_event_count,
+    fixedCostCount: company.fixed_cost_count,
+    treasuryMovementCount: company.treasury_movement_count,
+    grantCount: company.grant_count,
+    emailTemplateCount: company.email_template_count,
+    williamRequestCount: company.william_request_count,
+    activity7dCount: company.activity_7d_count,
+    activity30dCount: company.activity_30d_count,
+    pageView30dCount: company.page_view_30d_count,
+    activeDays30d: company.active_days_30d,
+    visitedSections: company.visited_sections ?? [],
+    lastActivity: company.last_activity,
+    lastLogin: company.last_login,
   }));
 }
 
