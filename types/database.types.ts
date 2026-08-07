@@ -1791,6 +1791,11 @@ export type Database = {
           page: string | null;
           kind: "bug" | "idee" | "avis";
           message: string;
+          source: "manual" | "daily_prompt";
+          usage_date: string | null;
+          problem_areas: string[];
+          no_problem: boolean;
+          suggestion: string | null;
           status: "nouveau" | "en_cours" | "traite";
           admin_response: string | null;
           created_at: string;
@@ -1804,6 +1809,11 @@ export type Database = {
           page?: string | null;
           kind?: "bug" | "idee" | "avis";
           message: string;
+          source?: "manual" | "daily_prompt";
+          usage_date?: string | null;
+          problem_areas?: string[];
+          no_problem?: boolean;
+          suggestion?: string | null;
           status?: "nouveau" | "en_cours" | "traite";
           admin_response?: string | null;
           created_at?: string;
@@ -1812,6 +1822,11 @@ export type Database = {
         Update: {
           kind?: "bug" | "idee" | "avis";
           message?: string;
+          source?: "manual" | "daily_prompt";
+          usage_date?: string | null;
+          problem_areas?: string[];
+          no_problem?: boolean;
+          suggestion?: string | null;
           status?: "nouveau" | "en_cours" | "traite";
           admin_response?: string | null;
           updated_at?: string;
@@ -2245,6 +2260,24 @@ export type Database = {
           feedback_kind: string;
           feedback_message: string;
           feedback_page?: string | null;
+        };
+        Returns: undefined;
+      };
+      get_daily_feedback_prompt: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          usage_date: string;
+          last_used_at: string;
+        }[];
+      };
+      submit_daily_feedback: {
+        Args: {
+          p_usage_date: string;
+          p_problem_areas: string[];
+          p_no_problem: boolean;
+          p_note?: string | null;
+          p_suggestion?: string | null;
+          p_page?: string | null;
         };
         Returns: undefined;
       };
