@@ -1841,6 +1841,37 @@ export type Database = {
           },
         ];
       };
+      feedback_prompt_events: {
+        Row: {
+          id: string;
+          company_id: string;
+          actor_id: string;
+          usage_date: string;
+          prompted_on: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          actor_id: string;
+          usage_date: string;
+          prompted_on?: string;
+          created_at?: string;
+        };
+        Update: {
+          usage_date?: string;
+          prompted_on?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feedback_prompt_events_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       patronage_deals: {
         Row: {
           id: string;

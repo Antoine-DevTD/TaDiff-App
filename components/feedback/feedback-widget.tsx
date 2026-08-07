@@ -11,6 +11,7 @@ import { tourStateChangeEvent, tourStorageKey } from "@/components/tour/guided-t
 import {
   dailyFeedbackAreas,
   getUsageDateLabel,
+  isWithinDailyFeedbackCooldown,
   type DailyFeedbackArea,
   type DailyFeedbackPrompt,
 } from "@/lib/daily-feedback";
@@ -85,7 +86,7 @@ export function FeedbackWidget({ triggerClassName }: { triggerClassName?: string
       })
       .then((payload) => {
         const nextPrompt = payload?.prompt;
-        if (!nextPrompt || isDismissedToday(nextPrompt.usageDate)) return;
+        if (!nextPrompt || isDismissedRecently(nextPrompt.usageDate)) return;
 
         openWhenPageIsReady(nextPrompt);
       })
@@ -110,7 +111,7 @@ export function FeedbackWidget({ triggerClassName }: { triggerClassName?: string
   }
 
   function closeDialog() {
-    if (mode === "daily" && prompt) dismissForToday(prompt.usageDate);
+    if (mode === "daily" && prompt) dismissForCooldown(prompt.usageDate);
     setOpen(false);
   }
 
@@ -159,7 +160,7 @@ export function FeedbackWidget({ triggerClassName }: { triggerClassName?: string
           text: payload.message ?? (ok ? "Merci pour votre retour." : "Le retour n’a pas pu être envoyé."),
         });
 
-        if (ok) dismissForToday(prompt.usageDate);
+        if (ok) dismissForCooldown(prompt.usageDate);
       } catch {
         setResult({ ok: false, text: "Le retour n’a pas pu être envoyé. Réessayez dans un instant." });
       }
@@ -409,22 +410,25 @@ function getLocalDayKey() {
 }
 
 function dismissalKey(usageDate: string) {
-  return `tadiff-daily-feedback-dismissed:${usageDate}:${getLocalDayKey()}`;
+  return `tadiff-daily-feedback-dismissed:${usageDate}`;
 }
 
-function isDismissedToday(usageDate: string) {
+function isDismissedRecently(usageDate: string) {
   try {
-    return window.localStorage.getItem(dismissalKey(usageDate)) === "1";
+    const dismissedOn = window.localStorage.getItem(dismissalKey(usageDate));
+    if (!dismissedOn) return false;
+
+    return isWithinDailyFeedbackCooldown(dismissedOn, getLocalDayKey());
   } catch {
     return false;
   }
 }
 
-function dismissForToday(usageDate: string) {
+function dismissForCooldown(usageDate: string) {
   try {
-    window.localStorage.setItem(dismissalKey(usageDate), "1");
+    window.localStorage.setItem(dismissalKey(usageDate), getLocalDayKey());
   } catch {
-    // Le stockage local peut être indisponible ; la réponse reste enregistrée côté serveur.
+    // Le stockage local peut être indisponible ; le délai serveur reste prioritaire.
   }
 }
 

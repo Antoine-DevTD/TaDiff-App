@@ -17,6 +17,20 @@ export type DailyFeedbackPrompt = {
   lastUsedAt: string;
 };
 
+export const dailyFeedbackCooldownDays = 3;
+
+export function isWithinDailyFeedbackCooldown(dismissedOn: string, todayKey: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dismissedOn) || !/^\d{4}-\d{2}-\d{2}$/.test(todayKey)) {
+    return false;
+  }
+
+  const dismissedDate = new Date(`${dismissedOn}T12:00:00`);
+  const today = new Date(`${todayKey}T12:00:00`);
+  const elapsedDays = Math.round((today.getTime() - dismissedDate.getTime()) / 86_400_000);
+
+  return elapsedDays >= 0 && elapsedDays < dailyFeedbackCooldownDays;
+}
+
 export function getUsageDateLabel(usageDate: string, today = new Date()) {
   const [year, month, day] = usageDate.split("-").map(Number);
   const usage = new Date(year, month - 1, day, 12);
