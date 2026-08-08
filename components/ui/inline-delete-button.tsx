@@ -40,7 +40,7 @@ export function InlineDeleteButton({
   return (
     <span className="inline-flex items-center gap-2">
       <button
-        className="text-sm font-medium text-danger/80 transition hover:text-danger disabled:opacity-50"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-danger/80 transition hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
         disabled={isPending}
         type="button"
         onClick={onClick}

@@ -1483,6 +1483,104 @@ export type Database = {
         };
         Relationships: [];
       };
+      grant_catalog_exclusions: {
+        Row: {
+          company_id: string;
+          catalog_id: string;
+          excluded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          company_id: string;
+          catalog_id: string;
+          excluded_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          excluded_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "grant_catalog_exclusions_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "grant_catalog_exclusions_catalog_id_fkey";
+            columns: ["catalog_id"];
+            isOneToOne: false;
+            referencedRelation: "grant_catalog";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      grant_catalog_proposals: {
+        Row: {
+          id: string;
+          opportunity_id: string | null;
+          company_id: string;
+          title: string;
+          funder: string;
+          territory: string | null;
+          discipline: string | null;
+          deadline: string;
+          amount: number;
+          requirements: string[];
+          themes: string[];
+          source_url: string | null;
+          review_status: "pending" | "published" | "local_only" | "withdrawn";
+          promoted_catalog_id: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          opportunity_id?: string | null;
+          company_id: string;
+          title: string;
+          funder: string;
+          territory?: string | null;
+          discipline?: string | null;
+          deadline: string;
+          amount?: number;
+          requirements?: string[];
+          themes?: string[];
+          source_url?: string | null;
+          review_status?: "pending" | "published" | "local_only" | "withdrawn";
+          promoted_catalog_id?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          review_status?: "pending" | "published" | "local_only" | "withdrawn";
+          promoted_catalog_id?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "grant_catalog_proposals_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "grant_catalog_proposals_opportunity_id_fkey";
+            columns: ["opportunity_id"];
+            isOneToOne: true;
+            referencedRelation: "grant_opportunities";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       patronage_catalog: {
         Row: {
           id: string;
@@ -1921,6 +2019,7 @@ export type Database = {
         Row: {
           id: string;
           company_id: string;
+          catalog_id: string | null;
           show_id: string | null;
           title: string;
           funder: string;
@@ -1938,6 +2037,7 @@ export type Database = {
         Insert: {
           id?: string;
           company_id: string;
+          catalog_id?: string | null;
           show_id?: string | null;
           title: string;
           funder: string;
@@ -1953,6 +2053,7 @@ export type Database = {
           created_at?: string;
         };
         Update: {
+          catalog_id?: string | null;
           show_id?: string | null;
           title?: string;
           funder?: string;
@@ -1968,6 +2069,13 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "grant_opportunities_catalog_id_fkey";
+            columns: ["catalog_id"];
+            isOneToOne: false;
+            referencedRelation: "grant_catalog";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "grant_opportunities_company_id_fkey";
             columns: ["company_id"];
@@ -2293,6 +2401,31 @@ export type Database = {
           feedback_page?: string | null;
         };
         Returns: undefined;
+      };
+      admin_list_grant_catalog_proposals: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          company_id: string;
+          company_name: string;
+          title: string;
+          funder: string;
+          territory: string | null;
+          discipline: string | null;
+          deadline: string;
+          amount: number;
+          requirements: string[];
+          themes: string[];
+          source_url: string | null;
+          created_at: string;
+        }[];
+      };
+      admin_review_grant_catalog_proposal: {
+        Args: {
+          target_proposal_id: string;
+          publish_globally: boolean;
+        };
+        Returns: string | null;
       };
       get_daily_feedback_prompt: {
         Args: Record<PropertyKey, never>;

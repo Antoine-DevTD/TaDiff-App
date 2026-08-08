@@ -9,6 +9,7 @@ import { FeedbackRow } from "@/components/admin/feedback-row";
 import { LegalInformationForm } from "@/components/admin/legal-information-form";
 import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
 import { PlatformCatalogManager } from "@/components/admin/platform-catalog-manager";
+import { GrantCatalogProposals } from "@/components/admin/grant-catalog-proposals";
 import { PlatformEmailTemplateStudio } from "@/components/admin/platform-email-template-studio";
 import { PlatformAdminManager } from "@/components/admin/platform-admin-manager";
 import { RevenueForecastChart } from "@/components/admin/revenue-forecast-chart";
@@ -24,6 +25,7 @@ import {
   getAdminMaintenanceMode,
   getAdminLegalInformation,
   getAdminGrantCatalog,
+  getAdminGrantCatalogProposals,
   getAdminPatronageCatalog,
   getAdminPlatformEmailTemplates,
   getAdminAiSettings,
@@ -73,6 +75,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     analyticsEvents,
     legalInformation,
     grantCatalog,
+    grantCatalogProposals,
     patronageCatalog,
     platformEmailTemplates,
     aiSettings,
@@ -89,6 +92,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     getAdminPublicAnalyticsEvents(30, 2000),
     getAdminLegalInformation(),
     getAdminGrantCatalog(),
+    getAdminGrantCatalogProposals(),
     getAdminPatronageCatalog(),
     getAdminPlatformEmailTemplates(),
     getAdminAiSettings(),
@@ -124,7 +128,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         {allowedTabs.includes("notifications") ? <AdminTab active={activeTab === "notifications"} href="/admin?tab=notifications" label={`Notifications${errorGroups.filter((error) => !error.resolvedAt).length ? ` (${errorGroups.filter((error) => !error.resolvedAt).length})` : ""}`} /> : null}
         {allowedTabs.includes("audience") ? <AdminTab active={activeTab === "audience"} href="/admin?tab=audience" label="Audience" /> : null}
         {allowedTabs.includes("informations") ? <AdminTab active={activeTab === "informations"} href="/admin?tab=informations" label="Informations" /> : null}
-        {allowedTabs.includes("catalogues") ? <AdminTab active={activeTab === "catalogues"} href="/admin?tab=catalogues" label="Catalogues" /> : null}
+        {allowedTabs.includes("catalogues") ? <AdminTab active={activeTab === "catalogues"} href="/admin?tab=catalogues" label={`Catalogues${grantCatalogProposals.length > 0 ? ` (${grantCatalogProposals.length})` : ""}`} /> : null}
         {allowedTabs.includes("emails") ? <AdminTab active={activeTab === "emails"} href="/admin?tab=emails" label="Emails" /> : null}
         {allowedTabs.includes("ia") ? <AdminTab active={activeTab === "ia"} href="/admin?tab=ia" label="William IA" /> : null}
         {allowedTabs.includes("administrateurs") ? <AdminTab active={activeTab === "administrateurs"} href="/admin?tab=administrateurs" label="Administrateurs" /> : null}
@@ -137,7 +141,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       ) : activeTab === "informations" ? (
         <LegalInformationForm initialValue={legalInformation} />
       ) : activeTab === "catalogues" ? (
-        <PlatformCatalogManager grants={grantCatalog} patronage={patronageCatalog} />
+        <div className="space-y-8">
+          {access.isSuperAdmin ? <GrantCatalogProposals proposals={grantCatalogProposals} /> : null}
+          <PlatformCatalogManager grants={grantCatalog} patronage={patronageCatalog} />
+        </div>
       ) : activeTab === "emails" ? (
         <PlatformEmailTemplateStudio templates={platformEmailTemplates} />
       ) : activeTab === "ia" ? (

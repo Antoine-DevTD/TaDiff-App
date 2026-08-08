@@ -14,7 +14,12 @@ export const grantSchema = z.object({
   relatedShowId: z.string().optional(),
   requirements: z.array(z.enum(dossierDocumentTypes)).optional(),
   eligibility: z.string().max(600, "Le texte est trop long").optional(),
-  sourceUrl: z.string().url("Lien invalide").optional().or(z.literal("")),
+  sourceUrl: z
+    .string()
+    .url("Lien invalide")
+    .refine((value) => /^https?:\/\//i.test(value), "Seuls les liens HTTP et HTTPS sont acceptés")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type GrantFormInput = z.input<typeof grantSchema>;

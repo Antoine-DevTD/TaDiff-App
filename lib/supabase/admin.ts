@@ -143,6 +143,22 @@ export type AdminGrantCatalogItem = {
   lastVerifiedAt: string;
 };
 
+export type AdminGrantCatalogProposal = {
+  id: string;
+  companyId: string;
+  companyName: string;
+  title: string;
+  funder: string;
+  territory: string;
+  discipline: string;
+  deadline: string;
+  amount: number;
+  requirements: string[];
+  themes: string[];
+  sourceUrl: string;
+  createdAt: string;
+};
+
 export type AdminPatronageCatalogItem = {
   id: string;
   organizationName: string;
@@ -515,6 +531,29 @@ export async function getAdminGrantCatalog(): Promise<AdminGrantCatalogItem[]> {
     sourceUrl: item.source_url ?? "",
     active: item.active,
     lastVerifiedAt: item.last_verified_at ?? "",
+  }));
+}
+
+export async function getAdminGrantCatalogProposals(): Promise<AdminGrantCatalogProposal[]> {
+  if (!hasSupabaseEnv()) return [];
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_grant_catalog_proposals");
+  if (error || !data) return [];
+
+  return data.map((proposal) => ({
+    id: proposal.id,
+    companyId: proposal.company_id,
+    companyName: proposal.company_name,
+    title: proposal.title,
+    funder: proposal.funder,
+    territory: proposal.territory ?? "",
+    discipline: proposal.discipline ?? "",
+    deadline: proposal.deadline,
+    amount: proposal.amount,
+    requirements: proposal.requirements ?? [],
+    themes: proposal.themes ?? [],
+    sourceUrl: proposal.source_url ?? "",
+    createdAt: proposal.created_at,
   }));
 }
 

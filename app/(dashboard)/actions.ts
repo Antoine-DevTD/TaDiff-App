@@ -3925,7 +3925,7 @@ export async function deleteGrantOpportunity(grantId: string): Promise<ActionRes
 
   await logActivity("a retire une subvention du radar", "subvention");
 
-  return { ok: true, message: "Dispositif retire du radar." };
+  return { ok: true, message: "Dispositif retiré uniquement pour votre compagnie." };
 }
 
 export async function importReferenceGrants(): Promise<ActionResult & { imported: number }> {

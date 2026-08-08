@@ -292,6 +292,37 @@ export async function adminDeleteGrantCatalogItem(id: string): Promise<ActionRes
   return { ok: true, message: "Aide supprimee du catalogue et du corpus William." };
 }
 
+export async function adminReviewGrantCatalogProposal(
+  proposalId: string,
+  publishGlobally: boolean,
+): Promise<ActionResult> {
+  if (!hasSupabaseEnv() || !(await isSuperAdmin())) {
+    return { ok: false, message: "Accès réservé au superadmin." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_review_grant_catalog_proposal", {
+    target_proposal_id: proposalId,
+    publish_globally: publishGlobally,
+  });
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/admin");
+  if (publishGlobally) {
+    revalidatePath("/subventions");
+    revalidatePath("/calendar");
+    revalidatePath("/dashboard");
+  }
+
+  return {
+    ok: true,
+    message: publishGlobally
+      ? "Aide publiée dans le catalogue commun."
+      : "Aide conservée uniquement pour cette compagnie.",
+  };
+}
+
 export async function adminSavePatronageCatalogItem(id: string | null, values: PatronageCatalogInput): Promise<ActionResult> {
   const parsed = patronageCatalogSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Programme invalide." };

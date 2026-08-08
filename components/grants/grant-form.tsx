@@ -144,6 +144,10 @@ export function GrantForm({ shows, onSuccess }: { shows: Show[]; onSuccess?: () 
         </p>
       ) : null}
 
+      <p className="text-xs leading-5 text-muted">
+        Les informations publiques du dispositif pourront être examinées par TaDiff pour enrichir le catalogue commun. Vos notes d’éligibilité restent propres à votre compagnie.
+      </p>
+
       <Button type="submit" disabled={isSubmitting || isPending}>
         Ajouter au radar
       </Button>
