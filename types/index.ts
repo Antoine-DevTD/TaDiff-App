@@ -10,7 +10,7 @@ export type CompanyDocument = {
   createdAt: string;
 };
 
-export type CalendarEventKind = "event" | "deadline" | "show";
+export type CalendarEventKind = "event" | "deadline" | "show" | "rehearsal";
 
 export type CalendarEvent = {
   id: string;

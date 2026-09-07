@@ -303,7 +303,7 @@ export type Database = {
           company_id: string;
           title: string;
           event_date: string;
-          kind: "event" | "deadline" | "show";
+          kind: "event" | "deadline" | "show" | "rehearsal";
           related_show_id: string | null;
           note: string | null;
           all_day: boolean;
@@ -317,7 +317,7 @@ export type Database = {
           company_id: string;
           title: string;
           event_date: string;
-          kind?: "event" | "deadline" | "show";
+          kind?: "event" | "deadline" | "show" | "rehearsal";
           related_show_id?: string | null;
           note?: string | null;
           all_day?: boolean;
@@ -331,7 +331,7 @@ export type Database = {
           company_id?: string;
           title?: string;
           event_date?: string;
-          kind?: "event" | "deadline" | "show";
+          kind?: "event" | "deadline" | "show" | "rehearsal";
           related_show_id?: string | null;
           note?: string | null;
           all_day?: boolean;
@@ -689,6 +689,54 @@ export type Database = {
         Row: { id: string; user_id: string; company_id: string; contact_type: "person" | "venue"; visible_columns: string[]; column_order: string[]; updated_at: string };
         Insert: { id?: string; user_id: string; company_id: string; contact_type: "person" | "venue"; visible_columns?: string[]; column_order?: string[]; updated_at?: string };
         Update: Partial<Database["public"]["Tables"]["contact_table_preferences"]["Insert"]>;
+        Relationships: [];
+      };
+      show_team_members: {
+        Row: { id: string; company_id: string; show_id: string; contact_id: string; job_title: string; character_name: string | null; alternate_group: string | null; created_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; contact_id: string; job_title: string; character_name?: string | null; alternate_group?: string | null; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["show_team_members"]["Insert"]>;
+        Relationships: [];
+      };
+      rehearsal_polls: {
+        Row: { id: string; company_id: string; show_id: string; title: string; public_token: string; default_location: string | null; response_deadline: string | null; show_responses: boolean; status: "draft" | "open" | "closed"; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; title: string; public_token?: string; default_location?: string | null; response_deadline?: string | null; show_responses?: boolean; status?: "draft" | "open" | "closed"; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["rehearsal_polls"]["Insert"]>;
+        Relationships: [];
+      };
+      rehearsal_slots: {
+        Row: { id: string; poll_id: string; company_id: string; slot_date: string; start_time: string; end_time: string; location: string | null; calendar_event_id: string | null; confirmed_at: string | null; created_at: string };
+        Insert: { id?: string; poll_id: string; company_id: string; slot_date: string; start_time: string; end_time: string; location?: string | null; calendar_event_id?: string | null; confirmed_at?: string | null; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["rehearsal_slots"]["Insert"]>;
+        Relationships: [];
+      };
+      rehearsal_participants: {
+        Row: { id: string; poll_id: string; company_id: string; team_member_id: string | null; display_name: string; comment: string | null; responded_at: string | null; created_at: string };
+        Insert: { id?: string; poll_id: string; company_id: string; team_member_id?: string | null; display_name: string; comment?: string | null; responded_at?: string | null; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["rehearsal_participants"]["Insert"]>;
+        Relationships: [];
+      };
+      rehearsal_responses: {
+        Row: { participant_id: string; slot_id: string; company_id: string; availability: "yes" | "maybe" | "no"; updated_at: string };
+        Insert: { participant_id: string; slot_id: string; company_id: string; availability: "yes" | "maybe" | "no"; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["rehearsal_responses"]["Insert"]>;
+        Relationships: [];
+      };
+      show_material_items: {
+        Row: { id: string; company_id: string; show_id: string; name: string; category: "costume" | "accessoire" | "decor" | "technique" | "consommable" | "autre"; description: string | null; owner_contact_id: string | null; owner_label: string | null; default_responsible_contact_id: string | null; is_consumable: boolean; quantity_owned: number; unit: string; unit_cost: number; photo_storage_path: string | null; photo_storage_provider: "supabase" | "r2" | null; notes: string | null; active: boolean; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; name: string; category?: "costume" | "accessoire" | "decor" | "technique" | "consommable" | "autre"; description?: string | null; owner_contact_id?: string | null; owner_label?: string | null; default_responsible_contact_id?: string | null; is_consumable?: boolean; quantity_owned?: number; unit?: string; unit_cost?: number; photo_storage_path?: string | null; photo_storage_provider?: "supabase" | "r2" | null; notes?: string | null; active?: boolean; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["show_material_items"]["Insert"]>;
+        Relationships: [];
+      };
+      show_material_requirements: {
+        Row: { id: string; company_id: string; show_id: string; material_item_id: string; performance_date: string; performance_time: string | null; venue: string | null; quantity_needed: number; responsible_contact_id: string | null; status: "to_prepare" | "ready" | "to_buy" | "packed"; notes: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; company_id: string; show_id: string; material_item_id: string; performance_date: string; performance_time?: string | null; venue?: string | null; quantity_needed?: number; responsible_contact_id?: string | null; status?: "to_prepare" | "ready" | "to_buy" | "packed"; notes?: string | null; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["show_material_requirements"]["Insert"]>;
+        Relationships: [];
+      };
+      material_reminder_deliveries: {
+        Row: { id: string; company_id: string; show_id: string; performance_date: string; responsible_contact_id: string; recipient_email: string; sent_at: string; provider_message_id: string | null };
+        Insert: { id?: string; company_id: string; show_id: string; performance_date: string; responsible_contact_id: string; recipient_email: string; sent_at?: string; provider_message_id?: string | null };
+        Update: never;
         Relationships: [];
       };
       opportunities: {
@@ -2208,6 +2256,22 @@ export type Database = {
       respond_to_performance_invitation: {
         Args: { invitation_token: string; invitation_response: string };
         Returns: boolean;
+      };
+      get_public_rehearsal_poll: {
+        Args: { p_token: string };
+        Returns: Json;
+      };
+      submit_public_rehearsal_response: {
+        Args: { p_token: string; p_participant_id: string | null; p_display_name: string; p_comment: string; p_responses: Json };
+        Returns: Json;
+      };
+      create_rehearsal_poll: {
+        Args: { p_show_id: string; p_title: string; p_default_location: string; p_deadline: string | null; p_show_responses: boolean; p_team_member_ids: string[]; p_slots: Json };
+        Returns: string;
+      };
+      confirm_rehearsal_slots: {
+        Args: { p_show_id: string; p_poll_id: string; p_slot_ids: string[] };
+        Returns: number;
       };
       ensure_workspace: {
         Args: {

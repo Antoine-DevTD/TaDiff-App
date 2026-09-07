@@ -32,7 +32,7 @@ export type CalendarBoardItem = {
   id: string;
   date: string;
   href: string;
-  kind: "fixed-cost" | "grant" | "show" | "reminder" | "event" | "deadline";
+  kind: "fixed-cost" | "grant" | "show" | "reminder" | "event" | "deadline" | "rehearsal";
   label: string;
   meta: string;
   tone: "neutral" | "success" | "warning" | "danger";
@@ -70,6 +70,7 @@ const kindStyles: Record<CalendarBoardItem["kind"], { chip: string; dot: string;
   grant: { chip: "border-danger/20 bg-danger/10 text-danger", dot: "bg-danger", label: "Subvention" },
   "fixed-cost": { chip: "border-border bg-panel-strong text-foreground", dot: "bg-muted", label: "Frais fixe" },
   event: { chip: "border-success/20 bg-success/10 text-success", dot: "bg-success", label: "Événement" },
+  rehearsal: { chip: "border-accent/20 bg-accent/10 text-accent", dot: "bg-accent", label: "Répétition" },
   deadline: { chip: "border-danger/20 bg-danger/10 text-danger", dot: "bg-danger", label: "Échéance" },
 };
 
@@ -121,7 +122,7 @@ function groupMatches(item: CalendarBoardItem, group: CalendarGroup) {
   if (group === "all") return true;
   if (group === "funding") return item.kind === "grant";
   if (group === "finance") return item.kind === "fixed-cost";
-  if (group === "event") return item.kind === "event" || item.kind === "deadline";
+  if (group === "event") return item.kind === "event" || item.kind === "deadline" || item.kind === "rehearsal";
   return item.kind === group;
 }
 

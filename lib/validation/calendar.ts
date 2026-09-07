@@ -3,7 +3,7 @@ import { z } from "zod";
 export const calendarEventSchema = z.object({
   title: z.string().min(1, "Le titre est requis").max(160),
   eventDate: z.string().min(1, "La date est requise"),
-  kind: z.enum(["event", "deadline", "show"]),
+  kind: z.enum(["event", "deadline", "show", "rehearsal"]),
   relatedShowId: z.string().max(80).optional().or(z.literal("")),
   note: z.string().max(600).optional().or(z.literal("")),
   allDay: z.boolean().default(true),

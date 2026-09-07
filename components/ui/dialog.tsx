@@ -16,6 +16,8 @@ type DialogProps = {
   className?: string;
 };
 
+const openDialogStack: string[] = [];
+
 export function Dialog({
   open,
   onClose,
@@ -29,6 +31,7 @@ export function Dialog({
   const onCloseRef = useRef(onClose);
   const titleId = useId();
   const descriptionId = useId();
+  const dialogInstanceId = useId();
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -39,6 +42,7 @@ export function Dialog({
 
     const previousFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    openDialogStack.push(dialogInstanceId);
     const focusableSelector = [
       "a[href]",
       "button:not([disabled])",
@@ -50,6 +54,7 @@ export function Dialog({
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        if (openDialogStack.at(-1) !== dialogInstanceId) return;
         event.preventDefault();
         onCloseRef.current();
         return;
@@ -94,17 +99,19 @@ export function Dialog({
     return () => {
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("keydown", onKeyDown, { capture: true });
+      const stackIndex = openDialogStack.lastIndexOf(dialogInstanceId);
+      if (stackIndex >= 0) openDialogStack.splice(stackIndex, 1);
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
-  }, [open]);
+  }, [dialogInstanceId, open]);
 
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] grid place-items-center bg-ink/40 p-4 backdrop-blur-sm">
       <button
-        aria-label="Fermer la fenetre"
+        aria-label="Fermer la fenêtre"
         className="absolute inset-0 cursor-default"
         tabIndex={-1}
         type="button"
@@ -138,7 +145,7 @@ export function Dialog({
               ) : null}
             </div>
             <Button
-              aria-label="Fermer la fenetre"
+              aria-label="Fermer la fenêtre"
               className="h-11 w-11 shrink-0 p-0"
               title="Fermer"
               type="button"

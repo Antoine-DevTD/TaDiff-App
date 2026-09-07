@@ -10,6 +10,9 @@ import { ShowBudgetWorkspace } from "@/components/shows/show-budget-workspace";
 import { ShowEmailProfileForm } from "@/components/shows/show-email-profile-form";
 import { ShowActionsPanel } from "@/components/shows/show-actions-panel";
 import { ShowWorkspaceDocuments } from "@/components/shows/show-workspace-documents";
+import { ShowTeamPanel } from "@/components/shows/show-team-panel";
+import { RehearsalWorkspace } from "@/components/shows/rehearsal-workspace";
+import { ShowMaterialRoadmap } from "@/components/shows/show-material-roadmap";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,9 +26,11 @@ import {
 } from "@/lib/show-documents";
 import { getContacts, getShowById, getShowDocuments, getShowWorkDocuments, getShows } from "@/lib/supabase/queries";
 import { cn } from "@/lib/utils";
-import type { Show } from "@/types";
+import { getShowRehearsalWorkspace } from "@/lib/rehearsals";
+import { getShowMaterialRoadmap } from "@/lib/show-materials";
+import type { PipelineDeal, Show } from "@/types";
 
-type ShowTab = "overview" | "presentation" | "files" | "workspace" | "dates" | "budget";
+type ShowTab = "overview" | "presentation" | "team" | "rehearsals" | "materials" | "files" | "workspace" | "dates" | "budget";
 
 type ShowDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -35,6 +40,9 @@ type ShowDetailPageProps = {
 const baseShowTabs: Array<{ id: ShowTab; label: string }> = [
   { id: "overview", label: "Vue d'ensemble" },
   { id: "presentation", label: "Présentation" },
+  { id: "team", label: "Équipe" },
+  { id: "rehearsals", label: "Répétitions" },
+  { id: "materials", label: "Matériel" },
   { id: "files", label: "Dossier" },
   { id: "workspace", label: "Documents de travail" },
   { id: "dates", label: "Dates" },
@@ -65,6 +73,12 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
     ? [...baseShowTabs, { id: "budget" as const, label: "Budget" }]
     : baseShowTabs;
   const activeTab = resolveTab(query.tab, showTabs);
+  const rehearsalWorkspace = activeTab === "team" || activeTab === "rehearsals"
+    ? await getShowRehearsalWorkspace(show.id)
+    : { team: [], polls: [], error: null };
+  const materialWorkspace = activeTab === "materials"
+    ? await getShowMaterialRoadmap(show.id)
+    : { items: [], requirements: [], reminderDates: [], error: null };
   const weightedRevenue = opportunities.reduce(
     (total, deal) => total + Math.round((deal.value * deal.probability) / 100),
     0,
@@ -144,6 +158,38 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
       ) : null}
 
       {activeTab === "presentation" ? <ShowEmailProfileForm documents={documents} show={show} /> : null}
+
+      {activeTab === "team" ? (
+        rehearsalWorkspace.error ? (
+          <Card className="p-5"><p className="text-sm text-danger">{rehearsalWorkspace.error}</p></Card>
+        ) : (
+          <ShowTeamPanel contacts={contacts} initialTeam={rehearsalWorkspace.team} showId={show.id} />
+        )
+      ) : null}
+
+      {activeTab === "rehearsals" ? (
+        rehearsalWorkspace.error ? (
+          <Card className="p-5"><p className="text-sm text-danger">{rehearsalWorkspace.error}</p></Card>
+        ) : (
+          <RehearsalWorkspace initialPolls={rehearsalWorkspace.polls} showId={show.id} team={rehearsalWorkspace.team} />
+        )
+      ) : null}
+
+      {activeTab === "materials" ? (
+        materialWorkspace.error ? (
+          <Card className="p-5"><p className="text-sm text-danger">{materialWorkspace.error}</p></Card>
+        ) : (
+          <ShowMaterialRoadmap
+            contacts={contacts}
+            initialItems={materialWorkspace.items}
+            initialRequirements={materialWorkspace.requirements}
+            reminderDates={materialWorkspace.reminderDates}
+            showId={show.id}
+            showTitle={show.title}
+            suggestedDates={buildMaterialDates(opportunities, show.nextDate)}
+          />
+        )
+      ) : null}
 
       {activeTab === "workspace" ? (
         <Card className="p-5">
@@ -400,6 +446,15 @@ function ShowPoster({ posterUrl, show }: { posterUrl: string; show: Show }) {
       </div>
     </div>
   );
+}
+
+function buildMaterialDates(opportunities: PipelineDeal[], showNextDate: string) {
+  const dates = opportunities.flatMap((deal) => {
+    const performanceDates = deal.performanceDates?.length ? deal.performanceDates : deal.performanceDate ? [deal.performanceDate] : [];
+    return performanceDates.map((date) => ({ date, time: "", venue: deal.contactOrganization || deal.venue || "" }));
+  });
+  if (showNextDate && !dates.some((item) => item.date === showNextDate)) dates.push({ date: showNextDate, time: "", venue: "" });
+  return [...new Map(dates.filter((item) => item.date).map((item) => [`${item.date}:${item.time}`, item])).values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function getOpportunityStageTone(stage: string) {
