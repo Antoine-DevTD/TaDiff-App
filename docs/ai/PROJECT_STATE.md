@@ -1,5 +1,13 @@
 # Etat court du projet
 
+## Corrections dates, minimum garanti et contacts — 7 septembre 2026
+
+- Dates : représentations des exploitations et événements de l’agenda rattachés au spectacle, en plus des propositions de diffusion. Les créneaux non confirmés restent dans Répétitions.
+- Minimum garanti au théâtre dans les calculs des propositions, exploitations et budgets ; recette compagnie négative possible.
+- Contacts d’équipe sans structure ni email obligatoires ; création directe depuis le spectacle avec métier, personnage et alternance distincts. Aucun compte utilisateur créé.
+- Publication demandée par l’utilisateur sur main. Aucune migration ni nouvelle variable nécessaire. Google, prospection et autres chantiers locaux exclus.
+- Vérifications locales : lint, types, build, copie française, tests de calcul et parcours connecté dates/contacts, clavier et mobile.
+
 ## Reprise des retours 2 à 8 — 5 août 2026
 
 - William est filtrable et triable par compagnie, réponse, recherche et date dans la console plateforme.

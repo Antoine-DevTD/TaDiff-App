@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { createContact, updateContact } from "@/app/(dashboard)/actions";
 import { AddressAutocomplete } from "@/components/contacts/address-autocomplete";
@@ -48,6 +48,7 @@ export function ContactForm({
   onSuccess?: () => void;
 }) {
   const router = useRouter();
+  const jobsId = useId();
   const [isPending, startTransition] = useTransition();
   const [submitMode, setSubmitMode] = useState<"close" | "another">("close");
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -145,7 +146,7 @@ export function ContactForm({
         <Field label={contactType === "venue" ? "Nom du lieu" : "Nom"} error={errors.name?.message}>
           <Input placeholder={contactType === "venue" ? "Théâtre municipal" : "Mina Laurent"} {...register("name")} />
         </Field>
-        {contactType === "person" ? <Field label="Structure" error={errors.organization?.message}><Input placeholder="Scène nationale" {...register("organization")} /></Field> : null}
+        {contactType === "person" ? <Field label="Structure (facultatif)" error={errors.organization?.message}><Input placeholder="Compagnie, théâtre ou indépendant" {...register("organization")} /></Field> : null}
       </div>
 
       {customFieldDefinitions.some((definition) => definition.active && (definition.appliesTo === "both" || definition.appliesTo === contactType)) ? (
@@ -225,7 +226,7 @@ export function ContactForm({
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {contactType === "person" ? <Field label="Rôle" error={errors.role?.message}><Input placeholder="Programmatrice" {...register("role")} /></Field> : null}
+        {contactType === "person" ? <Field label="Métier / fonction" error={errors.role?.message}><Input list={jobsId} placeholder="Comédienne, mise en scène, régie…" {...register("role")} /><datalist id={jobsId}>{["Comédien", "Comédienne", "Mise en scène", "Régie", "Production", "Diffusion", "Programmation", "Costumes", "Scénographie"].map((job) => <option value={job} key={job} />)}</datalist></Field> : null}
         <Field label="Email" error={errors.email?.message}>
           <Input type="email" placeholder="contact@scene.fr" {...register("email")} />
         </Field>
@@ -252,14 +253,15 @@ export function ContactForm({
         </section>
       ) : null}
 
+      {contactType === "person" ? <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={tags.includes("Équipe")} onChange={(event) => { setTags(event.target.checked ? [...new Set([...tags, "Équipe"])] : tags.filter((tag) => tag !== "Équipe")); if (event.target.checked) setValue("status", "Partenaire", { shouldDirty: true }); }} />Personne de l’équipe artistique, technique ou de production</label> : null}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Statut" error={errors.status?.message}>
+        <Field label="Relation" error={errors.status?.message}>
           <Select {...register("status")}>
             <option value="Prospect">Prospect</option>
             <option value="Premier contact">Premier contact</option>
             <option value="En discussion">En discussion</option>
             <option value="Refus">Refus</option>
-            <option value="Partenaire">Partenaire</option>
+            <option value="Partenaire">Équipe / partenaire</option>
           </Select>
         </Field>
       </div>
@@ -268,7 +270,7 @@ export function ContactForm({
         <TagInput
           tags={tags}
           onChange={setTags}
-          suggestions={["Theatre", "Festival", "Scene nationale", "Municipal", "Mecenat"]}
+          suggestions={contactType === "person" ? ["Équipe", "Comédien·ne", "Mise en scène", "Régie", "Production", "Diffusion"] : ["Théâtre", "Festival", "Scène nationale", "Municipal", "Mécénat"]}
         />
       </Field>
 

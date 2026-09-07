@@ -27,10 +27,6 @@ export const contactSchema = z.object({
   directorName: z.string().max(200).optional().or(z.literal("")),
   directorEmail: z.string().email("Email du directeur invalide").optional().or(z.literal("")),
   directorPhone: z.string().max(40, "Telephone trop long").optional().or(z.literal("")),
-}).superRefine((value, context) => {
-  if (value.contactType === "person" && value.organization.trim().length < 2) {
-    context.addIssue({ code: "custom", message: "La structure est requise", path: ["organization"] });
-  }
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;

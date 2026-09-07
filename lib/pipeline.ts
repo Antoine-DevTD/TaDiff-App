@@ -15,6 +15,11 @@ export function getExploitationModeLabel(mode: ExploitationMode) {
   return exploitationModes.find((item) => item.id === mode)?.label ?? "Accord à préciser";
 }
 
+export function resolveStoredCompanyRevenue(deal: { exploitation_mode?: string | null; value?: number | null; estimated_box_office?: number | null; company_share_percent?: number | null; minimum_guarantee?: number | null; minimum_guarantee_basis?: "per_performance" | "total" | null; performance_dates?: string[] | null }) {
+  if (deal.exploitation_mode !== "corealisation") return deal.value ?? 0;
+  return calculateCompanyRevenue({ exploitationMode: "corealisation", cessionFee: 0, venueRental: 0, estimatedBoxOffice: deal.estimated_box_office ?? 0, companySharePercent: deal.company_share_percent ?? 50, minimumGuarantee: deal.minimum_guarantee ?? 0, minimumGuaranteeBasis: deal.minimum_guarantee_basis ?? "total", performanceCount: deal.performance_dates?.length || 1 });
+}
+
 export function calculateCompanyRevenue(input: {
   exploitationMode: ExploitationMode;
   cessionFee: number;
@@ -23,14 +28,15 @@ export function calculateCompanyRevenue(input: {
   minimumGuarantee: number;
   minimumGuaranteeBasis?: "per_performance" | "total";
   performanceCount?: number;
+  performanceDates?: string[];
   venueRental: number;
 }) {
   if (input.exploitationMode === "corealisation") {
-    const sharedRevenue = input.estimatedBoxOffice * (input.companySharePercent / 100);
+    const theatreShare = input.estimatedBoxOffice * (1 - input.companySharePercent / 100);
     const guaranteed = input.minimumGuaranteeBasis === "per_performance"
-      ? input.minimumGuarantee * Math.max(input.performanceCount ?? 1, 1)
+      ? input.minimumGuarantee * Math.max(input.performanceCount ?? input.performanceDates?.length ?? 1, 1)
       : input.minimumGuarantee;
-    return Math.max(sharedRevenue, guaranteed);
+    return input.estimatedBoxOffice - Math.max(theatreShare, guaranteed);
   }
 
   if (input.exploitationMode === "location") {

@@ -1,5 +1,13 @@
 # Passage de relais actif
 
+## Corrections dates, minimum garanti et contacts — 7 septembre 2026
+
+- Dates : représentations des exploitations et événements de l’agenda rattachés au spectacle, en plus des propositions de diffusion. Les créneaux non confirmés restent dans Répétitions.
+- Minimum garanti au théâtre dans les calculs des propositions, exploitations et budgets ; recette compagnie négative possible.
+- Contacts d’équipe sans structure ni email obligatoires ; création directe depuis le spectacle avec métier, personnage et alternance distincts. Aucun compte utilisateur créé.
+- Publication demandée par l’utilisateur sur main. Aucune migration ni nouvelle variable nécessaire. Google, prospection et autres chantiers locaux exclus.
+- Vérifications locales : lint, types, build, copie française, tests de calcul et parcours connecté dates/contacts, clavier et mobile.
+
 ## Observabilite des parcours compagnie et resilience — 6 aout 2026
 
 - La nouvelle route `/admin/companies` presente au superadmin, ou a un administrateur disposant de `view_companies`, des compteurs et jalons d'usage par compagnie sans exposer le contenu des contacts, documents, budgets, emails ou questions William.

@@ -184,7 +184,7 @@ export function OpportunityEditor({
         <div className="grid grid-cols-2 gap-2">
           <Input aria-label="Billetterie estimée" className="min-h-9 text-xs" min="0" step="0.01" type="number" value={draft.estimatedBoxOffice} onChange={(event) => setDraft((current) => ({ ...current, estimatedBoxOffice: event.target.value }))} />
           <Input aria-label="Part compagnie" className="min-h-9 text-xs" min="0" max="100" step="5" type="number" value={draft.companySharePercent} onChange={(event) => setDraft((current) => ({ ...current, companySharePercent: event.target.value }))} />
-          <Input aria-label="Minimum garanti" className="min-h-9 text-xs" min="0" step="1" type="number" value={draft.minimumGuarantee} onChange={(event) => setDraft((current) => ({ ...current, minimumGuarantee: event.target.value }))} />
+          <Input aria-label="Minimum garanti au théâtre" className="min-h-9 text-xs" min="0" step="1" type="number" value={draft.minimumGuarantee} onChange={(event) => setDraft((current) => ({ ...current, minimumGuarantee: event.target.value }))} />
           <Select aria-label="Application du minimum garanti" className="min-h-9 text-xs" value={draft.minimumGuaranteeBasis} onChange={(event) => setDraft((current) => ({ ...current, minimumGuaranteeBasis: event.target.value as "per_performance" | "total" }))}><option value="total">Minimum global</option><option value="per_performance">Par représentation</option></Select>
         </div>
       ) : null}

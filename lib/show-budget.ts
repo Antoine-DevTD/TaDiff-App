@@ -76,7 +76,7 @@ export function calculateShowBudget(profile: ShowBudgetProfile, items: ShowBudge
   const performanceIncome = profile.exploitationMode === "cession"
     ? profile.cessionFee
     : profile.exploitationMode === "revenue_share"
-      ? Math.max(expectedBoxOffice * (profile.companySharePercent / 100), profile.minimumGuarantee)
+      ? expectedBoxOffice - Math.max(expectedBoxOffice * (1 - profile.companySharePercent / 100), profile.minimumGuarantee)
       : expectedBoxOffice;
   const contributionPerPerformance = performanceIncome - performanceCost;
   const remainingCreationCost = Math.max(creationCost - securedFunding, 0);

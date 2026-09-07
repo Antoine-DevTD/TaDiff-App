@@ -11,6 +11,7 @@ import { ShowEmailProfileForm } from "@/components/shows/show-email-profile-form
 import { ShowActionsPanel } from "@/components/shows/show-actions-panel";
 import { ShowWorkspaceDocuments } from "@/components/shows/show-workspace-documents";
 import { ShowTeamPanel } from "@/components/shows/show-team-panel";
+import { ShowDatesList } from "@/components/shows/show-dates-list";
 import { RehearsalWorkspace } from "@/components/shows/rehearsal-workspace";
 import { ShowMaterialRoadmap } from "@/components/shows/show-material-roadmap";
 import { Badge } from "@/components/ui/badge";
@@ -291,23 +292,24 @@ export default async function ShowDetailPage({ params, searchParams }: ShowDetai
         <Card>
           <CardHeader>
             <CardTitle>Dates et prochaines actions</CardTitle>
-            <CardDescription>Les propositions commerciales et les actions rattachees a ce spectacle.</CardDescription>
+            <CardDescription>Les représentations, répétitions confirmées, propositions et actions rattachées à ce spectacle.</CardDescription>
           </CardHeader>
+          <ShowDatesList showId={show.id} />
           <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold">Dates a vendre</h3>
+                <h3 className="text-sm font-semibold">Propositions de diffusion</h3>
                 <ButtonLink href="/pipeline" variant="secondary">Ouvrir la diffusion</ButtonLink>
               </div>
               {opportunities.length === 0 ? (
-                <ActionPanel href="/pipeline" text="Aucune date liee. Ajoutez une proposition depuis la rubrique Diffuser." />
+                <ActionPanel href="/pipeline" text="Aucune proposition de diffusion liée à ce spectacle." />
               ) : (
                 opportunities.map((deal) => (
                   <Link key={deal.id} className="flex flex-col gap-3 border-b border-border py-4 transition-colors hover:text-accent sm:flex-row sm:items-center sm:justify-between" href="/pipeline">
                     <div>
                       <p className="text-sm font-medium">{deal.title}</p>
                       <p className="mt-1 text-xs text-muted">{deal.contactName} - {deal.contactOrganization || deal.venue}</p>
-                      <p className="mt-1 text-xs text-muted">Représentation : {deal.performanceDate ? new Date(deal.performanceDate).toLocaleDateString("fr-FR") : "date à caler"}</p>
+                      <p className="mt-1 text-xs text-muted">Représentations : {(deal.performanceDates?.length ? deal.performanceDates : deal.performanceDate ? [deal.performanceDate] : []).map((date) => new Date(`${date}T12:00:00`).toLocaleDateString("fr-FR")).join(", ") || "dates à caler"}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right text-sm">

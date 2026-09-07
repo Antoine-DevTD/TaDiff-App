@@ -17,6 +17,7 @@ import {
   treasurySnapshot,
 } from "@/data/mock-data";
 import { hasSupabaseEnv } from "@/lib/env";
+import { resolveStoredCompanyRevenue } from "@/lib/pipeline";
 import { betaReservedSeatLimit } from "@/lib/beta";
 import { buildDownloadFileName } from "@/lib/documents-upload";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -270,7 +271,7 @@ export async function getShowById(showId: string): Promise<{
           showId: deal.show_id ?? "",
           venue: deal.contacts?.organization ?? "Structure a renseigner",
           stage: deal.stage as PipelineDeal["stage"],
-          value: deal.value ?? 0,
+          value: resolveStoredCompanyRevenue(deal),
           probability: deal.probability ?? 0,
           exploitationMode: (deal.exploitation_mode ?? "cession") as PipelineDeal["exploitationMode"],
           cessionFee: deal.cession_fee ?? 0,
@@ -567,7 +568,7 @@ export async function getContactById(contactId: string): Promise<{
     showId: deal.show_id ?? "",
     venue: deal.contacts?.organization ?? "Structure a renseigner",
     stage: deal.stage as PipelineDeal["stage"],
-    value: deal.value ?? 0,
+    value: resolveStoredCompanyRevenue(deal),
     probability: deal.probability ?? 0,
     exploitationMode: (deal.exploitation_mode ?? "cession") as PipelineDeal["exploitationMode"],
     cessionFee: deal.cession_fee ?? 0,
@@ -729,7 +730,7 @@ export async function getPipelineDeals(): Promise<PipelineDeal[]> {
     showId: deal.show_id ?? "",
     venue: deal.contacts?.organization ?? "Structure a renseigner",
     stage: deal.stage as PipelineDeal["stage"],
-    value: deal.value ?? 0,
+    value: resolveStoredCompanyRevenue(deal),
     probability: deal.probability ?? 0,
     exploitationMode: (deal.exploitation_mode ?? "cession") as PipelineDeal["exploitationMode"],
     cessionFee: deal.cession_fee ?? 0,

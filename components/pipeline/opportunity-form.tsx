@@ -293,11 +293,11 @@ export function OpportunityForm({
                     if (!event.target.checked) setValue("minimumGuarantee", 0);
                   }}
                 />
-                Un minimum garanti est prévu
+                Un minimum garanti au théâtre est prévu
               </label>
               {hasMinimumGuarantee ? (
                 <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
-                  <Field label="Montant du minimum garanti" error={errors.minimumGuarantee?.message} suffix="EUR">
+                  <Field label="Minimum garanti au théâtre" error={errors.minimumGuarantee?.message} suffix="EUR">
                     <Input type="number" min="0" step="1" inputMode="decimal" {...register("minimumGuarantee")} />
                   </Field>
                   <Field label="Ce montant s’applique">

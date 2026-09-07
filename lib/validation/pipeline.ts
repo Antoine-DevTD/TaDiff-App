@@ -12,7 +12,7 @@ export const opportunitySchema = z.object({
     "Confirme",
     "Perdu",
   ]),
-  value: z.coerce.number().min(0, "Le montant doit etre positif"),
+  value: z.coerce.number().finite("Le montant doit être un nombre"),
   probability: z.coerce.number().min(0).max(100),
   exploitationMode: z.enum(["cession", "corealisation", "location", "other"]).default("cession"),
   cessionFee: z.coerce.number().min(0).default(0),

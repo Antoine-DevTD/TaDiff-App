@@ -136,7 +136,7 @@ export function TheatreBudgetPlanner({
           </Field>
           {profile.exploitationMode === "cession" ? <NumberField label="Prix de cession envisagé" suffix="EUR" value={profile.cessionFee} onChange={(value) => update("cessionFee", value)} /> : null}
           {profile.exploitationMode === "revenue_share" ? <NumberField label="Part compagnie" suffix="%" value={profile.companySharePercent} onChange={(value) => update("companySharePercent", value)} /> : null}
-          {profile.exploitationMode === "revenue_share" ? <NumberField label="Minimum garanti" suffix="EUR" value={profile.minimumGuarantee} onChange={(value) => update("minimumGuarantee", value)} /> : null}
+          {profile.exploitationMode === "revenue_share" ? <NumberField label="Minimum garanti au théâtre" suffix="EUR" value={profile.minimumGuarantee} onChange={(value) => update("minimumGuarantee", value)} /> : null}
           {profile.exploitationMode === "rental" ? <NumberField label="Location par représentation" suffix="EUR" value={profile.venueRental} onChange={(value) => update("venueRental", value)} /> : null}
           <NumberField label="Prix moyen d'une place" suffix="EUR" value={profile.averageTicketPrice} onChange={(value) => update("averageTicketPrice", value)} />
           <NumberField label="Jauge" suffix="places" value={profile.venueCapacity} onChange={(value) => update("venueCapacity", value)} />
