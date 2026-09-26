@@ -1,5 +1,14 @@
 # Etat court du projet
 
+## William, répétitions et matériel — 26 septembre 2026
+
+- Publication sur `main` demandée par l’utilisateur : conversation William visible avec motif d’indisponibilité, erreurs fournisseur explicites, guide produit, suivi des sondages et contrôle de compagnie avant rappel matériel.
+- William fonctionne à nouveau sur le compte démo après changement du modèle Mistral et ajout du guide produit dans la configuration distante. Le compte personnel signalé reste à identifier ; aucun droit ni crédit modifié.
+- Candidat isolé sur `88daea4` : lint, TypeScript, build, contrôle du français et 53 tests réussis, aucun ignoré. Aucune migration ni nouvelle variable d’environnement.
+- Validation PostgreSQL embarquée sans Docker : ne pas démarrer Docker ni activer la virtualisation sur ce poste, pour préserver D::Light. Le parcours Supabase HTTP complet et la délivrance des emails restent à vérifier séparément.
+- Gmail, retours libres et autres travaux locaux exclus. Les invitations de répétition restent manuelles avec un lien collectif ; aucun ordonnanceur de rappels matériels attesté.
+- Publication via GitHub vers `ta-diff/ta-diff-app` ; vérifier le déploiement associé au commit. Détail : `docs/operations/readiness-william-repetitions-2026-09-26.md`.
+
 ## Corrections dates, minimum garanti et contacts — 7 septembre 2026
 
 - Dates : représentations des exploitations et événements de l’agenda rattachés au spectacle, en plus des propositions de diffusion. Les créneaux non confirmés restent dans Répétitions.

@@ -75,6 +75,21 @@ export async function confirmRehearsalSlots(showId: string, pollId: string, slot
   revalidatePath(`/shows/${showId}`); revalidatePath("/calendar"); return { ok: true, message: "Répétition(s) confirmée(s) dans l’agenda." };
 }
 
+export async function setRehearsalPollStatus(showId: string, pollId: string, status: "open" | "closed"): Promise<RehearsalActionResult> {
+  const parsed = z.object({ showId: uuid, pollId: uuid, status: z.enum(["open", "closed"]) }).safeParse({ showId, pollId, status });
+  if (!parsed.success) return { ok: false, message: "Sondage invalide." };
+  const ctx = await context();
+  if (ctx.error || !ctx.supabase || !ctx.companyId) return { ok: false, message: ctx.error ?? "Accès refusé." };
+  const { data: poll, error: readError } = await ctx.supabase.from("rehearsal_polls").select("id,response_deadline,public_token").eq("id", pollId).eq("show_id", showId).eq("company_id", ctx.companyId).maybeSingle();
+  if (readError || !poll) return { ok: false, message: "Sondage introuvable ou inaccessible." };
+  if (status === "open" && poll.response_deadline && poll.response_deadline < new Date().toISOString().slice(0, 10)) return { ok: false, message: "La date limite est passée. Préparez un nouveau sondage pour recueillir d’autres disponibilités." };
+  const { data, error } = await ctx.supabase.from("rehearsal_polls").update({ status, updated_at: new Date().toISOString() }).eq("id", pollId).eq("show_id", showId).eq("company_id", ctx.companyId).select("id").maybeSingle();
+  if (error || !data) return { ok: false, message: "Le statut du sondage n’a pas pu être enregistré. Réessayez." };
+  revalidatePath(`/shows/${showId}`);
+  revalidatePath(`/repetitions/${poll.public_token}`);
+  return { ok: true, message: status === "closed" ? "Sondage fermé. Les réponses et les répétitions confirmées sont conservées." : "Sondage rouvert. L’équipe peut à nouveau répondre avec le même lien." };
+}
+
 export async function updateRehearsalSlotLocations(showId: string, pollId: string, slotIds: string[], location: string): Promise<RehearsalActionResult> {
   const parsed = z.object({ showId: uuid, pollId: uuid, slotIds: z.array(uuid).min(1).max(180), location: z.string().trim().max(160) }).safeParse({ showId, pollId, slotIds, location });
   if (!parsed.success) return { ok: false, message: "Sélectionnez les créneaux et indiquez un lieu valide." };

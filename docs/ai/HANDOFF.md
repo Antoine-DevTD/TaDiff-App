@@ -1,5 +1,15 @@
 # Passage de relais actif
 
+## William, répétitions et matériel — 26 septembre 2026
+
+- L’utilisateur a autorisé le commit et le push du lot validé sur `main`. Publication depuis la copie Git isolée `tmp/publish-readiness-20260926`, base `88daea4`, en préservant tous les autres changements du dépôt principal.
+- Périmètre : 14 fichiers applicatifs William/répétitions/matériel, 6 fichiers de tests et le rapport opérationnel ; documentation de reprise actualisée séparément. Aucun changement de schéma ou de variables.
+- Vérifications du candidat : lint, TypeScript, build, contrôle du français et 53 tests réussis sans test ignoré. Les fichiers temporaires de validation et configurations locales sont exclus.
+- Ne pas démarrer Docker ni activer la virtualisation : incompatibilité signalée avec D::Light. PostgreSQL a été vérifié via PGlite, sans modifier les dépendances du produit.
+- En ligne, le modèle Mistral du compte démo a été remplacé et le guide produit ajouté ; réponses vérifiées. Ne pas modifier les droits du compte personnel avant confirmation de son identité.
+- Vérifier le déploiement GitHub/Vercel du commit vers `ta-diff/ta-diff-app`. L’association Vercel locale vise un autre projet. Aucun email envoyé ; Gmail, retours libres et autres chantiers exclus.
+- Limites et procédure de test : `docs/operations/readiness-william-repetitions-2026-09-26.md`.
+
 ## Corrections dates, minimum garanti et contacts — 7 septembre 2026
 
 - Dates : représentations des exploitations et événements de l’agenda rattachés au spectacle, en plus des propositions de diffusion. Les créneaux non confirmés restent dans Répétitions.

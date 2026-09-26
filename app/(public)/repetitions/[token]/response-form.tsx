@@ -58,13 +58,15 @@ export function ResponseForm({
   >({});
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [addedParticipant, setAddedParticipant] = useState<Participant | null>(null);
+  const availableParticipants = addedParticipant && !participants.some((person) => person.id === addedParticipant.id) ? [...participants, addedParticipant] : participants;
   const selectedParticipant = useMemo(
-    () => participants.find((participant) => participant.id === participantId),
-    [participantId, participants],
+    () => participants.find((participant) => participant.id === participantId) ?? (addedParticipant?.id === participantId ? addedParticipant : undefined),
+    [participantId, participants, addedParticipant],
   );
   function selectParticipant(value: string) {
     setParticipantId(value);
-    const participant = participants.find((item) => item.id === value);
+    const participant = availableParticipants.find((item) => item.id === value);
     setComment(participant?.comment ?? "");
     setAnswers(
       Object.fromEntries(
@@ -87,8 +89,10 @@ export function ResponseForm({
         })),
       });
       setMessage(result.message);
-      if (result.ok && result.participantId)
+      if (result.ok && result.participantId) {
+        if (participantId === "new") setAddedParticipant({ id: result.participantId, name: displayName.trim(), comment, respondedAt: new Date().toISOString() });
         setParticipantId(result.participantId);
+      }
     });
   }
   return (
@@ -102,7 +106,7 @@ export function ResponseForm({
             onChange={(event) => selectParticipant(event.target.value)}
           >
             <option value="">Choisir votre nom</option>
-            {participants.map((participant) => (
+            {availableParticipants.map((participant) => (
               <option key={participant.id} value={participant.id}>
                 {participant.name}
                 {participant.respondedAt ? " · réponse enregistrée" : ""}
@@ -124,8 +128,9 @@ export function ResponseForm({
         ) : null}
         {selectedParticipant?.respondedAt ? (
           <p className="mt-3 text-sm text-muted">
-            Votre réponse précédente est affichée ci-dessous. Vous pouvez la
-            modifier.
+            {responses.some((response) => response.participantId === participantId)
+              ? "Votre réponse précédente est affichée ci-dessous. Vous pouvez la modifier."
+              : "Une réponse est déjà enregistrée. Pour la remplacer, renseignez à nouveau tous les créneaux."}
           </p>
         ) : null}
       </section>

@@ -196,6 +196,10 @@ export async function buildCompanyOperationalContext(
       ].filter(Boolean),
       missingEssentialDocuments: missingDocuments,
       route: `/shows/${show.id}`,
+      teamRoute: `/shows/${show.id}?tab=team`,
+      rehearsalsRoute: `/shows/${show.id}?tab=rehearsals`,
+      materialsRoute: `/shows/${show.id}?tab=materials`,
+      datesRoute: `/shows/${show.id}?tab=dates`,
     };
   });
 

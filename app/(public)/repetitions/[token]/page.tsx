@@ -82,6 +82,11 @@ export default async function RehearsalPollPage({
         ) : null}
       </header>
       <div className="mt-8 grid min-w-0 gap-10">
+        <p className="text-sm text-muted">
+          Ce lien est partagé avec l’équipe : choisissez uniquement votre nom.
+          {poll.showResponses ? " Les disponibilités sont consultables par les personnes qui disposent du lien." : " Les disponibilités sont consultables par la compagnie."}
+          {" "}Les noms et commentaires restent accessibles aux personnes qui disposent du lien.
+        </p>
         {canRespond ? (
           <ResponseForm
             participants={poll.participants}

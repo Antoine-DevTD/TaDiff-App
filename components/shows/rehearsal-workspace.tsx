@@ -14,6 +14,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   confirmRehearsalSlots,
   createRehearsalPoll,
+  setRehearsalPollStatus,
   updateRehearsalSlotLocations,
 } from "@/app/(dashboard)/shows/[id]/rehearsal-actions";
 import { Badge } from "@/components/ui/badge";
@@ -122,7 +123,7 @@ export function RehearsalWorkspace({
       }
     });
   }
-  if (!team.length)
+  if (!team.length && !initialPolls.length)
     return (
       <section className="border border-border bg-panel p-8 text-center">
         <CalendarCheck aria-hidden className="mx-auto h-8 w-8 text-accent" />
@@ -148,7 +149,7 @@ export function RehearsalWorkspace({
           </p>
         </div>
         {!creating ? (
-          <Button onClick={() => setCreating(true)} type="button">
+          <Button disabled={!team.length} onClick={() => setCreating(true)} type="button">
             <Plus aria-hidden className="mr-2 h-4 w-4" />
             Nouveau sondage
           </Button>
@@ -415,8 +416,21 @@ function PollSummary({
             {poll.participants.filter((p) => p.respondedAt).length} réponse(s)
             sur {poll.participants.length}
           </p>
+          {poll.deadline ? <p className="mt-1 text-xs text-muted">Date limite : {new Date(`${poll.deadline}T12:00:00`).toLocaleDateString("fr-FR")}</p> : null}
         </div>
         <div className="flex flex-col items-end gap-2">
+          <Button
+            disabled={isPending}
+            onClick={() => startTransition(async () => {
+              const result = await setRehearsalPollStatus(showId, poll.id, poll.status === "open" ? "closed" : "open");
+              setMessage(result.message);
+              if (result.ok) router.refresh();
+            })}
+            type="button"
+            variant="secondary"
+          >
+            {poll.status === "open" ? "Fermer le sondage" : "Rouvrir le sondage"}
+          </Button>
           <Button
             onClick={async () => {
               try {
@@ -495,6 +509,7 @@ function PollSummary({
                     <Clock3 aria-hidden className="h-3.5 w-3.5" />
                     {slot.startTime}–{slot.endTime}
                   </p>
+                  {slot.confirmed ? <p className="mt-1 text-xs font-medium text-success">Confirmé dans l’agenda</p> : null}
                 </td>
                 <td className="px-3 py-4 text-muted">
                   {slot.location ? (
@@ -538,6 +553,19 @@ function PollSummary({
           </tbody>
         </table>
       </div>
+      {poll.participants.some((participant) => participant.comment) ? (
+        <div className="mt-5 border-t border-border pt-4">
+          <h5 className="text-sm font-semibold">Précisions de l’équipe</h5>
+          <dl className="mt-3 space-y-3">
+            {poll.participants.filter((participant) => participant.comment).map((participant) => (
+              <div key={participant.id}>
+                <dt className="text-sm font-medium">{participant.name}</dt>
+                <dd className="mt-1 whitespace-pre-wrap break-words text-sm text-muted">{participant.comment}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : null}
       <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-1 flex-wrap items-end gap-2">
           <label className="min-w-56 flex-1 text-xs font-medium text-muted">
@@ -576,12 +604,11 @@ function PollSummary({
         <Button
           disabled={!selected.length || isPending}
           onClick={() =>
-            startTransition(async () =>
-              setMessage(
-                (await confirmRehearsalSlots(showId, poll.id, selected))
-                  .message,
-              ),
-            )
+              startTransition(async () => {
+                const result = await confirmRehearsalSlots(showId, poll.id, selected);
+                setMessage(result.message);
+                if (result.ok) { setSelected([]); router.refresh(); }
+              })
           }
           type="button"
         >

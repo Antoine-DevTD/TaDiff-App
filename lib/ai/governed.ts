@@ -1,6 +1,7 @@
 import "server-only";
 
 import { generateAiText, type AiProvider } from "@/lib/ai/provider";
+import { williamProductGuide } from "@/lib/ai/product-guide";
 import { buildCompanyOperationalContext } from "@/lib/ai/company-context";
 import { formatRagContext, searchHybridRagKnowledge } from "@/lib/ai/rag";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
@@ -120,6 +121,7 @@ function buildWilliamSystemPrompt(basePrompt: string, question: string) {
   const planningQuestion = /(?:que|quoi).*(?:faire|priorit)|prochaine?s? etape?s?|par quoi commencer|priorit[eé]s?/i.test(question);
   return [
     basePrompt,
+    basePrompt.includes("[FONCTIONNALITÉS TADIFF VÉRIFIÉES]") ? "" : williamProductGuide,
     "Tu disposes de deux contextes separes : l'etat operationnel du compte et les sources documentaires.",
     "L'etat operationnel est la reference pour les faits propres a la compagnie connectee. Il suffit pour analyser ses priorites : n'exige pas de source documentaire pour cela.",
     "Les sources documentaires servent aux regles, aides, methodes et explications externes. Si elles sont absentes, reponds quand meme a partir de l'etat du compte lorsque la question le permet.",

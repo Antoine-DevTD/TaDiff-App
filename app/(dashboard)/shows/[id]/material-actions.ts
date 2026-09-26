@@ -185,11 +185,13 @@ export async function sendMaterialReminderNow(showId: string, performanceDate: s
   const parsed = z.object({ showId: uuid, performanceDate: z.string().date() }).safeParse({ showId, performanceDate });
   if (!parsed.success) return { ok: false, message: "Date invalide." };
   const ctx = await getContext();
-  if (ctx.error || !ctx.companyId) return { ok: false, message: ctx.error ?? "Accès refusé." };
+  if (ctx.error || !ctx.companyId || !ctx.supabase) return { ok: false, message: ctx.error ?? "Accès refusé." };
+  const { data: show, error: showError } = await ctx.supabase.from("shows").select("id").eq("id", parsed.data.showId).eq("company_id", ctx.companyId).maybeSingle();
+  if (showError || !show) return { ok: false, message: "Spectacle introuvable ou inaccessible." };
   try {
     const result = await runMaterialReminders({ showId: parsed.data.showId, targetDate: parsed.data.performanceDate });
     revalidatePath(`/shows/${showId}`);
-    if (result.sent > 0) return { ok: true, message: `${result.sent} rappel(s) envoyé(s). Consultez les emails locaux.` };
+    if (result.sent > 0) return { ok: true, message: `${result.sent} rappel(s) envoyé(s) aux personnes responsables.${result.missingEmails ? ` ${result.missingEmails} besoin(s) sans adresse email : complétez les contacts concernés.` : ""}` };
     if (result.skipped > 0) return { ok: true, message: "Les rappels de cette date ont déjà été envoyés." };
     if (result.missingEmails > 0) return { ok: false, message: "Aucun rappel envoyé : ajoutez une adresse email aux personnes responsables." };
     return { ok: false, message: "Aucun matériel avec une personne responsable pour cette date." };
