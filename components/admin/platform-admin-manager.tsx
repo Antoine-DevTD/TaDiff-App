@@ -77,7 +77,7 @@ export function PlatformAdminManager({
         <>
           <label className="block max-w-xl text-sm font-medium">
             Compte
-            <Select className="mt-2" value={userId} onChange={(event) => selectAccount(event.target.value)}>
+            <Select searchable className="mt-2" value={userId} onChange={(event) => selectAccount(event.target.value)}>
               {candidates.map((account) => (
                 <option key={account.userId} value={account.userId}>
                   {account.fullName || account.email} - {account.companyName || "Sans compagnie"}

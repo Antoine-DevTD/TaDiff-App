@@ -55,6 +55,8 @@ export function Dialog({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         if (openDialogStack.at(-1) !== dialogInstanceId) return;
+        // An open person picker handles the first Escape; the next closes the dialog.
+        if (event.target instanceof Element && event.target.closest('[role="combobox"][aria-expanded="true"]')) return;
         event.preventDefault();
         onCloseRef.current();
         return;

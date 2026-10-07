@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { matchesPersonSearch } from "@/components/ui/select";
 import type { RehearsalPoll, ShowTeamMember } from "@/lib/rehearsals";
 
 type SlotDraft = {
@@ -88,6 +89,8 @@ export function RehearsalWorkspace({
   const [selectedMembers, setSelectedMembers] = useState(() =>
     team.map((member) => member.id),
   );
+  const [personQuery, setPersonQuery] = useState("");
+  const matchingTeam = team.filter((member) => matchesPersonSearch(`${member.name} ${member.email ?? ""}`, personQuery));
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [ranges, setRanges] = useState<TimeRange[]>([
@@ -207,8 +210,13 @@ export function RehearsalWorkspace({
             <legend className="text-sm font-semibold">
               Personnes invitées
             </legend>
+            <label className="mt-3 block text-xs font-medium text-muted">
+              Rechercher une personne à inviter
+              <Input className="mt-2" type="search" placeholder="Écrivez un nom…" value={personQuery} onChange={(event) => setPersonQuery(event.target.value)} />
+            </label>
+            <p className="mt-2 text-xs text-muted" role="status">{selectedMembers.length} {selectedMembers.length > 1 ? "personnes sélectionnées" : "personne sélectionnée"}{matchingTeam.length === 0 ? " · Aucun résultat pour ce nom." : ""}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {team.map((member) => {
+              {matchingTeam.map((member) => {
                 const selected = selectedMembers.includes(member.id);
                 return (
                   <button

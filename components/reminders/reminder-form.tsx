@@ -225,8 +225,8 @@ export function ReminderForm({
           ) : contactUseful ? (
             <label className="mt-4 block text-sm font-medium">
               Contact <span className="font-normal text-muted">(facultatif)</span>
-              <Select className="mt-2" value={contactId} onChange={(event) => chooseContact(event.target.value)}>
-                <option value="">Sans contact precis</option>
+              <Select searchable className="mt-2" value={contactId} onChange={(event) => chooseContact(event.target.value)}>
+                <option value="">Sans contact précis</option>
                 {contacts.map((contact) => <option key={contact.id} value={contact.id}>{contact.name}{contact.organization ? ` - ${contact.organization}` : ""}</option>)}
               </Select>
             </label>

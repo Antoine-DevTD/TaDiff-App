@@ -67,14 +67,26 @@ test("répétitions : états de confirmation/fermeture au clavier et réponse ex
     await expect(page.getByRole("button", { name: "Fermer le sondage" })).toBeVisible();
 
     await page.evaluate(() => window.uiRoot.render(window.React.createElement(window.ResponseForm, { token: "token", slots: window.fixture.slots, participants: [], responses: [] })));
-    await page.getByLabel("Qui êtes-vous ?").selectOption("new");
+    await page.getByRole("combobox", { name: "Qui êtes-vous ?" }).fill("Mon nom");
+    await page.getByRole("option", { name: "Mon nom n’est pas dans la liste" }).click();
     await page.getByLabel("Votre nom", { exact: true }).fill("Régie invitée");
     await page.getByRole("button", { name: "Tout marquer disponible" }).click();
     await page.getByRole("button", { name: "Envoyer mes disponibilités" }).click();
     await expect(page.getByText(/disponibilités ont bien été transmises/)).toBeVisible();
-    await expect(page.getByLabel("Qui êtes-vous ?")).toHaveValue("new-id");
+    await expect(page.getByRole("combobox", { name: "Qui êtes-vous ?" })).toHaveValue("Régie invitée · réponse enregistrée");
     await page.getByRole("button", { name: "Envoyer mes disponibilités" }).click();
     assert.equal(await page.evaluate(() => window.lastResponse.participantId), "new-id");
+    await page.evaluate(() => window.uiRoot.render(window.React.createElement(window.RehearsalWorkspace, { key: "search-team", showId: "show", team: [{ id: "lea", name: "Léa Dupont", email: "lea@example.test" }, { id: "suzanne", name: "Suzanne Bussy", email: "suzanne@example.test" }], initialPolls: [] })));
+    const invitedSearch = page.getByRole("searchbox", { name: "Rechercher une personne à inviter" });
+    await invitedSearch.fill("LEA");
+    await expect(page.getByRole("button", { name: "Léa Dupont", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: "Suzanne Bussy", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Léa Dupont", exact: true }).click();
+    await invitedSearch.fill("introuvable");
+    await expect(page.getByRole("status")).toContainText("1 personne sélectionnée · Aucun résultat");
+    await invitedSearch.fill("");
+    await expect(page.getByRole("button", { name: "Léa Dupont", exact: true })).toHaveAttribute("aria-pressed", "false");
+    await expect(page.getByRole("button", { name: "Suzanne Bussy", exact: true })).toHaveAttribute("aria-pressed", "true");
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 });

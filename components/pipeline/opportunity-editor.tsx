@@ -138,7 +138,7 @@ export function OpportunityEditor({
         onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
       />
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-        <Select
+        <Select searchable
           aria-label="Contact"
           className="min-h-9 text-xs"
           value={draft.contactId}
