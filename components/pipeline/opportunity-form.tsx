@@ -96,6 +96,7 @@ export function OpportunityForm({
   const exploitationMode = useWatch({ control, name: "exploitationMode" }) ?? "cession";
   const stage = useWatch({ control, name: "stage" }) ?? "A qualifier";
   const selectedShowId = useWatch({ control, name: "showId" });
+  const selectedContactId = useWatch({ control, name: "contactId" }) ?? "";
   const cessionFee = Number(useWatch({ control, name: "cessionFee" })) || 0;
   const estimatedBoxOffice = Number(useWatch({ control, name: "estimatedBoxOffice" })) || 0;
   const companySharePercent = Number(useWatch({ control, name: "companySharePercent" })) || 0;
@@ -216,7 +217,7 @@ export function OpportunityForm({
           {contactMode === "existing" ? (
             <div className="mt-3">
               <Field label="Contact" error={errors.contactId?.message}>
-                <Select {...register("contactId")}>
+                <Select searchable {...register("contactId")} value={selectedContactId}>
                   <option value="">Choisir un contact</option>
                   {contacts.map((contact) => (
                     <option key={contact.id} value={contact.id}>{contact.name} - {contact.organization}</option>

@@ -100,7 +100,7 @@ export function ResponseForm({
       <section>
         <label className="block text-sm font-semibold">
           Qui êtes-vous ?
-          <Select
+          <Select searchable
             className="mt-2"
             value={participantId}
             onChange={(event) => selectParticipant(event.target.value)}

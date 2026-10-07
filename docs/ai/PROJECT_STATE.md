@@ -1,9 +1,16 @@
 # Etat court du projet
 
-## Supervision bêta — livraison isolée du 8 octobre 2026
+## Recherche de personnes — 8 octobre 2026
+
+- Les 14 champs de choix de personnes/contacts permettent de saisir un nom pour filtrer les résultats : équipe, matériel (propriétaire et responsable), diffusion, relances, emails, administration et réponse publique aux répétitions. Recherche sans distinction d’accents ou de majuscules ; navigation flèches/Entrée, annulation Échap, choix conservé tant qu’un résultat n’est pas validé.
+- Les invitations multiples aux répétitions disposent aussi d’une recherche par nom/email, sans perdre les personnes sélectionnées hors du filtre. Identifiants transmis, validations et autorisations conservés.
+- Vérifications navigateur à 390 et 1280 pixels : formulaires natifs et react-hook-form, champs obligatoires, listes vides, homonymes, choix refusé par le parent, fenêtres et répétitions. Aucune migration SQL ni nouvelle variable d’environnement nécessaire.
+
+## Supervision bêta — publication du 8 octobre 2026
 
 - Branche `codex/beta-supervision` : accès offert sans paiement fictif, invitation explicite, compagnies/membres et compteurs complets, droits et pagination contrôlés.
-- SQL 086–089 dans `sql/releases/20261008_beta_supervision.sql`, en une transaction. Application et qualification Supabase nécessaires avant mise en service.
+- PR nº 3 fusionnée au commit `f49023c1f86505802bb5a4f3f60bde7c2355e852` ; déploiement Vercel Production du même commit confirmé réussi (6923299592).
+- SQL 086–089 dans `sql/releases/20261008_beta_supervision.sql`, appliqué par l’utilisateur ; objets principaux et RPC de supervision présents dans l’API après contrôle en lecture. Aucun SQL distant exécuté par l’agent.
 - Aucun envoi de mail, paiement réel, réglage Auth à sept jours ou raccordement Stripe effectué par ce lot. Autres travaux locaux distincts. Procédure : `docs/operations/publication-supervision-beta-2026-10-08.md`.
 
 ## William, répétitions et matériel — 26 septembre 2026

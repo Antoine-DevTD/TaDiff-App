@@ -129,7 +129,7 @@ export function EmailComposer({ contacts, documents, initialContactId, initialCo
           </div>
         ) : (
           <label className="block text-sm font-medium">Contact
-            <Select aria-label="Contact" className="mt-2" value={selectedContact?.id ?? ""} onChange={(event) => setContactIds([event.target.value])}>
+            <Select searchable aria-label="Contact" className="mt-2" value={selectedContact?.id ?? ""} onChange={(event) => setContactIds([event.target.value])}>
               {contacts.map((contact) => <option key={contact.id} value={contact.id}>{contact.name}{contact.organization ? ` - ${contact.organization}` : ""}</option>)}
             </Select>
           </label>

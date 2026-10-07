@@ -70,7 +70,8 @@ test("répétitions : création, réponse publique, commentaire, agenda, fermetu
     assert.ifError(pollError);
     const publicPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await publicPage.goto(`${appUrl}/repetitions/${poll.public_token}`);
-    await publicPage.getByLabel("Qui êtes-vous ?").selectOption({ label: "Camille locale" });
+    await publicPage.getByRole("combobox", { name: "Qui êtes-vous ?" }).fill("Camille locale");
+    await publicPage.getByRole("option", { name: "Camille locale", exact: true }).click();
     await publicPage.getByRole("button", { name: "Tout marquer disponible" }).click();
     await publicPage.getByLabel("Un détail à transmettre ?", { exact: false }).fill("Départ à midi le mardi.");
     await publicPage.getByRole("button", { name: "Envoyer mes disponibilités" }).click();
