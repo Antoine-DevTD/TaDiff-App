@@ -5,7 +5,6 @@ import { z } from "zod";
 import { hasSupabaseEnv } from "@/lib/env";
 import { demoWebinarEmail } from "@/lib/demo-webinar";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getSupabaseAdminClient, hasSupabaseAdminEnv } from "@/lib/supabase/admin-client";
 import {
   getConfiguredStorageProvider,
   removePrivateObject,
@@ -221,20 +220,8 @@ export async function completeWelcomeOnboarding(
     return { ok: false, message: companyError.message, nextPath: "/welcome" };
   }
 
-  if (user.email && hasSupabaseAdminEnv()) {
-    const admin = getSupabaseAdminClient();
-    const now = new Date().toISOString();
-    const { data: signup } = await admin
-      .from("beta_signups")
-      .update({ account_created_at: now, invited_user_id: user.id, last_access_error: null })
-      .eq("email", user.email.toLowerCase())
-      .eq("is_demo", false)
-      .select("id")
-      .maybeSingle();
-    if (signup) {
-      await admin.from("beta_access_events").insert({ beta_signup_id: signup.id, actor_id: user.id, event_type: "account_created" });
-    }
-  }
+  // ensure_workspace owns the Auth association and the creation audit in SQL.
+  // Replaying onboarding must not reassign a signup or duplicate that event.
 
   revalidatePath("/dashboard");
   revalidatePath("/settings");

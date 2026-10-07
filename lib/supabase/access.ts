@@ -3,7 +3,7 @@ import { cache } from "react";
 import { getSupabaseServerClient, getSupabaseServerUser } from "@/lib/supabase/server";
 
 export type CompanyRole = "owner" | "admin" | "member" | "readonly";
-export type BillingStatus = "trial" | "active" | "comped" | "past_due" | "cancelled";
+export type BillingStatus = "pending_payment" | "trial" | "active" | "comped" | "past_due" | "cancelled";
 
 export type WorkspaceAccess = {
   companyId: string | null;
@@ -28,8 +28,12 @@ const demoAccess: WorkspaceAccess = {
 };
 
 function isCompedActive(compedUntil: string | null) {
-  if (!compedUntil) return true;
-  return new Date(compedUntil) >= new Date(new Date().toDateString());
+  if (compedUntil === null) return true;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(compedUntil)) return false;
+  const expiry = new Date(`${compedUntil}T00:00:00.000Z`);
+  if (!Number.isFinite(expiry.getTime()) || expiry.toISOString().slice(0, 10) !== compedUntil) return false;
+  // Les droits SQL utilisent des jours civils UTC, échéance incluse.
+  return compedUntil >= new Date().toISOString().slice(0, 10);
 }
 
 export function computeHasAccess(

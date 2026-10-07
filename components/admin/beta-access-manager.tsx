@@ -1,108 +1,149 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState, useTransition } from "react";
-import { CheckCircle2, Coins, Mail, Search, Send } from "lucide-react";
-import { confirmBetaPayment, creditBetaWilliam, inviteBetaSignups, markBetaPaymentEmailsSent, resendBetaInvitation, sendBetaPaymentEmails } from "@/app/(dashboard)/admin/beta/actions";
-import { betaPaymentEmailBody, betaPaymentEmailSubject, getBetaAccessStage, renderBetaEmailTemplate } from "@/lib/beta-access";
+import { useDeferredValue, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Coins, Gift, RefreshCw, Search, Send } from "lucide-react";
+import { confirmBetaPayment, creditBetaWilliam, grantBetaComplimentaryAccess, inviteBetaSignups, markBetaPaymentEmailsSent, resendBetaInvitation, sendBetaPaymentEmails } from "@/app/(dashboard)/admin/beta/actions";
+import { betaPaymentEmailBody, betaPaymentEmailSubject, renderBetaEmailTemplate } from "@/lib/beta-access";
 import type { AdminBetaSignup } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
-type Stage = ReturnType<typeof getBetaAccessStage>;
-const stageMeta: Record<Stage, { label: string; tone: "neutral" | "success" | "warning" | "danger" }> = {
-  registered: { label: "Inscrit", tone: "neutral" },
-  payment_email_sent: { label: "Paiement envoye", tone: "warning" },
-  paid: { label: "Paiement verifie", tone: "success" },
-  invited: { label: "Invitation envoyee", tone: "success" },
-  account_created: { label: "Compte cree", tone: "success" },
-  error: { label: "A reprendre", tone: "danger" },
-};
+type Filter = "all" | "pending" | "open" | "offered" | "error";
+type Result = { ok: boolean; message: string };
+function isOffered(signup: AdminBetaSignup) {
+  return signup.billingStatus === "comped" || Boolean(signup.accessGrantedAt && !signup.linkedCompanyId);
+}
+function formatDate(value: string) {
+  return new Date(value).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Paris" });
+}
 
-export function BetaAccessManager({ canManage, signups }: { canManage: boolean; signups: AdminBetaSignup[] }) {
+export function BetaAccessManager({ canManage, canViewAccess = canManage, signups, error = null }: { canManage: boolean; canViewAccess?: boolean; signups: AdminBetaSignup[]; error?: string | null }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
-  const [stage, setStage] = useState<"all" | Stage>("all");
+  const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<string[]>([]);
   const [subject, setSubject] = useState(betaPaymentEmailSubject);
   const [body, setBody] = useState(betaPaymentEmailBody);
   const [preview, setPreview] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<Result | null>(null);
   const [pending, startTransition] = useTransition();
-
+  const busy = useRef(false);
+  const realSignups = signups.filter((signup) => !signup.isDemo);
   const filtered = useMemo(() => {
     const needle = deferredQuery.trim().toLocaleLowerCase("fr-FR");
     return signups.filter((signup) => {
-      const currentStage = getBetaAccessStage(signup);
-      if (stage !== "all" && currentStage !== stage) return false;
-      if (!needle) return true;
-      return `${signup.companyName} ${signup.contactName} ${signup.email} ${signup.city}`.toLocaleLowerCase("fr-FR").includes(needle);
+      if (filter === "pending" && (signup.isDemo || signup.hasAccess)) return false;
+      if (filter === "open" && (signup.isDemo || !signup.hasAccess)) return false;
+      if (filter === "offered" && (signup.isDemo || !isOffered(signup))) return false;
+      if (filter === "error" && !signup.lastAccessError) return false;
+      return !needle || `${signup.companyName} ${signup.linkedCompanyName ?? ""} ${signup.contactName} ${signup.email} ${signup.city}`.toLocaleLowerCase("fr-FR").includes(needle);
     });
-  }, [deferredQuery, signups, stage]);
-
-  const eligible = filtered.filter((signup) => !signup.isDemo && signup.status === "reserved");
-  const previewSignup = signups.find((signup) => selected.includes(signup.id)) ?? eligible[0];
+  }, [deferredQuery, signups, filter]);
+  const eligible = filtered.filter((signup) => !signup.isDemo && signup.status === "reserved" && !signup.accessGrantedAt && !isOffered(signup));
+  const selectedIds = selected.filter((id) => signups.some((signup) => signup.id === id && !signup.isDemo && signup.status === "reserved" && !signup.accessGrantedAt && !isOffered(signup)));
+  const payableIds = selectedIds.filter((id) => !signups.find((signup) => signup.id === id)?.paymentConfirmedAt);
+  const inviteIds = selectedIds.filter((id) => signups.some((signup) => signup.id === id && signup.paymentConfirmedAt && !signup.emailConfirmedAt && !signup.invitationSentAt));
+  const previewSignup = signups.find((signup) => payableIds.includes(signup.id));
   const context = previewSignup ? { firstName: previewSignup.contactName.split(/\s+/)[0] || previewSignup.contactName, companyName: previewSignup.companyName, email: previewSignup.email, paymentUrl: "https://paiement.stripe.com/..." } : null;
 
-  function run(action: () => Promise<{ ok: boolean; message: string }>) {
-    setMessage("");
+  function run(action: () => Promise<Result>) {
+    if (busy.current || error) return;
+    busy.current = true;
+    setMessage(null);
     startTransition(async () => {
-      const result = await action();
-      setMessage(result.message);
-      if (result.ok) setSelected([]);
+      try {
+        const result = await action();
+        setMessage(result);
+        if (result.ok) { setSelected([]); setPreview(false); }
+        router.refresh();
+      } catch {
+        setMessage({ ok: false, message: "L’action n’a pas abouti. Vos choix sont conservés ; réessayez." });
+      } finally { busy.current = false; }
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Progression de la beta">
-        {(["registered", "payment_email_sent", "paid", "invited", "account_created"] as Stage[]).map((item) => (
-          <button key={item} type="button" className="rounded-md border border-border bg-panel p-4 text-left transition hover:border-accent/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" onClick={() => setStage(item)}>
-            <span className="text-2xl font-semibold tabular-nums">{signups.filter((signup) => getBetaAccessStage(signup) === item && !signup.isDemo).length}</span>
-            <span className="mt-1 block text-xs text-muted">{stageMeta[item].label}</span>
-          </button>
-        ))}
-      </section>
-
-      {canManage ? <Card className="space-y-4 p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div><h2 className="text-lg font-semibold">Mail d&apos;activation</h2><p className="mt-1 text-sm text-muted">Paiement unique du premier mois, sans renouvellement automatique.</p></div>
-          <Badge tone={selected.length ? "warning" : "neutral"}>{selected.length} selectionnee(s)</Badge>
-        </div>
-        <label className="block text-sm font-medium">Objet<Input className="mt-2" maxLength={180} value={subject} onChange={(event) => { setSubject(event.target.value); setPreview(false); }} /></label>
-        <label className="block text-sm font-medium">Message<textarea className="mt-2 min-h-72 w-full rounded-md border border-border bg-panel px-4 py-3 text-sm leading-6 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/10" maxLength={12000} value={body} onChange={(event) => { setBody(event.target.value); setPreview(false); }} /></label>
-        <p className="text-xs text-muted">Variables : @prenom · @compagnie · @email · @lien_paiement</p>
-        {preview && context ? <div className="rounded-md border border-border bg-white p-5 text-slate-900"><p className="border-b pb-3 text-sm"><strong>Objet :</strong> {renderBetaEmailTemplate(subject, context)}</p><p className="mt-4 whitespace-pre-wrap text-sm leading-6">{renderBetaEmailTemplate(body, context)}</p></div> : null}
-        <div className="flex flex-wrap gap-2"><Button type="button" variant="secondary" onClick={() => setPreview(true)}>Apercu final</Button><Button disabled={!preview || pending || selected.length === 0} type="button" onClick={() => run(() => sendBetaPaymentEmails({ signupIds: selected, subject, body }))}><Mail className="mr-2 h-4 w-4" />Envoyer le paiement</Button><Button disabled={pending || selected.length === 0} type="button" variant="secondary" onClick={() => run(() => markBetaPaymentEmailsSent({ signupIds: selected }))}><CheckCircle2 className="mr-2 h-4 w-4" />Mails deja envoyes manuellement</Button><Button disabled={pending || selected.length === 0} type="button" variant="secondary" onClick={() => run(() => inviteBetaSignups({ signupIds: selected }))}><Send className="mr-2 h-4 w-4" />Envoyer les invitations eligibles</Button><Button disabled={pending || selected.length === 0} type="button" variant="secondary" onClick={() => run(() => creditBetaWilliam({ signupIds: selected }))}><Coins className="mr-2 h-4 w-4" />Activer William + 200 000 tokens</Button></div>
-      </Card> : null}
-
-      <Card className="space-y-4 p-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div><h2 className="text-lg font-semibold">Compagnies inscrites</h2><p className="mt-1 text-sm text-muted">Suivez chaque compagnie de son inscription a la creation du compte.</p></div>
-          <div className="flex flex-col gap-2 sm:flex-row"><label className="relative"><span className="sr-only">Rechercher</span><Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted" /><Input className="pl-9" placeholder="Compagnie, contact, email..." value={query} onChange={(event) => setQuery(event.target.value)} /></label><Select aria-label="Filtrer par etape" value={stage} onChange={(event) => setStage(event.target.value as typeof stage)}><option value="all">Toutes les etapes</option>{Object.entries(stageMeta).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}</Select></div>
-        </div>
-        {canManage && eligible.length ? <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={eligible.every((signup) => selected.includes(signup.id))} onChange={(event) => setSelected(event.target.checked ? eligible.map((signup) => signup.id) : [])} />Selectionner les compagnies eligibles affichees</label> : null}
-        {message ? <p className="rounded-md border border-border bg-panel-strong p-3 text-sm" role="status">{message}</p> : null}
-        {filtered.length === 0 ? <p className="rounded-md border border-dashed border-border p-5 text-sm text-muted">Aucune inscription ne correspond a ce filtre.</p> : <div className="space-y-3">{filtered.map((signup) => <BetaSignupRow key={signup.id} canManage={canManage} checked={selected.includes(signup.id)} pending={pending} signup={signup} onCheck={(checked) => setSelected((current) => checked ? [...new Set([...current, signup.id])] : current.filter((id) => id !== signup.id))} onConfirm={(reference) => run(() => confirmBetaPayment({ signupId: signup.id, reference }))} onResend={() => run(() => resendBetaInvitation({ signupId: signup.id }))} />)}</div>}
-      </Card>
+  return <div className="space-y-5" aria-busy={pending}>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+      <p className="max-w-2xl text-sm text-muted">Ouvrez un accès offert directement. Le paiement et l’invitation se gèrent séparément.</p>
+      <Button type="button" variant="secondary" disabled={pending} onClick={() => router.refresh()}><RefreshCw aria-hidden="true" className="mr-2 h-4 w-4" />Actualiser</Button>
     </div>
-  );
+    {error ? <p className="rounded-md border border-danger/30 p-4 text-sm text-danger" role="alert">{error} Utilisez Actualiser après correction.</p> : <>
+      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Suivi des inscriptions">
+        <span><strong className="tabular-nums">{realSignups.length}</strong> inscriptions</span>
+        <span><strong className="tabular-nums">{realSignups.filter((signup) => signup.hasAccess).length}</strong> accès ouverts</span>
+        <span><strong className="tabular-nums">{realSignups.filter(isOffered).length}</strong> accès offerts</span>
+        <span><strong className="tabular-nums">{realSignups.filter((signup) => !signup.hasAccess).length}</strong> accès à activer</span>
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <label className="relative flex-1"><span className="sr-only">Rechercher une inscription</span><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted" /><Input className="pl-9" placeholder="Compagnie, personne, email…" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+        <Select aria-label="Filtrer les accès" className="sm:w-auto" value={filter} onChange={(event) => setFilter(event.target.value as Filter)}><option value="all">Toutes les inscriptions</option><option value="pending">Accès à activer</option><option value="open">Accès ouverts</option><option value="offered">Accès offerts</option><option value="error">Erreurs à reprendre</option></Select>
+      </div>
+      {message ? <p className={`rounded-md border p-3 text-sm ${message.ok ? "border-success/30 text-success" : "border-danger/30 text-danger"}`} role={message.ok ? "status" : "alert"}>{message.message}</p> : null}
+      {filtered.length === 0 ? <p className="border-y border-dashed border-border py-8 text-sm text-muted">{signups.length ? "Aucune inscription ne correspond à ce filtre." : "Aucune inscription bêta pour le moment."}</p> : <div className="divide-y divide-border border-y border-border">
+        {filtered.map((signup) => <BetaSignupRow key={signup.id} canManage={canManage} canViewAccess={canViewAccess} pending={pending} signup={signup} onGrant={(note) => run(() => grantBetaComplimentaryAccess({ signupId: signup.id, note }))} onInvite={() => run(() => inviteBetaSignups({ signupIds: [signup.id] }))} onConfirm={(reference) => run(() => confirmBetaPayment({ signupId: signup.id, reference }))} onResend={() => run(() => resendBetaInvitation({ signupId: signup.id }))} onCredit={() => run(() => creditBetaWilliam({ signupIds: [signup.id] }))} />)}
+      </div>}
+      {canManage ? <details className="border-b border-border pb-4">
+        <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">Paiements manuels et envois groupés</summary>
+        <div className="space-y-4 pt-2">
+          <p className="max-w-2xl text-sm text-muted">Ancien parcours bêta : paiement unique du premier mois, sans renouvellement automatique. Les accès offerts sont exclus de ces envois.</p>
+          {eligible.length ? <label className="flex min-h-11 items-center gap-2 text-sm"><input disabled={pending} type="checkbox" checked={eligible.every((signup) => selectedIds.includes(signup.id))} onChange={(event) => { setSelected(event.target.checked ? eligible.map((signup) => signup.id) : []); setPreview(false); }} />Sélectionner les inscriptions affichées</label> : null}
+          <div className="space-y-1">{eligible.map((signup) => <label key={signup.id} className="flex min-h-11 min-w-0 items-center gap-2 text-sm"><input disabled={pending} checked={selectedIds.includes(signup.id)} type="checkbox" onChange={(event) => { setSelected((current) => event.target.checked ? [...new Set([...current, signup.id])] : current.filter((id) => id !== signup.id)); setPreview(false); }} /><span className="break-words">{signup.contactName} · {signup.companyName}</span></label>)}</div>
+          <p className="text-sm text-muted">{selectedIds.length} inscription(s) sélectionnée(s)</p>
+          <label className="block text-sm font-medium">Objet<Input className="mt-2" disabled={pending} maxLength={180} value={subject} onChange={(event) => { setSubject(event.target.value); setPreview(false); }} /></label>
+          <label className="block text-sm font-medium">Message<textarea disabled={pending} className="mt-2 min-h-56 w-full rounded-md border border-border bg-panel px-4 py-3 text-sm leading-6 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/10" maxLength={12000} value={body} onChange={(event) => { setBody(event.target.value); setPreview(false); }} /></label>
+          <p className="text-xs text-muted">Variables : @prenom · @compagnie · @email · @lien_paiement</p>
+          {preview && context ? <div className="border-y border-border py-4"><p className="text-sm"><strong>Objet :</strong> {renderBetaEmailTemplate(subject, context)}</p><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{renderBetaEmailTemplate(body, context)}</p><p className="mt-2 text-xs text-muted">Le lien affiché est un exemple. L’envoi utilise le lien configuré sur le serveur.</p></div> : null}
+          <div className="flex flex-wrap gap-2"><Button disabled={pending || !context} type="button" variant="secondary" onClick={() => setPreview(true)}>Aperçu final</Button><Button disabled={!preview || pending || !payableIds.length} type="button" variant="secondary" onClick={() => run(() => sendBetaPaymentEmails({ signupIds: payableIds, subject, body }))}>Envoyer le paiement</Button><Button disabled={pending || !payableIds.length} type="button" variant="secondary" onClick={() => run(() => markBetaPaymentEmailsSent({ signupIds: payableIds }))}>Mails déjà envoyés manuellement</Button><Button disabled={pending || !inviteIds.length} type="button" variant="secondary" onClick={() => run(() => inviteBetaSignups({ signupIds: inviteIds }))}><Send aria-hidden="true" className="mr-2 h-4 w-4" />Envoyer les invitations éligibles</Button></div>
+        </div>
+      </details> : null}
+    </>}
+  </div>;
 }
 
-function BetaSignupRow({ canManage, checked, onCheck, onConfirm, onResend, pending, signup }: { canManage: boolean; checked: boolean; onCheck: (checked: boolean) => void; onConfirm: (reference: string) => void; onResend: () => void; pending: boolean; signup: AdminBetaSignup }) {
+function BetaSignupRow({ canManage, canViewAccess, onGrant, onInvite, onConfirm, onResend, onCredit, pending, signup }: { canManage: boolean; canViewAccess: boolean; onGrant: (note: string) => void; onInvite: () => void; onConfirm: (reference: string) => void; onResend: () => void; onCredit: () => void; pending: boolean; signup: AdminBetaSignup }) {
+  const [note, setNote] = useState("");
   const [reference, setReference] = useState("");
-  const currentStage = getBetaAccessStage(signup);
   const eligible = !signup.isDemo && signup.status === "reserved";
-  return <article className="rounded-md border border-border bg-panel-strong/35 p-4">
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-      <div className="flex min-w-0 gap-3">{canManage ? <input aria-label={`Selectionner ${signup.companyName}`} className="mt-1" disabled={!eligible} type="checkbox" checked={checked} onChange={(event) => onCheck(event.target.checked)} /> : null}<div className="min-w-0"><p className="font-semibold">#{signup.position} {signup.companyName}</p><p className="mt-1 text-sm text-muted">{signup.contactName} · {signup.email}{signup.city ? ` · ${signup.city}` : ""}</p><p className="mt-1 text-xs text-muted">{signup.discipline} — {signup.mainNeed}</p></div></div>
-      <div className="flex flex-wrap items-center gap-2">{signup.isDemo ? <Badge tone="warning">Donnee demo</Badge> : null}{signup.williamBetaCreditedAt ? <Badge tone="success"><Coins className="mr-1 h-3.5 w-3.5" />William bêta crédité</Badge> : null}<Badge tone={stageMeta[currentStage].tone}>{stageMeta[currentStage].label}</Badge></div>
+  const offered = isOffered(signup);
+  const canInvite = eligible && !signup.emailConfirmedAt && !signup.invitationSentAt && (signup.accessGrantedAt || signup.paymentConfirmedAt || (offered && signup.hasAccess));
+  return <article className="py-5">
+    <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
+      <div className="min-w-0 space-y-1">
+        <h2 className="break-words text-base font-semibold">{signup.contactName}</h2>
+        <p className="break-all text-sm text-muted">{signup.email}</p>
+        <p className="break-words text-sm">{signup.linkedCompanyName ?? signup.companyName}{signup.linkedCompanyId ? <span className="text-muted"> · {signup.memberCount} membre{signup.memberCount > 1 ? "s" : ""}</span> : <span className="text-muted"> · espace compagnie à créer</span>}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {signup.isDemo ? <Badge tone="warning">Donnée démo</Badge> : null}
+        {signup.status === "waitlist" ? <Badge tone="warning">Liste d’attente</Badge> : null}
+        <Badge tone={signup.hasAccess ? "success" : "warning"}>{signup.hasAccess ? "Accès ouvert" : "Accès à activer"}</Badge>
+        {offered ? <Badge tone="success">Offert{signup.compedUntil ? ` jusqu’au ${new Date(`${signup.compedUntil}T12:00:00Z`).toLocaleDateString("fr-FR")}` : " sans limite"}</Badge> : null}
+        {signup.paymentConfirmedAt ? <Badge tone="neutral">Paiement confirmé</Badge> : null}
+      </div>
     </div>
-    {signup.lastAccessError ? <p className="mt-3 rounded-md border border-danger/20 bg-danger/10 p-3 text-sm text-danger" role="alert">{signup.lastAccessError}</p> : null}
-    {canManage && eligible && signup.paymentEmailSentAt && !signup.paymentConfirmedAt ? <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row"><Input aria-label={`Reference de paiement pour ${signup.companyName}`} placeholder="Reference Stripe ou note de verification" value={reference} onChange={(event) => setReference(event.target.value)} /><Button disabled={pending || reference.trim().length < 3} type="button" variant="secondary" onClick={() => onConfirm(reference)}><CheckCircle2 className="mr-2 h-4 w-4" />Paiement verifie</Button></div> : null}
-    {canManage && eligible && signup.invitationSentAt && !signup.accountCreatedAt ? <div className="mt-4 border-t border-border pt-4"><Button disabled={pending} type="button" variant="secondary" onClick={onResend}><Send className="mr-2 h-4 w-4" />Renvoyer l&apos;invitation</Button><p className="mt-2 text-xs text-muted">Genere un nouveau lien personnel et remplace le lien precedent.</p></div> : null}
-    {signup.paymentReference ? <p className="mt-3 text-xs text-muted">Verification : {signup.paymentReference}</p> : null}
+    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
+      <span>{signup.accountExists ? "Compte existant" : "Compte à créer"}{signup.emailConfirmedAt ? " · email confirmé" : signup.accountExists ? " · email à confirmer" : ""}</span>
+      <span>{!canViewAccess ? "Connexions non visibles avec vos droits" : signup.lastSignInAt ? `Dernière connexion : ${formatDate(signup.lastSignInAt)}` : "Aucune connexion connue"}</span>
+      {signup.invitationSentAt ? <span>Invitation : {formatDate(signup.invitationSentAt)}</span> : null}
+    </div>
+    {signup.accessGrantNote ? <p className="mt-2 break-words text-xs text-muted">Motif de l’accès offert : {signup.accessGrantNote}</p> : null}
+    {signup.lastAccessError ? <p className="mt-3 break-words text-sm text-danger" role="alert">{signup.lastAccessError}</p> : null}
+    {canManage && eligible ? <div className="mt-4 space-y-3">
+      {!offered && !signup.accessGrantedAt && !signup.paymentConfirmedAt && signup.billingStatus !== "active" ? <div className="flex flex-col gap-2 sm:flex-row sm:items-center"><Input className="sm:max-w-sm" disabled={pending} aria-label={`Motif de l’accès offert pour ${signup.contactName}`} placeholder="Motif facultatif : collaboration, équipe…" maxLength={240} value={note} onChange={(event) => setNote(event.target.value)} /><Button disabled={pending} type="button" onClick={() => onGrant(note)}><Gift aria-hidden="true" className="mr-2 h-4 w-4" />Offrir l’accès</Button></div> : null}
+      {signup.accessGrantedAt && signup.linkedCompanyId && !offered ? <p className="text-sm text-muted">Un accès offert a déjà été accordé. Le statut actuel se gère depuis la supervision des compagnies.</p> : null}
+      {offered && !signup.hasAccess ? <p className="text-sm text-muted">{signup.linkedCompanyId ? "La période offerte est terminée. Gérez la durée depuis la supervision des compagnies." : signup.accountExists ? "Accès offert enregistré. La compagnie sera préparée lors de sa prochaine connexion." : "Accès offert enregistré. Envoyez l’invitation pour lui permettre de choisir son mot de passe."}</p> : null}
+      {canInvite ? <Button disabled={pending} type="button" variant="secondary" onClick={onInvite}><Send aria-hidden="true" className="mr-2 h-4 w-4" />Envoyer l’invitation</Button> : null}
+      {signup.invitationSentAt && !signup.emailConfirmedAt ? <Button disabled={pending} type="button" variant="secondary" onClick={onResend}>Renvoyer l’invitation</Button> : null}
+      <details><summary className="min-h-11 cursor-pointer py-3 text-sm text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">Détails et autres actions</summary><div className="space-y-3 pb-2">
+        <p className="break-words text-xs text-muted">Inscription #{signup.position} · {formatDate(signup.createdAt)}{signup.city ? ` · ${signup.city}` : ""}<br />{signup.discipline} — {signup.mainNeed}</p>
+        {signup.paymentReference ? <p className="break-words text-xs text-muted">Référence de paiement : {signup.paymentReference}</p> : null}
+        {!offered && !signup.accessGrantedAt && !signup.paymentConfirmedAt ? <div className="flex flex-col gap-2 sm:flex-row"><Input disabled={pending} aria-label={`Référence de paiement pour ${signup.contactName}`} placeholder="Référence Stripe ou note de vérification" value={reference} maxLength={240} onChange={(event) => setReference(event.target.value)} /><Button disabled={pending || reference.trim().length < 3} type="button" variant="secondary" onClick={() => onConfirm(reference)}>Confirmer le paiement</Button></div> : null}
+        {signup.williamBetaCreditedAt ? <p className="text-sm text-muted">William bêta déjà crédité.</p> : <Button disabled={pending || !signup.linkedCompanyId} type="button" variant="secondary" onClick={onCredit}><Coins aria-hidden="true" className="mr-2 h-4 w-4" />Créditer William de 200 000 tokens</Button>}
+      </div></details>
+    </div> : null}
   </article>;
 }

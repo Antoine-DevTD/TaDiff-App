@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const billingStatuses = ["trial", "active", "comped", "past_due", "cancelled"] as const;
+export const billingStatuses = ["pending_payment", "trial", "active", "comped", "past_due", "cancelled"] as const;
 
 export const adminBillingSchema = z.object({
   billingStatus: z.enum(billingStatuses),

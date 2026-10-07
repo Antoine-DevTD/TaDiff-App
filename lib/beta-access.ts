@@ -1,21 +1,21 @@
-export const betaPaymentEmailSubject = "Votre acces a la beta TaDiff est pret";
+export const betaPaymentEmailSubject = "Votre accès à la bêta TaDiff est prêt";
 
 export const betaPaymentEmailBody = `Bonjour @prenom,
 
-La beta TaDiff ouvre ses portes et la place de @compagnie est confirmee.
+La bêta TaDiff ouvre ses portes et la place de @compagnie est confirmée.
 
-Pour activer votre acces, reglez le premier mois de beta au tarif unique de 19,99 EUR TTC avec le lien securise ci-dessous. Utilisez la meme adresse email que lors de votre inscription : @email.
+Pour activer votre accès, réglez le premier mois de bêta au tarif unique de 19,99 EUR TTC avec le lien sécurisé ci-dessous. Utilisez la même adresse email que lors de votre inscription : @email.
 
 @lien_paiement
 
-Ce paiement couvre uniquement votre premier mois de beta. Aucun renouvellement automatique ne sera effectue. Les conditions de poursuite vous seront presentees separement avant toute nouvelle facturation.
+Ce paiement couvre uniquement votre premier mois de bêta. Aucun renouvellement automatique ne sera effectué. Les conditions de poursuite vous seront présentées séparément avant toute nouvelle facturation.
 
-Apres verification du paiement, vous recevrez votre invitation personnelle pour choisir votre mot de passe et creer l'espace de votre compagnie.
+Après vérification du paiement, vous recevrez votre invitation personnelle pour choisir votre mot de passe et créer l’espace de votre compagnie.
 
-En cas de question, repondez simplement a cet email.
+En cas de question, répondez simplement à cet email.
 
-A tres bientot,
-L'equipe TaDiff`;
+À très bientôt,
+L’équipe TaDiff`;
 
 export type BetaEmailContext = {
   firstName: string;

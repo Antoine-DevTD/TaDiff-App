@@ -1,5 +1,13 @@
 # Passage de relais actif
 
+## Livraison isolée de la supervision bêta — 8 octobre 2026
+
+- Branche `codex/beta-supervision`, basée sur `main=443a3b5` : compagnies/membres, accès offert, invitations séparées et protections Checkout/webhook. Autres travaux locaux exclus.
+- SQL : `sql/releases/20261008_beta_supervision.sql`, transaction 086 → 087 → 088 → 089. À appliquer et qualifier avant publication dans `main` ; un push ne modifie pas Supabase.
+- `ensure_workspace` contrôle l’identité Auth et l’audit unique. Retrait du bloc service-role par email dans `app/welcome/actions.ts` pour éviter réattribution et doublons.
+- Aucun email, paiement réel, migration distante, nouvelle clé Stripe ou réglage Auth à sept jours appliqué par cette livraison. Raccordement Stripe à qualifier en test.
+- Procédure : `docs/operations/publication-supervision-beta-2026-10-08.md`. Utiliser le lot SQL explicite, pas un push global des migrations CLI.
+
 ## William, répétitions et matériel — 26 septembre 2026
 
 - L’utilisateur a autorisé le commit et le push du lot validé sur `main`. Publication depuis la copie Git isolée `tmp/publish-readiness-20260926`, base `88daea4`, en préservant tous les autres changements du dépôt principal.
