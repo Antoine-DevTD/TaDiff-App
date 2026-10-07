@@ -168,7 +168,7 @@ function getMilestones(company: AdminCompanyWorkflowMetrics) {
 }
 
 function getBillingLabel(status: AdminCompanyWorkflowMetrics["billingStatus"]) {
-  return { trial: "Essai", active: "Actif", comped: "Offert", past_due: "Paiement en retard", cancelled: "Résilié" }[status];
+  return { pending_payment: "En attente de paiement", trial: "Essai", active: "Actif", comped: "Offert", past_due: "Paiement en retard", cancelled: "Résilié" }[status];
 }
 
 function formatDate(value: string) { return new Date(value).toLocaleDateString("fr-FR"); }

@@ -3,12 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { StripeCheckoutForm } from "@/components/billing/stripe-checkout-form";
 import { PlannedFeatureBadge } from "@/components/ui/planned-feature";
-import { betaReservedSeatLimit } from "@/lib/beta";
 import { formatCurrency, getFixedCostSharePerPerformance } from "@/lib/finance";
 import { getBillingPlans, getFixedCosts, getQuoteItems } from "@/lib/supabase/queries";
-import { hasSupabaseAdminEnv } from "@/lib/supabase/admin-client";
-import { hasStripePrice } from "@/lib/stripe/plans";
-import { hasStripeEnv, hasStripeWebhookEnv } from "@/lib/stripe/server";
+import { getBetaCheckoutOffer } from "@/lib/stripe/offer";
+import { getWorkspaceAccess } from "@/lib/supabase/access";
 import type { QuoteItem } from "@/types";
 
 function getQuoteTone(status: QuoteItem["status"]) {
@@ -17,11 +15,14 @@ function getQuoteTone(status: QuoteItem["status"]) {
   return "neutral" as const;
 }
 
-export default async function BillingPage() {
-  const [plans, quotes, fixedCosts] = await Promise.all([
+export default async function BillingPage({ searchParams }: { searchParams: Promise<{ stripe?: string }> }) {
+  const [plans, quotes, fixedCosts, offer, access, params] = await Promise.all([
     getBillingPlans(),
     getQuoteItems(),
     getFixedCosts(),
+    getBetaCheckoutOffer(),
+    getWorkspaceAccess(),
+    searchParams,
   ]);
   const quotesTotal = quotes.reduce((total, quote) => total + quote.amount, 0);
   const depositsDue = quotes.reduce((total, quote) => total + quote.depositDue, 0);
@@ -30,11 +31,23 @@ export default async function BillingPage() {
     costs: fixedCosts,
     targetPerformancesPerYear: 24,
   });
-  const stripeReady = hasStripeEnv() && hasStripeWebhookEnv() && hasSupabaseAdminEnv();
-  const betaPriceReady = hasStripePrice("beta");
+  const offeredAccess = access.billingStatus === "comped" && access.hasAccess;
+  const paymentMessages: Record<string, string> = {
+    offered_access: "Votre compagnie bénéficie déjà d’un accès offert.",
+    success: "Votre paiement a été transmis. Le statut de votre accès sera actualisé après confirmation.",
+    cancelled: "Le paiement a été interrompu. Aucun nouvel accès n’a été activé.",
+    expired: "La page de paiement a expiré. Vous pouvez recommencer.",
+    missing_configuration: "Le paiement n’est pas encore disponible. Contactez l’équipe TaDiff.",
+    invalid_price: "L’offre doit être vérifiée par l’équipe TaDiff avant le paiement.",
+    forbidden: "Seul un responsable avec une adresse email confirmée peut gérer cet abonnement.",
+    existing_subscription: "Un abonnement est déjà associé à cette compagnie. Contactez l’équipe TaDiff pour le modifier ou résoudre un problème de paiement.",
+    unavailable: "Le paiement n’a pas pu être ouvert. Réessayez dans quelques instants.",
+  };
+  const paymentMessage = params.stripe ? paymentMessages[params.stripe] : null;
 
   return (
     <div className="space-y-6">
+      {paymentMessage && <p role="status" className="rounded-lg border border-border bg-panel p-4 text-sm leading-6">{paymentMessage}</p>}
       <div className="flex justify-end">
       </div>
 
@@ -85,14 +98,13 @@ export default async function BillingPage() {
           <Card className="space-y-4 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-base font-semibold">Stripe</p>
+                <p className="text-base font-semibold">Abonnement TaDiff</p>
                 <p className="mt-1 text-sm text-muted">
-                  Checkout est branche en mode test. Le webhook met à jour le statut compagnie
-                  quand Stripe confirme ou refuse le paiement.
+                  {offeredAccess ? "Votre compagnie bénéficie d’un accès offert." : "Le paiement sécurisé est assuré par Stripe. L’accès est activé après confirmation du règlement."}
                 </p>
               </div>
-              <Badge className="shrink-0" tone={stripeReady && betaPriceReady ? "success" : "warning"}>
-                {stripeReady && betaPriceReady ? "Mode test prêt" : "Configuration incomplete"}
+              <Badge className="shrink-0" tone={offeredAccess || access.billingStatus === "active" ? "success" : "neutral"}>
+                {offeredAccess ? "Accès offert" : access.billingStatus === "active" ? "Abonnement actif" : "Offre bêta"}
               </Badge>
             </div>
             <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
@@ -100,22 +112,21 @@ export default async function BillingPage() {
                 <div>
                   <p className="font-medium">Bêta pilote</p>
                   <p className="mt-1 text-sm text-muted">
-                    Abonnement test a 19,99 EUR / mois pour les {betaReservedSeatLimit} compagnies de la bêta.
+                    Abonnement mensuel avec renouvellement automatique, résiliable pour la fin de la période payée.
                   </p>
                 </div>
-                <p className="shrink-0 text-sm font-semibold">19,99 EUR</p>
+                {offer.ready && <p className="shrink-0 text-sm font-semibold">{offer.displayPrice} TTC / mois</p>}
               </div>
               <StripeCheckoutForm
                 className="mt-4 w-full sm:w-auto"
-                disabled={!stripeReady || !betaPriceReady}
+                disabled={!offer.ready || !access.canManage || access.billingStatus === "active" || offeredAccess}
                 planCode="beta"
               >
-                Demarrer le paiement test
+                Passer au paiement sécurisé
               </StripeCheckoutForm>
-              {!stripeReady || !betaPriceReady ? (
+              {!offer.ready && !offeredAccess ? (
                 <p className="mt-3 text-xs text-muted">
-                  Variables requises : STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
-                  STRIPE_PRICE_BETA_MONTHLY, SUPABASE_SERVICE_ROLE_KEY.
+                  {offer.message}
                 </p>
               ) : null}
             </div>

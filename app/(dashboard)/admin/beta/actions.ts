@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { renderBetaEmailTemplate } from "@/lib/beta-access";
-import { isSuperAdmin } from "@/lib/supabase/admin";
+import { getAdminBetaSupervision, isSuperAdmin } from "@/lib/supabase/admin";
 import { getSupabaseAdminClient, hasSupabaseAdminEnv } from "@/lib/supabase/admin-client";
 import { getSupabaseServerClient, getSupabaseServerUser } from "@/lib/supabase/server";
 
@@ -16,6 +16,7 @@ const emailSchema = z.object({
 const paymentSchema = z.object({ signupId: z.string().uuid(), reference: z.string().trim().min(3).max(240) });
 const inviteSchema = z.object({ signupIds: idsSchema });
 const resendInviteSchema = z.object({ signupId: z.string().uuid() });
+const complimentarySchema = z.object({ signupId: z.string().uuid(), note: z.string().trim().max(1000).optional() });
 
 type Result = { ok: boolean; message: string; succeeded?: number; failed?: number };
 
@@ -24,6 +25,57 @@ async function requireSuperAdmin() {
   const { data: { user } } = await getSupabaseServerUser();
   if (!user) return null;
   return { admin: getSupabaseAdminClient(), actorId: user.id };
+}
+
+async function hasLinkedComplimentaryAccess(signup: { id: string; invited_user_id: string | null }) {
+  if (!signup.invited_user_id) return false;
+  try {
+    const supervision = await getAdminBetaSupervision();
+    if (supervision.error) return false;
+    return supervision.signups.some((account) => account.id === signup.id
+      && account.invitedUserId === signup.invited_user_id
+      && account.billingStatus === "comped" && account.hasAccess === true);
+  } catch {
+    return false;
+  }
+}
+
+export async function grantBetaComplimentaryAccess(input: z.input<typeof complimentarySchema>): Promise<Result> {
+  const parsed = complimentarySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Inscription ou note invalide." };
+  if (!(await isSuperAdmin())) return { ok: false, message: "Action réservée au super-admin." };
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { data, error } = await supabase.rpc("admin_grant_beta_complimentary_access", {
+      p_signup_id: parsed.data.signupId, p_note: parsed.data.note || null,
+    });
+    if (error) return { ok: false, message: error.code === "PGRST202" || error.code === "42703"
+      ? "Appliquez la migration SQL 089 avant d'offrir un accès." : "Impossible d'enregistrer l'accès offert. Réessayez." };
+    const result = data as { ok?: boolean; status?: string } | null;
+    if (!result?.ok) {
+      const messages: Record<string, string> = {
+        ineligible: "Cette inscription ne dispose pas d'une place bêta réelle réservée.",
+        paid_signup: "Un paiement est déjà vérifié pour cette inscription. Son accès payant est conservé.",
+        identity_changed: "Le compte associé a changé. Actualisez la supervision avant de réessayer.",
+        identity_ambiguous: "Le compte associé est ambigu ou introuvable. Vérifiez son identité avant d'offrir l'accès.",
+        company_manager_required: "Cette personne est membre d'une compagnie. Offrez l'accès au responsable de cette compagnie depuis la supervision.",
+        company_missing: "La compagnie associée est introuvable. Vérifiez le rattachement du compte.",
+        existing_subscription: "Un abonnement existe déjà. Vérifiez sa facturation Stripe avant d'offrir l'accès.",
+        existing_checkout: "Un paiement Stripe est en préparation. Clôturez sa session avant d'offrir l'accès.",
+      };
+      return { ok: false, message: messages[result?.status ?? ""] || "Impossible d'offrir l'accès à cette inscription." };
+    }
+    revalidatePath("/admin/beta");
+    revalidatePath("/admin");
+    revalidatePath("/activation");
+    return { ok: true, message: result.status === "already_granted"
+      ? "Une offre est déjà enregistrée. Consultez le statut actuel de la compagnie dans la supervision."
+      : result.status === "activated"
+      ? "Accès offert sans limite de durée. La compagnie est activée, aucun email n'a été envoyé."
+      : "Accès offert enregistré sans limite de durée. Envoyez l'invitation séparément si le compte reste à créer.", succeeded: 1, failed: 0 };
+  } catch {
+    return { ok: false, message: "Impossible d'enregistrer l'accès offert. Réessayez." };
+  }
 }
 
 export async function sendBetaPaymentEmails(input: z.input<typeof emailSchema>): Promise<Result> {
@@ -43,13 +95,13 @@ export async function sendBetaPaymentEmails(input: z.input<typeof emailSchema>):
     return { ok: false, message: "BETA_PAYMENT_LINK_URL doit etre une URL HTTPS valide." };
   }
 
-  const { data: signups, error } = await admin.from("beta_signups").select("id,company_name,contact_name,email,status,is_demo").in("id", parsed.data.signupIds);
+  const { data: signups, error } = await admin.from("beta_signups").select("id,company_name,contact_name,email,status,is_demo,access_granted_at,payment_confirmed_at").in("id", parsed.data.signupIds);
   if (error || !signups) return { ok: false, message: "Impossible de charger les inscriptions selectionnees." };
   let succeeded = 0;
   let failed = 0;
 
   for (const signup of signups) {
-    if (signup.is_demo || signup.status !== "reserved") { failed += 1; continue; }
+    if (signup.is_demo || signup.status !== "reserved" || signup.access_granted_at || signup.payment_confirmed_at) { failed += 1; continue; }
     const context = { firstName: signup.contact_name.trim().split(/\s+/)[0] || signup.contact_name, companyName: signup.company_name, email: signup.email, paymentUrl };
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -80,12 +132,12 @@ export async function markBetaPaymentEmailsSent(input: z.input<typeof inviteSche
   const { admin, actorId: actor } = access;
   const { data: signups, error } = await admin
     .from("beta_signups")
-    .select("id,status,is_demo")
+    .select("id,status,is_demo,access_granted_at,payment_confirmed_at")
     .in("id", parsed.data.signupIds);
   if (error || !signups) return { ok: false, message: "Impossible de charger les inscriptions." };
 
   const eligibleIds = signups
-    .filter((signup) => !signup.is_demo && signup.status === "reserved")
+    .filter((signup) => !signup.is_demo && signup.status === "reserved" && !signup.access_granted_at && !signup.payment_confirmed_at)
     .map((signup) => signup.id);
   if (eligibleIds.length === 0) return { ok: false, message: "Aucune inscription eligible dans la selection." };
 
@@ -93,6 +145,8 @@ export async function markBetaPaymentEmailsSent(input: z.input<typeof inviteSche
   const { error: updateError } = await admin
     .from("beta_signups")
     .update({ payment_email_sent_at: now, payment_email_sent_by: actor, last_access_error: null })
+    .is("access_granted_at", null)
+    .is("payment_confirmed_at", null)
     .in("id", eligibleIds);
   if (updateError) return { ok: false, message: "Impossible d'enregistrer l'envoi manuel des mails." };
 
@@ -120,7 +174,7 @@ export async function confirmBetaPayment(input: z.input<typeof paymentSchema>): 
   if (!access) return { ok: false, message: "Action reservee au super-admin." };
   const { admin, actorId: actor } = access;
   const now = new Date().toISOString();
-  const { data, error } = await admin.from("beta_signups").update({ payment_confirmed_at: now, payment_confirmed_by: actor, payment_reference: parsed.data.reference, last_access_error: null }).eq("id", parsed.data.signupId).eq("is_demo", false).eq("status", "reserved").select("id").maybeSingle();
+  const { data, error } = await admin.from("beta_signups").update({ payment_confirmed_at: now, payment_confirmed_by: actor, payment_reference: parsed.data.reference, last_access_error: null }).eq("id", parsed.data.signupId).eq("is_demo", false).eq("status", "reserved").is("access_granted_at", null).select("id").maybeSingle();
   if (error || !data) return { ok: false, message: "Inscription introuvable ou non eligible." };
   await admin.from("beta_access_events").insert({ beta_signup_id: data.id, actor_id: actor, event_type: "payment_confirmed", detail: parsed.data.reference });
   revalidatePath("/admin/beta");
@@ -133,20 +187,33 @@ export async function inviteBetaSignups(input: z.input<typeof inviteSchema>): Pr
   const access = await requireSuperAdmin();
   if (!access) return { ok: false, message: "Action reservee au super-admin." };
   const { admin, actorId: actor } = access;
-  const { data: signups, error } = await admin.from("beta_signups").select("id,email,contact_name,company_name,main_need,discipline,payment_confirmed_at,invitation_sent_at,is_demo").in("id", parsed.data.signupIds);
+  const { data: signups, error } = await admin.from("beta_signups").select("id,email,contact_name,company_name,main_need,discipline,payment_confirmed_at,access_granted_at,invitation_sent_at,invited_user_id,is_demo,status").in("id", parsed.data.signupIds);
   if (error || !signups) return { ok: false, message: "Impossible de charger les inscriptions." };
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://tadiff.com").replace(/\/$/, "");
   let succeeded = 0;
   let failed = 0;
   for (const signup of signups) {
-    if (signup.is_demo || !signup.payment_confirmed_at || signup.invitation_sent_at) { failed += 1; continue; }
+    if (signup.is_demo || signup.status !== "reserved" || signup.invitation_sent_at) { failed += 1; continue; }
+    const explicitEntitlement = Boolean(signup.payment_confirmed_at || signup.access_granted_at);
+    if (!explicitEntitlement && !(await hasLinkedComplimentaryAccess(signup))) { failed += 1; continue; }
+    if (signup.invited_user_id) {
+      const { data: invitedUser, error: userError } = await admin.auth.admin.getUserById(signup.invited_user_id);
+      if (userError || !invitedUser.user || invitedUser.user.id !== signup.invited_user_id
+        || invitedUser.user.email?.trim().toLowerCase() !== signup.email.trim().toLowerCase()
+        || invitedUser.user.email_confirmed_at) { failed += 1; continue; }
+    }
     const claimTime = new Date().toISOString();
-    const { data: claimed } = await admin.from("beta_signups")
+    let claim = admin.from("beta_signups")
       .update({ invitation_sent_at: claimTime, invitation_sent_by: actor })
       .eq("id", signup.id)
-      .is("invitation_sent_at", null)
-      .select("id")
-      .maybeSingle();
+      .eq("is_demo", false)
+      .eq("status", "reserved")
+      .is("invitation_sent_at", null);
+    if (explicitEntitlement) claim = claim.or("payment_confirmed_at.not.is.null,access_granted_at.not.is.null");
+    claim = signup.invited_user_id
+      ? claim.eq("invited_user_id", signup.invited_user_id)
+      : claim.is("invited_user_id", null);
+    const { data: claimed } = await claim.select("id").maybeSingle();
     if (!claimed) { failed += 1; continue; }
     const { data, error: inviteError } = await admin.auth.admin.inviteUserByEmail(signup.email, {
       data: {
@@ -157,13 +224,15 @@ export async function inviteBetaSignups(input: z.input<typeof inviteSchema>): Pr
       },
       redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent("/reset-password?next=/welcome")}`,
     });
-    if (!inviteError && data.user) {
+    const identityMismatch = Boolean(signup.invited_user_id && data.user && data.user.id !== signup.invited_user_id);
+    if (!inviteError && data.user && !identityMismatch) {
       succeeded += 1;
       await admin.from("beta_signups").update({ invited_user_id: data.user.id, last_access_error: null }).eq("id", signup.id);
       await admin.from("beta_access_events").insert({ beta_signup_id: signup.id, actor_id: actor, event_type: "invitation_sent" });
     } else {
       failed += 1;
-      const detail = inviteError?.message.slice(0, 240) || "Invitation Supabase impossible";
+      const detail = identityMismatch ? "Le compte retourné par Auth ne correspond pas au compte lié."
+        : inviteError?.message.slice(0, 240) || "Invitation Supabase impossible";
       await admin.from("beta_signups").update({ invitation_sent_at: null, invitation_sent_by: null, last_access_error: detail }).eq("id", signup.id);
       await admin.from("beta_access_events").insert({ beta_signup_id: signup.id, actor_id: actor, event_type: "invitation_failed", detail });
     }
@@ -196,24 +265,24 @@ export async function resendBetaInvitation(input: z.input<typeof resendInviteSch
   const { admin, actorId: actor } = access;
   const { data: signup, error } = await admin
     .from("beta_signups")
-    .select("id,email,contact_name,company_name,main_need,discipline,payment_confirmed_at,invitation_sent_at,invited_user_id,account_created_at,is_demo,status")
+    .select("id,email,contact_name,company_name,main_need,discipline,payment_confirmed_at,access_granted_at,invitation_sent_at,invited_user_id,account_created_at,is_demo,status")
     .eq("id", parsed.data.signupId)
     .maybeSingle();
 
   if (error || !signup || signup.is_demo || signup.status !== "reserved") {
     return { ok: false, message: "Inscription introuvable ou non eligible." };
   }
-  if (!signup.payment_confirmed_at) {
-    return { ok: false, message: "Verifiez d'abord le paiement avant de renvoyer l'invitation." };
+  if (!signup.payment_confirmed_at && !signup.access_granted_at && !(await hasLinkedComplimentaryAccess(signup))) {
+    return { ok: false, message: "Vérifiez le paiement ou offrez l'accès avant de renvoyer l'invitation." };
   }
   if (!signup.invitation_sent_at || !signup.invited_user_id) {
     return { ok: false, message: "Envoyez d'abord une premiere invitation." };
   }
-  if (signup.account_created_at) {
-    return { ok: false, message: "Le compte est deja cree. Utilisez plutot le mot de passe oublie." };
+  const { data: invitedUser, error: userError } = await admin.auth.admin.getUserById(signup.invited_user_id);
+  if (userError || !invitedUser.user || invitedUser.user.id !== signup.invited_user_id
+    || invitedUser.user.email?.trim().toLowerCase() !== signup.email.trim().toLowerCase()) {
+    return { ok: false, message: "Le compte invité ne correspond plus à cette inscription. Vérifiez son identité avant de renvoyer l'invitation." };
   }
-
-  const { data: invitedUser } = await admin.auth.admin.getUserById(signup.invited_user_id);
   if (invitedUser.user?.email_confirmed_at) {
     return { ok: false, message: "L'adresse est deja confirmee. Utilisez plutot le mot de passe oublie." };
   }
@@ -229,8 +298,10 @@ export async function resendBetaInvitation(input: z.input<typeof resendInviteSch
     redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent("/reset-password?next=/welcome")}`,
   });
 
-  if (inviteError || !data.user) {
-    const detail = inviteError?.message.slice(0, 240) || "Invitation Supabase impossible";
+  if (inviteError || !data.user || data.user.id !== signup.invited_user_id) {
+    const detail = data.user && data.user.id !== signup.invited_user_id
+      ? "Le compte retourné par Auth ne correspond pas au compte lié."
+      : inviteError?.message.slice(0, 240) || "Invitation Supabase impossible";
     await admin.from("beta_signups").update({ last_access_error: detail }).eq("id", signup.id);
     await admin.from("beta_access_events").insert({ beta_signup_id: signup.id, actor_id: actor, event_type: "invitation_failed", detail: `Renvoi : ${detail}` });
     revalidatePath("/admin/beta");

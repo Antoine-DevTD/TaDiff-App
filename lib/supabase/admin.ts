@@ -79,6 +79,17 @@ export type AdminBetaSignup = {
   accountCreatedAt: string | null;
   lastAccessError: string;
   williamBetaCreditedAt: string | null;
+  accessGrantedAt: string | null;
+  accessGrantNote: string;
+  linkedCompanyId: string | null;
+  linkedCompanyName: string | null;
+  billingStatus: BillingStatus | null;
+  compedUntil: string | null;
+  memberCount: number;
+  hasAccess: boolean;
+  accountExists: boolean;
+  emailConfirmedAt: string | null;
+  lastSignInAt: string | null;
 };
 
 export type FeedbackKind = "bug" | "idee" | "avis";
@@ -367,18 +378,41 @@ export async function getAdminCompanyWorkflowMetrics(): Promise<AdminCompanyWork
 }
 
 export async function getAdminBetaSignups(): Promise<AdminBetaSignup[]> {
+  return (await getAdminBetaSupervision()).signups;
+}
+
+export async function getAdminBetaSupervision(): Promise<{ signups: AdminBetaSignup[]; error: string | null }> {
   if (!hasSupabaseEnv()) {
-    return [];
+    return { signups: [], error: "La supervision bêta nécessite la connexion à Supabase." };
   }
-
-  const supabase = await getSupabaseServerClient();
-  const { data, error } = await supabase.rpc("admin_list_beta_signups");
-
-  if (error || !data) {
-    return [];
-  }
-
-  return data.map((signup) => ({
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { data: ready, error: readyError } = await supabase.rpc("admin_beta_supervision_ready");
+    if (readyError || ready !== true) return { signups: [], error: readyError?.code === "PGRST202" || readyError?.code === "42703"
+      ? "Appliquez la migration SQL 089 pour activer la supervision bêta."
+      : "La supervision bêta est indisponible ou cet accès n'est pas autorisé. Actualisez pour réessayer." };
+    const rows = [];
+    const pageSize = 500;
+    let expectedCount: number | null = null;
+    for (let start = 0; ; start = rows.length) {
+      const { data, error, count } = await supabase.rpc("admin_list_beta_signups", {}, { count: "exact" }).range(start, start + pageSize - 1);
+      if (error || !data) return { signups: [], error: error?.code === "PGRST202" || error?.code === "42703"
+        ? "Appliquez la migration SQL 089 pour activer la supervision bêta."
+        : "Impossible de charger les inscriptions bêta. Actualisez pour réessayer." };
+      if (data.some((signup) => !Object.hasOwn(signup, "access_granted_at") || !Object.hasOwn(signup, "account_exists"))) {
+        return { signups: [], error: "Appliquez la migration SQL 089 pour activer la supervision bêta." };
+      }
+      if (count === null || !Number.isSafeInteger(count) || count < 0 || expectedCount !== null && expectedCount !== count) {
+        return { signups: [], error: "La liste des inscriptions a changé pendant son chargement. Actualisez pour réessayer." };
+      }
+      expectedCount = count;
+      rows.push(...data);
+      if (rows.length >= count || data.length === 0) break;
+    }
+    if (rows.length !== expectedCount || new Set(rows.map((signup) => signup.id)).size !== rows.length) {
+      return { signups: [], error: "La liste des inscriptions est incomplète. Actualisez pour réessayer." };
+    }
+    return { error: null, signups: rows.map((signup) => ({
     id: signup.id,
     companyName: signup.company_name,
     contactName: signup.contact_name,
@@ -399,7 +433,21 @@ export async function getAdminBetaSignups(): Promise<AdminBetaSignup[]> {
     accountCreatedAt: signup.account_created_at,
     lastAccessError: signup.last_access_error ?? "",
     williamBetaCreditedAt: signup.william_beta_credited_at,
-  }));
+    accessGrantedAt: signup.access_granted_at,
+    accessGrantNote: signup.access_grant_note ?? "",
+    linkedCompanyId: signup.linked_company_id,
+    linkedCompanyName: signup.linked_company_name,
+    billingStatus: signup.billing_status,
+    compedUntil: signup.comped_until,
+    memberCount: signup.member_count,
+    hasAccess: signup.has_access,
+    accountExists: signup.account_exists,
+    emailConfirmedAt: signup.email_confirmed_at,
+    lastSignInAt: signup.last_sign_in_at,
+    })) };
+  } catch {
+    return { signups: [], error: "Impossible de charger les inscriptions bêta. Actualisez pour réessayer." };
+  }
 }
 
 export async function getAdminFeedback(): Promise<AdminFeedback[]> {

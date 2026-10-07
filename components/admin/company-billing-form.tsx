@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { adminUpdateCompanyBilling } from "@/app/(dashboard)/admin/actions";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,12 @@ import {
 } from "@/lib/validation/admin";
 
 const statusLabels: Record<(typeof billingStatuses)[number], string> = {
+  pending_payment: "En attente de paiement",
   trial: "Essai",
   active: "Abonnement actif",
   comped: "Compte offert",
   past_due: "Paiement en retard",
-  cancelled: "Resilie",
+  cancelled: "Résilié",
 };
 
 export function CompanyBillingForm({ company }: { company: AdminCompany }) {
@@ -29,9 +30,11 @@ export function CompanyBillingForm({ company }: { company: AdminCompany }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const formId = useId();
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<AdminBillingFormInput, unknown, AdminBillingFormValues>({
     resolver: zodResolver(adminBillingSchema),
@@ -43,14 +46,22 @@ export function CompanyBillingForm({ company }: { company: AdminCompany }) {
     },
   });
 
+  useEffect(() => {
+    if (!open) reset({ billingStatus: company.billingStatus, planCode: company.planCode, compedUntil: company.compedUntil ?? "", billingNotes: company.billingNotes });
+  }, [company.billingStatus, company.planCode, company.compedUntil, company.billingNotes, open, reset]);
+
   function onSubmit(values: AdminBillingFormValues) {
     startTransition(async () => {
-      const result = await adminUpdateCompanyBilling(company.id, values);
-      setMessage({ ok: result.ok, text: result.message });
+      try {
+        const result = await adminUpdateCompanyBilling(company.id, values);
+        setMessage({ ok: result.ok, text: result.message });
 
-      if (result.ok) {
-        setOpen(false);
-        router.refresh();
+        if (result.ok) {
+          setOpen(false);
+          router.refresh();
+        }
+      } catch {
+        setMessage({ ok: false, text: "L’accès n’a pas pu être enregistré. Réessayez ; votre saisie est conservée." });
       }
     });
   }
@@ -58,15 +69,20 @@ export function CompanyBillingForm({ company }: { company: AdminCompany }) {
   return (
     <div className="space-y-3">
       <button
-        className="text-sm font-medium text-accent transition hover:text-accent-strong"
+        className="min-h-11 rounded-md px-1 text-sm font-medium text-accent transition hover:text-accent-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         type="button"
+        aria-expanded={open}
+        aria-controls={formId}
+        disabled={isSubmitting || isPending}
         onClick={() => setOpen((value) => !value)}
       >
-        {open ? "Fermer" : "Gérer le billing"}
+        {open ? "Fermer les réglages" : "Accès et facturation"}
       </button>
 
       {open ? (
         <form
+          id={formId}
+          aria-label={`Accès et facturation de ${company.name}`}
           className="space-y-3 rounded-md border border-border bg-panel p-4"
           onSubmit={handleSubmit(onSubmit)}
         >
@@ -80,27 +96,27 @@ export function CompanyBillingForm({ company }: { company: AdminCompany }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Code plan" error={errors.planCode?.message}>
+            <Field label="Offre" error={errors.planCode?.message}>
               <Input placeholder="bêta" {...register("planCode")} />
             </Field>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Offert jusqu'au (vide = sans limite)" error={errors.compedUntil?.message}>
+            <Field label="Offert jusqu’au (vide = sans limite)" error={errors.compedUntil?.message}>
               <Input type="date" {...register("compedUntil")} />
             </Field>
             <Field label="Note interne" error={errors.billingNotes?.message}>
-              <Input placeholder="Pourquoi ce statut, qui a decide..." {...register("billingNotes")} />
+              <Input placeholder="Pourquoi ce statut, qui a décidé…" {...register("billingNotes")} />
             </Field>
           </div>
           {message && !message.ok ? (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{message.text}</p>
+            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{message.text}</p>
           ) : null}
           <Button type="submit" disabled={isSubmitting || isPending}>
-            Enregistrer
+            {isPending || isSubmitting ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </form>
       ) : null}
-      {message?.ok && !open ? <p className="text-xs text-success">{message.text}</p> : null}
+      {message?.ok && !open ? <p role="status" className="text-xs text-success">{message.text}</p> : null}
     </div>
   );
 }

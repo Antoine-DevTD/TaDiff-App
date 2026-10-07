@@ -174,7 +174,7 @@ export type Database = {
         Row: {
           id: string;
           name: string;
-          billing_status: "trial" | "active" | "comped" | "past_due" | "cancelled";
+          billing_status: "pending_payment" | "trial" | "active" | "comped" | "past_due" | "cancelled";
           plan_code: string;
           comped_until: string | null;
           billing_notes: string | null;
@@ -203,7 +203,7 @@ export type Database = {
         Insert: {
           id?: string;
           name: string;
-          billing_status?: "trial" | "active" | "comped" | "past_due" | "cancelled";
+          billing_status?: "pending_payment" | "trial" | "active" | "comped" | "past_due" | "cancelled";
           plan_code?: string;
           comped_until?: string | null;
           billing_notes?: string | null;
@@ -231,7 +231,7 @@ export type Database = {
         Update: {
           id?: string;
           name?: string;
-          billing_status?: "trial" | "active" | "comped" | "past_due" | "cancelled";
+          billing_status?: "pending_payment" | "trial" | "active" | "comped" | "past_due" | "cancelled";
           plan_code?: string;
           comped_until?: string | null;
           billing_notes?: string | null;
@@ -1075,7 +1075,7 @@ export type Database = {
           id: string;
           beta_signup_id: string;
           actor_id: string | null;
-          event_type: "payment_email_sent" | "payment_email_failed" | "payment_confirmed" | "invitation_sent" | "invitation_failed" | "account_created";
+          event_type: "payment_email_sent" | "payment_email_failed" | "payment_confirmed" | "invitation_sent" | "invitation_failed" | "account_created" | "complimentary_access_granted";
           detail: string | null;
           created_at: string;
         };
@@ -1083,7 +1083,7 @@ export type Database = {
           id?: string;
           beta_signup_id: string;
           actor_id?: string | null;
-          event_type: "payment_email_sent" | "payment_email_failed" | "payment_confirmed" | "invitation_sent" | "invitation_failed" | "account_created";
+          event_type: "payment_email_sent" | "payment_email_failed" | "payment_confirmed" | "invitation_sent" | "invitation_failed" | "account_created" | "complimentary_access_granted";
           detail?: string | null;
           created_at?: string;
         };
@@ -1116,6 +1116,9 @@ export type Database = {
           last_access_error: string | null;
           william_beta_credited_at: string | null;
           william_beta_credited_by: string | null;
+          access_granted_at: string | null;
+          access_granted_by: string | null;
+          access_grant_note: string | null;
         };
         Insert: {
           id?: string;
@@ -1142,6 +1145,9 @@ export type Database = {
           last_access_error?: string | null;
           william_beta_credited_at?: string | null;
           william_beta_credited_by?: string | null;
+          access_granted_at?: string | null;
+          access_granted_by?: string | null;
+          access_grant_note?: string | null;
         };
         Update: {
           company_name?: string;
@@ -1167,6 +1173,9 @@ export type Database = {
           last_access_error?: string | null;
           william_beta_credited_at?: string | null;
           william_beta_credited_by?: string | null;
+          access_granted_at?: string | null;
+          access_granted_by?: string | null;
+          access_grant_note?: string | null;
         };
         Relationships: [];
       };
@@ -2354,7 +2363,7 @@ export type Database = {
         Returns: {
           id: string;
           name: string;
-          billing_status: "trial" | "active" | "comped" | "past_due" | "cancelled";
+          billing_status: "pending_payment" | "trial" | "active" | "comped" | "past_due" | "cancelled";
           plan_code: string;
           comped_until: string | null;
           billing_notes: string | null;
@@ -2373,7 +2382,7 @@ export type Database = {
         Returns: {
           company_id: string;
           company_name: string;
-          billing_status: "trial" | "active" | "comped" | "past_due" | "cancelled";
+          billing_status: "pending_payment" | "trial" | "active" | "comped" | "past_due" | "cancelled";
           plan_code: string;
           created_at: string;
           member_count: number;
@@ -2436,6 +2445,17 @@ export type Database = {
           account_created_at: string | null;
           last_access_error: string | null;
           william_beta_credited_at: string | null;
+          access_granted_at: string | null;
+          access_grant_note: string | null;
+          linked_company_id: string | null;
+          linked_company_name: string | null;
+          billing_status: "pending_payment" | "trial" | "active" | "comped" | "past_due" | "cancelled" | null;
+          comped_until: string | null;
+          member_count: number;
+          has_access: boolean;
+          account_exists: boolean;
+          email_confirmed_at: string | null;
+          last_sign_in_at: string | null;
         }[];
       };
       admin_credit_beta_william: {
@@ -2508,6 +2528,24 @@ export type Database = {
           p_page?: string | null;
         };
         Returns: undefined;
+      };
+      admin_grant_beta_complimentary_access: {
+        Args: { p_signup_id: string; p_note?: string | null };
+        Returns: Json;
+      };
+      admin_beta_supervision_ready: { Args: Record<PropertyKey, never>; Returns: boolean };
+      admin_list_company_members: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          company_id: string;
+          user_id: string;
+          full_name: string | null;
+          email: string | null;
+          role: "owner" | "admin" | "member" | "readonly";
+          created_at: string;
+          last_activity: string | null;
+          last_login: string | null;
+        }[];
       };
       admin_list_feedback: {
         Args: Record<PropertyKey, never>;

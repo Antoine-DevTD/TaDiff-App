@@ -1,5 +1,11 @@
 # Etat court du projet
 
+## Supervision bêta — livraison isolée du 8 octobre 2026
+
+- Branche `codex/beta-supervision` : accès offert sans paiement fictif, invitation explicite, compagnies/membres et compteurs complets, droits et pagination contrôlés.
+- SQL 086–089 dans `sql/releases/20261008_beta_supervision.sql`, en une transaction. Application et qualification Supabase nécessaires avant mise en service.
+- Aucun envoi de mail, paiement réel, réglage Auth à sept jours ou raccordement Stripe effectué par ce lot. Autres travaux locaux distincts. Procédure : `docs/operations/publication-supervision-beta-2026-10-08.md`.
+
 ## William, répétitions et matériel — 26 septembre 2026
 
 - Publication sur `main` demandée par l’utilisateur : conversation William visible avec motif d’indisponibilité, erreurs fournisseur explicites, guide produit, suivi des sondages et contrôle de compagnie avant rappel matériel.

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { CompanyBillingForm } from "@/components/admin/company-billing-form";
+import { CompanySupervision } from "@/components/admin/company-supervision";
+import { BetaAccessManager } from "@/components/admin/beta-access-manager";
+import { getAdminCompanySupervision } from "@/lib/admin-supervision-server";
 import { AiConfigurationPanel } from "@/components/admin/ai-configuration-panel";
 import { AiAccessManager } from "@/components/admin/ai-access-manager";
 import { WilliamAnalyticsPanel } from "@/components/admin/william-analytics-panel";
@@ -20,7 +22,7 @@ import { buildRevenueForecast } from "@/lib/admin-forecast";
 import { formatCurrency } from "@/lib/finance";
 import {
   getAdminAccessEvents,
-  getAdminCompanies,
+  getAdminBetaSupervision,
   getAdminFeedback,
   getAdminMaintenanceMode,
   getAdminLegalInformation,
@@ -39,17 +41,7 @@ import {
   getPlatformAdminAccess,
   type PlatformPermission,
   type AdminAccessEvent,
-  type AdminCompany,
 } from "@/lib/supabase/admin";
-import type { BillingStatus } from "@/lib/supabase/access";
-
-const statusMeta: Record<BillingStatus, { label: string; tone: "neutral" | "success" | "warning" | "danger" }> = {
-  trial: { label: "Essai", tone: "neutral" },
-  active: { label: "Actif", tone: "success" },
-  comped: { label: "Offert", tone: "success" },
-  past_due: { label: "Retard", tone: "warning" },
-  cancelled: { label: "Resilie", tone: "danger" },
-};
 
 type AdminPageProps = {
   searchParams?: Promise<{ tab?: string }>;
@@ -67,8 +59,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const activeTab = allowedTabs.includes(requestedTab as AdminTabId)
     ? (requestedTab as AdminTabId)
     : allowedTabs[0];
+  const canViewCompanies = access.isSuperAdmin || access.permissions.includes("view_companies");
+  const canViewAccess = access.isSuperAdmin || access.permissions.includes("view_access");
+  const isSupervision = activeTab === "supervision";
   const [
-    companies,
+    companySnapshot,
+    betaSnapshot,
     feedback,
     accessEvents,
     maintenanceActive,
@@ -85,24 +81,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     platformAdmins,
     errorGroups,
   ] = await Promise.all([
-    getAdminCompanies(),
-    getAdminFeedback(),
-    getAdminAccessEvents(60),
-    getAdminMaintenanceMode(),
-    getAdminPublicAnalyticsEvents(30, 2000),
-    getAdminLegalInformation(),
-    getAdminGrantCatalog(),
-    getAdminGrantCatalogProposals(),
-    getAdminPatronageCatalog(),
-    getAdminPlatformEmailTemplates(),
-    getAdminAiSettings(),
-    getAdminRagDocuments(),
-    getAdminAiAccounts(),
-    getAdminWilliamQuestionEvents(),
-    getAdminPlatformAdmins(),
-    getAdminErrorGroups(),
+    isSupervision && canViewCompanies ? getAdminCompanySupervision() : Promise.resolve(null),
+    activeTab === "beta" ? getAdminBetaSupervision() : Promise.resolve(null),
+    access.isSuperAdmin || access.permissions.includes("manage_feedback") ? getAdminFeedback() : Promise.resolve([]),
+    isSupervision && canViewAccess ? getAdminAccessEvents(60) : Promise.resolve([]),
+    isSupervision && access.isSuperAdmin ? getAdminMaintenanceMode() : Promise.resolve(false),
+    activeTab === "audience" ? getAdminPublicAnalyticsEvents(30, 2000) : Promise.resolve([]),
+    activeTab === "informations" ? getAdminLegalInformation() : Promise.resolve(null),
+    activeTab === "catalogues" ? getAdminGrantCatalog() : Promise.resolve([]),
+    activeTab === "catalogues" ? getAdminGrantCatalogProposals() : Promise.resolve([]),
+    activeTab === "catalogues" ? getAdminPatronageCatalog() : Promise.resolve([]),
+    activeTab === "emails" ? getAdminPlatformEmailTemplates() : Promise.resolve([]),
+    activeTab === "ia" ? getAdminAiSettings() : Promise.resolve(null),
+    activeTab === "ia" ? getAdminRagDocuments() : Promise.resolve([]),
+    activeTab === "ia" || activeTab === "administrateurs" ? getAdminAiAccounts() : Promise.resolve([]),
+    activeTab === "ia" ? getAdminWilliamQuestionEvents() : Promise.resolve([]),
+    activeTab === "administrateurs" ? getAdminPlatformAdmins() : Promise.resolve([]),
+    activeTab === "notifications" ? getAdminErrorGroups() : Promise.resolve([]),
   ]);
   const aiReadiness = getAiProviderReadiness();
+  const companies = companySnapshot?.status === "ready" ? companySnapshot.companies : [];
 
   const activeCount = companies.filter((company) => company.billingStatus === "active").length;
   const compedCount = companies.filter((company) => company.billingStatus === "comped").length;
@@ -120,6 +118,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       <div className="flex flex-wrap gap-2 border-b border-border">
         {allowedTabs.includes("supervision") ? <AdminTab active={activeTab === "supervision"} href="/admin" label="Supervision" /> : null}
+        {allowedTabs.includes("beta") ? <AdminTab active={activeTab === "beta"} href="/admin?tab=beta" label="Accès bêta" /> : null}
         {allowedTabs.includes("retours") ? <AdminTab
           active={activeTab === "retours"}
           href="/admin?tab=retours"
@@ -134,11 +133,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         {allowedTabs.includes("administrateurs") ? <AdminTab active={activeTab === "administrateurs"} href="/admin?tab=administrateurs" label="Administrateurs" /> : null}
       </div>
 
-      {activeTab === "administrateurs" ? (
+      {activeTab === "beta" && betaSnapshot ? (
+        <BetaAccessManager canManage={access.isSuperAdmin} canViewAccess={canViewAccess} signups={betaSnapshot.signups} error={betaSnapshot.error} />
+      ) : activeTab === "administrateurs" ? (
         <PlatformAdminManager accounts={aiAccounts} admins={platformAdmins} />
       ) : activeTab === "notifications" ? (
         <ErrorNotificationsPanel errors={errorGroups} />
-      ) : activeTab === "informations" ? (
+      ) : activeTab === "informations" && legalInformation ? (
         <LegalInformationForm initialValue={legalInformation} />
       ) : activeTab === "catalogues" ? (
         <div className="space-y-8">
@@ -147,7 +148,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
       ) : activeTab === "emails" ? (
         <PlatformEmailTemplateStudio templates={platformEmailTemplates} />
-      ) : activeTab === "ia" ? (
+      ) : activeTab === "ia" && aiSettings ? (
         <div className="space-y-5">
           {access.isSuperAdmin ? <AiAccessManager accounts={aiAccounts} /> : null}
           <WilliamAnalyticsPanel events={williamQuestionEvents} />
@@ -159,75 +160,35 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <AdminFeedbackPanel feedback={feedback} openFeedback={openFeedback} />
       ) : (
         <>
-      {access.isSuperAdmin ? <Card className="space-y-3 p-5">
-        <div>
-          <p className="text-base font-semibold">Mode maintenance</p>
-          <p className="mt-1 text-sm text-muted">
-            Coupe l&apos;accès au site pour tous les visiteurs (bascule immédiate, pas de
-            redeploiement). A utiliser pendant une intervention technique.
-          </p>
-        </div>
-        <MaintenanceToggle active={maintenanceActive} />
-      </Card> : null}
+      {companySnapshot ? <CompanySupervision snapshot={companySnapshot} canManageBilling={access.isSuperAdmin} /> : null}
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} active(s), ${compedCount} offerte(s)`} />
-        <MetricCard label="MRR bêta" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) a 19,99 EUR`} />
-      </section>
-
-      <Card className="space-y-4 p-5">
-        <div>
-          <p className="text-base font-semibold">Prevision de revenu</p>
-          <p className="mt-1 text-sm text-muted">
-            MRR estime depuis les abonnements actifs, prolonge sur 6 mois au rythme des nouvelles
-            souscriptions. Indicatif tant que Stripe n&apos;est pas branche.
-          </p>
+      {companySnapshot?.status === "ready" ? <details className="border-y border-border">
+        <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">Abonnements et prévision de revenu</summary>
+        <div className="space-y-4 pb-5">
+          <section className="grid gap-4 md:grid-cols-2">
+            <MetricCard label="Compagnies" value={companies.length.toString()} detail={`${activeCount} abonnement(s) actif(s), ${compedCount} accès offert(s)`} />
+            <MetricCard label="Revenu mensuel estimé" value={formatCurrency(monthlyRevenue)} detail={`${activeCount} abonnement(s) à 19,99 EUR`} />
+          </section>
+          <p className="text-sm text-muted">Estimation depuis les statuts d’abonnement, projetée sur six mois. Le montant encaissé doit être vérifié dans Stripe.</p>
+          <RevenueForecastChart forecast={forecast} />
         </div>
-        <RevenueForecastChart forecast={forecast} />
-      </Card>
+      </details> : null}
 
-      <Card className="space-y-4 p-5">
-        <div>
-          <p className="text-base font-semibold">Compagnies</p>
-          <p className="mt-1 text-sm text-muted">
-            Statut d&apos;abonnement, volumes et dernière activité. La facturation se gère ici sans
-            passer par le SQL editor.
-          </p>
+      {canViewAccess ? <details className="border-b border-border">
+        <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">Connexions et navigation récentes</summary>
+        <div className="space-y-3 pb-5">
+          <p className="text-sm text-muted">Derniers événements enregistrés. Ils ne constituent pas une présence en temps réel.</p>
+          {accessEvents.length === 0 ? <p className="py-4 text-sm text-muted">Aucun événement d’accès disponible. Vérifiez la collecte si cette liste reste vide.</p> : <div className="space-y-2">{accessEvents.map((event) => <AccessEventRow key={event.id} event={event} />)}</div>}
         </div>
-        {companies.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-            Aucune compagnie inscrite pour le moment.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {companies.map((company) => (
-              <CompanyRow key={company.id} company={company} canManageBilling={access.isSuperAdmin} />
-            ))}
-          </div>
-        )}
-      </Card>
+      </details> : null}
 
-      <Card className="space-y-4 p-5">
-        <div>
-          <p className="text-base font-semibold">Accès récents</p>
-          <p className="mt-1 text-sm text-muted">
-            Connexions et navigation authentifiee. A utiliser pour vérifier quel compte accede a
-            l&apos;application, depuis quelle IP et quel navigateur.
-          </p>
+      {access.isSuperAdmin ? <details className="border-b border-border">
+        <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">Maintenance du site</summary>
+        <div className="space-y-3 pb-5">
+          <p className="text-sm text-muted">Coupe l’accès au site pour les visiteurs pendant une intervention technique.</p>
+          <MaintenanceToggle active={maintenanceActive} />
         </div>
-        {accessEvents.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border bg-panel-strong/35 p-4 text-sm text-muted">
-            Aucun accès journalise pour le moment. Appliquer la migration 021 et vérifier
-            `SUPABASE_SERVICE_ROLE_KEY` si la liste reste vide.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {accessEvents.map((event) => (
-              <AccessEventRow key={event.id} event={event} />
-            ))}
-          </div>
-        )}
-      </Card>
+      </details> : null}
 
         </>
       )}
@@ -237,7 +198,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
 const adminTabMeta = {
   supervision: { title: "Supervision TaDiff", description: "Compagnies, facturation, accès et inscriptions bêta." },
-  retours: { title: "Retours compagnies", description: "Bugs, idees et avis envoyes depuis le cockpit." },
+  beta: { title: "Accès bêta", description: "Activer un accès offert et suivre chaque inscription jusqu’à sa première connexion." },
+  retours: { title: "Retours des compagnies", description: "Bugs, idées et avis envoyés depuis le cockpit." },
   notifications: { title: "Notifications techniques", description: "Erreurs groupées, compagnies touchées et suivi des corrections." },
   audience: { title: "Audience publique", description: "Visites, clics et inscriptions sur les pages publiques, sans adresse IP." },
   informations: { title: "Informations publiees", description: "Identite legale, contacts et prix modifiables sans redeploiement." },
@@ -250,9 +212,10 @@ const adminTabMeta = {
 type AdminTabId = keyof typeof adminTabMeta;
 
 function getAllowedTabs(isSuperAdmin: boolean, permissions: PlatformPermission[]): AdminTabId[] {
-  if (isSuperAdmin) return ["supervision", "retours", "notifications", "audience", "informations", "catalogues", "emails", "ia", "administrateurs"];
+  if (isSuperAdmin) return ["supervision", "beta", "retours", "notifications", "audience", "informations", "catalogues", "emails", "ia", "administrateurs"];
   const tabs: AdminTabId[] = [];
-  if (["view_companies", "view_beta", "view_access"].some((permission) => permissions.includes(permission as PlatformPermission))) tabs.push("supervision");
+  if (["view_companies", "view_access"].some((permission) => permissions.includes(permission as PlatformPermission))) tabs.push("supervision");
+  if (permissions.includes("view_beta")) tabs.push("beta");
   if (permissions.includes("manage_feedback")) tabs.push("retours");
   if (permissions.includes("manage_feedback")) tabs.push("notifications");
   if (permissions.includes("view_audience")) tabs.push("audience");
@@ -342,73 +305,6 @@ function AccessEventRow({ event }: { event: AdminAccessEvent }) {
       <p className="text-xs text-muted lg:text-right">
         {new Date(event.createdAt).toLocaleString("fr-FR")}
       </p>
-    </div>
-  );
-}
-
-function CompanyRow({ company, canManageBilling }: { company: AdminCompany; canManageBilling: boolean }) {
-  const meta = statusMeta[company.billingStatus];
-  const shortId = company.id.slice(0, 8);
-
-  return (
-    <div className="rounded-lg border border-border bg-panel-strong/35 p-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-accent text-xs font-semibold text-white">
-              {getCompanyInitials(company.name)}
-            </span>
-            <p className="font-medium">{company.name}</p>
-            <span className="font-mono text-xs text-muted">#{shortId}</span>
-            <Badge tone={meta.tone}>{meta.label}</Badge>
-            <Badge>{company.planCode}</Badge>
-            {company.billingStatus === "comped" && company.compedUntil ? (
-              <Badge tone="warning">
-                jusqu&apos;au {new Date(company.compedUntil).toLocaleDateString("fr-FR")}
-              </Badge>
-            ) : null}
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Creee le {new Date(company.createdAt).toLocaleDateString("fr-FR")} —{" "}
-            {company.lastActivity
-              ? `derniere activite le ${new Date(company.lastActivity).toLocaleDateString("fr-FR")}`
-              : "aucune activité journalisee"}
-          </p>
-          {company.billingNotes ? (
-            <p className="mt-2 text-sm text-muted">{company.billingNotes}</p>
-          ) : null}
-          {company.ownerEmail || company.ownerName ? (
-            <p className="mt-1 text-xs text-muted">
-              Referent : {[company.ownerName, company.ownerEmail].filter(Boolean).join(" - ")}
-            </p>
-          ) : null}
-        </div>
-        <div className="grid shrink-0 grid-cols-4 gap-3 text-center text-sm">
-          <VolumeCell label="Membres" value={company.memberCount} />
-          <VolumeCell label="Spectacles" value={company.showCount} />
-          <VolumeCell label="Contacts" value={company.contactCount} />
-          <VolumeCell label="Dates" value={company.dealCount} />
-        </div>
-      </div>
-      {canManageBilling ? <div className="mt-3"><CompanyBillingForm company={company} /></div> : null}
-    </div>
-  );
-}
-
-function getCompanyInitials(name: string) {
-  const words = name
-    .replace(/^compagnie\s+/i, "")
-    .split(/\s+/)
-    .filter(Boolean);
-
-  return (words[0]?.[0] ?? "T").concat(words[1]?.[0] ?? "").toUpperCase();
-}
-
-function VolumeCell({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-border bg-panel px-2 py-1.5">
-      <p className="text-base font-semibold">{value}</p>
-      <p className="text-xs text-muted">{label}</p>
     </div>
   );
 }
