@@ -1,5 +1,7 @@
-import { ResetPasswordForm } from "@/components/forms/reset-password-form";
+import { PasswordResetEntry } from "@/components/forms/reusable-password-reset-form";
 import { Card } from "@/components/ui/card";
+
+export const metadata = { robots: { index: false, follow: false }, referrer: "no-referrer" as const };
 
 export default async function ResetPasswordPage({
   searchParams,
@@ -17,11 +19,10 @@ export default async function ResetPasswordPage({
         <p className="text-sm font-medium text-muted">Nouveau mot de passe</p>
         <h1 className="mt-2 text-2xl font-semibold">Choisissez un nouveau mot de passe</h1>
         <p className="mt-2 text-sm text-muted">
-          Vous arrivez ici depuis le lien recu par email. Le nouveau mot de passe remplace
-          l&apos;ancien immediatement.
+          Votre mot de passe sera remplacé lorsque vous validerez le formulaire.
         </p>
       </div>
-      <ResetPasswordForm nextPath={nextPath} />
+      <PasswordResetEntry nextPath={nextPath} />
     </Card>
   );
 }

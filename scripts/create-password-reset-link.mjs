@@ -1,0 +1,20 @@
+import { createHash, randomBytes } from "node:crypto";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { createClient } from "@supabase/supabase-js";
+
+const [email, outputFile, origin = "https://tadiff.com"] = process.argv.slice(2);
+if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !outputFile || !isAbsolute(outputFile)) throw new Error("Usage : node --env-file=.env.local scripts/create-password-reset-link.mjs email fichier-prive-absolu [origine-https]");
+if (!relative(process.cwd(), resolve(outputFile)).startsWith("..")) throw new Error("Le lien doit être conservé hors dépôt, dans un dossier privé.");
+if (existsSync(outputFile)) throw new Error("Le fichier existe déjà. Choisissez un nouveau fichier privé pour conserver ce lien.");
+if (new URL(origin).protocol !== "https:") throw new Error("Une origine HTTPS est requise.");
+const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+const token = randomBytes(32).toString("hex");
+const tokenHash = createHash("sha256").update(`tadiff:password-reset:v1:${token}`).digest("hex");
+const { data, error } = await client.rpc("issue_password_reset_link", { p_email: email.toLowerCase().trim(), p_token_hash: tokenHash });
+if (error) throw new Error("Création du lien indisponible. Vérifiez la migration 090 et les droits serveur.");
+if (data?.status !== "issued") throw new Error("Aucun lien créé : compte non confirmé/inconnu/suspendu, ou demande trop récente. Aucun email envoyé.");
+const link = new URL("/reset-password", origin); link.hash = new URLSearchParams({ recovery: token }).toString();
+mkdirSync(dirname(outputFile), { recursive: true });
+writeFileSync(outputFile, `Lien personnel TaDiff — ${email}\nValable jusqu’au : ${data.expiresAt}\n\n${link}\n\nCe lien peut être ouvert plusieurs fois pendant 7 jours. Il est désactivé après le changement du mot de passe.\nAucun email envoyé par cet outil.\n`, { mode: 0o600, flag: "wx" });
+console.log(JSON.stringify({ created: true, email: data.email, expiresAt: data.expiresAt, outputFile, emailSent: false }));

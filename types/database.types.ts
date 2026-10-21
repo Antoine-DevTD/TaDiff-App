@@ -9,6 +9,12 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      password_reset_links: {
+        Row: { id: string; token_hash: string; user_id: string; email: string; created_at: string; expires_at: string; used_at: string | null; applied_at: string | null; consumed_txid: number | null; claim_id: string | null; claim_until: string | null };
+        Insert: { id?: string; token_hash: string; user_id: string; email: string; created_at?: string; expires_at?: string; used_at?: string | null; applied_at?: string | null; consumed_txid?: number | null; claim_id?: string | null; claim_until?: string | null };
+        Update: { used_at?: string | null; applied_at?: string | null; consumed_txid?: number | null; claim_id?: string | null; claim_until?: string | null };
+        Relationships: [];
+      };
       treasury_movements: {
         Row: { id: string; company_id: string; show_id: string | null; fixed_cost_id: string | null; label: string; direction: "income" | "expense"; amount: number; movement_date: string; reliability: "secured" | "probable" | "uncertain"; status: "planned" | "paid" | "cancelled"; notes: string | null; created_by: string | null; created_at: string; updated_at: string };
         Insert: { id?: string; company_id: string; show_id?: string | null; fixed_cost_id?: string | null; label: string; direction: "income" | "expense"; amount: number; movement_date: string; reliability?: "secured" | "probable" | "uncertain"; status?: "planned" | "paid" | "cancelled"; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string };
@@ -2243,6 +2249,11 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      issue_password_reset_link: { Args: { p_email: string; p_token_hash: string }; Returns: Json };
+      inspect_password_reset_link: { Args: { p_token_hash: string }; Returns: Json };
+      claim_password_reset_link: { Args: { p_token_hash: string }; Returns: Json };
+      release_password_reset_claim: { Args: { p_claim_id: string }; Returns: undefined };
+      password_reset_claim_applied: { Args: { p_claim_id: string }; Returns: boolean };
       get_beta_signup_stats: {
         Args: Record<PropertyKey, never>;
         Returns: {

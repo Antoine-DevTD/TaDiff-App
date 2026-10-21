@@ -1,5 +1,11 @@
 # Etat court du projet
 
+## Réinitialisation du mot de passe — 21 octobre 2026
+
+- Nouveau parcours avec des liens valables sept jours, consultables plusieurs fois, sans session ouverte au simple clic. Désactivation dans la transaction Auth après le changement du mot de passe ; autres changements habituels du mot de passe également pris en compte.
+- Migration 090 et miroir CLI : table privée sous RLS, empreintes de jetons, réservations sérialisées, garde et reçu transactionnels. Aucun réglage global Auth ni nouvelle variable obligatoire. Procédure et outil de génération sans envoi : `docs/operations/password-reset-seven-days.md`.
+- Tests unitaires, PostgreSQL embarqué et navigateur mobile/ordinateur, puis parcours avec le vrai Supabase sur un compte QA temporaire supprimé : lectures répétées, échéance, saisie corrigée, changement réel, ancien mot de passe refusé, rejeu bloqué et table inaccessible aux membres.
+
 ## Supervision bêta — livraison isolée du 8 octobre 2026
 
 - Branche `codex/beta-supervision` : accès offert sans paiement fictif, invitation explicite, compagnies/membres et compteurs complets, droits et pagination contrôlés.
