@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { passwordResetRequestMessage } from "@/lib/password-reset-validation";
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
@@ -13,6 +13,7 @@ import {
 
 export function ForgotPasswordForm() {
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const lock = useRef(false);
   const {
     register,
     handleSubmit,
@@ -23,37 +24,25 @@ export function ForgotPasswordForm() {
   });
 
   async function onSubmit(values: ForgotPasswordFormValues) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      setMessage({
-        ok: false,
-        text: "Mode demo actif : ajoutez les variables Supabase pour activer la recuperation.",
-      });
-      return;
-    }
-
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    });
-
-    if (error) {
-      setMessage({ ok: false, text: error.message });
-      return;
-    }
-
-    setMessage({
-      ok: true,
-      text: "Si un compte existe avec cet email, un lien de reinitialisation vient d'être envoye.",
-    });
+    if (lock.current) return;
+    lock.current = true;
+    setMessage(null);
+    try {
+      const response = await fetch("/api/auth/password-reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "request", email: values.email }) });
+      if (!response.ok) throw new Error("Unavailable");
+      setMessage({ ok: true, text: passwordResetRequestMessage });
+    } catch { setMessage({ ok: false, text: "Le lien n’a pas pu être envoyé. Votre email est conservé ; réessayez dans un instant." }); }
+    finally { lock.current = false; }
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-4" onSubmit={(event) => handleSubmit(onSubmit)(event)}>
       <Field label="Email du compte" error={errors.email?.message}>
-        <Input type="email" placeholder="vous@compagnie.fr" {...register("email")} />
+        <Input type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} className="!text-base sm:!text-sm" placeholder="vous@compagnie.fr" {...register("email")} />
       </Field>
       {message ? (
         <p
+          role={message.ok ? "status" : "alert"}
           className={
             message.ok
               ? "rounded-md bg-success/10 px-3 py-2 text-sm text-success"
@@ -64,7 +53,7 @@ export function ForgotPasswordForm() {
         </p>
       ) : null}
       <Button className="w-full" type="submit" disabled={isSubmitting}>
-        Envoyer le lien de reinitialisation
+        {isSubmitting ? "Envoi du lien…" : "Envoyer le lien de réinitialisation"}
       </Button>
     </form>
   );
