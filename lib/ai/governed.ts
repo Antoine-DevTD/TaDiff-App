@@ -60,7 +60,7 @@ export async function askWilliam(input: AskWilliamInput): Promise<WilliamAnswer>
     buildWilliamSystemPrompt(settings.system_prompt, question),
     input.additionalInstructions?.trim(),
   ].filter(Boolean).join("\n");
-  const maxOutputTokens = Math.min(Math.max(input.maxOutputTokens ?? 900, 100), 2_000);
+  const maxOutputTokens = Math.min(Math.max(input.maxOutputTokens ?? 2_000, 100), 2_000);
   const reservationBudget = estimateReservationTokens(systemPrompt, question, context, maxOutputTokens);
   const { data: reservationId, error: reservationError } = await supabase.rpc("reserve_my_ai_tokens", {
     p_requested_tokens: reservationBudget,
