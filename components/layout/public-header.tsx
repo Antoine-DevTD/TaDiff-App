@@ -54,6 +54,7 @@ export async function PublicHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <Link href="/ressources" className="rounded-md px-2 py-2 text-sm font-medium hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">Ressources</Link>
             <ButtonLink href="/login" variant="secondary" data-analytics="login_header">
               Connexion
             </ButtonLink>

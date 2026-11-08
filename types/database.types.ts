@@ -1,3 +1,5 @@
+import type { ResourceAsset, ResourcePage, ResourceRevision, PublishedResource } from "./resources";
+
 export type Json =
   | string
   | number
@@ -9,6 +11,11 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      resource_editors: { Row: { user_id: string; granted_by: string | null; granted_at: string }; Insert: never; Update: never; Relationships: [] };
+      resource_pages: { Row: ResourcePage & { slug: string; created_by: string | null }; Insert: never; Update: never; Relationships: [] };
+      resource_publications: { Row: PublishedResource & { slug: string; visibility: 'public' | 'members'; asset_ids: string[] }; Insert: never; Update: never; Relationships: [] };
+      resource_assets: { Row: ResourceAsset; Insert: Omit<ResourceAsset, 'created_at'>; Update: never; Relationships: [] };
+      resource_revisions: { Row: ResourceRevision & { created_by: string | null }; Insert: never; Update: never; Relationships: [] };
       password_reset_links: {
         Row: { id: string; token_hash: string; user_id: string; email: string; created_at: string; expires_at: string; used_at: string | null; applied_at: string | null; consumed_txid: number | null; claim_id: string | null; claim_until: string | null };
         Insert: { id?: string; token_hash: string; user_id: string; email: string; created_at?: string; expires_at?: string; used_at?: string | null; applied_at?: string | null; consumed_txid?: number | null; claim_id?: string | null; claim_until?: string | null };
@@ -2249,6 +2256,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      can_edit_resources: { Args: Record<string, never>; Returns: boolean };
+      admin_list_resource_editors: { Args: { p_limit?: number; p_offset?: number }; Returns: { user_id: string; full_name: string; email: string; company_name: string; is_super_admin: boolean; can_edit: boolean; granted_at: string | null }[] };
+      admin_set_resource_editor: { Args: { p_user_id: string; p_can_edit: boolean }; Returns: boolean };
+      mutate_resource_page: { Args: { p_id: string; p_document: Json | null; p_expected_revision: number | null; p_action: string; p_revision_id?: string | null }; Returns: Json };
       issue_password_reset_link: { Args: { p_email: string; p_token_hash: string }; Returns: Json };
       inspect_password_reset_link: { Args: { p_token_hash: string }; Returns: Json };
       claim_password_reset_link: { Args: { p_token_hash: string }; Returns: Json };

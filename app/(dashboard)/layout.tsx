@@ -6,6 +6,7 @@ import { DeferredDashboardTools } from "@/components/layout/deferred-dashboard-t
 import { WilliamAssistant } from "@/components/william/william-assistant";
 import { ThemeApplier } from "@/components/theme/theme-applier";
 import { Topbar } from "@/components/layout/topbar";
+import { canEditResources } from "@/lib/resources-server";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getPlatformAdminAccess } from "@/lib/supabase/admin";
 import { getSupabaseServerUser } from "@/lib/supabase/server";
@@ -24,6 +25,7 @@ export default async function DashboardLayout({
   let superAdmin = false;
   let canViewBeta = false;
   let canViewCompanies = false;
+  let canManageResources = false;
 
   if (hasSupabaseEnv()) {
     const {
@@ -34,13 +36,15 @@ export default async function DashboardLayout({
       redirect("/login");
     }
 
-    const [platformAccess, workspaceBranding] = await Promise.all([
+    const [platformAccess, workspaceBranding, resourceEditor] = await Promise.all([
       getPlatformAdminAccess(),
       getWorkspaceBranding(),
+      canEditResources(),
     ]);
     superAdmin = platformAccess.isSuperAdmin || platformAccess.permissions.length > 0;
     canViewBeta = platformAccess.isSuperAdmin || platformAccess.permissions.includes("view_beta");
     canViewCompanies = platformAccess.isSuperAdmin || platformAccess.permissions.includes("view_companies");
+    canManageResources = resourceEditor;
     workspaceLabel = superAdmin ? "Console interne" : workspaceBranding.label;
     companyLogoUrl = superAdmin ? "" : workspaceBranding.logoUrl;
     logoScale = workspaceBranding.logoScale;
@@ -57,7 +61,7 @@ export default async function DashboardLayout({
       >
         Aller au contenu
       </a>
-      <Sidebar canViewBeta={canViewBeta} canViewCompanies={canViewCompanies} variant={superAdmin ? "admin" : "company"} />
+      <Sidebar canManageResources={canManageResources} canViewBeta={canViewBeta} canViewCompanies={canViewCompanies} variant={superAdmin ? "admin" : "company"} />
       <div className="min-w-0 flex-1">
         <Topbar
           workspaceLabel={workspaceLabel}

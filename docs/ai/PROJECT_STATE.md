@@ -1,5 +1,12 @@
 # Etat court du projet
 
+## Ressources éditoriales — livraison du 8 novembre 2026
+
+- Branche `codex/resource-editor`, préparée depuis `main` du 8 novembre (`cf7025b`). Éditeur visuel `/resources/manage` : blocs, colonnes, médias, aperçu mobile, brouillons, publication, historique et archives restaurables. Chaque page choisit un accès public ou membres ; les fichiers suivent la publication.
+- Attribution et retrait du droit indépendant « Éditeur de ressources » dans `/admin?tab=ressources`, réservés au superadministrateur. Compagnie, rôle et outils habituels conservés. La connexion vers l’éditeur ne crée aucune compagnie pour un compte autorisé qui n’en possède pas.
+- Migrations **091 puis 092** et miroirs inclus, à appliquer avant mise en service ; `storage.allow_only_operation(text)` requis. Aucune nouvelle variable d’environnement, aucun droit réel attribué, aucun SQL distant ni déploiement effectué pour ce lot.
+- Validation de la branche : 75 résultats ciblés réussis via `npm run test:resources`, PostgreSQL embarqué installé comme dépendance de développement, interfaces ordinateur/mobile, lint, types, français et compilation webpack validés. Recette Auth/Storage sur l’hébergement et concurrence PostgreSQL multi-connexion à qualifier avant production. Mode d’emploi : `docs/product/ressources-editoriales.md` ; installation : `docs/operations/ressources-editoriales-2026-10-21.md`.
+
 ## Réinitialisation du mot de passe — 21 octobre 2026
 
 - Nouveau parcours avec des liens valables sept jours, consultables plusieurs fois, sans session ouverte au simple clic. Désactivation dans la transaction Auth après le changement du mot de passe ; autres changements habituels du mot de passe également pris en compte.
