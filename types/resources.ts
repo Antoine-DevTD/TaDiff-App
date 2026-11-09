@@ -1,7 +1,14 @@
 export type ResourceVisibility = "public" | "members";
 export type ResourceTone = "plain" | "soft" | "accent";
 export type ResourceImage = { assetId: string | null; alt: string; caption: string };
-type BlockBase = { id: string; tone: ResourceTone };
+export type ResourceLayout = {
+  align?: "left" | "center" | "right";
+  width?: "full" | "medium" | "narrow";
+  size?: "small" | "normal" | "large";
+  spacing?: "compact" | "normal" | "roomy";
+  button?: "solid" | "outline" | "text";
+};
+type BlockBase = { id: string; tone: ResourceTone; layout?: ResourceLayout };
 export type ResourceBlock = BlockBase & (
   | { type: "heading"; text: string; level: 2 | 3 }
   | { type: "text"; text: string }

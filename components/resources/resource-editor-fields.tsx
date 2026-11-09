@@ -2,13 +2,14 @@
 "use client";
 
 import { Children, cloneElement, isValidElement, useId, type ReactNode } from "react";
-import { ImagePlus, Upload, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ImagePlus, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { resourceAssetUrl, resourceVideoEmbed, safeResourceLink } from "@/lib/resources";
-import type { ResourceAsset, ResourceBlock } from "@/types/resources";
+import { findResourceBlock, placeResourceBlock, type BlockDestination } from "@/components/resources/editor-tree";
+import type { ResourceAsset, ResourceBlock, ResourceLayout } from "@/types/resources";
 
 export function EditorField({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   const id = useId();
@@ -26,7 +27,28 @@ export function AssetField({ assetId, assets, onChoose, onRemove, label = "Image
   </div>;
 }
 
+export function ResourceMoveField({ block, blocks, onMove }: { block: ResourceBlock; blocks: ResourceBlock[]; onMove: (blocks: ResourceBlock[]) => void }) {
+  const options: { label: string; destination: BlockDestination; length: number }[] = [];
+  if (!blocks.some(item => item.id === block.id)) options.push({ label: "À la fin de la page", destination: null, length: blocks.length });
+  function collect(items: ResourceBlock[], path = "") {
+    items.forEach((item, index) => {
+      if (item.type !== "columns" || findResourceBlock([block], item.id)) return;
+      item.columns.forEach((column, columnIndex) => {
+        const label = `${path}Colonne ${columnIndex + 1} · 2 colonnes ${index + 1}`;
+        const destination = { parentId: item.id, column: columnIndex as 0 | 1 };
+        if (!column.some(child => child.id === block.id) && placeResourceBlock(blocks, block, destination, column.length) !== blocks) options.push({ label, destination, length: column.length });
+        collect(column, `${label} / `);
+      });
+    });
+  }
+  collect(blocks);
+  if (!options.length) return null;
+  return <EditorField label="Déplacer le bloc vers" hint="Le bloc sera placé à la fin de cet emplacement."><Select value="" onChange={(event) => { const target = options[Number(event.target.value)]; if (target) onMove(placeResourceBlock(blocks, block, target.destination, target.length)); }}><option value="" disabled>Choisir un emplacement</option>{options.map((option, index) => <option key={index} value={index}>{option.label}</option>)}</Select></EditorField>;
+}
+
 export function ResourceBlockFields({ block, assets, onChange, onChooseAsset }: { block: ResourceBlock; assets: ResourceAsset[]; onChange: (next: ResourceBlock) => void; onChooseAsset: (kind: "image" | "file", apply: (asset: ResourceAsset) => void) => void }) {
+  const layout = block.layout || {};
+  const changeLayout = (next: Partial<ResourceLayout>) => onChange({ ...block, layout: { ...layout, ...next } });
   return <div className="space-y-5">
     {block.type === "heading" ? <>
       <EditorField label="Texte du titre"><Input value={block.text} maxLength={240} onChange={(event) => onChange({ ...block, text: event.target.value })} /></EditorField>
@@ -67,6 +89,14 @@ export function ResourceBlockFields({ block, assets, onChange, onChooseAsset }: 
       <EditorField label="Largeur des colonnes"><Select value={block.ratio} onChange={(event) => onChange({ ...block, ratio: event.target.value as typeof block.ratio })}><option value="equal">Deux colonnes égales</option><option value="wide-left">Colonne gauche plus large</option><option value="wide-right">Colonne droite plus large</option></Select></EditorField>
       <p className="text-sm leading-relaxed text-muted">Ajoutez vos blocs dans chaque colonne depuis la page. Sur téléphone, les colonnes s’affichent l’une sous l’autre.</p>
     </> : null}
-    <EditorField label="Style du bloc" hint="Les couleurs et les caractères suivent la charte TaDiff."><Select value={block.tone} onChange={(event) => onChange({ ...block, tone: event.target.value as ResourceBlock["tone"] })}><option value="plain">Fond blanc</option><option value="soft">Fond bleu clair</option><option value="accent">Mise en avant bleue</option></Select></EditorField>
+    <div className="space-y-4 border-t border-border pt-4">
+      <h3 className="text-sm font-semibold">Mise en page</h3>
+      <fieldset><legend className="mb-2 text-xs font-medium text-muted">Alignement</legend><div className="flex gap-2">{([{ value: "left", label: "Aligner à gauche", icon: AlignLeft }, { value: "center", label: "Centrer", icon: AlignCenter }, { value: "right", label: "Aligner à droite", icon: AlignRight }] as const).map(({ value, label, icon: Icon }) => <button key={value} type="button" aria-label={label} title={label} aria-pressed={(layout.align || "left") === value} onClick={() => changeLayout({ align: value })} className={`flex min-h-11 flex-1 items-center justify-center rounded-md border focus-visible:outline-2 focus-visible:outline-accent ${(layout.align || "left") === value ? "border-accent bg-accent/5 text-accent" : "border-border text-muted"}`}><Icon className="size-4" aria-hidden="true" /></button>)}</div></fieldset>
+      <EditorField label="Largeur du bloc"><Select value={layout.width || "full"} onChange={(event) => changeLayout({ width: event.target.value as ResourceLayout["width"] })}><option value="full">Toute la largeur</option><option value="medium">Moyenne</option><option value="narrow">Étroite</option></Select></EditorField>
+      {["heading", "text", "link"].includes(block.type) ? <EditorField label="Taille du texte"><Select value={layout.size || "normal"} onChange={(event) => changeLayout({ size: event.target.value as ResourceLayout["size"] })}><option value="small">Petite</option><option value="normal">Normale</option><option value="large">Grande</option></Select></EditorField> : null}
+      {block.type === "link" ? <EditorField label="Apparence du bouton"><Select value={layout.button || "solid"} onChange={(event) => changeLayout({ button: event.target.value as ResourceLayout["button"] })}><option value="solid">Bleu plein</option><option value="outline">Contour bleu</option><option value="text">Lien souligné</option></Select></EditorField> : null}
+      <EditorField label="Espace autour du contenu"><Select value={layout.spacing || "normal"} onChange={(event) => changeLayout({ spacing: event.target.value as ResourceLayout["spacing"] })}><option value="compact">Serré</option><option value="normal">Normal</option><option value="roomy">Aéré</option></Select></EditorField>
+      <EditorField label="Style du bloc" hint="Les couleurs et les caractères suivent la charte TaDiff."><Select value={block.tone} onChange={(event) => onChange({ ...block, tone: event.target.value as ResourceBlock["tone"] })}><option value="plain">Fond blanc</option><option value="soft">Fond bleu clair</option><option value="accent">Mise en avant bleue</option></Select></EditorField>
+    </div>
   </div>;
 }

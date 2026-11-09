@@ -5,6 +5,18 @@ import { allowedResourceUpload, createResourceBlock, createResourceDocument, res
 
 const document = () => ({ ...createResourceDocument(), blocks: [createResourceBlock("text")] });
 
+test("ressources : mise en page encadrée et compatibilité des anciennes pages", () => {
+  const doc = document();
+  assert.equal(resourceDocumentSchema.safeParse(doc).success, true);
+  doc.blocks[0].layout = { align: "center", width: "narrow", size: "large", spacing: "roomy", button: "outline" };
+  const parsed = resourceDocumentSchema.safeParse(doc);
+  assert.equal(parsed.success, true);
+  assert.deepEqual(parsed.data.blocks[0].layout, doc.blocks[0].layout);
+  for (const layout of [{ width: "9999px" }, { color: "red" }, { size: "huge" }, { align: "absolute" }]) {
+    assert.equal(resourceDocumentSchema.safeParse({ ...doc, blocks: [{ ...doc.blocks[0], layout }] }).success, false);
+  }
+});
+
 test("ressources : brouillon privé par défaut et publication explicite d’un contenu complet", () => {
   const draft = createResourceDocument();
   assert.equal(draft.visibility, "members");

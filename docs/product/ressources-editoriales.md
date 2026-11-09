@@ -31,3 +31,9 @@ La bibliothèque des compagnies reste dans `/resources`. Le catalogue public est
 - Une page précédemment publique peut avoir été copiée ou téléchargée par ses lecteurs. Le passage en membres protège les prochaines requêtes ; il ne retire pas les copies déjà obtenues.
 
 Mise en service et limites de vérification : [procédure d’exploitation](../operations/ressources-editoriales-2026-10-21.md).
+
+## Évolution du composeur — préparée localement le 9 novembre 2026
+
+Cette évolution n’est pas encore publiée. Depuis la palette, glisser un titre, un texte, une image ou un bouton à l’emplacement voulu ; une ligne bleue indique la destination. La poignée permet aussi de passer un bloc d’une colonne à une autre. Sur écran tactile, maintenir avant de déplacer ; cliquer pour ajouter reste possible.
+
+Les réglages du bloc proposent l’alignement, la largeur, la taille du texte, l’espacement et l’apparence des boutons, dans la palette TaDiff. Les colonnes se réorganisent sur téléphone. Au clavier, les commandes monter/descendre et **Déplacer le bloc vers** permettent de composer la page sans souris. Les droits, brouillons, publications et anciennes révisions conservent leur fonctionnement.

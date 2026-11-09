@@ -64,8 +64,8 @@ mkdirSync(path.join(root, "tmp/resources"), { recursive: true });
 
 test("ressources : éditeur réel, publication explicite, historique, médias et mobile", { timeout: 180_000 }, async (suite) => {
   const browser = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } : { channel: "chrome" });
-  async function fixture({ kind = "editor", width = 1480, page = pageData, assets = [], responses = [], managerPages = [], managerError = null, uploadFailures = 0 } = {}) {
-    const tab = await browser.newPage({ viewport: { width, height: 1000 }, reducedMotion: "reduce" });
+  async function fixture({ kind = "editor", width = 1480, page = pageData, assets = [], responses = [], managerPages = [], managerError = null, uploadFailures = 0, touch = false } = {}) {
+    const tab = await browser.newPage({ viewport: { width, height: 1000 }, reducedMotion: "reduce", hasTouch: touch });
     tab.setDefaultTimeout(6000);
     const errors = [];
     tab.on("pageerror", (error) => errors.push(error.message));
@@ -97,6 +97,94 @@ test("ressources : éditeur réel, publication explicite, historique, médias et
     return { tab, close: async () => { assert.deepEqual(errors, []); await tab.close(); } };
   }
   try {
+    await suite.test("palette glissée dans la page puis bouton déplacé entre colonnes", async () => {
+      const f = await fixture(); const { tab } = f;
+      async function drag(source, target) {
+        await source.scrollIntoViewIfNeeded(); const from = await source.boundingBox();
+        await target.scrollIntoViewIfNeeded(); const to = await target.boundingBox();
+        await tab.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+        await tab.mouse.down(); await tab.mouse.move(from.x + from.width / 2 + 8, from.y + from.height / 2, { steps: 3 });
+        await tab.mouse.move(to.x + to.width / 2, to.y + 8, { steps: 20 });
+        await tab.mouse.up();
+      }
+      await drag(tab.getByRole("button", { name: "Lien / bouton", exact: true }), tab.locator(`[data-resource-block="${textId}"]`));
+      await expect(tab.locator("[data-resource-block]")).toHaveCount(3);
+      await tab.getByLabel("Texte du bouton", { exact: true }).fill("Les outils de diffusion");
+      await tab.getByLabel("Adresse du lien", { exact: true }).fill("https://tadiff.com/ressources");
+      await tab.getByRole("button", { name: "Centrer", exact: true }).click();
+      await tab.getByLabel("Taille du texte", { exact: true }).selectOption("large");
+      await tab.getByLabel("Apparence du bouton", { exact: true }).selectOption("outline");
+      await tab.getByLabel("Largeur du bloc", { exact: true }).selectOption("narrow");
+      await tab.getByRole("button", { name: "2 colonnes", exact: true }).click();
+      await drag(tab.getByRole("button", { name: "Déplacer le bloc Lien / bouton 2", exact: true }), tab.getByRole("button", { name: "Ajouter dans cette colonne", exact: true }).last());
+      await tab.screenshot({ path: path.join(root, "tmp/resources/composer-before-save.png"), fullPage: true });
+      await tab.getByRole("button", { name: "Enregistrer", exact: true }).click();
+      assert.equal(await tab.getByRole("alert").count(), 0, await tab.getByRole("alert").allTextContents());
+      await expect.poll(() => tab.evaluate(() => window.calls.length)).toBe(1);
+      const doc = (await tab.evaluate(() => window.calls)).at(-1).args[0].document;
+      assert.deepEqual(doc.blocks.map(block => block.type), ["heading", "text", "columns"]);
+      assert.equal(doc.blocks[2].columns[1][0].label, "Les outils de diffusion");
+      assert.deepEqual(doc.blocks[2].columns[1][0].layout, { align: "center", size: "large", button: "outline", width: "narrow" });
+      const content = tab.locator(`[data-resource-content="${doc.blocks[2].columns[1][0].id}"]`);
+      await expect(content).toHaveCSS("text-align", "center");
+      await expect(content.getByRole("button")).toHaveCSS("font-size", "16px");
+      await tab.screenshot({ path: path.join(root, "tmp/resources/composer-drag.png"), fullPage: true });
+      await f.close();
+    });
+    await suite.test("déposer hors de la page et Échap conservent le document", async () => {
+      const f = await fixture(); const { tab } = f;
+      const palette = tab.getByRole("button", { name: "Lien / bouton", exact: true });
+      const from = await palette.boundingBox();
+      await tab.mouse.move(from.x + 20, from.y + 20); await tab.mouse.down(); await tab.mouse.move(1100, 30, { steps: 15 }); await tab.mouse.up();
+      await expect(tab.locator("[data-resource-block]")).toHaveCount(2);
+      await tab.getByRole("button", { name: "Déplacer le bloc Titre 1", exact: true }).focus();
+      await tab.keyboard.press("Space"); await tab.keyboard.press("ArrowDown"); await tab.keyboard.press("Escape");
+      assert.equal(await tab.locator("[data-resource-block]").first().getAttribute("data-resource-block"), headingId);
+      await expect(tab.getByText("Brouillon enregistré", { exact: true })).toBeVisible();
+      await f.close();
+    });
+    await suite.test("appui prolongé tactile : ajout dans une page vide", async () => {
+      const f = await fixture({ touch: true, page: { ...pageData, draft: { ...document, blocks: [] } } }); const { tab } = f;
+      const from = await tab.getByRole("button", { name: "Lien / bouton", exact: true }).boundingBox();
+      const to = await tab.getByRole("button", { name: "Ajouter un bloc", exact: true }).boundingBox();
+      const session = await tab.context().newCDPSession(tab);
+      const start = { x: from.x + from.width / 2, y: from.y + from.height / 2 };
+      await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [start] });
+      // The real gesture intentionally waits for the 180 ms long-press threshold.
+      await new Promise(resolve => setTimeout(resolve, 240));
+      for (let step = 1; step <= 10; step++) await session.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: start.x + (to.x + to.width / 2 - start.x) * step / 10, y: start.y + (to.y + to.height / 2 - start.y) * step / 10 }] });
+      await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await expect(tab.locator("[data-resource-block]")).toHaveCount(1);
+      await expect(tab.getByLabel("Texte du bouton", { exact: true })).toBeVisible();
+      await session.detach(); await f.close();
+    });
+    await suite.test("un long bloc suit le pointeur ; changement de colonne sans glisser", async () => {
+      const f = await fixture({ page: { ...pageData, draft: { ...document, blocks: [document.blocks[0], { ...document.blocks[1], text: Array(32).fill("Une longue présentation du spectacle.").join("\n") }] } } }); const { tab } = f;
+      const from = await tab.getByRole("button", { name: "Déplacer le bloc Texte 2", exact: true }).boundingBox();
+      const to = await tab.locator(`[data-resource-block="${headingId}"]`).boundingBox();
+      await tab.mouse.move(from.x + from.width / 2, from.y + from.height / 2); await tab.mouse.down();
+      await tab.mouse.move(to.x + 100, to.y + 8, { steps: 20 }); await tab.mouse.up();
+      await expect.poll(() => tab.locator("[data-resource-block]").first().getAttribute("data-resource-block")).toBe(textId);
+      await tab.getByRole("button", { name: "2 colonnes", exact: true }).click();
+      await tab.getByRole("button", { name: "Modifier le bloc Titre 2", exact: true }).click();
+      await tab.getByLabel("Déplacer le bloc vers", { exact: true }).selectOption({ label: "Colonne 2 · 2 colonnes 3" });
+      await tab.getByRole("button", { name: "Enregistrer", exact: true }).click();
+      await expect.poll(() => tab.evaluate(() => window.calls.length)).toBe(1);
+      const doc = (await tab.evaluate(() => window.calls))[0].args[0].document;
+      assert.equal(doc.blocks[1].columns[1][0].id, headingId);
+      await f.close();
+    });
+    await suite.test("colonnes mises en avant : même style dans le composeur et l’aperçu publié", async () => {
+      const columns = { id: assetId, type: "columns", tone: "accent", ratio: "equal", layout: { spacing: "roomy", width: "medium", align: "center" }, columns: [[document.blocks[0]], [document.blocks[1]]] };
+      const f = await fixture({ page: { ...pageData, draft: { ...document, blocks: [columns] } } }); const { tab } = f;
+      const styles = await tab.locator(`[data-resource-columns="${assetId}"]`).evaluate(el => { const s = getComputedStyle(el); return [s.backgroundColor, s.borderColor, s.paddingTop, s.paddingLeft, s.maxWidth, s.textAlign]; });
+      await tab.getByRole("button", { name: "Aperçu", exact: true }).click();
+      const preview = await tab.getByRole("dialog").locator(`[data-resource-content="${assetId}"]`).evaluate(el => { const s = getComputedStyle(el); return [s.backgroundColor, s.borderColor, s.paddingTop, s.paddingLeft, s.maxWidth, s.textAlign]; });
+      assert.deepEqual(preview, styles);
+      await tab.getByRole("button", { name: "Téléphone", exact: true }).click();
+      await tab.screenshot({ path: path.join(root, "tmp/resources/composer-mobile-preview.png"), fullPage: true });
+      await f.close();
+    });
     await suite.test("brouillon, visibilité et publication sont des opérations distinctes", async () => {
       const f = await fixture(); const { tab } = f;
       await tab.getByLabel("Titre de la page", { exact: true }).fill("Les outils de la compagnie");
