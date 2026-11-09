@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Building2, CalendarDays, ExternalLink, MoreHorizontal, Settings, TestTube2, X } from "lucide-react";
+import { BookOpen, Building2, CalendarDays, PenLine, ExternalLink, MoreHorizontal, Settings, TestTube2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -29,6 +29,7 @@ const adminNavItems = [
     summary: "Adoption, parcours et espaces utilisés",
     initials: "CO",
   },
+  { href: "/resources/manage", label: "Ressources", summary: "Créer et publier les pages de ressources", initials: "RE" },
 ];
 
 const bookingUrl = "https://calendar.app.google/qpNBBf3UhVusTHYo7";
@@ -37,17 +38,17 @@ function isItemActive(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
 }
 
-export function Sidebar({ variant = "company", canViewBeta = false, canViewCompanies = false }: { variant?: "admin" | "company"; canViewBeta?: boolean; canViewCompanies?: boolean }) {
+export function Sidebar({ variant = "company", canViewBeta = false, canViewCompanies = false, canManageResources = false }: { variant?: "admin" | "company"; canViewBeta?: boolean; canViewCompanies?: boolean; canManageResources?: boolean }) {
   const pathname = usePathname();
 
   if (variant === "admin") {
-    return <AdminSidebar canViewBeta={canViewBeta} canViewCompanies={canViewCompanies} pathname={pathname} />;
+    return <AdminSidebar canManageResources={canManageResources} canViewBeta={canViewBeta} canViewCompanies={canViewCompanies} pathname={pathname} />;
   }
 
-  return <CompanyNavigation pathname={pathname} />;
+  return <CompanyNavigation canManageResources={canManageResources} pathname={pathname} />;
 }
 
-function CompanyNavigation({ pathname }: { pathname: string }) {
+function CompanyNavigation({ pathname, canManageResources }: { pathname: string; canManageResources: boolean }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const activeSection = getDashboardSection(pathname);
   const mobileSections = dashboardSections.slice(0, 4);
@@ -140,6 +141,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
             <BookOpen className="h-4 w-4" aria-hidden />
             Ressources
           </Link>
+          {canManageResources ? <Link href="/resources/manage" className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-white"><PenLine className="h-4 w-4" aria-hidden />Gérer les pages</Link> : null}
           <Link
             href="/settings"
             className={cn(
@@ -242,6 +244,7 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
                   <span className="block text-xs text-muted">Liens et outils utiles</span>
                 </span>
               </Link>
+          {canManageResources ? <Link href="/resources/manage" onClick={() => setMoreOpen(false)} className="flex min-h-16 items-center gap-3 rounded-md border border-border bg-panel-strong/55 px-4 focus-visible:outline-2 focus-visible:outline-accent"><PenLine className="h-5 w-5 text-accent" aria-hidden /><span><span className="block text-sm font-semibold">Gérer les pages</span><span className="block text-xs text-muted">Votre espace d’édition</span></span></Link> : null}
               <Link
                 href="/settings"
                 onClick={() => setMoreOpen(false)}
@@ -275,10 +278,11 @@ function CompanyNavigation({ pathname }: { pathname: string }) {
   );
 }
 
-function AdminSidebar({ canViewBeta, canViewCompanies, pathname }: { canViewBeta: boolean; canViewCompanies: boolean; pathname: string }) {
+function AdminSidebar({ canViewBeta, canViewCompanies, canManageResources, pathname }: { canViewBeta: boolean; canViewCompanies: boolean; canManageResources: boolean; pathname: string }) {
   const visibleItems = adminNavItems.filter((item) => {
     if (item.href === "/admin/beta") return canViewBeta;
     if (item.href === "/admin/companies") return canViewCompanies;
+    if (item.href === "/resources/manage") return canManageResources;
     return true;
   });
 

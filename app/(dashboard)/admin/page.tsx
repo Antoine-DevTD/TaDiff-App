@@ -7,6 +7,8 @@ import { AiConfigurationPanel } from "@/components/admin/ai-configuration-panel"
 import { AiAccessManager } from "@/components/admin/ai-access-manager";
 import { WilliamAnalyticsPanel } from "@/components/admin/william-analytics-panel";
 import { ErrorNotificationsPanel } from "@/components/admin/error-notifications-panel";
+import { ResourceEditorAccessManager } from "@/components/admin/resource-editor-access-manager";
+import { listResourceEditorAccounts } from "@/lib/resource-editors-server";
 import { FeedbackRow } from "@/components/admin/feedback-row";
 import { LegalInformationForm } from "@/components/admin/legal-information-form";
 import { MaintenanceToggle } from "@/components/admin/maintenance-toggle";
@@ -130,11 +132,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         {allowedTabs.includes("catalogues") ? <AdminTab active={activeTab === "catalogues"} href="/admin?tab=catalogues" label={`Catalogues${grantCatalogProposals.length > 0 ? ` (${grantCatalogProposals.length})` : ""}`} /> : null}
         {allowedTabs.includes("emails") ? <AdminTab active={activeTab === "emails"} href="/admin?tab=emails" label="Emails" /> : null}
         {allowedTabs.includes("ia") ? <AdminTab active={activeTab === "ia"} href="/admin?tab=ia" label="William IA" /> : null}
+        {allowedTabs.includes("ressources") ? <AdminTab active={activeTab === "ressources"} href="/admin?tab=ressources" label="Ressources" /> : null}
         {allowedTabs.includes("administrateurs") ? <AdminTab active={activeTab === "administrateurs"} href="/admin?tab=administrateurs" label="Administrateurs" /> : null}
       </div>
 
       {activeTab === "beta" && betaSnapshot ? (
         <BetaAccessManager canManage={access.isSuperAdmin} canViewAccess={canViewAccess} signups={betaSnapshot.signups} error={betaSnapshot.error} />
+      ) : activeTab === "ressources" && access.isSuperAdmin ? (
+        <ResourceEditorsPanel />
       ) : activeTab === "administrateurs" ? (
         <PlatformAdminManager accounts={aiAccounts} admins={platformAdmins} />
       ) : activeTab === "notifications" ? (
@@ -197,6 +202,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 }
 
 const adminTabMeta = {
+  ressources: { title: "Accès aux ressources", description: "Désigner les personnes qui peuvent gérer les pages de ressources TaDiff." },
   supervision: { title: "Supervision TaDiff", description: "Compagnies, facturation, accès et inscriptions bêta." },
   beta: { title: "Accès bêta", description: "Activer un accès offert et suivre chaque inscription jusqu’à sa première connexion." },
   retours: { title: "Retours des compagnies", description: "Bugs, idées et avis envoyés depuis le cockpit." },
@@ -212,7 +218,7 @@ const adminTabMeta = {
 type AdminTabId = keyof typeof adminTabMeta;
 
 function getAllowedTabs(isSuperAdmin: boolean, permissions: PlatformPermission[]): AdminTabId[] {
-  if (isSuperAdmin) return ["supervision", "beta", "retours", "notifications", "audience", "informations", "catalogues", "emails", "ia", "administrateurs"];
+  if (isSuperAdmin) return ["supervision", "beta", "retours", "notifications", "audience", "informations", "catalogues", "emails", "ia", "administrateurs", "ressources"];
   const tabs: AdminTabId[] = [];
   if (["view_companies", "view_access"].some((permission) => permissions.includes(permission as PlatformPermission))) tabs.push("supervision");
   if (permissions.includes("view_beta")) tabs.push("beta");
@@ -224,6 +230,11 @@ function getAllowedTabs(isSuperAdmin: boolean, permissions: PlatformPermission[]
   if (permissions.includes("manage_email_templates")) tabs.push("emails");
   if (permissions.includes("manage_ai")) tabs.push("ia");
   return tabs;
+}
+
+async function ResourceEditorsPanel() {
+  const { data, error } = await listResourceEditorAccounts();
+  return <ResourceEditorAccessManager accounts={data} error={error} />;
 }
 
 function AdminTab({ active, href, label }: { active: boolean; href: string; label: string }) {

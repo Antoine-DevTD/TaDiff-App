@@ -40,7 +40,7 @@ export function LoginForm() {
       return;
     }
 
-    const workspace = await ensureClientWorkspace();
+    const workspace = await ensureClientWorkspace(undefined, searchParams.get("next"));
 
     if (!workspace.ok) {
       setMessage(workspace.message);

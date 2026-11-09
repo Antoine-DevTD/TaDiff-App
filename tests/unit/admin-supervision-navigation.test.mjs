@@ -32,6 +32,7 @@ async function render(permissions, tab, isSuperAdmin = false) {
       calls.push("getAdminCompanySupervision");
       return { status: "ready", companies: [], canViewAccess: isSuperAdmin || permissions.includes("view_access"), loadedAt: "2026-10-05T12:00:00Z" };
     } };
+    if (name === "@/lib/resource-editors-server") return { listResourceEditorAccounts: async () => ({ data: [], error: null }) };
     if (name === "@/lib/admin-forecast") return { buildRevenueForecast: () => [] };
     if (name === "@/lib/finance") return { formatCurrency: () => "0 €" };
     if (name === "@/lib/access-codes-server") return { listAccessCodes: async () => ({ codes: [], error: null }) };

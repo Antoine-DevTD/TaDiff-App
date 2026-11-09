@@ -21,6 +21,7 @@ const protectedRoutes = [
   "/contracts",
   "/finances",
   "/documents",
+  "/resources",
   "/billing",
   "/settings",
 ];
@@ -126,7 +127,10 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (!isProtectedPath(request.nextUrl.pathname)) {
+  const protectedPath = isProtectedPath(request.nextUrl.pathname);
+  // Refresh member cookies on public resource pages and file requests too.
+  const resourceSessionPath = /^\/(?:ressources|api\/resources)(?:\/|$)/.test(request.nextUrl.pathname);
+  if (!protectedPath && !resourceSessionPath) {
     return NextResponse.next();
   }
 
@@ -140,7 +144,7 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await client.supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && protectedPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);
