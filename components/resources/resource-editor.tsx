@@ -8,15 +8,15 @@
  * FORM: The user-approved visual editor extends TaDiff's current design system. */
 import { memo, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useRouter } from "next/navigation";
-import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Archive, ArrowDown, ArrowLeft, ArrowUp, Check, Columns2, Copy, Eye, FileText, Globe, GripVertical, Heading2, History, ImageIcon, Images, Link2, LockKeyhole, Monitor, PanelRight, Plus, Save, Smartphone, Trash2, Type, Undo2, Upload, Video } from "lucide-react";
 import { getResourceRevisions, restoreResourceRevision, saveResourcePage, unpublishResourcePage } from "@/app/(dashboard)/admin/resources/actions";
 import { ResourceArticle } from "@/components/resources/resource-article";
-import { ResourceBlocks } from "@/components/resources/resource-blocks";
-import { AssetField, EditorField, ResourceBlockFields } from "@/components/resources/resource-editor-fields";
-import { duplicateResourceBlock, editResourceBlock, editResourceList, findResourceBlock, resourceBlockCount, type BlockDestination } from "@/components/resources/editor-tree";
+import { ResourceBlocks, resourceBlockPresentationClass } from "@/components/resources/resource-blocks";
+import { ResourceDragArea, ResourceDropEnd, ResourceDropMarker, ResourcePaletteBlock } from "@/components/resources/resource-editor-drag";
+import { AssetField, EditorField, ResourceBlockFields, ResourceMoveField } from "@/components/resources/resource-editor-fields";
+import { duplicateResourceBlock, editResourceBlock, editResourceList, findResourceBlock, placeResourceBlock, resourceBlockCount, type BlockDestination } from "@/components/resources/editor-tree";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ type BlockListProps = {
 };
 
 function SortableBlock({ block, index, total, listProps }: { block: ResourceBlock; index: number; total: number; listProps: BlockListProps }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id, disabled: listProps.busy });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id, disabled: listProps.busy, data: { kind: "block", destination: listProps.destination, index, label: blockLabel(block.type) } });
   const selected = listProps.selected === block.id;
   function move(offset: number) { listProps.onChangeList(listProps.destination, (items) => arrayMove(items, index, index + offset)); }
   return <section ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`min-w-0 rounded-md border ${selected ? "border-accent ring-1 ring-accent" : "border-transparent hover:border-border"} ${isDragging ? "relative z-10 bg-panel opacity-75" : ""}`} aria-label={`Bloc ${blockLabel(block.type)} ${index + 1}`} data-resource-block={block.id}>
@@ -74,21 +74,14 @@ function SortableBlock({ block, index, total, listProps }: { block: ResourceBloc
         <IconButton label={`Supprimer le bloc ${index + 1}`} disabled={listProps.busy} onClick={() => listProps.onRemove(block.id)}><Trash2 className="size-3.5" aria-hidden="true" /></IconButton>
       </div>
     </div>
-    {block.type === "columns" ? <div className={`grid min-w-0 gap-3 p-3 ${block.ratio === "wide-left" ? "@min-[540px]:grid-cols-[2fr_1fr]" : block.ratio === "wide-right" ? "@min-[540px]:grid-cols-[1fr_2fr]" : "@min-[540px]:grid-cols-2"}`}>
+    {block.type === "columns" ? <div data-resource-columns={block.id} className={`grid min-w-0 gap-6 ${resourceBlockPresentationClass(block)} ${block.ratio === "wide-left" ? "@[768px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]" : block.ratio === "wide-right" ? "@[768px]:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]" : "@[768px]:grid-cols-2"}`}>
       {block.columns.map((column, columnIndex) => <div key={columnIndex} className="min-w-0 space-y-2 rounded border border-dashed border-border p-2"><p className="px-1 text-xs text-muted">Colonne {columnIndex + 1}</p><BlockList {...listProps} blocks={column} destination={{ parentId: block.id, column: columnIndex as 0 | 1 }} /></div>)}
     </div> : <div role="button" tabIndex={listProps.busy ? -1 : 0} aria-label={`Modifier le bloc ${blockLabel(block.type)} ${index + 1}`} onClick={() => !listProps.busy && listProps.onSelect(block.id)} onKeyDown={(event) => { if (!listProps.busy && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); listProps.onSelect(block.id); } }} className="cursor-pointer rounded-b p-4 focus-visible:outline-2 focus-visible:outline-accent"><ResourceBlockPreview block={block} /></div>}
   </section>;
 }
 
 function BlockList(props: BlockListProps) {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
-  function onDragEnd({ active, over }: DragEndEvent) {
-    if (!over || active.id === over.id || props.busy) return;
-    const from = props.blocks.findIndex((block) => block.id === active.id);
-    const to = props.blocks.findIndex((block) => block.id === over.id);
-    if (from >= 0 && to >= 0) props.onChangeList(props.destination, (blocks) => arrayMove(blocks, from, to));
-  }
-  return <div className="min-w-0 space-y-4"><DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} accessibility={{ announcements: { onDragStart: () => "Bloc saisi. Utilisez les flèches pour le déplacer.", onDragOver: ({ over }) => over ? "Nouvel emplacement sélectionné." : "Aucun emplacement sélectionné.", onDragEnd: () => "Bloc déplacé.", onDragCancel: () => "Déplacement annulé." }, screenReaderInstructions: { draggable: "Appuyez sur Espace pour saisir un bloc, utilisez les flèches pour le déplacer puis Espace pour le déposer. Échap annule." } }}><SortableContext items={props.blocks.map((block) => block.id)} strategy={verticalListSortingStrategy}>{props.blocks.map((block, index) => <SortableBlock key={block.id} block={block} index={index} total={props.blocks.length} listProps={props} />)}</SortableContext></DndContext><Button variant="ghost" disabled={props.busy} className="w-full border border-dashed border-border text-xs" onClick={() => props.onAdd(props.destination)}><Plus className="mr-1 size-4" aria-hidden="true" />{props.destination ? "Ajouter dans cette colonne" : "Ajouter un bloc"}</Button></div>;
+  return <div className="min-w-0"><SortableContext items={props.blocks.map((block) => block.id)} strategy={verticalListSortingStrategy}>{props.blocks.map((block, index) => <div key={block.id}><ResourceDropMarker destination={props.destination} index={index} /><SortableBlock block={block} index={index} total={props.blocks.length} listProps={props} /></div>)}</SortableContext><ResourceDropEnd destination={props.destination} index={props.blocks.length} disabled={props.busy}><Button variant="ghost" disabled={props.busy} className="w-full border border-dashed border-border text-xs" onClick={() => props.onAdd(props.destination)}><Plus className="mr-1 size-4" aria-hidden="true" />{props.destination ? "Ajouter dans cette colonne" : "Ajouter un bloc"}</Button></ResourceDropEnd></div>;
 }
 
 export function ResourceEditor({ initialPage, initialAssets }: { initialPage: ResourcePage; initialAssets: ResourceAsset[] }) {
@@ -186,7 +179,11 @@ export function ResourceEditor({ initialPage, initialAssets }: { initialPage: Re
   function addBlock(type: ResourceBlockType) {
     if (busyRef.current || resourceBlockCount(document.blocks) >= RESOURCE_MAX_BLOCKS) return;
     const block = createResourceBlock(type);
-    changeList(destination, (blocks) => [...blocks, block]);
+    const parent = destination ? findResourceBlock(document.blocks, destination.parentId) : null;
+    const list = parent?.type === "columns" && destination ? parent.columns[destination.column] : document.blocks;
+    const blocks = placeResourceBlock(document.blocks, block, destination, list.length);
+    if (blocks === document.blocks) { setNotice({ kind: "error", text: "Cet emplacement ne peut pas accueillir un niveau de colonnes supplémentaire." }); return; }
+    changeDocument({ ...document, blocks });
     selectBlock(block.id);
   }
   function removeBlock(id: string) {
@@ -284,12 +281,13 @@ export function ResourceEditor({ initialPage, initialAssets }: { initialPage: Re
       <nav aria-label="Zones de l’éditeur" className="flex flex-wrap gap-1 border-t border-border pt-2 xl:hidden"><Button variant="ghost" className="min-h-9 px-2 py-1 text-xs" onClick={() => requestAdd(destination)}><Plus className="mr-1 size-3.5" aria-hidden="true" />Blocs</Button><Button variant="ghost" className="min-h-9 px-2 py-1 text-xs" onClick={() => jumpTo(canvasRef)}><FileText className="mr-1 size-3.5" aria-hidden="true" />Voir la page</Button><Button variant="ghost" className="min-h-9 px-2 py-1 text-xs" onClick={() => jumpTo(panelRef, "input, textarea, select")}><PanelRight className="mr-1 size-3.5" aria-hidden="true" />Réglages</Button></nav>
     </header>
     {notice ? <div role={notice.kind === "error" ? "alert" : "status"} className={`flex flex-wrap items-center gap-3 rounded-md border p-3 text-sm ${notice.kind === "error" ? "border-danger/30 bg-danger/5 text-danger" : "border-success/25 bg-success/5 text-foreground"}`}><span className="min-w-0 flex-1">{notice.text}</span>{undo ? <Button variant="ghost" disabled={busy} onClick={() => { changeDocument(undo); setUndo(null); setSelected(null); setInspector("page"); }}><Undo2 className="mr-1 size-4" aria-hidden="true" />Annuler la suppression</Button> : null}{conflict ? <Button variant="secondary" onClick={() => { if (window.confirm("Recharger la version enregistrée remplacera vos modifications locales. Continuer ?")) { allowLeave.current = true; window.location.reload(); } }}>Recharger la version enregistrée</Button> : null}</div> : null}
+    <ResourceDragArea blocks={document.blocks} busy={busy} onChange={(blocks) => changeDocument({ ...document, blocks })} onSelect={selectBlock} onRejected={() => setNotice({ kind: "error", text: "Ce déplacement dépasse la limite de deux niveaux de colonnes ou de 80 blocs. Votre contenu est conservé." })}>
     <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[176px_minmax(0,1fr)_260px]">
       <aside ref={paletteRef} aria-label="Ajouter des blocs" className="min-w-0 rounded-lg border border-border bg-panel p-3 [scroll-margin-top:calc(var(--resource-toolbar-height,10rem)+1rem)] xl:sticky xl:[top:calc(var(--resource-toolbar-height,10rem)+1rem)]">
-        <h2 className="mb-3 px-1 text-sm font-semibold sm:mb-0">Ajouter un bloc</h2><p className="mb-3 mt-1 hidden px-1 text-xs leading-relaxed text-muted sm:block">Cliquez pour l’ajouter à votre page.</p>
+        <h2 className="mb-3 px-1 text-sm font-semibold sm:mb-0">Ajouter un bloc</h2><p className="mb-3 mt-1 px-1 text-xs leading-relaxed text-muted">Glissez dans la page, ou cliquez pour ajouter.</p>
         {destination ? <div className="mb-3 rounded bg-panel-strong p-2 text-xs"><p>Ajout dans la colonne {destination.column + 1}</p><button type="button" onClick={() => setDestination(null)} className="mt-1 min-h-9 font-medium text-accent underline">Revenir à la page</button></div> : null}
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 xl:grid-cols-2">{BLOCKS.map(({ type, label, icon: Icon }) => <button type="button" key={type} disabled={busy || (type === "columns" && Boolean(destination)) || resourceBlockCount(document.blocks) >= RESOURCE_MAX_BLOCKS} onClick={() => addBlock(type)} className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1.5 rounded-md border border-border bg-panel px-1 py-2 text-center text-xs font-medium hover:border-accent hover:bg-accent/5 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40 xl:min-h-20 xl:py-3"><Icon className="size-4 xl:size-5" aria-hidden="true" /><span>{label}</span></button>)}</div>
-        <p className="mt-4 hidden px-1 text-xs leading-relaxed text-muted xl:block">Glissez les blocs pour les déplacer, ou utilisez leurs flèches.</p>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 xl:grid-cols-2">{BLOCKS.map(({ type, label, icon: Icon }) => <ResourcePaletteBlock key={type} type={type} label={label} disabled={busy || resourceBlockCount(document.blocks) >= RESOURCE_MAX_BLOCKS} onAdd={() => addBlock(type)}><Icon className="size-4 xl:size-5" aria-hidden="true" /></ResourcePaletteBlock>)}</div>
+        <p className="mt-4 hidden px-1 text-xs leading-relaxed text-muted xl:block">La ligne bleue indique où déposer le bloc. Sur écran tactile, maintenez avant de glisser.</p>
       </aside>
       <section ref={canvasRef} tabIndex={-1} className="min-w-0 space-y-3 outline-none [scroll-margin-top:calc(var(--resource-toolbar-height,10rem)+1rem)]" aria-label="Composition de la page">
         <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-muted">Votre page · {resourceBlockCount(document.blocks)} blocs</p><div className="flex items-center rounded-md border border-border bg-panel p-0.5" aria-label="Format de l’aperçu"><IconButton label="Format ordinateur" aria-pressed={!mobile} onClick={() => setMobile(false)}><Monitor className={`size-4 ${!mobile ? "text-accent" : ""}`} aria-hidden="true" /></IconButton><IconButton label="Format téléphone" aria-pressed={mobile} onClick={() => setMobile(true)}><Smartphone className={`size-4 ${mobile ? "text-accent" : ""}`} aria-hidden="true" /></IconButton></div></div>
@@ -306,7 +304,7 @@ export function ResourceEditor({ initialPage, initialAssets }: { initialPage: Re
       <aside ref={panelRef} className="min-w-0 rounded-lg border border-border bg-panel [scroll-margin-top:calc(var(--resource-toolbar-height,10rem)+1rem)] xl:sticky xl:max-h-[calc(100dvh-var(--resource-toolbar-height,10rem)-2rem)] xl:overflow-y-auto xl:[top:calc(var(--resource-toolbar-height,10rem)+1rem)]" aria-label="Réglages de la ressource">
         <div className="flex border-b border-border" aria-label="Choix des réglages"><button type="button" aria-pressed={inspector === "page"} onClick={() => setInspector("page")} className={`min-h-12 flex-1 border-b-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-accent ${inspector === "page" ? "border-accent text-accent" : "border-transparent text-muted"}`}>Page</button><button type="button" aria-pressed={inspector === "block"} disabled={!selectedBlock} onClick={() => setInspector("block")} className={`min-h-12 flex-1 border-b-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50 ${inspector === "block" ? "border-accent text-accent" : "border-transparent text-muted"}`}>Bloc</button></div>
         <fieldset disabled={busy} className="min-w-0 space-y-5 p-4">
-          {inspector === "block" && selectedBlock ? <><h2 className="text-sm font-semibold">{blockLabel(selectedBlock.type)}</h2><ResourceBlockFields key={selectedBlock.id} block={selectedBlock} assets={assets} onChange={(next) => { setDocument((current) => ({ ...current, blocks: editResourceBlock(current.blocks, next.id, () => next) })); setNotice(null); }} onChooseAsset={chooseAsset} /></> : <>
+          {inspector === "block" && selectedBlock ? <><h2 className="text-sm font-semibold">{blockLabel(selectedBlock.type)}</h2><ResourceMoveField block={selectedBlock} blocks={document.blocks} onMove={(blocks) => changeDocument({ ...document, blocks })} /><ResourceBlockFields key={selectedBlock.id} block={selectedBlock} assets={assets} onChange={(next) => { setDocument((current) => ({ ...current, blocks: editResourceBlock(current.blocks, next.id, () => next) })); setNotice(null); }} onChooseAsset={chooseAsset} /></> : <>
             <EditorField label="Titre de la page"><Input value={document.title} maxLength={180} onChange={(event) => changeDocument({ ...document, title: event.target.value })} /></EditorField>
             <EditorField label="Adresse de la page" hint="Lettres minuscules, chiffres et tirets. Changer l’adresse d’une page publiée rend son ancien lien indisponible."><Input value={document.slug} maxLength={100} onChange={(event) => changeDocument({ ...document, slug: event.target.value })} /></EditorField>
             <button type="button" onClick={() => changeDocument({ ...document, slug: resourceSlug(document.title) })} className="min-h-9 text-xs font-medium text-accent underline">Créer l’adresse à partir du titre</button>
@@ -321,6 +319,7 @@ export function ResourceEditor({ initialPage, initialAssets }: { initialPage: Re
         </fieldset>
       </aside>
     </div>
+    </ResourceDragArea>
     <Dialog open={preview} onClose={() => setPreview(false)} title="Aperçu de la page" description={`Aperçu du brouillon · ${document.visibility === "public" ? "accessible à tout le monde après publication" : "réservé aux membres après publication"}. Les liens et téléchargements sont désactivés dans cet aperçu.`} className="max-w-6xl"><div className="mb-4 flex justify-end gap-2"><Button variant={mobile ? "secondary" : "primary"} onClick={() => setMobile(false)}><Monitor className="mr-2 size-4" aria-hidden="true" />Ordinateur</Button><Button variant={mobile ? "primary" : "secondary"} onClick={() => setMobile(true)}><Smartphone className="mr-2 size-4" aria-hidden="true" />Téléphone</Button></div><div className={`@container mx-auto min-w-0 ${mobile ? "max-w-[390px]" : ""}`}><ResourceArticle resource={{ id: page.id, document, updated_at: page.updated_at, published_at: page.published_at || page.updated_at }} preview /></div></Dialog>
     <Dialog open={Boolean(picker)} onClose={() => { if (!busy) setPicker(null); }} title={picker?.kind === "image" ? "Choisir une image" : "Choisir un fichier"} description="Les fichiers sont rattachés à cette page. Un brouillon n’est visible que par les personnes autorisées à gérer les ressources." className="max-w-3xl">
       <div className="space-y-5"><label className={`flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border bg-panel-strong p-4 text-center ${busy ? "opacity-60" : "hover:border-accent"}`}><Upload className="size-6 text-accent" aria-hidden="true" /><span className="text-sm font-semibold">{busy ? "Envoi en cours…" : "Ajouter un fichier depuis cet appareil"}</span><span className="text-xs text-muted">{picker?.kind === "image" ? "JPG, PNG, WebP ou GIF" : "Images, PDF, DOCX, XLSX, CSV ou TXT"} · 4 Mo maximum</span><input aria-label="Fichier à ajouter" type="file" disabled={busy} accept={picker?.kind === "image" ? "image/jpeg,image/png,image/webp,image/gif" : ".jpg,.jpeg,.png,.webp,.gif,.pdf,.docx,.xlsx,.txt,.csv"} className="max-w-full text-xs file:mr-2 file:rounded file:border-0 file:bg-panel file:px-3 file:py-2 file:font-medium" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void upload(file); }} /></label>

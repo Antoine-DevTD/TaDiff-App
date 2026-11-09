@@ -8,7 +8,13 @@ const identifier = z.string().uuid("Identifiant de ressource invalide.");
 const shortText = z.string().trim().max(240, "Ce texte est trop long.");
 const tone = z.enum(["plain", "soft", "accent"]);
 const image = { assetId: identifier.nullable(), alt: shortText, caption: z.string().trim().max(500) };
-const base = { id: identifier, tone };
+const base = { id: identifier, tone, layout: z.object({
+  align: z.enum(["left", "center", "right"]).optional(),
+  width: z.enum(["full", "medium", "narrow"]).optional(),
+  size: z.enum(["small", "normal", "large"]).optional(),
+  spacing: z.enum(["compact", "normal", "roomy"]).optional(),
+  button: z.enum(["solid", "outline", "text"]).optional(),
+}).strict().optional() };
 
 /** Only links to published resources or explicit web URLs can leave a block. */
 export function safeResourceLink(value: string): string | null {

@@ -51,3 +51,22 @@ export function duplicateResourceBlock(block: ResourceBlock): ResourceBlock {
 export function resourceBlockCount(blocks: ResourceBlock[]): number {
   return blocks.reduce((count, block) => count + 1 + (block.type === "columns" ? block.columns.reduce((total, column) => total + resourceBlockCount(column), 0) : 0), 0);
 }
+
+/** Insert before the target index (in the original list). Reject invalid moves atomically. */
+export function placeResourceBlock(blocks: ResourceBlock[], block: ResourceBlock, destination: BlockDestination, index: number): ResourceBlock[] {
+  if (!Number.isInteger(index) || index < 0) return blocks;
+  const parent = destination ? findResourceBlock(blocks, destination.parentId) : null;
+  if (destination && (parent?.type !== "columns" || findResourceBlock([block], destination.parentId))) return blocks;
+  const list = parent?.type === "columns" && destination ? parent.columns[destination.column] : blocks;
+  if (!list || index > list.length) return blocks;
+  const sourceIndex = list.findIndex((item) => item.id === block.id);
+  const existing = findResourceBlock(blocks, block.id);
+  const without = existing ? editResourceBlock(blocks, block.id, () => null) : blocks;
+  const insertAt = sourceIndex >= 0 && sourceIndex < index ? index - 1 : index;
+  const next = editResourceList(without, destination, (items) => [...items.slice(0, insertAt), existing || block, ...items.slice(insertAt)]);
+  function validDepth(items: ResourceBlock[], depth = 0): boolean {
+    return depth <= 2 && items.every((item) => item.type !== "columns" || item.columns.every((column) => !column.length || validDepth(column, depth + 1)));
+  }
+  if (resourceBlockCount(next) > 80 || !validDepth(next)) return blocks;
+  return next;
+}

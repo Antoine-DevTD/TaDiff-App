@@ -4,6 +4,17 @@ import type { ResourceBlock, ResourceImage } from "@/types/resources";
 
 const actionClass = "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold !text-white hover:bg-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60";
 
+export function resourceBlockLayoutClass(block: ResourceBlock) {
+  const layout = block.layout;
+  return [layout?.width === "narrow" ? "max-w-sm" : layout?.width === "medium" ? "max-w-2xl" : "",
+    layout?.align === "center" ? "mx-auto text-center [&_p]:mx-auto" : layout?.align === "right" ? "ml-auto text-right [&_p]:ml-auto" : "mr-auto text-left",
+    layout?.spacing === "roomy" ? "py-8" : layout?.spacing === "compact" ? "py-0" : ""].join(" ");
+}
+
+export function resourceBlockPresentationClass(block: ResourceBlock) {
+  return `${block.type === "heading" && !block.layout?.spacing ? "pt-3" : ""} ${block.tone === "soft" ? "rounded-md bg-panel-strong px-5" : block.tone === "accent" ? "rounded-md border border-accent/30 bg-accent/5 px-5" : ""} ${block.tone !== "plain" && (!block.layout?.spacing || block.layout.spacing === "normal") ? "py-5" : ""} ${resourceBlockLayoutClass(block)}`;
+}
+
 export function resourceHeadingId(id: string) {
   return `resource-section-${id}`;
 }
@@ -24,17 +35,19 @@ function BlockContent({ block, preview }: { block: ResourceBlock; preview: boole
   switch (block.type) {
     case "heading": {
       const Heading = block.level === 3 ? "h3" : "h2";
-      return <Heading id={resourceHeadingId(block.id)} className={`scroll-mt-24 font-semibold leading-tight tracking-tight ${block.level === 3 ? "text-xl" : "text-2xl @[640px]:text-[1.75rem]"}`}>{block.text || (preview ? "Votre titre" : "")}</Heading>;
+      return <Heading id={resourceHeadingId(block.id)} className={`scroll-mt-24 font-semibold leading-tight tracking-tight ${block.layout?.size === "large" ? "text-3xl @[640px]:text-4xl" : block.layout?.size === "small" ? "text-xl" : block.level === 3 ? "text-xl" : "text-2xl @[640px]:text-[1.75rem]"}`}>{block.text || (preview ? "Votre titre" : "")}</Heading>;
     }
     case "text":
-      return <div className="max-w-[72ch] space-y-4 text-base leading-7">{(block.text || (preview ? "Votre texte apparaîtra ici." : "")).split(/\n\s*\n/).map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}</div>;
+      return <div className={`space-y-4 ${block.layout?.size === "large" ? "text-lg leading-8" : block.layout?.size === "small" ? "text-sm leading-6" : "text-base leading-7"}`}>{(block.text || (preview ? "Votre texte apparaîtra ici." : "")).split(/\n\s*\n/).map((paragraph, index) => <p key={index} className="max-w-[72ch] whitespace-pre-line">{paragraph}</p>)}</div>;
     case "image":
       return <ResourcePicture {...block} preview={preview} />;
     case "gallery":
       return <div className="grid min-w-0 gap-4 @[640px]:grid-cols-2">{block.images.length ? block.images.map((picture, index) => <ResourcePicture key={`${picture.assetId}-${index}`} {...picture} preview={preview} />) : preview ? <ResourcePicture assetId={null} alt="" caption="" preview /> : null}</div>;
     case "link": {
       const href = safeResourceLink(block.url);
-      return preview || !href ? <button type="button" disabled className={actionClass}>{block.label || "Votre lien"}<ArrowUpRight aria-hidden="true" className="h-4 w-4" /></button> : <a href={href} className={actionClass} {...(href.startsWith("https://") || href.startsWith("http://") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{block.label}<ArrowUpRight aria-hidden="true" className="h-4 w-4" />{href.startsWith("http") ? <span className="sr-only"> (nouvel onglet)</span> : null}</a>;
+      const style = block.layout?.button;
+      const buttonClass = `inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-md font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${style === "outline" ? "border border-accent text-accent hover:bg-accent/5" : style === "text" ? "text-accent underline underline-offset-4 hover:bg-accent/5" : "bg-accent !text-white hover:bg-accent-strong"} ${block.layout?.size === "large" ? "px-6 py-3 text-base" : block.layout?.size === "small" ? "px-3 py-2 text-xs" : "px-4 py-2 text-sm"}`;
+      return preview || !href ? <button type="button" disabled className={buttonClass}>{block.label || "Votre lien"}<ArrowUpRight aria-hidden="true" className="h-4 w-4 shrink-0" /></button> : <a href={href} className={buttonClass} {...(href.startsWith("https://") || href.startsWith("http://") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{block.label}<ArrowUpRight aria-hidden="true" className="h-4 w-4 shrink-0" />{href.startsWith("http") ? <span className="sr-only"> (nouvel onglet)</span> : null}</a>;
     }
     case "file":
       return <div className="flex flex-wrap items-center gap-4 rounded-md bg-panel-strong p-4 @[640px]:p-5"><FileText aria-hidden="true" className="h-8 w-8 shrink-0 text-accent" /><div className="min-w-0 flex-1 basis-40"><p className="font-semibold">{block.label || "Votre document"}</p>{block.description ? <p className="mt-1 text-sm leading-6 text-muted">{block.description}</p> : null}</div>{preview || !block.assetId ? <button type="button" disabled className={`${actionClass} w-full @[640px]:w-auto`}><Download aria-hidden="true" className="h-4 w-4" />Télécharger</button> : <a href={resourceAssetUrl(block.assetId, true)} className={`${actionClass} w-full @[640px]:w-auto`}><Download aria-hidden="true" className="h-4 w-4" />Télécharger<span className="sr-only"> : {block.label}</span></a>}</div>;
@@ -48,5 +61,5 @@ function BlockContent({ block, preview }: { block: ResourceBlock; preview: boole
 }
 
 export function ResourceBlocks({ blocks, preview = false }: { blocks: ResourceBlock[]; preview?: boolean }) {
-  return <div className="@container min-w-0 space-y-6 [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} className={`${block.type === "heading" ? "pt-3" : ""} ${block.tone === "soft" ? "rounded-md bg-panel-strong p-5" : block.tone === "accent" ? "rounded-md border border-accent/30 bg-accent/5 p-5" : ""}`}><BlockContent block={block} preview={preview} /></div>)}</div>;
+  return <div className="@container min-w-0 space-y-6 [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} data-resource-content={block.id} className={resourceBlockPresentationClass(block)}><BlockContent block={block} preview={preview} /></div>)}</div>;
 }
