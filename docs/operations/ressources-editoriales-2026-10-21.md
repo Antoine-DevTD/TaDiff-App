@@ -2,7 +2,9 @@
 
 ## État
 
-Lot livré dans la PR 7 depuis `codex/resource-editor`, à partir de `main` (`cf7025b`). Le 9 novembre 2026, les migrations 091 à 094 ont été appliquées sur le projet Supabase de TaDiff et qualifiées avec Auth, Storage et concurrence réels. Le déploiement applicatif doit suivre la fusion. Aucun droit réel attribué à Tony dans ce lot. Aucune nouvelle variable d’environnement ; les variables Supabase existantes sont nécessaires.
+Lot livré dans la [PR 7](https://github.com/Antoine-DevTD/TaDiff-App/pull/7), fusionnée le 9 novembre 2026 en `8e2e01b755497a5f77d37b3e93451b30cab03d03`. Les migrations 091 à 094 sont appliquées sur Supabase TaDiff. Le [déploiement Vercel](https://vercel.com/ta-diff/ta-diff-app/GZfVfMjgY4y4R3Tsm2a67U2DvzUd), environnement **Production** et reçu GitHub `7644460664`, est réussi. Les routes sont vérifiées sur `https://tadiff.com`. Aucun droit réel attribué à Tony dans ce lot. Aucune nouvelle variable d’environnement ; les variables Supabase existantes sont utilisées.
+
+Quatorze scénarios réels ont réussi : les dix contrôles Auth/Storage ci-dessous, plus l’accès à l’éditeur sans administration, la publication HTML et le proxy de fichier sans cache, le passage immédiat en membres sur ces deux routes et la fermeture de l’éditeur après révocation. Le refus Next.js peut être rendu dans un flux HTTP déjà ouvert avec un statut 200 ; la page contient alors le résultat `NEXT_HTTP_ERROR_FALLBACK;404` et aucune donnée de brouillon. Les fichiers de test utilisent `cacheControl: "0"`, comme l’import applicatif, afin de vérifier les autorisations sans cache Storage.
 
 La qualification hébergée a révélé deux incompatibilités corrigées avant fusion : 093 remplace le conflit métier `40001` par `PT409` pour éviter les relances infinies de PostgREST ; 094 autorise aussi l’opération exacte `object.get_authenticated_info`, utilisée pour le téléchargement par le service Storage hébergé. Les signatures réutilisables restent refusées. Les migrations 091 et 092 déjà appliquées restent inchangées ; appliquer les correctifs après elles.
 

@@ -1,6 +1,6 @@
 # Ressources éditoriales de TaDiff
 
-Implémentation du 21 octobre 2026, qualifiée sur Supabase le 9 novembre après validation des visuels et ajout du droit éditorial indépendant demandé par l’utilisateur. L’installation utilise les migrations 091 à 094 et le déploiement de l’application.
+Implémentation du 21 octobre 2026, mise en production le 9 novembre après validation des visuels et ajout du droit éditorial indépendant demandé par l’utilisateur. L’installation utilise les migrations 091 à 094.
 
 ## Pour Tony
 

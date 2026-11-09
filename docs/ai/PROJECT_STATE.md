@@ -1,11 +1,11 @@
 # Etat court du projet
 
-## Ressources éditoriales — qualification du 9 novembre 2026
+## Ressources éditoriales — en production le 9 novembre 2026
 
 - Branche `codex/resource-editor`, préparée depuis `main` du 8 novembre (`cf7025b`). Éditeur visuel `/resources/manage` : blocs, colonnes, médias, aperçu mobile, brouillons, publication, historique et archives restaurables. Chaque page choisit un accès public ou membres ; les fichiers suivent la publication.
 - Attribution et retrait du droit indépendant « Éditeur de ressources » dans `/admin?tab=ressources`, réservés au superadministrateur. Compagnie, rôle et outils habituels conservés. La connexion vers l’éditeur ne crée aucune compagnie pour un compte autorisé qui n’en possède pas.
 - Migrations **091 à 094 appliquées** sur Supabase TaDiff. 093 évite les relances PostgREST du conflit de révision (`PT409`) ; 094 prend en charge les deux opérations exactes de téléchargement Storage. RLS sur les cinq tables et bucket privé vérifiés. Aucune nouvelle variable d’environnement ni droit réel attribué.
-- Validation : 75 résultats ciblés réussis, PostgreSQL embarqué, interfaces ordinateur/mobile, lint, types et compilation webpack. Dix scénarios Auth/Storage hébergés réussis, dont deux sauvegardes simultanées, refus des signatures, changement public/membres et révocation sans perte de l’accès compagnie. Données QA nettoyées. La fusion de la PR 7 et le contrôle du déploiement applicatif restent à effectuer. Mode d’emploi : `docs/product/ressources-editoriales.md` ; installation : `docs/operations/ressources-editoriales-2026-10-21.md`.
+- PR 7 fusionnée (`8e2e01b`), déploiement Vercel **Production** `7644460664` réussi dans `ta-diff/ta-diff-app`, site `https://tadiff.com`. Validation : 75 résultats ciblés, PostgreSQL embarqué, interfaces ordinateur/mobile, lint, types et compilation webpack. Quatorze scénarios réels réussis, dont l’éditeur sur le domaine public, le proxy de fichiers sans cache, le changement public/membres et la révocation. Données QA nettoyées. Mode d’emploi : `docs/product/ressources-editoriales.md` ; installation et preuve : `docs/operations/ressources-editoriales-2026-10-21.md`.
 
 ## Réinitialisation du mot de passe — 21 octobre 2026
 
