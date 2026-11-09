@@ -1,6 +1,6 @@
 # Ressources éditoriales de TaDiff
 
-Implémentation du 21 octobre 2026, préparée pour livraison Git le 8 novembre après validation des visuels et ajout du droit éditorial indépendant demandé par l’utilisateur. La mise en production nécessite les migrations 091 puis 092 et le déploiement de l’application.
+Implémentation du 21 octobre 2026, qualifiée sur Supabase le 9 novembre après validation des visuels et ajout du droit éditorial indépendant demandé par l’utilisateur. L’installation utilise les migrations 091 à 094 et le déploiement de l’application.
 
 ## Pour Tony
 

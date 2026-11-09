@@ -95,7 +95,7 @@ test("enregistrement validé, conflit explicite, adresse unique et erreurs sans 
   assert.equal((await save(h,{publish:true})).ok,true);
   const rpc = h.calls.find((call) => call[1] === "mutate_resource_page");
   assert.equal(rpc[2].p_action,"publish"); assert.equal(rpc[2].p_expected_revision,1);
-  assert.equal((await save(harness({mutateError:{code:"40001",message:"resource_conflict"}}))).conflict,true);
+  assert.equal((await save(harness({mutateError:{code:"PT409",message:"resource_conflict"}}))).conflict,true);
   assert.match((await save(harness({mutateError:{code:"23505"}}))).message,/adresse/);
   assert.match((await save(harness({mutateError:{message:"resource_asset_invalid"}}))).message,/pièce jointe/);
   const failed = await save(harness({mutateThrows:true})); assert.equal(failed.ok,false); assert.equal(failed.message.includes("secret"),false);
@@ -167,7 +167,7 @@ test("archivage et restauration : révision obligatoire, état transmis et publi
   assert.equal((await restored.actions.restoreArchivedResourcePage(pageId,3)).ok,true);
   assert.equal(restored.calls.find(call=>call[1]==="mutate_resource_page")[2].p_action,"unarchive");
   assert.match((await save(harness({mutateError:{message:"resource_archived"}}))).message,/archivée/);
-  assert.equal((await harness({mutateError:{code:"40001",message:"resource_conflict"}}).actions.archiveResourcePage(pageId,1)).conflict,true);
+  assert.equal((await harness({mutateError:{code:"PT409",message:"resource_conflict"}}).actions.archiveResourcePage(pageId,1)).conflict,true);
   assert.equal(h.server.parseResourcePage(page).archived_at,null,"compatibility for older fixtures");
   assert.equal(h.server.parseResourcePage({...page,archived_at:42}),null);
 });

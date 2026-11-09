@@ -20,7 +20,7 @@ async function mutate(id: string, document: ResourceDocument | null, expectedRev
       p_id: id, p_document: document as Json | null, p_expected_revision: expectedRevision, p_action: action, p_revision_id: revisionId ?? null,
     });
     if (error) {
-      if (error.code === "40001" || error.message?.includes("resource_conflict")) return { ok: false, conflict: true, message: "Cette page a été modifiée ailleurs. Copiez vos changements puis rechargez la page avant de réessayer." };
+      if (error.code === "PT409" || error.code === "40001" || error.message?.includes("resource_conflict")) return { ok: false, conflict: true, message: "Cette page a été modifiée ailleurs. Copiez vos changements puis rechargez la page avant de réessayer." };
       if (error.code === "23505" || error.message?.includes("resource_slug_taken")) return { ok: false, message: "Cette adresse est déjà utilisée par une autre page. Choisissez une autre adresse." };
       if (error.message?.includes("resource_asset_invalid")) return { ok: false, message: "Une pièce jointe n’appartient pas à cette page. Importez-la à nouveau depuis cette page." };
       if (error.message?.includes("resource_archived")) return { ok: false, message: "Cette page est archivée. Restaurez-la avant de la modifier ou de la publier." };

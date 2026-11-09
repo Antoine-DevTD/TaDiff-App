@@ -66,6 +66,10 @@ test("Ressources : publications, brouillons, concurrence et fichiers sous RLS rÃ
     await db.exec(source("091_resource_pages.sql"));
     await db.exec(source("092_resource_editors_and_archive.sql"));
     await db.exec(source("092_resource_editors_and_archive.sql"));
+    await db.exec(source("093_resource_conflict_http_status.sql"));
+    await db.exec(source("093_resource_conflict_http_status.sql"));
+    await db.exec(source("094_resource_storage_download_operation.sql"));
+    await db.exec(source("094_resource_storage_download_operation.sql"));
     for (const [id, role, status, until] of [[editor,"member","active",null],[superadmin,"owner","active",null],[catalogManager,"member","active",null],[member,"member","active",null],[readonly,"readonly","comped",null],[expired,"owner","comped","2000-01-01"],[pending,"owner","pending_payment",null],[pastDue,"owner","past_due",null],[cancelled,"owner","cancelled",null]]) {
       const company = randomUUID();
       await db.query("insert into auth.users(id,email) values($1,$2)", [id, `${id}@example.test`]);
@@ -162,7 +166,11 @@ test("Ressources : publications, brouillons, concurrence et fichiers sous RLS rÃ
     });
 
     await suite.test("opÃ©rations Storage rÃ©elles : prÃ©fixe normalisÃ©, absence/partiel/signature refusÃ©s", async () => {
-      for (const operation of ["object.get_authenticated", "storage.object.get_authenticated"]) assert.equal(await objectVisible(null, assetId, operation),1);
+      for (const operation of ["object.get_authenticated", "storage.object.get_authenticated", "object.get_authenticated_info", "storage.object.get_authenticated_info"]) {
+        assert.equal(await objectVisible(null, assetId, operation),1);
+        assert.equal(await objectVisible(null, draftAsset, operation),0);
+        assert.equal(await objectVisible(editor, draftAsset, operation),1);
+      }
       for (const operation of ["", "object", "storage.object.sign", "storage.object.sign_many", "storage.object.get_signed"]) {
         assert.equal(await objectVisible(null, assetId, operation),0,operation);
         assert.equal(await objectVisible(editor, assetId, operation),0,operation);
@@ -174,7 +182,7 @@ test("Ressources : publications, brouillons, concurrence et fichiers sous RLS rÃ
       await mutate(pageId, doc({ title: "Brouillon secret", coverAssetId: draftAsset, visibility: "members" }), 2);
       assert.deepEqual((await visible("resource_publications", null))[0], before);
       assert.equal(await objectVisible(null, draftAsset), 0);
-      await assert.rejects(mutate(pageId, doc(), 2, "publish"), /resource_conflict/);
+      await assert.rejects(mutate(pageId, doc(), 2, "publish"), (error) => error.code === "PT409" && /resource_conflict/.test(error.message));
       await assert.rejects(mutate(pageId, doc(), null), /resource_conflict/);
       assert.equal((await visible("resource_pages", editor))[0].revision, 3);
     });
